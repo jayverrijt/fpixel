@@ -1,0 +1,166 @@
+[23:37:16] [ServerMain/INFO]: [bootstrap] Running Java 25 (OpenJDK 64-Bit Server VM 25.0.1+8-27; Oracle Corporation null) on Mac OS X 26.3.1 (aarch64)
+[23:37:16] [ServerMain/INFO]: [bootstrap] Loading Paper 1.21.11-130-ver/1.21.11@c5a2736 (2026-04-11T11:14:19Z) for Minecraft 1.21.11
+[23:37:17] [ServerMain/INFO]: [PluginInitializerManager] Initializing plugins...
+[23:37:17] [ServerMain/INFO]: [PluginInitializerManager] Initialized 6 plugins
+[23:37:17] [ServerMain/INFO]: [PluginInitializerManager] Bukkit plugins (6):
+ - Citizens (2.0.13-SNAPSHOT (build 1130)), DeluxeMenus (1.14.1-Release), Essentials (2.22.0-dev+104-87bde72), PlaceholderAPI (2.12.2), ViaBackwards (5.8.1), ViaVersion (5.8.1)
+[23:37:18] [ServerMain/INFO]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[23:37:19] [ServerMain/INFO]: Loaded 1470 recipes
+[23:37:19] [ServerMain/INFO]: Loaded 1584 advancements
+[23:37:19] [ServerMain/INFO]: [ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry] Initialising converters for DataConverter...
+[23:37:19] [ServerMain/INFO]: [ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry] Finished initialising converters for DataConverter in 142,2ms
+[23:37:19] [Server thread/INFO]: Starting minecraft server version 1.21.11
+[23:37:19] [Server thread/INFO]: Loading properties
+[23:37:19] [Server thread/INFO]: This server is running Paper version 1.21.11-130-ver/1.21.11@c5a2736 (2026-04-11T11:14:19Z) (Implementing API version 1.21.11-R0.1-SNAPSHOT)
+[23:37:19] [Server thread/INFO]: [spark] This server bundles the spark profiler. For more information please visit https://docs.papermc.io/paper/profiling
+[23:37:19] [Server thread/INFO]: Using 4 threads for Netty based IO
+[23:37:19] [Server thread/INFO]: Server Ping Player Sample Count: 12
+[23:37:20] [Server thread/INFO]: [MoonriseCommon] Paper is using 2 worker threads, 1 I/O threads
+[23:37:20] [Server thread/INFO]: Default game type: SURVIVAL
+[23:37:20] [Server thread/INFO]: Generating keypair
+[23:37:20] [Server thread/INFO]: Starting Minecraft server on *:25565
+[23:37:20] [Server thread/INFO]: Paper: Using libdeflate (macOS ARM64 / Apple Silicon) compression from Velocity.
+[23:37:20] [Server thread/INFO]: Paper: Using native (macOS ARM64 / Apple Silicon) cipher from Velocity.
+[23:37:20] [Server thread/WARN]: [org.bukkit.craftbukkit.legacy.CraftLegacy] Initializing Legacy Material Support. Unless you have legacy plugins and/or data this is a bug!
+[23:37:26] [Server thread/WARN]: Legacy plugin Citizens v2.0.13-SNAPSHOT (build 1130) does not specify an api-version.
+[23:37:26] [Server thread/INFO]: [PlaceholderAPI] Loading server plugin PlaceholderAPI v2.12.2
+[23:37:26] [Server thread/INFO]: [ViaVersion] Loading server plugin ViaVersion v5.8.1
+[23:37:26] [Server thread/INFO]: [ViaVersion] ViaVersion 5.8.1 is now loaded. Registering protocol transformers and injecting...
+[23:37:27] [Via-Mappingloader-1/INFO]: [ViaVersion] Loading block connection mappings ...
+[23:37:27] [Via-Mappingloader-1/INFO]: [ViaVersion] Using FastUtil Long2ObjectOpenHashMap for block connections
+[23:37:27] [Server thread/INFO]: [ViaBackwards] Loading translations...
+[23:37:27] [Server thread/INFO]: [ViaBackwards] Registering protocols...
+[23:37:27] [Server thread/INFO]: [DeluxeMenus] Loading server plugin DeluxeMenus v1.14.1-Release
+[23:37:27] [Server thread/WARN]: [DeluxeMenus] Could not setup a NMS hook for your server version! The following Item options will not work: nbt_int, nbt_ints, nbt_string and nbt_strings.
+[23:37:27] [Server thread/INFO]: [ViaBackwards] Loading server plugin ViaBackwards v5.8.1
+[23:37:27] [Server thread/INFO]: [Citizens] Loading server plugin Citizens v2.0.13-SNAPSHOT (build 1130)
+[23:37:27] [Server thread/INFO]: [Essentials] Loading server plugin Essentials v2.22.0-dev+104-87bde72
+[23:37:27] [Server thread/INFO]: Server permissions file permissions.yml is empty, ignoring it
+[23:37:27] [Server thread/INFO]: Preparing level "world"
+[23:37:27] [Server thread/INFO]: Loading 0 persistent chunks for world 'minecraft:overworld'...
+[23:37:27] [Server thread/INFO]: Preparing spawn area: 100%
+[23:37:27] [Server thread/INFO]: Prepared spawn area in 1 ms
+[23:37:27] [Server thread/INFO]: Loading 0 persistent chunks for world 'minecraft:the_nether'...
+[23:37:27] [Server thread/INFO]: Prepared spawn area in 0 ms
+[23:37:27] [Server thread/INFO]: Loading 0 persistent chunks for world 'minecraft:the_end'...
+[23:37:27] [Server thread/INFO]: Prepared spawn area in 0 ms
+[23:37:27] [Server thread/INFO]: Done preparing level "world" (0.222s)
+[23:37:27] [Server thread/INFO]: [PlaceholderAPI] Enabling PlaceholderAPI v2.12.2
+[23:37:27] [Server thread/INFO]: [PlaceholderAPI] Fetching available expansion information...
+[23:37:27] [Server thread/INFO]: [ViaVersion] Enabling ViaVersion v5.8.1
+[23:37:27] [Server thread/INFO]: [ViaVersion] ViaVersion detected server version: 1.21.11 (774)
+[23:37:28] [Server thread/INFO]: [DeluxeMenus] Enabling DeluxeMenus v1.14.1-Release
+[23:37:28] [Server thread/INFO]: [DeluxeMenus] Successfully hooked into PlaceholderAPI!
+[23:37:28] [placeholderapi-io-#0/WARN]: [PlaceholderAPI] Failed to download expansion information
+java.io.IOException: Server returned HTTP response code: 502 for URL: https://ecloud.placeholderapi.com/api/v3/?platform=bukkit
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1700) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1302) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getInputStream(HttpsURLConnectionImpl.java:223) ~[?:?]
+	at java.base/java.net.URL.openStream(URL.java:1263) ~[?:?]
+	at com.google.common.io.Resources$UrlByteSource.openStream(Resources.java:69) ~[guava-33.5.0-jre.jar:?]
+	at com.google.common.io.ByteSource.read(ByteSource.java:295) ~[guava-33.5.0-jre.jar:?]
+	at com.google.common.io.ByteSource$AsCharSource.read(ByteSource.java:473) ~[guava-33.5.0-jre.jar:?]
+	at com.google.common.io.Resources.toString(Resources.java:108) ~[guava-33.5.0-jre.jar:?]
+	at PlaceholderAPI-2.12.2.jar//me.clip.placeholderapi.expansion.manager.CloudExpansionManager.lambda$fetch$4(CloudExpansionManager.java:189) ~[?:?]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:545) ~[?:?]
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1474) ~[?:?]
+[23:37:28] [Server thread/WARN]: [DeluxeMenus] Found 'data' option for item: teststone in menu: basics_menu. This option is deprecated and will be removed soon. Please use 'damage' instead.
+[23:37:28] [Server thread/INFO]: [DeluxeMenus] 3 GUI menus loaded!
+[23:37:28] [Server thread/INFO]: [PlaceholderAPI] Successfully registered internal expansion: deluxemenus [1.14.1-Release]
+[23:37:28] [Server thread/INFO]: [DeluxeMenus] You are running the latest version of DeluxeMenus!
+[23:37:28] [Server thread/INFO]: [ViaBackwards] Enabling ViaBackwards v5.8.1
+[23:37:28] [Server thread/INFO]: [Citizens] Enabling Citizens v2.0.13-SNAPSHOT (build 1130)*
+[23:37:28] [Server thread/ERROR]: [Citizens] v2.0.13-SNAPSHOT (build 1130) werkt niet met Minecraft v1.21.11. Uitschakelen
+[23:37:28] [Server thread/INFO]: [Citizens] Disabling Citizens v2.0.13-SNAPSHOT (build 1130)
+[23:37:28] [Server thread/INFO]: [Essentials] Enabling Essentials v2.22.0-dev+104-87bde72
+[23:37:28] [Server thread/INFO]: [Essentials] Attempting to convert old kits in config.yml to new kits.yml
+[23:37:28] [Server thread/INFO]: [Essentials] No kits found to migrate.
+[23:37:28] [Server thread/INFO]: [Essentials] Starting Essentials ban format conversion
+[23:37:28] [Server thread/INFO]: [Essentials] Attempting to migrate ignore list to UUIDs
+[23:37:28] [Server thread/INFO]: [Essentials] Attempting to migrate legacy userdata keys to Configurate
+[23:37:28] [Server thread/INFO]: [Essentials] Selected Paper Material Tag Provider as the provider for MaterialTagProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected 1.8.3+ Spawner Item Provider as the provider for SpawnerItemProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected Paper Known Commands Provider as the provider for KnownCommandsProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected 1.14+ Sign Data Provider as the provider for SignDataProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected 1.17.1+ World Info Provider as the provider for WorldInfoProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected Reflection Online Mode Provider as the provider for OnlineModeProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected 1.13+ Spawn Egg Provider as the provider for SpawnEggProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected 1.11+ Item Unbreakable Provider as the provider for ItemUnbreakableProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected 1.20.5+ Banner Data Provider as the provider for BannerDataProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected Paper Tick Count Provider as the provider for TickCountProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected 1.21.4+ Sync Commands Provider as the provider for SyncCommandsProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected Paper Server State Provider as the provider for ServerStateProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected Reflection Formatted Command Alias Provider as the provider for FormattedCommandAliasProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected Paper Biome Key Provider as the provider for BiomeKeyProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected 1.20.6+ Potion Meta Provider as the provider for PotionMetaProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected 1.20.4+ Damage Event Provider as the provider for DamageEventProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected 1.14.4+ Persistent Data Container Provider as the provider for PersistentDataProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected Paper Serialization Provider as the provider for SerializationProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected Paper Container Provider as the provider for ContainerProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected Legacy Biome Name Provider as the provider for BiomeNameProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected 1.21+ InventoryView Interface ABI Provider as the provider for InventoryViewProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected 1.12.2+ Player Locale Provider as the provider for PlayerLocaleProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected Paper 1.13+ Tile Entity Provider as the provider for TileEntityProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Selected 1.12+ Spawner Block Provider as the provider for SpawnerBlockProvider
+[23:37:28] [Server thread/INFO]: [Essentials] Loaded 46312 items from items.json.
+[23:37:28] [Server thread/INFO]: [Essentials] Using locale nl_NL
+[23:37:28] [Server thread/INFO]: [Essentials] ServerListPingEvent: Spigot iterator API
+[23:37:28] [Server thread/INFO]: [Essentials] Starting Metrics. Opt-out using the global bStats config.
+[23:37:28] [Server thread/INFO]: [Essentials] Using superperms-based permissions.
+[23:37:28] [Server thread/INFO]: [spark] Starting background profiler...
+[23:37:29] [Server thread/INFO]: [PlaceholderAPI] Placeholder expansion registration initializing...
+[23:37:29] [Server thread/INFO]: Running delayed init tasks
+[23:37:29] [Craft Scheduler Thread - 0 - Essentials/INFO]: [Essentials] Versie-informatie ophalen...
+[23:37:29] [Craft Scheduler Thread - 2 - ViaVersion/INFO]: [ViaVersion] Finished mapping loading, shutting down loader executor.
+[23:37:29] [Server thread/INFO]: Done (13.053s)! For help, type "help"
+[23:37:29] [Server thread/INFO]: 0 placeholder hook(s) registered!
+[23:38:23] [User Authenticator #0/INFO]: UUID of player Jay_V0 is 9c61a572-30f1-42cb-a4d4-baf9f91471ee
+[23:38:23] [Server thread/INFO]: [HorriblePlayerLoginEventHack] You have plugins listening to the PlayerLoginEvent, this will cause re-configuration APIs to be unavailable: [DeluxeMenus]
+[23:38:25] [Server thread/WARN]: [Essentials] File motd.txt does not exist. Creating one for you.
+[23:38:25] [Server thread/INFO]: Jay_V0 joined the game
+[23:38:25] [Server thread/INFO]: Jay_V0[/127.0.0.1:53711] logged in with entity id 1 at ([world]47.5, 67.0, -1.5)
+[23:38:32] [Server thread/INFO]: Jay_V0 issued server command: /duels
+[23:38:34] [Server thread/INFO]: Jay_V0 issued server command: /plugins
+[23:39:03] [Server thread/INFO]: Jay_V0 lost connection: Disconnected
+[23:39:03] [Server thread/INFO]: Jay_V0 left the game
+[23:39:09] [Server thread/INFO]: Stopping server
+[23:39:09] [Server thread/INFO]: [Essentials] Disabling Essentials v2.22.0-dev+104-87bde72
+[23:39:09] [Server thread/INFO]: [ViaBackwards] Disabling ViaBackwards v5.8.1
+[23:39:09] [Server thread/INFO]: [DeluxeMenus] Disabling DeluxeMenus v1.14.1-Release
+[23:39:09] [Server thread/INFO]: [ViaVersion] Disabling ViaVersion v5.8.1
+[23:39:09] [Server thread/INFO]: [ViaVersion] ViaVersion has been disabled; uninjected the platform and shut down the scheduler.
+[23:39:09] [Server thread/INFO]: [PlaceholderAPI] Disabling PlaceholderAPI v2.12.2
+[23:39:09] [Server thread/INFO]: Saving players
+[23:39:09] [Server thread/INFO]: Saving worlds
+[23:39:09] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[23:39:09] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk system to halt for world 'world'
+[23:39:09] [Server thread/INFO]: [ChunkHolderManager] Halted chunk system for world 'world'
+[23:39:09] [Server thread/INFO]: [ChunkHolderManager] Saving all chunkholders for world 'world'
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Saved 2209 block chunks, 625 entity chunks, 16 poi chunks in world 'world' in 0,67s
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk I/O to halt for world 'world'
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Halted I/O scheduler for world 'world'
+[23:39:10] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world_nether]'/minecraft:the_nether
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk system to halt for world 'world_nether'
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Halted chunk system for world 'world_nether'
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Saving all chunkholders for world 'world_nether'
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Saved 0 block chunks, 0 entity chunks, 0 poi chunks in world 'world_nether' in 0,00s
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk I/O to halt for world 'world_nether'
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Halted I/O scheduler for world 'world_nether'
+[23:39:10] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world_the_end]'/minecraft:the_end
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk system to halt for world 'world_the_end'
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Halted chunk system for world 'world_the_end'
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Saving all chunkholders for world 'world_the_end'
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Saved 0 block chunks, 0 entity chunks, 0 poi chunks in world 'world_the_end' in 0,00s
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk I/O to halt for world 'world_the_end'
+[23:39:10] [Server thread/INFO]: [ChunkHolderManager] Halted I/O scheduler for world 'world_the_end'
+[23:39:10] [Server thread/INFO]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[23:39:10] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[23:39:10] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[23:39:10] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved
+[23:39:10] [Server thread/INFO]: Waiting for all RegionFile I/O tasks to complete...
+[23:39:10] [Server thread/INFO]: All RegionFile I/O tasks to complete
+[23:39:10] [Server thread/INFO]: [MoonriseCommon] Awaiting termination of worker pool for up to 60s...
+[23:39:10] [Server thread/INFO]: [MoonriseCommon] Awaiting termination of I/O pool for up to 60s...

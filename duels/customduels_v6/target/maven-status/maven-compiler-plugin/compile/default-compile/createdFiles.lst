@@ -1,0 +1,4 @@
+com/example/duels/CustomDuels.class
+com/example/duels/GameManager.class
+com/example/duels/QueueCommand.class
+com/example/duels/GameListener.class

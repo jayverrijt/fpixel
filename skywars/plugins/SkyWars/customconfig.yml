@@ -1,0 +1,39 @@
+useconfigislands: true
+game:
+  island:
+    '1':
+      spawnlocation: 2,45,2,0,0
+      chests:
+        '1': 2,43,2,north
+        '2': 2,42,2,south
+        '3': 2,41,2,west
+    '2':
+      spawnlocation: 6,41,2,0,0
+      chests:
+        '1': 6,43,2,north
+        '2': 6,42,2,south
+        '3': 6,41,2,west
+    '3':
+      spawnlocation: 10,41,2,0,0
+      chests:
+        '1': 10,43,2,north
+        '2': 10,42,2,south
+        '3': 10,41,2,west
+    '4':
+      spawnlocation: 14,41,2,0,0
+      chests:
+        '1': 14,43,2,north
+        '2': 14,42,2,south
+        '3': 14,41,2,west
+    '5':
+      spawnlocation: 18,41,2,0,0
+      chests:
+        '1': 18,43,2,north
+        '2': 18,42,2,south
+        '3': 18,41,2,west
+    mid:
+      chests:
+        '1': 0,30,0,east
+        '2': 0,31,0,west
+        '3': 0,32,0,south
+        '4': 0,33,0,north

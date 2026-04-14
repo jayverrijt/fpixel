@@ -1,0 +1,7 @@
+
+name: CustomDuels
+main: com.example.duels.CustomDuels
+version: 6.0
+api-version: 1.13
+commands:
+  queue:
