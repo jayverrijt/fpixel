@@ -1,0 +1,20 @@
+1778241879886:op Jay_V0
+1778241925489:stop
+1780777763908:gamemode spectator .minnieheks
+1780777802858:tp .minnieheks -25644.6863 46 -1708.5386
+1780777840766:tp .minnieheks -2564 46 -1708
+1780777851806:gamemode creative .minnieheks
+1780777859159:tick unfreeze
+1781117110840:tick freeze
+1781117125675:give .minnieheks cooked_beef 64
+1781117138397:effect give .minnieheks minecraft:saturation 99 99
+1781117195507:tp .minnieheks -2514 64 -1226
+1781117227757:effect clear .minnieheks
+1781117382741:tick unfreeze
+1781117403283:gamemode spectator .minnieheks
+1781117409379:tp .minnieheks 0 128 0
+1781117422174:gamemode survival .minnieheks
+1783458793993:stop
+1785270808147:kick .oljw3895 lol loser
+1785270821391:list
+1785270859680:stop
