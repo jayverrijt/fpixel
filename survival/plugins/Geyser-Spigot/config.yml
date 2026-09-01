@@ -2,29 +2,16 @@
 # Geyser Configuration File
 # 
 # A bridge between Minecraft: Bedrock Edition and Minecraft: Java Edition.
-# 
-# GitHub: https://github.com/GeyserMC/Geyser
-# Discord: https://discord.gg/geysermc
-# Wiki: https://geysermc.org/wiki
 # --------------------------------
 
-# Network settings for the Bedrock listener
 bedrock:
-  # The IP address that Geyser will bind on to listen for incoming Bedrock connections.
   address: 0.0.0.0
-
-  # The port that will Geyser will listen on for incoming Bedrock connections.
   port: 19132
-
-  # Some hosting services change your Java port everytime you start the server and require the same port to be used for Bedrock.
   clone-remote-port: false
 
-# Network settings for the Java server connection
 java:
-  # Insteld op floodgate omdat je Floodgate gebruikt in combinatie met ViaVersion/ViaBackwards
   auth-type: floodgate
 
-# MOTD settings
 motd:
   primary-motd: Geyser
   secondary-motd: Another Geyser server.
@@ -34,7 +21,6 @@ motd:
   integrated-ping-passthrough: true
   ping-passthrough-interval: 3
 
-# Gameplay options that affect Bedrock players
 gameplay:
   server-name: Geyser
   cooldown-type: crosshair
@@ -53,13 +39,9 @@ gameplay:
   max-visible-custom-skulls: 128
   custom-skull-render-distance: 32
 
-# The default locale if we don't have the one the client requested.
 default-locale: system
-
-# Whether player IP addresses will be logged by the server.
 log-player-ip-addresses: true
 
-# For online mode authentication type only. (Niet actief bij floodgate, maar behouden voor structuur)
 saved-user-logins:
   - ThisExampleUsernameShouldBeLongEnoughToNeverBeAnXboxUsername
   - ThisOtherExampleUsernameShouldAlsoBeLongEnough
@@ -67,15 +49,11 @@ saved-user-logins:
 pending-authentication-timeout: 120
 notify-on-new-bedrock-update: true
 
-# Advanced configuration options.
 advanced:
   cache-images: 0
   scoreboard-packet-threshold: 20
   add-team-suggestions: true
   resource-pack-urls: []
-
-  # Floodgate uses encryption to ensure use from authorized sources.
-  # Dit pakt automatisch de key.pem van je Floodgate plugin map.
   floodgate-key-file: key.pem
 
   java:
@@ -92,8 +70,5 @@ advanced:
     mtu: 1400
     validate-bedrock-login: true
 
-# If debug messages should be sent through console
 debug-mode: false
-
-# Do not change!
 config-version: 7

@@ -1,1 +1,1 @@
-java -Xms2G -Xmx4G -jar paper.jar nogui
+java -Xms256M -Xmx2048M -XX:+UseG1GC -jar paper.jar nogui
