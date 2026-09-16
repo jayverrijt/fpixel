@@ -1,44 +1,135 @@
-[02:26:10] [Server thread/INFO]: Cornbread2100_ (/176.65.148.136:55248) lost connection: Disconnected
-[09:09:37] [Server thread/INFO]: There are 0 of a max of 20 players online: 
-[09:09:38] [Server thread/INFO]: Stopping the server
-[09:09:38] [Server thread/INFO]: Stopping server
-[09:09:38] [Server thread/INFO]: [ViaBackwards] Disabling ViaBackwards v5.11.0
-[09:09:38] [Server thread/INFO]: [Geyser-Spigot] Disabling Geyser-Spigot v2.11.1-SNAPSHOT
-[09:09:38] [Server thread/INFO]: [Geyser-Spigot] Shutting down Geyser.
-[09:09:39] [Server thread/INFO]: [Geyser-Spigot] Geyser shutdown successfully.
-[09:09:39] [Server thread/INFO]: [Chunky] Disabling Chunky v1.5.3
-[09:09:39] [Server thread/INFO]: [ViaVersion] Disabling ViaVersion v5.11.0
-[09:09:39] [Server thread/INFO]: [ViaVersion] ViaVersion has been disabled; uninjected the platform and shut down the scheduler.
-[09:09:39] [Server thread/INFO]: [floodgate] Disabling floodgate v2.2.5-SNAPSHOT (b138-fc99cfc)
-[09:09:39] [WebSocketConnectReadThread-13795/INFO]: [Geyser-Spigot] The skin uploader has been closed
-[09:09:39] [Server thread/INFO]: Saving players
-[09:09:39] [Server thread/INFO]: Saving worlds
-[09:09:39] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk system to halt for world 'minecraft:overworld'
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Halted chunk system for world 'minecraft:overworld'
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Saving all chunkholders for world 'minecraft:overworld'
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Saved 0 block chunks, 0 entity chunks, 0 poi chunks in world 'minecraft:overworld' in 0.00s
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk I/O to halt for world 'minecraft:overworld'
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Halted I/O scheduler for world 'minecraft:overworld'
-[09:09:39] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk system to halt for world 'minecraft:the_nether'
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Halted chunk system for world 'minecraft:the_nether'
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Saving all chunkholders for world 'minecraft:the_nether'
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Saved 0 block chunks, 0 entity chunks, 0 poi chunks in world 'minecraft:the_nether' in 0.00s
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk I/O to halt for world 'minecraft:the_nether'
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Halted I/O scheduler for world 'minecraft:the_nether'
-[09:09:39] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk system to halt for world 'minecraft:the_end'
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Halted chunk system for world 'minecraft:the_end'
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Saving all chunkholders for world 'minecraft:the_end'
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Saved 0 block chunks, 0 entity chunks, 0 poi chunks in world 'minecraft:the_end' in 0.00s
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk I/O to halt for world 'minecraft:the_end'
-[09:09:39] [Server thread/INFO]: [ChunkHolderManager] Halted I/O scheduler for world 'minecraft:the_end'
-[09:09:39] [Server thread/INFO]: ThreadedAnvilChunkStorage (world): All chunks are saved
-[09:09:39] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
-[09:09:39] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
-[09:09:39] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved
-[09:09:39] [Server thread/INFO]: Waiting for all RegionFile I/O tasks to complete...
-[09:09:39] [Server thread/INFO]: All RegionFile I/O tasks to complete
-[09:09:39] [Server thread/INFO]: [MoonriseCommon] Awaiting termination of worker pool for up to 60s...
-[09:09:39] [Server thread/INFO]: [MoonriseCommon] Awaiting termination of I/O pool for up to 60s...
+[19:47:25] [ServerMain/INFO]: [bootstrap] Running Java 25 (OpenJDK 64-Bit Server VM 25.0.4.1+1-1-deb13u1-Debian; Debian null) on Linux 6.12.107+deb13-amd64 (amd64)
+[19:47:25] [ServerMain/INFO]: [bootstrap] Loading Paper 26.2-84-main@26e81c4 (2026-07-26T18:11:33Z) for Minecraft 26.2
+[19:47:25] [ServerMain/INFO]: [PluginInitializerManager] Initializing plugins...
+[19:47:26] [ServerMain/INFO]: [PluginInitializerManager] Initialized 6 plugins
+[19:47:26] [ServerMain/INFO]: [PluginInitializerManager] Bukkit plugins (6):
+ - Chunky (1.5.3), EssentialsChat (2.22.1-dev+19-83aaf8c), Geyser-Spigot (2.11.1-SNAPSHOT), ViaBackwards (5.11.0), ViaVersion (5.11.0), floodgate (2.2.5-SNAPSHOT (b138-fc99cfc))
+[19:47:28] [DataConverter MCTypeRegistry init thread/INFO]: [ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry] Initialising converters for DataConverter...
+[19:47:28] [ServerMain/INFO]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[19:47:28] [DataConverter MCTypeRegistry init thread/INFO]: [ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry] Finished initialising converters for DataConverter in 279.8ms
+[19:47:29] [ServerMain/INFO]: Loaded 1585 recipes
+[19:47:29] [ServerMain/INFO]: Loaded 1688 advancements
+[19:47:29] [Server thread/INFO]: Starting minecraft server version 26.2
+[19:47:29] [Server thread/INFO]: Loading properties
+[19:47:29] [Server thread/INFO]: This server is running Paper version 26.2-84-main@26e81c4 (2026-07-26T18:11:33Z) (Implementing API version 26.2.build.84-stable)
+[19:47:29] [Server thread/INFO]: [spark] This server bundles the spark profiler. For more information please visit https://docs.papermc.io/paper/profiling
+[19:47:29] [Server thread/INFO]: Server Ping Player Sample Count: 12
+[19:47:29] [Server thread/INFO]: Using 4 threads for Netty based IO
+[19:47:30] [Server thread/INFO]: [MoonriseCommon] Paper is using 1 worker threads, 1 I/O threads
+[19:47:30] [Server thread/INFO]: Default game type: SURVIVAL
+[19:47:30] [Server thread/INFO]: Generating keypair
+[19:47:30] [Server thread/INFO]: Starting Minecraft server on *:25565
+[19:47:30] [Server thread/INFO]: Paper: Using libdeflate (Linux x86_64) compression from Velocity.
+[19:47:30] [Server thread/INFO]: Paper: Using OpenSSL 3.x.x (Linux x86_64) cipher from Velocity.
+[19:47:30] [Server thread/ERROR]: [ModernPluginLoadingStrategy] Could not load 'plugins/EssentialsXChat-2.22.1-dev+19-83aaf8c.jar' in 'plugins'
+org.bukkit.plugin.UnknownDependencyException: Unknown/missing dependency plugins: [Essentials]. Please download and install these plugins to run 'EssentialsChat'.
+	at io.papermc.paper.plugin.entrypoint.strategy.modern.ModernPluginLoadingStrategy.loadProviders(ModernPluginLoadingStrategy.java:82) ~[paper-26.2.jar:26.2-84-26e81c4]
+	at io.papermc.paper.plugin.storage.SimpleProviderStorage.enter(SimpleProviderStorage.java:38) ~[paper-26.2.jar:26.2-84-26e81c4]
+	at io.papermc.paper.plugin.entrypoint.LaunchEntryPointHandler.enter(LaunchEntryPointHandler.java:39) ~[paper-26.2.jar:26.2-84-26e81c4]
+	at org.bukkit.craftbukkit.CraftServer.loadPlugins(CraftServer.java:549) ~[paper-26.2.jar:26.2-84-26e81c4]
+	at net.minecraft.server.dedicated.DedicatedServer.initServer(DedicatedServer.java:297) ~[paper-26.2.jar:26.2-84-26e81c4]
+	at net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:1267) ~[paper-26.2.jar:26.2-84-26e81c4]
+	at net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:303) ~[paper-26.2.jar:26.2-84-26e81c4]
+	at java.base/java.lang.Thread.run(Thread.java:1474) ~[?:?]
+[19:47:30] [Server thread/INFO]: [ViaVersion] Loading server plugin ViaVersion v5.11.0
+[19:47:30] [Server thread/INFO]: [ViaVersion] ViaVersion 5.11.0 is now loaded. Registering protocol transformers and injecting...
+[19:47:30] [Server thread/INFO]: [ViaBackwards] Loading translations...
+[19:47:30] [Server thread/INFO]: [ViaBackwards] Registering protocols...
+[19:47:31] [Server thread/INFO]: [floodgate] Loading server plugin floodgate v2.2.5-SNAPSHOT (b138-fc99cfc)
+[19:47:31] [Server thread/WARN]: [floodgate] en_ is not a supported Floodgate language.
+[19:47:31] [Server thread/INFO]: [floodgate] Took 303ms to boot Floodgate
+[19:47:31] [Server thread/INFO]: [ViaBackwards] Loading server plugin ViaBackwards v5.11.0
+[19:47:31] [Server thread/INFO]: [Chunky] Loading server plugin Chunky v1.5.3
+[19:47:31] [Server thread/INFO]: [Geyser-Spigot] Loading server plugin Geyser-Spigot v2.11.1-SNAPSHOT
+[19:47:31] [Server thread/INFO]: [Geyser-Spigot] Loading extensions...
+[19:47:31] [Server thread/INFO]: [Geyser-Spigot] Loaded 0 extension(s)
+[19:47:31] [Server thread/INFO]: Preparing level "world"
+[19:47:31] [Server thread/INFO]: Loading 0 persistent chunks for level 'minecraft:overworld'...
+[19:47:31] [Server thread/INFO]: Prepared spawn area in 1 ms
+[19:47:31] [Server thread/INFO]: Loading 0 persistent chunks for level 'minecraft:the_nether'...
+[19:47:31] [Server thread/INFO]: Prepared spawn area in 0 ms
+[19:47:31] [Server thread/INFO]: Loading 0 persistent chunks for level 'minecraft:the_end'...
+[19:47:31] [Server thread/INFO]: Prepared spawn area in 0 ms
+[19:47:31] [Server thread/INFO]: Done preparing level "world" (0.225s)
+[19:47:31] [Server thread/INFO]: [ViaVersion] Enabling ViaVersion v5.11.0
+[19:47:31] [Server thread/INFO]: [ViaVersion] ViaVersion detected server version: 26.2 (776)
+[19:47:31] [Server thread/INFO]: [floodgate] Enabling floodgate v2.2.5-SNAPSHOT (b138-fc99cfc)
+[19:47:32] [Server thread/INFO]: [ViaBackwards] Enabling ViaBackwards v5.11.0
+[19:47:32] [Server thread/INFO]: [Chunky] Enabling Chunky v1.5.3
+[19:47:32] [Server thread/INFO]: [Geyser-Spigot] Enabling Geyser-Spigot v2.11.1-SNAPSHOT
+[19:47:32] [Server thread/INFO]: [spark] Starting background profiler...
+[19:47:33] [Server thread/INFO]: [Geyser-Spigot] ******************************************
+[19:47:33] [Server thread/INFO]: [Geyser-Spigot] 
+[19:47:33] [Server thread/INFO]: [Geyser-Spigot] Loading Geyser version 2.11.1-b1208 (git-master-a78fc63)
+[19:47:33] [Server thread/INFO]: [Geyser-Spigot] 
+[19:47:33] [Server thread/INFO]: [Geyser-Spigot] ******************************************
+[19:47:33] [Server thread/INFO]: [Geyser-Spigot] Registered 199 custom block overrides.
+[19:47:33] [Server thread/INFO]: [Geyser-Spigot] Registered 2 custom block item overrides.
+[19:47:33] [Server thread/INFO]: [Geyser-Spigot] Registered 7 custom blocks.
+[19:47:34] [Server thread/INFO]: [Geyser-Spigot] Registered 1 custom items
+[19:47:35] [GeyserServer-3-1/INFO]: [Geyser-Spigot] Started Geyser on UDP port 19132
+[19:47:35] [Server thread/INFO]: [Geyser-Spigot] Done (1.942s)! Run /geyser help for help!
+[19:47:35] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[19:47:35] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[19:47:35] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[19:47:35] [Server thread/INFO]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[19:47:35] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[19:47:35] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[19:47:35] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved
+[19:47:35] [Server thread/INFO]: Running delayed init tasks
+[19:47:35] [Server thread/INFO]: Done (9.839s)! For help, type "help"
+[19:47:35] [Craft Scheduler Thread - 2 - ViaVersion/INFO]: [ViaVersion] Finished mapping loading, shutting down loader executor.
+[19:47:35] [ForkJoinPool.commonPool-worker-4/INFO]: [Geyser-Spigot] There's a new Geyser update available to support Bedrock version 26.51. Download it here: https://geysermc.org/download
+[19:47:35] [Paper Async Task Handler Thread - 1/INFO]: *** Currently you are 40 builds behind ***
+[19:47:35] [Paper Async Task Handler Thread - 1/INFO]: *** It is highly recommended to download the latest build from https://papermc.io/downloads/paper ***
+[19:47:41] [User Authenticator #0/INFO]: UUID of player Jay_V0 is 9c61a572-30f1-42cb-a4d4-baf9f91471ee
+[19:47:42] [Server thread/INFO]: Jay_V0 joined the game
+[19:47:42] [Server thread/INFO]: Jay_V0[/185.231.24.23:65278] logged in with entity id 126 at ([minecraft:overworld]-948.922055284028, 63.0, -146.31896945361078)
+[19:47:54] [Server thread/INFO]: Jay_V0 issued server command: /gamemode creative
+[19:47:54] [Server thread/INFO]: [Jay_V0: Set own game mode to Creative Mode]
+[19:47:57] [Server thread/INFO]: Jay_V0 issued server command: /time set day
+[19:47:57] [Server thread/INFO]: [Jay_V0: Set minecraft:overworld to time marker minecraft:day]
+[19:48:41] [Server thread/INFO]: Jay_V0 lost connection: Disconnected
+[19:48:42] [Server thread/INFO]: Jay_V0 left the game
+[19:48:44] [Server thread/INFO]: Stopping the server
+[19:48:44] [Server thread/INFO]: Stopping server
+[19:48:44] [Server thread/INFO]: [Geyser-Spigot] Disabling Geyser-Spigot v2.11.1-SNAPSHOT
+[19:48:44] [Server thread/INFO]: [Geyser-Spigot] Shutting down Geyser.
+[19:48:44] [Server thread/INFO]: [Geyser-Spigot] Geyser shutdown successfully.
+[19:48:44] [Server thread/INFO]: [Chunky] Disabling Chunky v1.5.3
+[19:48:44] [Server thread/INFO]: [ViaBackwards] Disabling ViaBackwards v5.11.0
+[19:48:44] [Server thread/INFO]: [floodgate] Disabling floodgate v2.2.5-SNAPSHOT (b138-fc99cfc)
+[19:48:44] [Server thread/INFO]: [ViaVersion] Disabling ViaVersion v5.11.0
+[19:48:44] [Server thread/INFO]: [ViaVersion] ViaVersion has been disabled; uninjected the platform and shut down the scheduler.
+[19:48:44] [Server thread/INFO]: Saving players
+[19:48:44] [WebSocketConnectReadThread-94/INFO]: [Geyser-Spigot] The skin uploader has been closed
+[19:48:44] [Server thread/INFO]: Saving worlds
+[19:48:44] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[19:48:44] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk system to halt for world 'minecraft:overworld'
+[19:48:44] [Server thread/INFO]: [ChunkHolderManager] Halted chunk system for world 'minecraft:overworld'
+[19:48:44] [Server thread/INFO]: [ChunkHolderManager] Saving all chunkholders for world 'minecraft:overworld'
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Saved 361 block chunks, 361 entity chunks, 0 poi chunks in world 'minecraft:overworld' in 0.51s
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk I/O to halt for world 'minecraft:overworld'
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Halted I/O scheduler for world 'minecraft:overworld'
+[19:48:45] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk system to halt for world 'minecraft:the_nether'
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Halted chunk system for world 'minecraft:the_nether'
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Saving all chunkholders for world 'minecraft:the_nether'
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Saved 0 block chunks, 0 entity chunks, 0 poi chunks in world 'minecraft:the_nether' in 0.00s
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk I/O to halt for world 'minecraft:the_nether'
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Halted I/O scheduler for world 'minecraft:the_nether'
+[19:48:45] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk system to halt for world 'minecraft:the_end'
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Halted chunk system for world 'minecraft:the_end'
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Saving all chunkholders for world 'minecraft:the_end'
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Saved 0 block chunks, 0 entity chunks, 0 poi chunks in world 'minecraft:the_end' in 0.00s
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk I/O to halt for world 'minecraft:the_end'
+[19:48:45] [Server thread/INFO]: [ChunkHolderManager] Halted I/O scheduler for world 'minecraft:the_end'
+[19:48:45] [Server thread/INFO]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[19:48:45] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[19:48:45] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[19:48:45] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved
+[19:48:45] [Server thread/INFO]: Waiting for all RegionFile I/O tasks to complete...
+[19:48:45] [Server thread/INFO]: All RegionFile I/O tasks to complete
+[19:48:45] [Server thread/INFO]: [MoonriseCommon] Awaiting termination of worker pool for up to 60s...
+[19:48:45] [Server thread/INFO]: [MoonriseCommon] Awaiting termination of I/O pool for up to 60s...

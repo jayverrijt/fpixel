@@ -1,0 +1,165 @@
+[19:49:28] [ServerMain/INFO]: [bootstrap] Running Java 25 (OpenJDK 64-Bit Server VM 25.0.4.1+1-1-deb13u1-Debian; Debian null) on Linux 6.12.107+deb13-amd64 (amd64)
+[19:49:28] [ServerMain/INFO]: [bootstrap] Loading Paper 26.2-124-ver/26.2@22ca6c7 (2026-09-15T17:48:49Z) for Minecraft 26.2
+[19:49:28] [ServerMain/INFO]: [PluginInitializerManager] Initializing plugins...
+[19:49:28] [ServerMain/INFO]: [PluginInitializerManager] Initialized 5 plugins
+[19:49:28] [ServerMain/INFO]: [PluginInitializerManager] Bukkit plugins (5):
+ - Chunky (1.5.3), Geyser-Spigot (2.11.3-SNAPSHOT), ViaBackwards (5.11.0), ViaVersion (5.11.0), floodgate (2.2.5-SNAPSHOT (b140-8780fa4))
+[19:49:31] [DataConverter MCTypeRegistry init thread/INFO]: [ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry] Initialising converters for DataConverter...
+[19:49:31] [ServerMain/INFO]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[19:49:31] [DataConverter MCTypeRegistry init thread/INFO]: [ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry] Finished initialising converters for DataConverter in 321.1ms
+[19:49:32] [ServerMain/INFO]: Loaded 1585 recipes
+[19:49:32] [ServerMain/INFO]: Loaded 1688 advancements
+[19:49:32] [Server thread/INFO]: Starting minecraft server version 26.2
+[19:49:32] [Server thread/INFO]: Loading properties
+[19:49:32] [Server thread/INFO]: This server is running Paper version 26.2-124-ver/26.2@22ca6c7 (2026-09-15T17:48:49Z) (Implementing API version 26.2.build.124-stable)
+[19:49:32] [Server thread/INFO]: [spark] This server bundles the spark profiler. For more information please visit https://docs.papermc.io/paper/profiling
+[19:49:32] [Server thread/INFO]: Server Ping Player Sample Count: 12
+[19:49:32] [Server thread/INFO]: Using 4 threads for Netty based IO
+[19:49:32] [Server thread/INFO]: [MoonriseCommon] Paper is using 1 worker threads, 1 I/O threads
+[19:49:33] [Server thread/INFO]: Default game type: SURVIVAL
+[19:49:33] [Server thread/INFO]: Generating keypair
+[19:49:33] [Server thread/INFO]: Starting Minecraft server on *:25565
+[19:49:33] [Server thread/INFO]: Paper: Using libdeflate (Linux x86_64) compression from Velocity.
+[19:49:33] [Server thread/INFO]: Paper: Using OpenSSL 3.x.x (Linux x86_64) cipher from Velocity.
+[19:49:33] [Server thread/INFO]: [ViaVersion] Loading server plugin ViaVersion v5.11.0
+[19:49:33] [Server thread/INFO]: [ViaVersion] ViaVersion 5.11.0 is now loaded. Registering protocol transformers and injecting...
+[19:49:33] [Server thread/INFO]: [ViaBackwards] Loading translations...
+[19:49:33] [Server thread/INFO]: [ViaBackwards] Registering protocols...
+[19:49:33] [Server thread/INFO]: [floodgate] Loading server plugin floodgate v2.2.5-SNAPSHOT (b140-8780fa4)
+[19:49:34] [Server thread/WARN]: [floodgate] en_ is not a supported Floodgate language.
+[19:49:34] [Server thread/INFO]: [floodgate] Took 334ms to boot Floodgate
+[19:49:34] [Server thread/INFO]: [ViaBackwards] Loading server plugin ViaBackwards v5.11.0
+[19:49:34] [Server thread/INFO]: [Chunky] Loading server plugin Chunky v1.5.3
+[19:49:34] [Server thread/INFO]: [Geyser-Spigot] Loading server plugin Geyser-Spigot v2.11.3-SNAPSHOT
+[19:49:34] [Server thread/INFO]: [Geyser-Spigot] Loading extensions...
+[19:49:34] [Server thread/INFO]: [Geyser-Spigot] Loaded 0 extension(s)
+[19:49:34] [Server thread/INFO]: Preparing level "world"
+[19:49:34] [Server thread/INFO]: Loading 0 persistent chunks for level 'minecraft:overworld'...
+[19:49:34] [Server thread/INFO]: Prepared spawn area in 0 ms
+[19:49:34] [Server thread/INFO]: Loading 0 persistent chunks for level 'minecraft:the_nether'...
+[19:49:34] [Server thread/INFO]: Prepared spawn area in 0 ms
+[19:49:34] [Server thread/INFO]: Loading 0 persistent chunks for level 'minecraft:the_end'...
+[19:49:34] [Server thread/INFO]: Prepared spawn area in 2 ms
+[19:49:34] [Server thread/INFO]: Done preparing level "world" (0.224s)
+[19:49:34] [Server thread/INFO]: [ViaVersion] Enabling ViaVersion v5.11.0
+[19:49:34] [Server thread/INFO]: [ViaVersion] ViaVersion detected server version: 26.2 (776)
+[19:49:34] [Server thread/INFO]: [floodgate] Enabling floodgate v2.2.5-SNAPSHOT (b140-8780fa4)
+[19:49:34] [Server thread/INFO]: [ViaBackwards] Enabling ViaBackwards v5.11.0
+[19:49:34] [Server thread/INFO]: [Chunky] Enabling Chunky v1.5.3
+[19:49:34] [Server thread/INFO]: [Geyser-Spigot] Enabling Geyser-Spigot v2.11.3-SNAPSHOT
+[19:49:35] [Server thread/INFO]: [spark] Starting background profiler...
+[19:49:35] [Server thread/INFO]: [Geyser-Spigot] ******************************************
+[19:49:35] [Server thread/INFO]: [Geyser-Spigot] 
+[19:49:35] [Server thread/INFO]: [Geyser-Spigot] Loading Geyser version 2.11.3-b1243 (git-master-53ca3bc)
+[19:49:35] [Server thread/INFO]: [Geyser-Spigot] 
+[19:49:35] [Server thread/INFO]: [Geyser-Spigot] ******************************************
+[19:49:36] [Server thread/INFO]: [Geyser-Spigot] Registered 199 custom block overrides.
+[19:49:36] [Server thread/INFO]: [Geyser-Spigot] Registered 2 custom block item overrides.
+[19:49:36] [Server thread/INFO]: [Geyser-Spigot] Registered 7 custom blocks.
+[19:49:37] [Server thread/INFO]: [Geyser-Spigot] Registered 1 custom items
+[19:49:37] [GeyserServer-3-1/INFO]: [Geyser-Spigot] Started Geyser on UDP port 19132
+[19:49:37] [Server thread/INFO]: [Geyser-Spigot] Done (1.6s)! Run /geyser help for help!
+[19:49:37] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[19:49:37] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[19:49:37] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[19:49:37] [Server thread/INFO]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[19:49:37] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[19:49:37] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[19:49:37] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved
+[19:49:37] [Server thread/INFO]: Running delayed init tasks
+[19:49:37] [Server thread/INFO]: Done (9.286s)! For help, type "help"
+[19:49:37] [Craft Scheduler Thread - 2 - ViaVersion/INFO]: [ViaVersion] Finished mapping loading, shutting down loader executor.
+[19:49:38] [User Authenticator #0/INFO]: UUID of player Jay_V0 is 9c61a572-30f1-42cb-a4d4-baf9f91471ee
+[19:49:38] [Paper Common Worker #0/ERROR]: [ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkLoadTask] Failed to run converters for entity data for task: GenericDataLoadTask{class: ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkLoadTask$EntityDataLoadTask, world: minecraft:overworld, chunk: (-60,-6), hashcode: 698563832, priority: COMPLETING, type: ENTITY_DATA}, entity data will be lost
+java.lang.ClassCastException: class java.lang.String cannot be cast to class ca.spottedleaf.converter.types.MapType (java.lang.String is in module java.base of loader 'bootstrap'; ca.spottedleaf.converter.types.MapType is in unnamed module of loader java.net.URLClassLoader @179d3b25)
+	at ca.spottedleaf.dataconverter.minecraft.datatypes.MCDataType.convert(MCDataType.java:13) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.walkers.generic.DataWalkerTypePaths.walk(DataWalkerTypePaths.java:25) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.walkers.generic.DataWalkerTypePaths.walk(DataWalkerTypePaths.java:7) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.datatypes.IDDataType.convert(IDDataType.java:147) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.walkers.generic.WalkerUtils.convertList(WalkerUtils.java:38) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.versions.V99$11.walk(V99.java:372) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.versions.V99$11.walk(V99.java:369) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.datatypes.MCDataType.convert(MCDataType.java:115) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.datatypes.MCDataType.convert(MCDataType.java:13) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertWithSubVersion(MCDataConverter.java:76) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convert(MCDataConverter.java:44) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(MCDataConverter.java:30) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.util.ConvertUtil.convertTag0(ConvertUtil.java:173) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.util.ConvertUtil.convertTag(ConvertUtil.java:201) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.moonrise.paper.PaperHooks.convertNBT(PaperHooks.java:235) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.moonrise.patches.chunk_system.ChunkSystemConverters.convertEntityChunkCompoundTag(ChunkSystemConverters.java:34) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkLoadTask$EntityDataLoadTask.runOffMain(ChunkLoadTask.java:482) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.GenericDataLoadTask$ProcessOffMainTask.run(GenericDataLoadTask.java:311) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.concurrentutil.executor.thread.BalancedPrioritisedThreadPool$OrderedStreamGroup$Queue.lambda$createTask$0(BalancedPrioritisedThreadPool.java:467) ~[leafpile-1.2.0.jar:?]
+	at ca.spottedleaf.concurrentutil.executor.queue.PrioritisedTaskQueue$PrioritisedQueuedTask.execute(PrioritisedTaskQueue.java:345) ~[leafpile-1.2.0.jar:?]
+	at ca.spottedleaf.concurrentutil.executor.thread.BalancedPrioritisedThreadPool$OrderedStreamGroup.executeTask(BalancedPrioritisedThreadPool.java:344) ~[leafpile-1.2.0.jar:?]
+	at ca.spottedleaf.concurrentutil.executor.thread.BalancedPrioritisedThreadPool$WorkerThread.pollTasks(BalancedPrioritisedThreadPool.java:630) ~[leafpile-1.2.0.jar:?]
+	at ca.spottedleaf.concurrentutil.executor.QueueExecutorRunnable.mainLoop(QueueExecutorRunnable.java:50) ~[leafpile-1.2.0.jar:?]
+	at ca.spottedleaf.concurrentutil.executor.QueueExecutorRunnable.doRun(QueueExecutorRunnable.java:115) ~[leafpile-1.2.0.jar:?]
+	at ca.spottedleaf.concurrentutil.executor.QueueExecutorRunnable.run(QueueExecutorRunnable.java:42) ~[leafpile-1.2.0.jar:?]
+	at ca.spottedleaf.concurrentutil.util.LazyRunnable.run(LazyRunnable.java:25) ~[leafpile-1.2.0.jar:?]
+	at java.base/java.lang.Thread.run(Thread.java:1474) ~[?:?]
+[19:49:38] [Paper Common Worker #0/ERROR]: [ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder] Unhandled entity data load exception, data data will be lost: 
+java.lang.ClassCastException: class java.lang.String cannot be cast to class ca.spottedleaf.converter.types.MapType (java.lang.String is in module java.base of loader 'bootstrap'; ca.spottedleaf.converter.types.MapType is in unnamed module of loader java.net.URLClassLoader @179d3b25)
+	at ca.spottedleaf.dataconverter.minecraft.datatypes.MCDataType.convert(MCDataType.java:13) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.walkers.generic.DataWalkerTypePaths.walk(DataWalkerTypePaths.java:25) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.walkers.generic.DataWalkerTypePaths.walk(DataWalkerTypePaths.java:7) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.datatypes.IDDataType.convert(IDDataType.java:147) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.walkers.generic.WalkerUtils.convertList(WalkerUtils.java:38) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.versions.V99$11.walk(V99.java:372) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.versions.V99$11.walk(V99.java:369) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.datatypes.MCDataType.convert(MCDataType.java:115) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.datatypes.MCDataType.convert(MCDataType.java:13) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertWithSubVersion(MCDataConverter.java:76) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convert(MCDataConverter.java:44) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(MCDataConverter.java:30) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.util.ConvertUtil.convertTag0(ConvertUtil.java:173) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.dataconverter.util.ConvertUtil.convertTag(ConvertUtil.java:201) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.moonrise.paper.PaperHooks.convertNBT(PaperHooks.java:235) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.moonrise.patches.chunk_system.ChunkSystemConverters.convertEntityChunkCompoundTag(ChunkSystemConverters.java:34) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkLoadTask$EntityDataLoadTask.runOffMain(ChunkLoadTask.java:482) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.GenericDataLoadTask$ProcessOffMainTask.run(GenericDataLoadTask.java:311) ~[paper-26.2.jar:26.2-124-22ca6c7]
+	at ca.spottedleaf.concurrentutil.executor.thread.BalancedPrioritisedThreadPool$OrderedStreamGroup$Queue.lambda$createTask$0(BalancedPrioritisedThreadPool.java:467) ~[leafpile-1.2.0.jar:?]
+	at ca.spottedleaf.concurrentutil.executor.queue.PrioritisedTaskQueue$PrioritisedQueuedTask.execute(PrioritisedTaskQueue.java:345) ~[leafpile-1.2.0.jar:?]
+	at ca.spottedleaf.concurrentutil.executor.thread.BalancedPrioritisedThreadPool$OrderedStreamGroup.executeTask(BalancedPrioritisedThreadPool.java:344) ~[leafpile-1.2.0.jar:?]
+	at ca.spottedleaf.concurrentutil.executor.thread.BalancedPrioritisedThreadPool$WorkerThread.pollTasks(BalancedPrioritisedThreadPool.java:630) ~[leafpile-1.2.0.jar:?]
+	at ca.spottedleaf.concurrentutil.executor.QueueExecutorRunnable.mainLoop(QueueExecutorRunnable.java:50) ~[leafpile-1.2.0.jar:?]
+	at ca.spottedleaf.concurrentutil.executor.QueueExecutorRunnable.doRun(QueueExecutorRunnable.java:115) ~[leafpile-1.2.0.jar:?]
+	at ca.spottedleaf.concurrentutil.executor.QueueExecutorRunnable.run(QueueExecutorRunnable.java:42) ~[leafpile-1.2.0.jar:?]
+	at ca.spottedleaf.concurrentutil.util.LazyRunnable.run(LazyRunnable.java:25) ~[leafpile-1.2.0.jar:?]
+	at java.base/java.lang.Thread.run(Thread.java:1474) ~[?:?]
+[19:49:39] [Server thread/INFO]: Jay_V0 joined the game
+[19:49:39] [Server thread/INFO]: Jay_V0[/185.231.24.23:65291] logged in with entity id 66 at ([minecraft:overworld]-964.3139152617573, 66.0, -139.36301489855046)
+[19:49:40] [Paper Common Worker #0/WARN]: java.lang.RuntimeException: Server attempted to load chunk saved with newer version of minecraft! 5023 > 4903
+[19:49:40] [Paper Common Worker #0/WARN]: 	at net.minecraft.world.level.chunk.storage.SerializableChunkData.lambda$parse$0(SerializableChunkData.java:152)
+[19:49:40] [Paper Common Worker #0/WARN]: 	at java.base/java.util.Optional.ifPresent(Optional.java:178)
+[19:49:40] [Paper Common Worker #0/WARN]: 	at net.minecraft.world.level.chunk.storage.SerializableChunkData.parse(SerializableChunkData.java:150)
+[19:49:40] [Paper Common Worker #0/WARN]: 	at ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkLoadTask$ChunkDataLoadTask.runOffMain(ChunkLoadTask.java:346)
+[19:49:40] [Paper Common Worker #0/WARN]: 	at ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.GenericDataLoadTask$ProcessOffMainTask.run(GenericDataLoadTask.java:311)
+[19:49:40] [Paper Common Worker #0/WARN]: 	at ca.spottedleaf.concurrentutil.executor.thread.BalancedPrioritisedThreadPool$OrderedStreamGroup$Queue.lambda$createTask$0(BalancedPrioritisedThreadPool.java:467)
+[19:49:40] [Paper Common Worker #0/WARN]: 	at ca.spottedleaf.concurrentutil.executor.queue.PrioritisedTaskQueue$PrioritisedQueuedTask.execute(PrioritisedTaskQueue.java:345)
+[19:49:40] [Paper Common Worker #0/WARN]: 	at ca.spottedleaf.concurrentutil.executor.thread.BalancedPrioritisedThreadPool$OrderedStreamGroup.executeTask(BalancedPrioritisedThreadPool.java:344)
+[19:49:40] [Paper Common Worker #0/WARN]: 	at ca.spottedleaf.concurrentutil.executor.thread.BalancedPrioritisedThreadPool$WorkerThread.pollTasks(BalancedPrioritisedThreadPool.java:630)
+[19:49:40] [Paper Common Worker #0/WARN]: 	at ca.spottedleaf.concurrentutil.executor.QueueExecutorRunnable.mainLoop(QueueExecutorRunnable.java:74)
+[19:49:40] [Paper Common Worker #0/WARN]: 	at ca.spottedleaf.concurrentutil.executor.QueueExecutorRunnable.doRun(QueueExecutorRunnable.java:115)
+[19:49:40] [Paper Common Worker #0/WARN]: 	at ca.spottedleaf.concurrentutil.executor.QueueExecutorRunnable.run(QueueExecutorRunnable.java:42)
+[19:49:40] [Paper Common Worker #0/WARN]: 	at ca.spottedleaf.concurrentutil.util.LazyRunnable.run(LazyRunnable.java:25)
+[19:49:40] [Paper Common Worker #0/WARN]: 	at java.base/java.lang.Thread.run(Thread.java:1474)
+[19:49:40] [Server thread/INFO]: Stopping server
+[19:49:40] [Server thread/INFO]: [Geyser-Spigot] Disabling Geyser-Spigot v2.11.3-SNAPSHOT
+[19:49:40] [Server thread/INFO]: [Geyser-Spigot] Shutting down Geyser.
+[19:49:40] [Server thread/INFO]: [Geyser-Spigot] Geyser shutdown successfully.
+[19:49:40] [Server thread/INFO]: [Chunky] Disabling Chunky v1.5.3
+[19:49:40] [Server thread/INFO]: [ViaBackwards] Disabling ViaBackwards v5.11.0
+[19:49:40] [Server thread/INFO]: [floodgate] Disabling floodgate v2.2.5-SNAPSHOT (b140-8780fa4)
+[19:49:40] [Server thread/INFO]: [ViaVersion] Disabling ViaVersion v5.11.0
+[19:49:40] [Server thread/INFO]: [ViaVersion] ViaVersion has been disabled; uninjected the platform and shut down the scheduler.
+[19:49:40] [Server thread/INFO]: Saving players
+[19:49:40] [WebSocketConnectReadThread-97/INFO]: [Geyser-Spigot] The skin uploader has been closed
+[19:49:40] [Server thread/INFO]: Jay_V0 lost connection: Disconnected
+[19:49:40] [Server thread/INFO]: Jay_V0 left the game
+[19:49:40] [Server thread/INFO]: Saving worlds
+[19:49:40] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[19:49:40] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk system to halt for world 'minecraft:overworld'
+[19:50:40] [Server thread/WARN]: [ChunkHolderManager] Failed to halt generation/loading tasks for world 'minecraft:overworld'
+[19:50:40] [Server thread/INFO]: [ChunkHolderManager] Saving all chunkholders for world 'minecraft:overworld'

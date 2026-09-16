@@ -1,0 +1,23 @@
+# Commando's die standaard toegankelijk zijn voor normale spelers zonder permissie-plugin:
+player-commands:
+  - tpa
+  - tpaccept
+  - tpdeny
+  - tpadeny
+  - tpcancel
+  - spawn
+  - sethome
+  - home
+  - delhome
+  - back
+  - ping
+  - afk
+
+# Tijd in seconden voordat de teleportatie daadwerkelijk plaatsvindt (0 = direct)
+teleport-delay: 3
+
+# Tijd in seconden dat een speler moet wachten tussen teleports
+teleport-cooldown: 0
+
+# Tijd in seconden dat een /tpa verzoek geldig blijft
+tpa-accept-cancellation: 120
