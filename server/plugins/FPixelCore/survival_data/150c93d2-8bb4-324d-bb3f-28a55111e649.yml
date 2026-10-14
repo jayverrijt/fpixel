@@ -1,0 +1,279 @@
+location:
+  x: -634.3163524276733
+  y: -22.0
+  z: -116.31731475419863
+  yaw: 65.630295
+  pitch: -36.380367
+level: 68
+exp: 0.7515662
+health: 20.0
+food: 19
+inventory:
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_pickaxe
+  count: 1
+  components:
+    minecraft:repair_cost: '7'
+    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:mending":1,"minecraft:silk_touch":1,"minecraft:unbreaking":3}'
+    minecraft:damage: '173'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_axe
+  count: 1
+  components:
+    minecraft:repair_cost: '3'
+    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:fortune":3,"minecraft:unbreaking":3}'
+    minecraft:damage: '70'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_shovel
+  count: 1
+  components:
+    minecraft:repair_cost: '1'
+    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:silk_touch":1,"minecraft:unbreaking":3}'
+    minecraft:damage: '423'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_sword
+  count: 1
+  components:
+    minecraft:repair_cost: '15'
+    minecraft:enchantments: '{"minecraft:fire_aspect":2,"minecraft:knockback":2,"minecraft:looting":3,"minecraft:sharpness":5,"minecraft:unbreaking":3}'
+    minecraft:damage: '405'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:water_bucket
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:deepslate_redstone_ore
+  count: 34
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:cooked_cod
+  count: 25
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:shears
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:cooked_beef
+  count: 29
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:arrow
+  count: 64
+  schema_version: 1
+- null
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:spider_eye
+  count: 37
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:rotten_flesh
+  count: 4
+  schema_version: 1
+- null
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:arrow
+  count: 20
+  schema_version: 1
+- null
+- null
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:bone
+  count: 4
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:ender_pearl
+  count: 2
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_pickaxe
+  count: 1
+  components:
+    minecraft:repair_cost: '1'
+    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:fortune":3,"minecraft:unbreaking":3}'
+    minecraft:damage: '59'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:deepslate_gold_ore
+  count: 23
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:prismarine_shard
+  count: 25
+  schema_version: 1
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:prismarine_crystals
+  count: 39
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:scaffolding
+  count: 32
+  schema_version: 1
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:deepslate_iron_ore
+  count: 15
+  schema_version: 1
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:string
+  count: 13
+  schema_version: 1
+- null
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:gunpowder
+  count: 12
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:crossbow
+  count: 1
+  components:
+    minecraft:repair_cost: '1'
+    minecraft:enchantments: '{"minecraft:piercing":4,"minecraft:unbreaking":3}'
+    minecraft:damage: '4'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_boots
+  count: 1
+  components:
+    minecraft:repair_cost: '7'
+    minecraft:enchantments: '{"minecraft:depth_strider":3,"minecraft:feather_falling":4,"minecraft:mending":1,"minecraft:protection":4,"minecraft:unbreaking":3}'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_leggings
+  count: 1
+  components:
+    minecraft:repair_cost: '31'
+    minecraft:enchantments: '{"minecraft:mending":1,"minecraft:protection":4,"minecraft:swift_sneak":3,"minecraft:thorns":3,"minecraft:unbreaking":3}'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_chestplate
+  count: 1
+  components:
+    minecraft:repair_cost: '7'
+    minecraft:enchantments: '{"minecraft:mending":1,"minecraft:protection":4,"minecraft:thorns":3,"minecraft:unbreaking":3}'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_helmet
+  count: 1
+  components:
+    minecraft:repair_cost: '15'
+    minecraft:enchantments: '{"minecraft:aqua_affinity":1,"minecraft:mending":1,"minecraft:protection":4,"minecraft:respiration":3,"minecraft:unbreaking":3}'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:trident
+  count: 1
+  components:
+    minecraft:repair_cost: '1'
+    minecraft:enchantments: '{"minecraft:impaling":4,"minecraft:mending":1,"minecraft:riptide":2,"minecraft:unbreaking":3}'
+  schema_version: 1
+- null
+- null
+armor:
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_boots
+  count: 1
+  components:
+    minecraft:repair_cost: '7'
+    minecraft:enchantments: '{"minecraft:depth_strider":3,"minecraft:feather_falling":4,"minecraft:mending":1,"minecraft:protection":4,"minecraft:unbreaking":3}'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_leggings
+  count: 1
+  components:
+    minecraft:repair_cost: '31'
+    minecraft:enchantments: '{"minecraft:mending":1,"minecraft:protection":4,"minecraft:swift_sneak":3,"minecraft:thorns":3,"minecraft:unbreaking":3}'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_chestplate
+  count: 1
+  components:
+    minecraft:repair_cost: '7'
+    minecraft:enchantments: '{"minecraft:mending":1,"minecraft:protection":4,"minecraft:thorns":3,"minecraft:unbreaking":3}'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_helmet
+  count: 1
+  components:
+    minecraft:repair_cost: '15'
+    minecraft:enchantments: '{"minecraft:aqua_affinity":1,"minecraft:mending":1,"minecraft:protection":4,"minecraft:respiration":3,"minecraft:unbreaking":3}'
+  schema_version: 1
+offhand:
+  ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:trident
+  count: 1
+  components:
+    minecraft:repair_cost: '1'
+    minecraft:enchantments: '{"minecraft:impaling":4,"minecraft:mending":1,"minecraft:riptide":2,"minecraft:unbreaking":3}'
+  schema_version: 1
+enderchest:
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null

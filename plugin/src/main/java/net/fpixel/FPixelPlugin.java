@@ -38,6 +38,7 @@ public class FPixelPlugin extends JavaPlugin {
     private DuelManager duelManager;
     private PartyManager partyManager;
     private SurvivalManager survivalManager;
+    private net.fpixel.lobby.HubNPCManager hubNPCManager;
 
 
     @Override
@@ -56,6 +57,7 @@ public class FPixelPlugin extends JavaPlugin {
         this.spectatorManager = new SpectatorManager(this);
         this.gameManager = new GameManager(this);
         this.lobbyManager = new LobbyManager(this);
+        this.hubNPCManager = new net.fpixel.lobby.HubNPCManager(this);
         this.duelManager = new DuelManager(this);
         this.partyManager = new PartyManager(this);
         this.survivalManager = new SurvivalManager(this);
@@ -150,5 +152,6 @@ public class FPixelPlugin extends JavaPlugin {
     public DuelManager getDuelManager() { return duelManager; }
     public PartyManager getPartyManager() { return partyManager; }
     public SurvivalManager getSurvivalManager() { return survivalManager; }
+    public net.fpixel.lobby.HubNPCManager getHubNPCManager() { return hubNPCManager; }
 }
 

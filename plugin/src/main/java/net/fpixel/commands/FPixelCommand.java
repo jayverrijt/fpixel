@@ -43,6 +43,10 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             plugin.getRankManager().loadRanks();
             plugin.getLobbyManager().loadSpawn();
             sender.sendMessage(ChatUtil.colorize("§aFPixel configuration and ranks reloaded successfully!"));
+        } else if (sub.equals("rebuildhub") || sub.equals("hub")) {
+            sender.sendMessage(ChatUtil.colorize("§eRebuilding Grand Hub with NPCs, launchpads, and survival-inspired architecture..."));
+            plugin.getWorldManager().rebuildGrandHub(Bukkit.getWorlds().get(0));
+            sender.sendMessage(ChatUtil.colorize("§aGrand Hub rebuild complete! All 8 gamemode pavilions, launchpads, and NPCs are live."));
         } else if (sub.equals("buildmaps")) {
             sender.sendMessage(ChatUtil.colorize("§eBuilding Grand Hub and 30 custom minigame maps..."));
             plugin.getWorldManager().generateAllMaps(Bukkit.getWorlds().get(0));
@@ -77,6 +81,7 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
 
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(ChatUtil.colorize("§6§lFPixel Admin Commands:"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel rebuildhub §7- Rebuild Hub with NPCs & launchpads"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel setlobby §7- Set hub spawn point"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel buildmaps §7- Generate Grand Hub & 30 minigame maps"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel list §7- List all minigame arenas"));
@@ -88,7 +93,7 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> list = Arrays.asList("setlobby", "buildmaps", "list", "addcoins", "reload");
+            List<String> list = Arrays.asList("rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload");
             List<String> filtered = new ArrayList<>();
             for (String s : list) {
                 if (s.toLowerCase().startsWith(args[0].toLowerCase())) {

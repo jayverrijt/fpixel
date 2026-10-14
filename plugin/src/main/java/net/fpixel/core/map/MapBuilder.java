@@ -363,4 +363,292 @@ public class MapBuilder {
         // 4. Center beacon / glowstone marker
         world.getBlockAt(cx, cy, cz).setType(Material.BEACON, false);
     }
+
+    /**
+     * Builds an authentic arched wooden bridge inspired by the user's survival world.
+     */
+    public static void buildArchedWoodenBridge(World world, int x1, int z1, int x2, int z2, int y, int width) {
+        int dx = x2 - x1;
+        int dz = z2 - z1;
+        int steps = (int) Math.hypot(dx, dz);
+        if (steps <= 0) return;
+
+        double xStep = (double) dx / steps;
+        double zStep = (double) dz / steps;
+
+        for (int i = 0; i <= steps; i++) {
+            double curX = x1 + i * xStep;
+            double curZ = z1 + i * zStep;
+            double progress = (double) i / steps; // 0 to 1
+            int archLift = (int) Math.round(Math.sin(progress * Math.PI) * 2.0);
+            int curY = y + archLift;
+
+            int bx = (int) Math.round(curX);
+            int bz = (int) Math.round(curZ);
+
+            int halfW = width / 2;
+            for (int w = -halfW; w <= halfW; w++) {
+                int px = (Math.abs(dx) < Math.abs(dz)) ? bx + w : bx;
+                int pz = (Math.abs(dx) >= Math.abs(dz)) ? bz + w : bz;
+
+                world.getBlockAt(px, curY, pz).setType(Material.SPRUCE_PLANKS, false);
+                world.getBlockAt(px, curY - 1, pz).setType(Material.OAK_LOG, false);
+
+                // Railings on edge
+                if (w == -halfW || w == halfW) {
+                    world.getBlockAt(px, curY + 1, pz).setType(Material.OAK_FENCE, false);
+                    if (i == 0 || i == steps || i == steps / 2) {
+                        world.getBlockAt(px, curY + 2, pz).setType(Material.LANTERN, false);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Builds the Grand Survival Estate Manor inspired directly by the user's survival world:
+     * Cobblestone base, stripped oak frame, spruce gable roof, glass windows, rooftop viewing terrace, smoking chimney.
+     */
+    public static void buildSurvivalEstateManor(World world, int x, int y, int z, int width, int length) {
+        // Foundation
+        fillBox(world, x, y, z, x + width - 1, y, z + length - 1, Material.COBBLESTONE);
+        fillBox(world, x + 1, y, z + 1, x + width - 2, y, z + length - 2, Material.DARK_OAK_PLANKS);
+
+        int height = 8; // 2 stories
+
+        // Corner Pillars
+        buildPillar(world, x, y + 1, z, height, Material.STRIPPED_OAK_LOG);
+        buildPillar(world, x + width - 1, y + 1, z, height, Material.STRIPPED_OAK_LOG);
+        buildPillar(world, x, y + 1, z + length - 1, height, Material.STRIPPED_OAK_LOG);
+        buildPillar(world, x + width - 1, y + 1, z + length - 1, height, Material.STRIPPED_OAK_LOG);
+
+        // Mid-pillars
+        int midX = x + width / 2;
+        int midZ = z + length / 2;
+        buildPillar(world, midX, y + 1, z, height, Material.STRIPPED_OAK_LOG);
+        buildPillar(world, midX, y + 1, z + length - 1, height, Material.STRIPPED_OAK_LOG);
+
+        // First floor walls: Cobblestone & Stone Bricks
+        for (int py = y + 1; py <= y + 4; py++) {
+            for (int px = x + 1; px < x + width - 1; px++) {
+                if (px != midX) {
+                    world.getBlockAt(px, py, z).setType(Material.STONE_BRICKS, false);
+                    world.getBlockAt(px, py, z + length - 1).setType(Material.STONE_BRICKS, false);
+                }
+            }
+            for (int pz = z + 1; pz < z + length - 1; pz++) {
+                world.getBlockAt(x, py, pz).setType(Material.COBBLESTONE, false);
+                world.getBlockAt(x + width - 1, py, pz).setType(Material.COBBLESTONE, false);
+            }
+        }
+
+        // Second floor divider
+        fillBox(world, x + 1, y + 4, z + 1, x + width - 2, y + 4, z + length - 2, Material.SPRUCE_PLANKS);
+
+        // Second floor walls: Stripped oak wood & spruce
+        for (int py = y + 5; py <= y + height; py++) {
+            for (int px = x + 1; px < x + width - 1; px++) {
+                if (px != midX) {
+                    world.getBlockAt(px, py, z).setType(Material.SPRUCE_PLANKS, false);
+                    world.getBlockAt(px, py, z + length - 1).setType(Material.SPRUCE_PLANKS, false);
+                }
+            }
+            for (int pz = z + 1; pz < z + length - 1; pz++) {
+                world.getBlockAt(x, py, pz).setType(Material.SPRUCE_PLANKS, false);
+                world.getBlockAt(x + width - 1, py, pz).setType(Material.SPRUCE_PLANKS, false);
+            }
+        }
+
+        // Glass windows
+        world.getBlockAt(x + 2, y + 2, z).setType(Material.GLASS_PANE, false);
+        world.getBlockAt(x + width - 3, y + 2, z).setType(Material.GLASS_PANE, false);
+        world.getBlockAt(x + 2, y + 6, z).setType(Material.GLASS_PANE, false);
+        world.getBlockAt(x + width - 3, y + 6, z).setType(Material.GLASS_PANE, false);
+        world.getBlockAt(x, y + 2, midZ).setType(Material.GLASS_PANE, false);
+        world.getBlockAt(x, y + 6, midZ).setType(Material.GLASS_PANE, false);
+        world.getBlockAt(x + width - 1, y + 2, midZ).setType(Material.GLASS_PANE, false);
+        world.getBlockAt(x + width - 1, y + 6, midZ).setType(Material.GLASS_PANE, false);
+
+        // Front grand entrance door
+        world.getBlockAt(midX, y + 1, z).setType(Material.AIR, false);
+        world.getBlockAt(midX, y + 2, z).setType(Material.AIR, false);
+        world.getBlockAt(midX, y + 3, z - 1).setType(Material.LANTERN, false);
+
+        // Roof: Multi-tier steep A-frame with spruce stairs
+        int roofBaseY = y + height + 1;
+        int gableSteps = (width + 1) / 2;
+        for (int step = 0; step < gableSteps; step++) {
+            int currentY = roofBaseY + step;
+            int leftX = x + step - 1;
+            int rightX = x + width - step;
+
+            for (int pz = z - 1; pz <= z + length; pz++) {
+                world.getBlockAt(leftX, currentY, pz).setType(Material.SPRUCE_STAIRS, false);
+                world.getBlockAt(rightX, currentY, pz).setType(Material.SPRUCE_STAIRS, false);
+            }
+            for (int px = x + step; px <= x + width - 1 - step; px++) {
+                world.getBlockAt(px, currentY, z).setType(Material.STRIPPED_OAK_LOG, false);
+                world.getBlockAt(px, currentY, z + length - 1).setType(Material.STRIPPED_OAK_LOG, false);
+            }
+        }
+        int ridgeY = roofBaseY + gableSteps;
+        for (int pz = z - 1; pz <= z + length; pz++) {
+            world.getBlockAt(midX, ridgeY, pz).setType(Material.SPRUCE_SLAB, false);
+        }
+
+        // Rooftop viewing balcony with glass railings (as in survival screenshot)
+        int balcX = x + width - 1;
+        for (int bz = z; bz < z + 4; bz++) {
+            world.getBlockAt(balcX + 1, y + 5, bz).setType(Material.DARK_OAK_PLANKS, false);
+            world.getBlockAt(balcX + 2, y + 5, bz).setType(Material.DARK_OAK_PLANKS, false);
+            world.getBlockAt(balcX + 2, y + 6, bz).setType(Material.GLASS_PANE, false);
+        }
+        world.getBlockAt(balcX + 1, y + 6, z).setType(Material.GLASS_PANE, false);
+        world.getBlockAt(balcX + 1, y + 6, z + 3).setType(Material.GLASS_PANE, false);
+
+        // Stone Chimney with real smoking campfire
+        int chimneyX = x + 1;
+        int chimneyZ = z + length - 2;
+        for (int cy = y + 1; cy <= ridgeY + 2; cy++) {
+            world.getBlockAt(chimneyX, cy, chimneyZ).setType(Material.COBBLESTONE, false);
+        }
+        world.getBlockAt(chimneyX, ridgeY + 3, chimneyZ).setType(Material.CAMPFIRE, false);
+        world.getBlockAt(chimneyX, ridgeY + 4, chimneyZ).setType(Material.COBBLESTONE_WALL, false);
+
+        // Interior cozy decorations
+        world.getBlockAt(x + 1, y + 1, z + 1).setType(Material.CRAFTING_TABLE, false);
+        world.getBlockAt(x + 1, y + 1, z + 2).setType(Material.FURNACE, false);
+        world.getBlockAt(x + width - 2, y + 1, z + 1).setType(Material.BOOKSHELF, false);
+        world.getBlockAt(x + width - 2, y + 2, z + 1).setType(Material.LANTERN, false);
+        world.getBlockAt(x + width - 2, y + 1, z + length - 2).setType(Material.BARREL, false);
+    }
+
+    /**
+     * Builds a rustic wooden windmill with turning sail blades.
+     */
+    public static void buildWindmill(World world, int cx, int y, int cz) {
+        fillCylinder(world, cx, y, cz, 4, 3, Material.COBBLESTONE);
+        fillCylinder(world, cx, y + 3, cz, 3, 6, Material.SPRUCE_PLANKS);
+        fillCylinder(world, cx, y + 9, cz, 2, 4, Material.DARK_OAK_PLANKS);
+        fillCylinder(world, cx, y + 13, cz, 1, 2, Material.DARK_OAK_STAIRS);
+
+        // Balcony
+        fillRing(world, cx, y + 9, cz, 3, 4, Material.OAK_SLAB);
+        for (int angle = 0; angle < 360; angle += 45) {
+            double rad = Math.toRadians(angle);
+            int fx = (int) Math.round(cx + 4 * Math.cos(rad));
+            int fz = (int) Math.round(cz + 4 * Math.sin(rad));
+            world.getBlockAt(fx, y + 10, fz).setType(Material.OAK_FENCE, false);
+        }
+
+        // Center axle for blades
+        int axleY = y + 11;
+        world.getBlockAt(cx, axleY, cz - 3).setType(Material.OAK_LOG, false);
+
+        // 4 Sail blades made of fences and white wool
+        for (int i = 1; i <= 6; i++) {
+            // Up
+            world.getBlockAt(cx, axleY + i, cz - 3).setType(Material.OAK_FENCE, false);
+            world.getBlockAt(cx + 1, axleY + i, cz - 3).setType(Material.WHITE_WOOL, false);
+            // Down
+            world.getBlockAt(cx, axleY - i, cz - 3).setType(Material.OAK_FENCE, false);
+            world.getBlockAt(cx - 1, axleY - i, cz - 3).setType(Material.WHITE_WOOL, false);
+            // Right
+            world.getBlockAt(cx + i, axleY, cz - 3).setType(Material.OAK_FENCE, false);
+            world.getBlockAt(cx + i, axleY - 1, cz - 3).setType(Material.WHITE_WOOL, false);
+            // Left
+            world.getBlockAt(cx - i, axleY, cz - 3).setType(Material.OAK_FENCE, false);
+            world.getBlockAt(cx - i, axleY + 1, cz - 3).setType(Material.WHITE_WOOL, false);
+        }
+    }
+
+    /**
+     * Carves a natural pathway blending dirt path, cobblestone, stone bricks, mossy stone bricks, and gravel.
+     */
+    public static void buildScenicPath(World world, int x1, int z1, int x2, int z2, int y, int width) {
+        int dx = x2 - x1;
+        int dz = z2 - z1;
+        int steps = (int) Math.hypot(dx, dz);
+        if (steps <= 0) return;
+
+        double xStep = (double) dx / steps;
+        double zStep = (double) dz / steps;
+
+        Material[] pathMats = {Material.DIRT_PATH, Material.COBBLESTONE, Material.STONE_BRICKS, Material.MOSSY_STONE_BRICKS, Material.GRAVEL};
+
+        for (int i = 0; i <= steps; i++) {
+            int bx = (int) Math.round(x1 + i * xStep);
+            int bz = (int) Math.round(z1 + i * zStep);
+
+            int halfW = width / 2;
+            for (int ox = -halfW; ox <= halfW; ox++) {
+                for (int oz = -halfW; oz <= halfW; oz++) {
+                    if (ox * ox + oz * oz <= halfW * halfW + 1) {
+                        int px = bx + ox;
+                        int pz = bz + oz;
+                        int hash = Math.abs((px * 31 + pz * 17) % pathMats.length);
+                        world.getBlockAt(px, y, pz).setType(pathMats[hash], false);
+                    }
+                }
+            }
+        }
+    }
+
+    public static void buildLamppost(World world, int x, int y, int z) {
+        world.getBlockAt(x, y + 1, z).setType(Material.COBBLESTONE_WALL, false);
+        world.getBlockAt(x, y + 2, z).setType(Material.OAK_FENCE, false);
+        world.getBlockAt(x, y + 3, z).setType(Material.OAK_FENCE, false);
+        world.getBlockAt(x, y + 4, z).setType(Material.LANTERN, false);
+    }
+
+    public static void buildParkBench(World world, int x, int y, int z) {
+        world.getBlockAt(x, y + 1, z).setType(Material.SPRUCE_STAIRS, false);
+        world.getBlockAt(x + 1, y + 1, z).setType(Material.SPRUCE_STAIRS, false);
+        world.getBlockAt(x - 1, y + 1, z).setType(Material.SPRUCE_TRAPDOOR, false);
+        world.getBlockAt(x + 2, y + 1, z).setType(Material.SPRUCE_TRAPDOOR, false);
+    }
+
+    public static void buildToriiArch(World world, int x, int y, int z) {
+        buildPillar(world, x - 3, y + 1, z, 6, Material.STRIPPED_DARK_OAK_LOG);
+        buildPillar(world, x + 3, y + 1, z, 6, Material.STRIPPED_DARK_OAK_LOG);
+
+        for (int px = x - 4; px <= x + 4; px++) {
+            world.getBlockAt(px, y + 5, z).setType(Material.DARK_OAK_PLANKS, false);
+        }
+        for (int px = x - 5; px <= x + 5; px++) {
+            world.getBlockAt(px, y + 7, z).setType(Material.RED_TERRACOTTA, false);
+        }
+        world.getBlockAt(x - 5, y + 8, z).setType(Material.DARK_OAK_STAIRS, false);
+        world.getBlockAt(x + 5, y + 8, z).setType(Material.DARK_OAK_STAIRS, false);
+
+        world.getBlockAt(x - 3, y + 4, z).setType(Material.LANTERN, false);
+        world.getBlockAt(x + 3, y + 4, z).setType(Material.LANTERN, false);
+    }
+
+    /**
+     * Builds an ornate open-air Game Pavilion with vaulted canopy, columns, and an NPC dais.
+     */
+    public static void buildGamePavilion(World world, int cx, int y, int cz, int radius,
+                                         Material floorMat, Material columnMat, Material roofMat, Material accentMat) {
+        fillCircle(world, cx, y, cz, radius, floorMat);
+        fillRing(world, cx, y, cz, radius - 1, radius, accentMat);
+
+        int colHeight = 5;
+        for (int angle = 0; angle < 360; angle += 45) {
+            double rad = Math.toRadians(angle);
+            int px = (int) Math.round(cx + (radius - 1) * Math.cos(rad));
+            int pz = (int) Math.round(cz + (radius - 1) * Math.sin(rad));
+            buildPillar(world, px, y + 1, pz, colHeight, columnMat);
+            world.getBlockAt(px, y + colHeight + 1, pz).setType(Material.SEA_LANTERN, false);
+        }
+
+        int roofBaseY = y + colHeight + 1;
+        fillCircle(world, cx, roofBaseY, cz, radius, roofMat);
+        fillCircle(world, cx, roofBaseY + 1, cz, Math.max(1, radius - 1), roofMat);
+        fillCircle(world, cx, roofBaseY + 2, cz, Math.max(1, radius - 2), roofMat);
+        world.getBlockAt(cx, roofBaseY + 3, cz).setType(Material.LIGHTNING_ROD, false);
+
+        // Center dais for NPC
+        world.getBlockAt(cx, y + 1, cz).setType(accentMat, false);
+    }
 }

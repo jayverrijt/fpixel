@@ -30,14 +30,18 @@ public class LaunchpadListener implements Listener {
         if (!matName.contains("PRESSURE_PLATE")) return;
 
         Block below = plate.getRelative(0, -1, 0);
-        if (below.getType() == Material.REDSTONE_BLOCK || below.getType() == Material.EMERALD_BLOCK) {
+        Material belowType = below.getType();
+        if (belowType == Material.REDSTONE_BLOCK || belowType == Material.EMERALD_BLOCK ||
+            belowType == Material.SLIME_BLOCK || belowType == Material.GOLD_BLOCK) {
             Player player = event.getPlayer();
             event.setCancelled(true);
 
             Location loc = player.getLocation();
-            player.setVelocity(loc.getDirection().multiply(2.2).setY(1.1));
+            player.setVelocity(loc.getDirection().multiply(2.4).setY(1.15));
 
             player.getWorld().spawnParticle(Particle.EXPLOSION, loc, 1);
+            player.getWorld().spawnParticle(Particle.FIREWORK, loc, 20, 0.3, 0.3, 0.3, 0.08);
+            player.playSound(loc, Sound.ENTITY_BAT_TAKEOFF, 1.0f, 1.4f);
             player.playSound(loc, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1.0f, 1.0f);
         }
     }
