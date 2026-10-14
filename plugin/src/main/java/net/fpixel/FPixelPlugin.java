@@ -146,6 +146,9 @@ public class FPixelPlugin extends JavaPlugin {
         if (rankManager != null) {
             rankManager.saveRanks();
         }
+        if (survivalManager != null) {
+            survivalManager.saveAllActiveProfiles();
+        }
         if (gameManager != null) {
             for (var arena : gameManager.getArenas()) {
                 arena.resetArena();

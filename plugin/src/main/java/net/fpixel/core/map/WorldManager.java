@@ -360,7 +360,8 @@ public class WorldManager {
         }
 
         // 13. Spawn Point at Grand Central Plaza facing North (towards Survival Gateway & Fountain)
-        Location hubSpawn = new Location(world, 0.5, cy + 1, 6.5, 0f, 0f);
+        Location hubSpawn = new Location(world, 0.5, cy + 1.5, 6.5, 0f, 0f);
+        world.setSpawnLocation(0, cy + 2, 6);
         plugin.getLobbyManager().setSpawn(hubSpawn);
 
         // 14. Spawn All Interactive Gamemode NPCs with Floating Holograms!
@@ -394,21 +395,33 @@ public class WorldManager {
 
             if (mapWorld.equals(defaultWorld)) {
                 // Procedural generation if world was not downloaded
+                // Middle Island with Open Emerald Pedestal (No suffocating towers!)
                 MapBuilder.buildFloatingIslandNatural(mapWorld, cx, cy, cz, 16, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
-                MapBuilder.buildCastleTower(mapWorld, cx, cy + 1, cz, 4, 12, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.DARK_OAK_STAIRS);
-                worldAt(mapWorld, cx, cy + 1, cz, Material.EMERALD_BLOCK);
+                MapBuilder.fillCircle(mapWorld, cx, cy + 1, cz, 4, Material.POLISHED_ANDESITE);
+                worldAt(mapWorld, cx, cy + 2, cz, Material.EMERALD_BLOCK);
+                // Open decorative corner pillars with lanterns
+                worldAt(mapWorld, cx - 2, cy + 2, cz - 2, Material.STONE_BRICK_WALL);
+                worldAt(mapWorld, cx + 2, cy + 2, cz - 2, Material.STONE_BRICK_WALL);
+                worldAt(mapWorld, cx - 2, cy + 2, cz + 2, Material.STONE_BRICK_WALL);
+                worldAt(mapWorld, cx + 2, cy + 2, cz + 2, Material.STONE_BRICK_WALL);
+                worldAt(mapWorld, cx - 2, cy + 3, cz - 2, Material.LANTERN);
+                worldAt(mapWorld, cx + 2, cy + 3, cz - 2, Material.LANTERN);
+                worldAt(mapWorld, cx - 2, cy + 3, cz + 2, Material.LANTERN);
+                worldAt(mapWorld, cx + 2, cy + 3, cz + 2, Material.LANTERN);
 
+                // Red Island (Open Air Bed - No enclosing medieval houses!)
                 int rx = cx - 45;
                 MapBuilder.buildFloatingIslandNatural(mapWorld, rx, cy, cz, 12, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
-                MapBuilder.buildMedievalHouse(mapWorld, rx - 4, cy + 1, cz - 4, 8, 8, Material.STONE_BRICKS, Material.OAK_LOG, Material.DARK_OAK_STAIRS, Material.SPRUCE_SLAB);
-                worldAt(mapWorld, rx - 2, cy + 2, cz, Material.RED_BED);
-                worldAt(mapWorld, rx + 2, cy + 2, cz, Material.IRON_BLOCK);
+                MapBuilder.fillBox(mapWorld, rx - 4, cy + 1, cz - 1, rx - 1, cy + 1, cz + 1, Material.RED_WOOL);
+                MapBuilder.placeBed(mapWorld, rx - 3, cy + 2, cz, org.bukkit.block.BlockFace.EAST, Material.RED_BED);
+                worldAt(mapWorld, rx + 2, cy + 1, cz, Material.IRON_BLOCK);
 
+                // Blue Island (Open Air Bed - No enclosing medieval houses!)
                 int bx = cx + 45;
                 MapBuilder.buildFloatingIslandNatural(mapWorld, bx, cy, cz, 12, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
-                MapBuilder.buildMedievalHouse(mapWorld, bx - 4, cy + 1, cz - 4, 8, 8, Material.STONE_BRICKS, Material.OAK_LOG, Material.DARK_OAK_STAIRS, Material.SPRUCE_SLAB);
-                worldAt(mapWorld, bx + 2, cy + 2, cz, Material.BLUE_BED);
-                worldAt(mapWorld, bx - 2, cy + 2, cz, Material.IRON_BLOCK);
+                MapBuilder.fillBox(mapWorld, bx + 1, cy + 1, cz - 1, bx + 4, cy + 1, cz + 1, Material.BLUE_WOOL);
+                MapBuilder.placeBed(mapWorld, bx + 2, cy + 2, cz, org.bukkit.block.BlockFace.EAST, Material.BLUE_BED);
+                worldAt(mapWorld, bx - 2, cy + 1, cz, Material.IRON_BLOCK);
 
                 // Two Diamond Islands (North and South of Middle)
                 MapBuilder.buildFloatingIslandNatural(mapWorld, cx, cy, cz - 35, 7, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
@@ -425,12 +438,14 @@ public class WorldManager {
             BedWarsTeam red = game.getTeam("RED");
             if (red != null) {
                 red.setSpawnLocation(new Location(mapWorld, cx - 45 + 0.5, cy + 2, cz + 0.5));
-                red.setBedLocation(new Location(mapWorld, cx - 47, cy + 2, cz));
+                red.setBedLocation(new Location(mapWorld, cx - 48, cy + 2, cz));
+                red.setBedFacing(org.bukkit.block.BlockFace.EAST);
             }
             BedWarsTeam blue = game.getTeam("BLUE");
             if (blue != null) {
                 blue.setSpawnLocation(new Location(mapWorld, cx + 45 + 0.5, cy + 2, cz + 0.5));
                 blue.setBedLocation(new Location(mapWorld, cx + 47, cy + 2, cz));
+                blue.setBedFacing(org.bukkit.block.BlockFace.EAST);
             }
 
             // Team Base Spawners (Iron & Gold)
@@ -438,8 +453,8 @@ public class WorldManager {
             game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx - 42.5, cy + 2.5, cz + 0.5), BedWarsSpawner.SpawnerType.GOLD));
             game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 42.5, cy + 2.5, cz + 0.5), BedWarsSpawner.SpawnerType.IRON));
             game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 42.5, cy + 2.5, cz + 0.5), BedWarsSpawner.SpawnerType.GOLD));
-            // Middle Emerald Spawner
-            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 0.5, cy + 2.5, cz + 0.5), BedWarsSpawner.SpawnerType.EMERALD));
+            // Middle Emerald Spawner (Elevated & Open Air)
+            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 0.5, cy + 3.0, cz + 0.5), BedWarsSpawner.SpawnerType.EMERALD));
             // Side Diamond Spawners
             game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 0.5, cy + 2.5, cz - 35 + 0.5), BedWarsSpawner.SpawnerType.DIAMOND));
             game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 0.5, cy + 2.5, cz + 35 + 0.5), BedWarsSpawner.SpawnerType.DIAMOND));
@@ -467,7 +482,7 @@ public class WorldManager {
             Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 35, cz + 0.5);
             MapBuilder.buildWaitingLobby(defaultWorld, waitingLoc, Material.POLISHED_ANDESITE, Material.STONE_BRICKS, Material.CYAN_STAINED_GLASS);
 
-            SkyWarsGame game = new SkyWarsGame(plugin, id, "SkyWars: " + names[i], 3, 12, cy - 40);
+            SkyWarsGame game = new SkyWarsGame(plugin, id, "SkyWars: " + names[i], 2, 12, cy - 40);
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
 
@@ -538,7 +553,10 @@ public class WorldManager {
                 int r = radii[f];
                 MapBuilder.fillCircle(defaultWorld, cx, fy, cz, r, topMats[i]);
                 MapBuilder.fillCircle(defaultWorld, cx, fy - 1, cz, r, Material.TNT);
-                MapBuilder.fillRing(defaultWorld, cx, fy + 1, cz, r - 1, r, Material.STONE_BRICK_SLAB);
+                // Vertical boundary wall at r + 1 so players cannot stand on any outer ledge
+                for (int wy = 1; wy <= 3; wy++) {
+                    MapBuilder.fillRing(defaultWorld, cx, fy + wy, cz, r + 1, r + 1, Material.TINTED_GLASS);
+                }
             }
 
             int[] pd = {-20, 20};
@@ -548,7 +566,7 @@ public class WorldManager {
                 }
             }
 
-            TNTRunGame game = new TNTRunGame(plugin, id, "TNT Run: " + names[i], 3, 16, cy - 35);
+            TNTRunGame game = new TNTRunGame(plugin, id, "TNT Run: " + names[i], 2, 16, cy - 35);
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
             game.setArenaSpawn(new Location(defaultWorld, cx + 0.5, cy + 1, cz + 0.5));
@@ -557,7 +575,7 @@ public class WorldManager {
     }
 
     // =========================================================================
-    // 5. Global Parkour Maps (Min 3, Max 16)
+    // 5. Global Parkour Maps (Min 2, Max 16)
     // =========================================================================
 
     private void setupGlobalParkourMaps(World defaultWorld) {
@@ -575,37 +593,80 @@ public class WorldManager {
             Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 25, cz + 0.5);
             MapBuilder.buildWaitingLobby(defaultWorld, waitingLoc, Material.SMOOTH_STONE, Material.OAK_FENCE, Material.LIME_STAINED_GLASS);
 
-            ParkourGame game = new ParkourGame(plugin, id, "Parkour: " + names[i], 3, 16, cy - 15);
+            ParkourGame game = new ParkourGame(plugin, id, "Parkour: " + names[i], 2, 16, cy - 15);
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
 
             MapBuilder.fillCircle(defaultWorld, cx, cy, cz, 4, Material.POLISHED_ANDESITE);
             game.setStartLocation(new Location(defaultWorld, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f));
 
+            Material[][] mapPalettes = {
+                    {Material.STONE_BRICKS, Material.MOSSY_STONE_BRICKS, Material.COBBLESTONE},
+                    {Material.JUNGLE_LOG, Material.JUNGLE_PLANKS, Material.MOSS_BLOCK},
+                    {Material.CYAN_CONCRETE, Material.MAGENTA_CONCRETE, Material.SEA_LANTERN},
+                    {Material.PACKED_ICE, Material.BLUE_ICE, Material.SNOW_BLOCK},
+                    {Material.NETHER_BRICKS, Material.CRIMSON_STEM, Material.RED_NETHER_BRICKS},
+                    {Material.BRICKS, Material.TERRACOTTA, Material.POLISHED_GRANITE},
+                    {Material.SMOOTH_SANDSTONE, Material.CUT_SANDSTONE, Material.GOLD_BLOCK},
+                    {Material.PRISMARINE, Material.DARK_PRISMARINE, Material.SEA_LANTERN},
+                    {Material.RED_MUSHROOM_BLOCK, Material.BROWN_MUSHROOM_BLOCK, Material.MUSHROOM_STEM},
+                    {Material.POLISHED_BLACKSTONE_BRICKS, Material.CRYING_OBSIDIAN, Material.GILDED_BLACKSTONE}
+            };
+            Material[] palette = mapPalettes[i % mapPalettes.length];
+
             int curX = cx;
+            int curY = cy + 1;
             int curZ = cz + 3;
+
+            java.util.Random rnd = new java.util.Random((i + 1) * 314159L);
+
             for (int cp = 1; cp <= 4; cp++) {
-                defaultWorld.getBlockAt(curX - 1, cy + 1, curZ + 3).setType(Material.SPRUCE_PLANKS, false);
-                defaultWorld.getBlockAt(curX + 1, cy + 1, curZ + 6).setType(Material.SPRUCE_PLANKS, false);
-                defaultWorld.getBlockAt(curX, cy + 2, curZ + 9).setType(Material.SPRUCE_PLANKS, false);
-                defaultWorld.getBlockAt(curX - 1, cy + 2, curZ + 12).setType(Material.SPRUCE_PLANKS, false);
-                curZ += 15;
-                MapBuilder.fillCircle(defaultWorld, curX, cy + 1, curZ, 2, Material.STONE_BRICKS);
-                defaultWorld.getBlockAt(curX, cy + 2, curZ).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
-                game.addCheckpoint(new Location(defaultWorld, curX + 0.5, cy + 2, curZ + 0.5));
+                int jumpCount = 4 + rnd.nextInt(3); // 4 to 6 randomized jumps per checkpoint
+                for (int j = 0; j < jumpCount; j++) {
+                    int dx = rnd.nextInt(5) - 2; // -2 to +2
+                    int dz = 3 + (rnd.nextInt(100) < 35 ? 1 : 0); // 3 or 4 blocks distance
+                    int dy = rnd.nextInt(3) - 1; // -1, 0, or +1 elevation
+
+                    // Keep Y within safe jumping bounds [cy - 2, cy + 8]
+                    if (curY + dy < cy - 2 || curY + dy > cy + 8) dy = 0;
+
+                    curX += dx;
+                    curY += dy;
+                    curZ += dz;
+
+                    Material jumpMat = palette[rnd.nextInt(palette.length)];
+                    // Occasional special obstacle
+                    if (j == 2 && i % 2 == 1) {
+                        jumpMat = Material.SLIME_BLOCK;
+                    }
+                    defaultWorld.getBlockAt(curX, curY, curZ).setType(jumpMat, false);
+                }
+
+                // Checkpoint Island
+                curZ += 3;
+                curY = Math.max(cy + 1, curY);
+                MapBuilder.fillCircle(defaultWorld, curX, curY, curZ, 2, palette[0]);
+                defaultWorld.getBlockAt(curX, curY + 1, curZ).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
+                game.addCheckpoint(new Location(defaultWorld, curX + 0.5, curY + 1, curZ + 0.5));
             }
 
-            defaultWorld.getBlockAt(curX + 1, cy + 2, curZ + 3).setType(Material.QUARTZ_BLOCK, false);
-            defaultWorld.getBlockAt(curX - 1, cy + 2, curZ + 6).setType(Material.QUARTZ_BLOCK, false);
-            defaultWorld.getBlockAt(curX, cy + 3, curZ + 9).setType(Material.QUARTZ_BLOCK, false);
-            curZ += 12;
+            // Final Challenge stretch
+            for (int j = 0; j < 4; j++) {
+                int dx = rnd.nextInt(3) - 1;
+                curX += dx;
+                curY += (j % 2 == 0 ? 1 : 0);
+                curZ += 3;
+                defaultWorld.getBlockAt(curX, curY, curZ).setType(palette[rnd.nextInt(palette.length)], false);
+            }
+            curZ += 4;
 
-            MapBuilder.fillCircle(defaultWorld, curX, cy + 2, curZ, 3, Material.QUARTZ_BLOCK);
-            MapBuilder.buildPillar(defaultWorld, curX - 2, cy + 3, curZ, 4, Material.QUARTZ_PILLAR);
-            MapBuilder.buildPillar(defaultWorld, curX + 2, cy + 3, curZ, 4, Material.QUARTZ_PILLAR);
-            MapBuilder.fillBox(defaultWorld, curX - 2, cy + 7, curZ, curX + 2, cy + 7, curZ, Material.GOLD_BLOCK);
-            defaultWorld.getBlockAt(curX, cy + 3, curZ).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
-            game.setFinishLocation(new Location(defaultWorld, curX + 0.5, cy + 3, curZ + 0.5));
+            // Grand Finish Temple
+            MapBuilder.fillCircle(defaultWorld, curX, curY, curZ, 3, Material.QUARTZ_BLOCK);
+            MapBuilder.buildPillar(defaultWorld, curX - 2, curY + 1, curZ, 4, Material.QUARTZ_PILLAR);
+            MapBuilder.buildPillar(defaultWorld, curX + 2, curY + 1, curZ, 4, Material.QUARTZ_PILLAR);
+            MapBuilder.fillBox(defaultWorld, curX - 2, curY + 5, curZ, curX + 2, curY + 5, curZ, Material.GOLD_BLOCK);
+            defaultWorld.getBlockAt(curX, curY + 1, curZ).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+            game.setFinishLocation(new Location(defaultWorld, curX + 0.5, curY + 1, curZ + 0.5));
 
             plugin.getGameManager().registerArena(game);
         }
@@ -758,30 +819,48 @@ public class WorldManager {
             MapBuilder.fillCircle(defaultWorld, cx, cy, cz, 3, Material.POLISHED_ANDESITE);
             game.setStartLocation(new Location(defaultWorld, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f));
 
+            Material[][] duelPalettes = {
+                    {Material.SPRUCE_PLANKS, Material.DARK_OAK_PLANKS, Material.STRIPPED_SPRUCE_LOG},
+                    {Material.PRISMARINE_BRICKS, Material.DARK_PRISMARINE, Material.SEA_LANTERN},
+                    {Material.WARPED_PLANKS, Material.WARPED_STEM, Material.WARPED_WART_BLOCK}
+            };
+            Material[] palette = duelPalettes[(i - 1) % duelPalettes.length];
+            java.util.Random rnd = new java.util.Random(i * 99991L);
+
             int curX = cx;
+            int curY = cy + 1;
             int curZ = cz + 3;
             for (int cp = 1; cp <= 4; cp++) {
-                defaultWorld.getBlockAt(curX - 1, cy + 1, curZ + 3).setType(Material.SPRUCE_PLANKS, false);
-                defaultWorld.getBlockAt(curX + 1, cy + 1, curZ + 6).setType(Material.SPRUCE_PLANKS, false);
-                defaultWorld.getBlockAt(curX, cy + 2, curZ + 9).setType(Material.SPRUCE_PLANKS, false);
-                defaultWorld.getBlockAt(curX - 1, cy + 2, curZ + 12).setType(Material.SPRUCE_PLANKS, false);
-                curZ += 15;
-                MapBuilder.fillCircle(defaultWorld, curX, cy + 1, curZ, 2, Material.STONE_BRICKS);
-                defaultWorld.getBlockAt(curX, cy + 2, curZ).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
-                game.addCheckpoint(new Location(defaultWorld, curX + 0.5, cy + 2, curZ + 0.5));
+                int jumpCount = 4;
+                for (int j = 0; j < jumpCount; j++) {
+                    int dx = rnd.nextInt(3) - 1; // -1, 0, +1
+                    int dz = 3 + (rnd.nextBoolean() ? 1 : 0);
+                    int dy = rnd.nextInt(3) - 1; // -1, 0, +1
+                    if (curY + dy < cy - 1 || curY + dy > cy + 6) dy = 0;
+                    curX += dx;
+                    curY += dy;
+                    curZ += dz;
+                    defaultWorld.getBlockAt(curX, curY, curZ).setType(palette[rnd.nextInt(palette.length)], false);
+                }
+                curZ += 3;
+                curY = Math.max(cy + 1, curY);
+                MapBuilder.fillCircle(defaultWorld, curX, curY, curZ, 2, Material.STONE_BRICKS);
+                defaultWorld.getBlockAt(curX, curY + 1, curZ).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
+                game.addCheckpoint(new Location(defaultWorld, curX + 0.5, curY + 1, curZ + 0.5));
             }
 
-            defaultWorld.getBlockAt(curX + 1, cy + 2, curZ + 3).setType(Material.QUARTZ_BLOCK, false);
-            defaultWorld.getBlockAt(curX - 1, cy + 2, curZ + 6).setType(Material.QUARTZ_BLOCK, false);
-            defaultWorld.getBlockAt(curX, cy + 3, curZ + 9).setType(Material.QUARTZ_BLOCK, false);
-            curZ += 12;
+            for (int j = 0; j < 3; j++) {
+                curZ += 3;
+                defaultWorld.getBlockAt(curX, curY, curZ).setType(Material.QUARTZ_BLOCK, false);
+            }
+            curZ += 4;
 
-            MapBuilder.fillCircle(defaultWorld, curX, cy + 2, curZ, 3, Material.QUARTZ_BLOCK);
-            MapBuilder.buildPillar(defaultWorld, curX - 2, cy + 3, curZ, 4, Material.QUARTZ_PILLAR);
-            MapBuilder.buildPillar(defaultWorld, curX + 2, cy + 3, curZ, 4, Material.QUARTZ_PILLAR);
-            MapBuilder.fillBox(defaultWorld, curX - 2, cy + 7, curZ, curX + 2, cy + 7, curZ, Material.GOLD_BLOCK);
-            defaultWorld.getBlockAt(curX, cy + 3, curZ).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
-            game.setFinishLocation(new Location(defaultWorld, curX + 0.5, cy + 3, curZ + 0.5));
+            MapBuilder.fillCircle(defaultWorld, curX, curY, curZ, 3, Material.QUARTZ_BLOCK);
+            MapBuilder.buildPillar(defaultWorld, curX - 2, curY + 1, curZ, 4, Material.QUARTZ_PILLAR);
+            MapBuilder.buildPillar(defaultWorld, curX + 2, curY + 1, curZ, 4, Material.QUARTZ_PILLAR);
+            MapBuilder.fillBox(defaultWorld, curX - 2, curY + 5, curZ, curX + 2, curY + 5, curZ, Material.GOLD_BLOCK);
+            defaultWorld.getBlockAt(curX, curY + 1, curZ).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+            game.setFinishLocation(new Location(defaultWorld, curX + 0.5, curY + 1, curZ + 0.5));
 
             plugin.getGameManager().registerArena(game);
         }
@@ -800,7 +879,10 @@ public class WorldManager {
             for (int fy : floorYs) {
                 MapBuilder.fillCircle(defaultWorld, cx, fy, cz, 12, Material.SAND);
                 MapBuilder.fillCircle(defaultWorld, cx, fy - 1, cz, 12, Material.TNT);
-                MapBuilder.fillRing(defaultWorld, cx, fy + 1, cz, 11, 12, Material.STONE_BRICK_SLAB);
+                // Glass barrier walls at radius 13 so players cannot stand on any outer rim
+                for (int wy = 1; wy <= 3; wy++) {
+                    MapBuilder.fillRing(defaultWorld, cx, fy + wy, cz, 13, 13, Material.TINTED_GLASS);
+                }
             }
 
             TNTRunGame game = new TNTRunGame(plugin, id, "TNT Run 1v1 Arena #" + i, 2, 2, cy - 25);

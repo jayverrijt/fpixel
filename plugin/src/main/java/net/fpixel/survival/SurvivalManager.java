@@ -40,6 +40,58 @@ public class SurvivalManager {
     public void init() {
         checkAndExtractZip();
         loadSurvivalWorld();
+        startAutoSaveTask();
+    }
+
+    private void startAutoSaveTask() {
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                if (isSurvivalWorld(player.getWorld()) || isPlayerInSurvival(player)) {
+                    profileManager.saveProfile(player);
+                }
+            }
+        }, 1200L, 1200L); // Auto-save every 60 seconds (1200 ticks)
+    }
+
+    public void saveAllActiveProfiles() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (isSurvivalWorld(player.getWorld()) || isPlayerInSurvival(player)) {
+                profileManager.saveProfile(player);
+            }
+        }
+    }
+
+    public World getNetherWorld() {
+        World w = Bukkit.getWorld("world_nether");
+        if (w != null) return w;
+        w = Bukkit.getWorld("the_nether");
+        if (w != null) return w;
+        for (World world : Bukkit.getWorlds()) {
+            if (world.getEnvironment() == World.Environment.NETHER) return world;
+        }
+        return null;
+    }
+
+    public World getEndWorld() {
+        World w = Bukkit.getWorld("world_the_end");
+        if (w != null) return w;
+        w = Bukkit.getWorld("the_end");
+        if (w != null) return w;
+        for (World world : Bukkit.getWorlds()) {
+            if (world.getEnvironment() == World.Environment.THE_END) return world;
+        }
+        return null;
+    }
+
+    public boolean isSurvivalWorld(World world) {
+        if (world == null) return false;
+        if (survivalWorld != null && world.equals(survivalWorld)) return true;
+        String name = world.getName().toLowerCase();
+        if (name.equals("survival")) return true;
+        if (world.getEnvironment() == World.Environment.NETHER) return true;
+        if (world.getEnvironment() == World.Environment.THE_END) return true;
+        if (name.contains("nether") || name.contains("the_end")) return true;
+        return false;
     }
 
     private void checkAndExtractZip() {

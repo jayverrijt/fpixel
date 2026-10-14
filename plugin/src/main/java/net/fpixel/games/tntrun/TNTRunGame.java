@@ -88,23 +88,31 @@ public class TNTRunGame extends Arena {
             return;
         }
 
-        // Detect block below player
-        Location locBelow = player.getLocation().clone().subtract(0, 0.1, 0);
-        Block block = locBelow.getBlock();
+        // Keep players inside arena boundary if arena spawn is set
+        if (arenaSpawn != null) {
+            double distSq = Math.pow(player.getLocation().getX() - arenaSpawn.getX(), 2) + Math.pow(player.getLocation().getZ() - arenaSpawn.getZ(), 2);
+            if (distSq > 19.0 * 19.0) {
+                // Beyond arena rim: bounce back towards center
+                org.bukkit.util.Vector toCenter = new org.bukkit.util.Vector(arenaSpawn.getX() - player.getLocation().getX(), 0.2, arenaSpawn.getZ() - player.getLocation().getZ()).normalize().multiply(0.7);
+                player.setVelocity(toCenter);
+                ChatUtil.sendActionBar(player, "§cStay inside the arena!");
+            }
+        }
 
-        decayBlock(block);
-
-        // Also check if standing slightly offset
-        decayBlock(player.getLocation().clone().add(0.3, -0.1, 0).getBlock());
-        decayBlock(player.getLocation().clone().add(-0.3, -0.1, 0).getBlock());
-        decayBlock(player.getLocation().clone().add(0, -0.1, 0.3).getBlock());
-        decayBlock(player.getLocation().clone().add(0, -0.1, -0.3).getBlock());
+        // Comprehensive footprint detection across horizontal corners and vertical offsets
+        for (double ox : new double[]{-0.35, 0.0, 0.35}) {
+            for (double oz : new double[]{-0.35, 0.0, 0.35}) {
+                for (double oy : new double[]{0.0, -0.2, -0.6}) {
+                    decayBlock(player.getLocation().clone().add(ox, oy, oz).getBlock());
+                }
+            }
+        }
     }
 
     private void decayBlock(Block block) {
-        if (block == null || block.getType() == Material.AIR) return;
-        if (block.getType() != Material.SAND && block.getType() != Material.GRAVEL
-                && block.getType() != Material.TNT && !block.getType().name().contains("CONCRETE")) {
+        if (block == null || block.getType() == Material.AIR || !block.getType().isSolid()) return;
+        // Don't decay bedrock floor or outer glass enclosure walls
+        if (block.getType() == Material.BEDROCK || block.getType() == Material.BARRIER || block.getType().name().contains("GLASS")) {
             return;
         }
 
@@ -121,7 +129,7 @@ public class TNTRunGame extends Arena {
             rollbackEngine.logCustomChange(block);
             block.setType(Material.AIR);
 
-            // Check if there is TNT below the sand
+            // Check if there is TNT below
             Block below = block.getRelative(0, -1, 0);
             if (below.getType() == Material.TNT) {
                 rollbackEngine.logCustomChange(below);

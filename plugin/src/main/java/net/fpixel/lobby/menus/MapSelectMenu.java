@@ -82,6 +82,17 @@ public class MapSelectMenu {
             if (slots[i] == slot && i < gameArenas.size()) {
                 Arena chosen = gameArenas.get(i);
                 player.closeInventory();
+                if (plugin.getPartyManager() != null) {
+                    var party = plugin.getPartyManager().getParty(player);
+                    if (party != null && !party.isLeader(player)) {
+                        ChatUtil.sendMessage(player, "§cOnly the party leader can join games!");
+                        return;
+                    }
+                    if (party != null && party.isLeader(player)) {
+                        party.warpToGame(chosen);
+                        return;
+                    }
+                }
                 chosen.join(player);
                 return;
             }

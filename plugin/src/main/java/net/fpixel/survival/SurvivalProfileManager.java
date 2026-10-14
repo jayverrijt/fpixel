@@ -142,47 +142,72 @@ public class SurvivalProfileManager {
         plugin.getLogger().info("New player " + player.getName() + " initialized at survival spawn: " + spawn);
     }
 
+    private boolean fileHasItems(File file) {
+        if (file == null || !file.exists()) return false;
+        try (FileReader reader = new FileReader(file)) {
+            JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+            if (json.has("inventory") && json.get("inventory").isJsonArray()) {
+                JsonArray inv = json.getAsJsonArray("inventory");
+                if (inv.size() > 0) return true;
+            }
+            if (json.has("equipment") && json.get("equipment").isJsonObject()) {
+                JsonObject eq = json.getAsJsonObject("equipment");
+                if (eq.size() > 0) return true;
+            }
+            if (json.has("level") && json.get("level").getAsInt() > 0) return true;
+        } catch (Exception ignored) {}
+        return false;
+    }
+
     public File findImportedFile(Player player) {
         String name = player.getName().toLowerCase();
         UUID uuid = player.getUniqueId();
 
-        // 1. By exact session UUID
+        // 1. Check exact session UUID with items
         File byUuid = new File(importedDir, uuid.toString() + ".json");
-        if (byUuid.exists()) return byUuid;
+        if (byUuid.exists() && fileHasItems(byUuid)) return byUuid;
 
-        // 2. By offline UUID
+        // 2. Check offline UUID with items
         UUID offlineUuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + player.getName()).getBytes(java.nio.charset.StandardCharsets.UTF_8));
         File byOfflineUuid = new File(importedDir, offlineUuid.toString() + ".json");
-        if (byOfflineUuid.exists()) return byOfflineUuid;
+        if (byOfflineUuid.exists() && fileHasItems(byOfflineUuid)) return byOfflineUuid;
 
-        // 3. By exact lowercase username
+        // 3. Check exact lowercase username with items
         File byName = new File(importedDir, name + ".json");
-        if (byName.exists()) return byName;
+        if (byName.exists() && fileHasItems(byName)) return byName;
 
         // 4. Strip Bedrock / Floodgate prefix if present (e.g. .username or *username or _username)
         if (name.startsWith(".") || name.startsWith("*") || name.startsWith("_")) {
             File stripped = new File(importedDir, name.substring(1) + ".json");
-            if (stripped.exists()) return stripped;
-        } else {
-            // Check with dot prefix for Bedrock players
-            File dotted = new File(importedDir, "." + name + ".json");
-            if (dotted.exists()) return dotted;
+            if (stripped.exists() && fileHasItems(stripped)) return stripped;
         }
 
-        // 5. Case-insensitive scan of imported directory
+        // 5. Check with dot prefix for Bedrock players only if it has items
+        File dotted = new File(importedDir, "." + name + ".json");
+        if (dotted.exists() && fileHasItems(dotted)) return dotted;
+
+        // Fallbacks if no file had items yet:
+        if (byUuid.exists()) return byUuid;
+        if (byOfflineUuid.exists()) return byOfflineUuid;
+        if (byName.exists()) return byName;
+        if (dotted.exists()) return dotted;
+
+        // 6. Case-insensitive scan of imported directory
         File[] files = importedDir.listFiles();
         if (files != null) {
+            File fallback = null;
             for (File f : files) {
                 if (f.getName().endsWith(".json")) {
                     String base = f.getName().substring(0, f.getName().length() - 5).toLowerCase();
-                    if (base.equals(name) || base.equals(player.getName().toLowerCase())) {
-                        return f;
-                    }
-                    if (base.startsWith(".") && base.substring(1).equals(name)) {
-                        return f;
+                    if (base.equals(name) || base.equals(player.getName().toLowerCase())
+                            || (base.startsWith(".") && base.substring(1).equals(name))
+                            || (name.startsWith(".") && base.equals(name.substring(1)))) {
+                        if (fileHasItems(f)) return f;
+                        if (fallback == null) fallback = f;
                     }
                 }
             }
+            if (fallback != null) return fallback;
         }
 
         return null;
@@ -205,12 +230,17 @@ public class SurvivalProfileManager {
         try {
             // 1. Location
             if (config.contains("location.x")) {
+                String worldName = config.getString("location.world", "survival");
+                World targetWorld = Bukkit.getWorld(worldName);
+                if (targetWorld == null || (plugin.getSurvivalManager() != null && !plugin.getSurvivalManager().isSurvivalWorld(targetWorld))) {
+                    targetWorld = survivalWorld;
+                }
                 double x = config.getDouble("location.x");
                 double y = config.getDouble("location.y");
                 double z = config.getDouble("location.z");
                 float yaw = (float) config.getDouble("location.yaw");
                 float pitch = (float) config.getDouble("location.pitch");
-                Location loc = new Location(survivalWorld, x, y, z, yaw, pitch);
+                Location loc = new Location(targetWorld, x, y, z, yaw, pitch);
                 player.teleport(loc);
             } else {
                 player.teleport(survivalWorld.getSpawnLocation());
@@ -403,10 +433,11 @@ public class SurvivalProfileManager {
      * Saves the current survival profile (location, inventory, armor, offhand, XP, health, food) to disk.
      */
     public void saveProfile(Player player) {
-        if (!player.getWorld().getName().equalsIgnoreCase("survival")) {
-            return;
-        }
-        if (plugin.getSurvivalManager() != null && !plugin.getSurvivalManager().isPlayerInSurvival(player)) {
+        if (plugin.getSurvivalManager() != null) {
+            if (!plugin.getSurvivalManager().isSurvivalWorld(player.getWorld()) && !plugin.getSurvivalManager().isPlayerInSurvival(player)) {
+                return;
+            }
+        } else if (!player.getWorld().getName().equalsIgnoreCase("survival")) {
             return;
         }
 
@@ -414,6 +445,7 @@ public class SurvivalProfileManager {
         try {
             YamlConfiguration config = new YamlConfiguration();
             Location loc = player.getLocation();
+            config.set("location.world", loc.getWorld().getName());
             config.set("location.x", loc.getX());
             config.set("location.y", loc.getY());
             config.set("location.z", loc.getZ());

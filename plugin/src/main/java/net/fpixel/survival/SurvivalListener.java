@@ -27,8 +27,11 @@ public class SurvivalListener implements Listener {
 
         if (fromWorld == null || toWorld == null) return;
 
-        // Leaving Survival World for another world (Hub, Arenas, etc.)
-        if (fromWorld.getName().equalsIgnoreCase("survival") && !toWorld.getName().equalsIgnoreCase("survival")) {
+        boolean fromSurvival = plugin.getSurvivalManager().isSurvivalWorld(fromWorld);
+        boolean toSurvival = plugin.getSurvivalManager().isSurvivalWorld(toWorld);
+
+        // Leaving Survival dimensions completely (e.g. going to Hub or Arenas)
+        if (fromSurvival && !toSurvival) {
             if (plugin.getSurvivalManager().isPlayerInSurvival(player)) {
                 plugin.getSurvivalManager().getProfileManager().saveProfile(player);
                 plugin.getSurvivalManager().removeSurvivalPlayer(player);
@@ -39,39 +42,94 @@ public class SurvivalListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerPortal(org.bukkit.event.player.PlayerPortalEvent event) {
+        Player player = event.getPlayer();
+        World fromWorld = event.getFrom().getWorld();
+        if (fromWorld == null) return;
+
+        if (plugin.getSurvivalManager().isSurvivalWorld(fromWorld)) {
+            // Keep player marked in survival mode across all portals
+            plugin.getSurvivalManager().addSurvivalPlayer(player);
+
+            if (event.getCause() == PlayerTeleportEvent.TeleportCause.NETHER_PORTAL) {
+                if (fromWorld.getEnvironment() == World.Environment.NORMAL) {
+                    // Survival Overworld -> Survival Nether
+                    World nether = plugin.getSurvivalManager().getNetherWorld();
+                    if (nether != null) {
+                        org.bukkit.Location from = event.getFrom();
+                        org.bukkit.Location dest = new org.bukkit.Location(nether, from.getX() / 8.0, Math.min(120, Math.max(32, from.getY())), from.getZ() / 8.0, from.getYaw(), from.getPitch());
+                        event.setTo(dest);
+                        event.setCanCreatePortal(true);
+                    }
+                } else if (fromWorld.getEnvironment() == World.Environment.NETHER) {
+                    // Survival Nether -> Survival Overworld (MUST RETURN TO SURVIVAL WORLD, NOT HUB!)
+                    World survivalWorld = plugin.getSurvivalManager().getSurvivalWorld();
+                    if (survivalWorld != null) {
+                        org.bukkit.Location from = event.getFrom();
+                        org.bukkit.Location dest = new org.bukkit.Location(survivalWorld, from.getX() * 8.0, Math.min(250, Math.max(60, from.getY())), from.getZ() * 8.0, from.getYaw(), from.getPitch());
+                        event.setTo(dest);
+                        event.setCanCreatePortal(true);
+                    }
+                }
+            } else if (event.getCause() == PlayerTeleportEvent.TeleportCause.END_PORTAL) {
+                if (fromWorld.getEnvironment() == World.Environment.NORMAL) {
+                    World end = plugin.getSurvivalManager().getEndWorld();
+                    if (end != null) {
+                        event.setTo(end.getSpawnLocation());
+                    }
+                } else if (fromWorld.getEnvironment() == World.Environment.THE_END) {
+                    World survivalWorld = plugin.getSurvivalManager().getSurvivalWorld();
+                    if (survivalWorld != null) {
+                        org.bukkit.Location bedSpawn = player.getRespawnLocation();
+                        event.setTo(bedSpawn != null ? bedSpawn : survivalWorld.getSpawnLocation());
+                    }
+                }
+            }
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldChange(PlayerChangedWorldEvent event) {
         Player player = event.getPlayer();
-        String fromWorldName = event.getFrom().getName();
-        String currentWorldName = player.getWorld().getName();
+        boolean fromSurvival = plugin.getSurvivalManager().isSurvivalWorld(event.getFrom());
+        boolean currentSurvival = plugin.getSurvivalManager().isSurvivalWorld(player.getWorld());
 
         // Returning to Lobby from Survival
-        if (fromWorldName.equalsIgnoreCase("survival") && !currentWorldName.equalsIgnoreCase("survival")) {
+        if (fromSurvival && !currentSurvival) {
             if (plugin.getGameManager().getPlayerArena(player) == null) {
                 plugin.getLobbyManager().giveLobbyItems(player);
                 player.setGameMode(GameMode.ADVENTURE);
             }
-        } else if (!fromWorldName.equalsIgnoreCase("survival") && currentWorldName.equalsIgnoreCase("survival")) {
+        } else if (!fromSurvival && currentSurvival) {
             // Entering survival: remove lobby scoreboard
             plugin.getScoreboardManager().remove(player);
+            plugin.getSurvivalManager().addSurvivalPlayer(player);
         }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        if (plugin.getSurvivalManager().isPlayerInSurvival(player)) {
+        if (plugin.getSurvivalManager().isSurvivalWorld(player.getWorld()) || plugin.getSurvivalManager().isPlayerInSurvival(player)) {
             plugin.getSurvivalManager().getProfileManager().saveProfile(player);
             plugin.getSurvivalManager().removeSurvivalPlayer(player);
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
-        // If respawning in survival, ensure the player stays registered in survival mode
-        if (event.getRespawnLocation().getWorld() != null &&
-                event.getRespawnLocation().getWorld().getName().equalsIgnoreCase("survival")) {
+        if (plugin.getSurvivalManager().isPlayerInSurvival(player)) {
+            World respawnWorld = event.getRespawnLocation().getWorld();
+            if (respawnWorld == null || !plugin.getSurvivalManager().isSurvivalWorld(respawnWorld)) {
+                // If respawn is in Hub world, redirect to bed in survival or survival world spawn
+                World survivalWorld = plugin.getSurvivalManager().getSurvivalWorld();
+                if (survivalWorld != null) {
+                    org.bukkit.Location bed = player.getRespawnLocation();
+                    event.setRespawnLocation(bed != null ? bed : survivalWorld.getSpawnLocation());
+                }
+            }
             plugin.getSurvivalManager().addSurvivalPlayer(player);
             plugin.getScoreboardManager().remove(player);
         }

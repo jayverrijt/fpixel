@@ -15,6 +15,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -197,13 +198,50 @@ public class SkyWarsGame extends Arena {
             event.setCancelled(true);
             return;
         }
+        if (lobbySpawn != null && event.getBlockPlaced().getY() >= lobbySpawn.getBlockY() - 3) {
+            event.setCancelled(true);
+            ChatUtil.sendMessage(event.getPlayer(), "§cYou cannot build that high!");
+            return;
+        }
         rollbackEngine.recordPlace(event.getBlockPlaced());
+    }
+
+    @Override
+    public void onPlayerMove(PlayerMoveEvent event) {
+        if (state != GameState.IN_GAME) return;
+        Player player = event.getPlayer();
+        if (!players.contains(player.getUniqueId())) return;
+        if (player.getLocation().getY() < voidKillY) {
+            broadcast("§c" + player.getName() + " §7fell into the void.");
+            eliminatePlayer(player);
+        }
     }
 
     @Override
     public void onPlayerDamage(EntityDamageByEntityEvent event) {
         if (state != GameState.IN_GAME) {
             event.setCancelled(true);
+            return;
+        }
+        if (event.getEntity() instanceof Player victim && players.contains(victim.getUniqueId())) {
+            if (victim.getHealth() - event.getFinalDamage() <= 0) {
+                event.setCancelled(true);
+                victim.setHealth(20.0);
+                victim.setFoodLevel(20);
+                victim.setFireTicks(0);
+                victim.setFallDistance(0);
+                victim.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
+
+                if (event.getDamager() instanceof Player killer) {
+                    kills.put(killer.getUniqueId(), kills.getOrDefault(killer.getUniqueId(), 0) + 1);
+                    broadcast("§c" + victim.getName() + " §7was slain by §a" + killer.getName() + "§7!");
+                    ChatUtil.playSound(killer, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.5f);
+                } else {
+                    broadcast("§c" + victim.getName() + " §7died.");
+                }
+
+                eliminatePlayer(victim);
+            }
         }
     }
 
@@ -212,6 +250,11 @@ public class SkyWarsGame extends Arena {
         Player player = event.getPlayer();
         event.getDrops().clear();
         event.setCancelled(true);
+        player.setHealth(20.0);
+        player.setFoodLevel(20);
+        player.setFireTicks(0);
+        player.setFallDistance(0);
+        player.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
 
         if (player.getKiller() != null) {
             Player killer = player.getKiller();

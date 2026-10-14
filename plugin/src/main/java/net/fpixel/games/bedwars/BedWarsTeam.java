@@ -48,6 +48,44 @@ public class BedWarsTeam {
     public void removeMember(UUID uuid) { members.remove(uuid); }
     public boolean hasMember(UUID uuid) { return members.contains(uuid); }
 
+    private org.bukkit.block.BlockFace bedFacing = org.bukkit.block.BlockFace.WEST;
+    private int sharpness = 0;
+    private int protection = 0;
+    private int haste = 0;
+    private int forgeTier = 0;
+    private boolean healPool = false;
+    private boolean trap = false;
+
+    public org.bukkit.block.BlockFace getBedFacing() { return bedFacing; }
+    public void setBedFacing(org.bukkit.block.BlockFace bedFacing) { this.bedFacing = bedFacing; }
+
+    public int getSharpness() { return sharpness; }
+    public void setSharpness(int sharpness) { this.sharpness = sharpness; }
+
+    public int getProtection() { return protection; }
+    public void setProtection(int protection) { this.protection = protection; }
+
+    public int getHaste() { return haste; }
+    public void setHaste(int haste) { this.haste = haste; }
+
+    public int getForgeTier() { return forgeTier; }
+    public void setForgeTier(int forgeTier) { this.forgeTier = forgeTier; }
+
+    public boolean hasHealPool() { return healPool; }
+    public void setHealPool(boolean healPool) { this.healPool = healPool; }
+
+    public boolean hasTrap() { return trap; }
+    public void setTrap(boolean trap) { this.trap = trap; }
+
+    public void resetUpgrades() {
+        this.sharpness = 0;
+        this.protection = 0;
+        this.haste = 0;
+        this.forgeTier = 0;
+        this.healPool = false;
+        this.trap = false;
+    }
+
     public String getStatusSymbol() {
         return bedAlive ? "§a✔" : (members.isEmpty() ? "§c✖" : "§e" + members.size());
     }

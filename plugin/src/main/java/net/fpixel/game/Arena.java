@@ -61,6 +61,7 @@ public abstract class Arena {
         } else if (state == GameState.IN_GAME) {
             gameTime++;
             handleGameTick();
+            checkWinCondition();
         } else if (state == GameState.ENDING) {
             handleEndingTick();
         }
@@ -272,7 +273,17 @@ public abstract class Arena {
     public void eliminatePlayer(Player player) {
         players.remove(player.getUniqueId());
         spectators.add(player.getUniqueId());
+        player.setFallDistance(0);
+        player.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
+        player.setHealth(20.0);
+        player.setFoodLevel(20);
+        player.setFireTicks(0);
         plugin.getSpectatorManager().makeSpectator(player, this);
+        if (spectatorSpawn != null) {
+            player.teleport(spectatorSpawn);
+        } else if (lobbySpawn != null) {
+            player.teleport(lobbySpawn.clone().add(0, 5, 0));
+        }
         broadcast("§c" + player.getName() + " §7has been eliminated!");
         checkWinCondition();
     }

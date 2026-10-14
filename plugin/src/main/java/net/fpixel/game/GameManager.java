@@ -62,6 +62,15 @@ public class GameManager implements Listener {
     }
 
     public boolean joinQueue(Player player, String gameType) {
+        // Prevent party guests from joining minigames alone
+        if (plugin.getPartyManager() != null) {
+            var party = plugin.getPartyManager().getParty(player);
+            if (party != null && !party.isLeader(player)) {
+                ChatUtil.sendMessage(player, "§cOnly the party leader can queue for minigames!");
+                return false;
+            }
+        }
+
         // Leave current arena if any
         Arena current = getPlayerArena(player);
         if (current != null) {
@@ -136,8 +145,14 @@ public class GameManager implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onDamage(EntityDamageByEntityEvent event) {
+        // Cancel all firework damage globally in minigames
+        if (event.getDamager() instanceof org.bukkit.entity.Firework) {
+            event.setCancelled(true);
+            return;
+        }
+
         if (event.getDamager() instanceof Player damager && event.getEntity() instanceof Player target) {
             Arena damagerArena = getPlayerArena(damager);
             Arena targetArena = getPlayerArena(target);
@@ -150,6 +165,13 @@ public class GameManager implements Listener {
                 return;
             }
             damagerArena.onPlayerDamage(event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onGeneralDamage(org.bukkit.event.entity.EntityDamageEvent event) {
+        if (event instanceof EntityDamageByEntityEvent edbe && edbe.getDamager() instanceof org.bukkit.entity.Firework) {
+            event.setCancelled(true);
         }
     }
 

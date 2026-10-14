@@ -110,22 +110,26 @@ public class BridgeGame extends Arena {
     }
 
     private void spawnCage(Location loc, Material glassMat) {
-        int x = loc.getBlockX();
-        int y = loc.getBlockY();
-        int z = loc.getBlockZ();
+        int cx = loc.getBlockX();
+        int cy = loc.getBlockY();
+        int cz = loc.getBlockZ();
         var world = loc.getWorld();
         if (world == null) return;
 
-        int[][] offsets = {
-                {0, -1, 0}, {0, 2, 0},
-                {1, 0, 0}, {-1, 0, 0}, {0, 0, 1}, {0, 0, -1},
-                {1, 1, 0}, {-1, 1, 0}, {0, 1, 1}, {0, 1, -1}
-        };
-
-        for (int[] off : offsets) {
-            Block b = world.getBlockAt(x + off[0], y + off[1], z + off[2]);
-            b.setType(glassMat, false);
-            activeCages.add(b.getLocation());
+        // Build a complete 3x3x4 solid glass cage (floor, walls, roof, all corners)
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                for (int dy = -1; dy <= 3; dy++) {
+                    if (dy == -1 || dy == 3 || Math.abs(dx) == 1 || Math.abs(dz) == 1) {
+                        Block b = world.getBlockAt(cx + dx, cy + dy, cz + dz);
+                        b.setType(glassMat, false);
+                        activeCages.add(b.getLocation());
+                    } else {
+                        Block b = world.getBlockAt(cx + dx, cy + dy, cz + dz);
+                        b.setType(Material.AIR, false);
+                    }
+                }
+            }
         }
     }
 
@@ -189,9 +193,18 @@ public class BridgeGame extends Arena {
 
     @Override
     public void onPlayerMove(PlayerMoveEvent event) {
-        if (state != GameState.IN_GAME || inRoundCountdown) return;
+        if (state != GameState.IN_GAME) return;
         Player p = event.getPlayer();
         if (!contains(p)) return;
+
+        if (inRoundCountdown) {
+            Location from = event.getFrom();
+            Location to = event.getTo();
+            if (to != null && (from.getBlockX() != to.getBlockX() || from.getBlockZ() != to.getBlockZ())) {
+                event.setTo(new Location(from.getWorld(), from.getX(), from.getY(), from.getZ(), to.getYaw(), to.getPitch()));
+            }
+            return;
+        }
 
         boolean isRed = redTeam.contains(p.getUniqueId());
         Location loc = p.getLocation();
@@ -219,8 +232,7 @@ public class BridgeGame extends Arena {
             blueScore++;
         }
 
-        // Clean up placed blocks on bridge for next round
-        rollbackEngine.rollback();
+        // Note: Bridge blocks persist across rounds as in standard competitive The Bridge!
 
         broadcast("§6§lGOAL! " + (team.equals("RED") ? "§c[RED] " : "§9[BLUE] ") + scorer.getName() + " §escored a goal! §f(" + redScore + " - " + blueScore + ")");
 
@@ -246,14 +258,14 @@ public class BridgeGame extends Arena {
 
     @Override
     public void onBlockBreak(BlockBreakEvent event) {
-        if (state != GameState.IN_GAME) {
+        if (state != GameState.IN_GAME || inRoundCountdown) {
             event.setCancelled(true);
             return;
         }
-        // Only allow breaking terracotta
-        Material type = event.getBlock().getType();
-        if (type != Material.RED_TERRACOTTA && type != Material.BLUE_TERRACOTTA) {
+        // ONLY allow breaking blocks that were placed by players during this match
+        if (!rollbackEngine.isPlayerPlaced(event.getBlock().getLocation())) {
             event.setCancelled(true);
+            ChatUtil.sendMessage(event.getPlayer(), "§cYou can only break blocks placed by players!");
             return;
         }
         rollbackEngine.recordBreak(event.getBlock());
@@ -263,6 +275,11 @@ public class BridgeGame extends Arena {
     public void onBlockPlace(BlockPlaceEvent event) {
         if (state != GameState.IN_GAME || inRoundCountdown) {
             event.setCancelled(true);
+            return;
+        }
+        if (lobbySpawn != null && event.getBlockPlaced().getY() >= lobbySpawn.getBlockY() - 3) {
+            event.setCancelled(true);
+            ChatUtil.sendMessage(event.getPlayer(), "§cYou cannot build that high!");
             return;
         }
         rollbackEngine.recordPlace(event.getBlockPlaced());

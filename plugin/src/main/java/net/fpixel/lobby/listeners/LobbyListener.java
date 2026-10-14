@@ -21,6 +21,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.entity.Firework;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -36,16 +38,24 @@ public class LobbyListener implements Listener {
     }
 
     private boolean isInLobby(Player player) {
+        if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().isSurvivalWorld(player.getWorld())) {
+            return false;
+        }
         if (player.getWorld().getName().equalsIgnoreCase("survival")) {
             return false;
         }
         return plugin.getGameManager().getPlayerArena(player) == null;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         event.joinMessage(null); // Silent join message, Hypixel style
+
+        // Preserve and save survival profile if reconnecting in a survival world
+        if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().isSurvivalWorld(player.getWorld())) {
+            plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+        }
 
         plugin.getRankManager().updatePlayerDisplayName(player);
         plugin.getLobbyManager().teleportToLobby(player);
@@ -152,8 +162,15 @@ public class LobbyListener implements Listener {
                 PlayerHiderMenu.open(player);
             } else if (item.getType() == Material.NETHER_STAR) {
                 event.setCancelled(true);
-                GameSelectorMenu.open(plugin, player);
+                net.fpixel.lobby.menus.QuickMenu.open(plugin, player);
             }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onFireworkDamage(EntityDamageByEntityEvent event) {
+        if (event.getDamager() instanceof org.bukkit.entity.Firework) {
+            event.setCancelled(true);
         }
     }
 
@@ -203,6 +220,9 @@ public class LobbyListener implements Listener {
         if (title.contains("Game Navigator")) {
             event.setCancelled(true);
             GameSelectorMenu.handleClick(plugin, player, event.getRawSlot(), event.getClick());
+        } else if (title.contains("FPixel Quick Menu")) {
+            event.setCancelled(true);
+            net.fpixel.lobby.menus.QuickMenu.handleClick(plugin, player, event.getRawSlot());
         } else if (title.contains("Select Map:")) {
             event.setCancelled(true);
             MapSelectMenu.handleClick(plugin, player, title, event.getRawSlot());
@@ -211,7 +231,7 @@ public class LobbyListener implements Listener {
             PlayerHiderMenu.handleClick(plugin, player, event.getRawSlot());
         } else if (title.contains("My Profile & Stats")) {
             event.setCancelled(true);
-        } else if (title.contains("BedWars Item Shop")) {
+        } else if (title.contains("BedWars Item Shop") || title.contains("BedWars Team Upgrades")) {
             event.setCancelled(true);
             BedWarsShop.handleClick(player, event.getRawSlot());
         } else if (isInLobby(player) && player.getGameMode() != GameMode.CREATIVE) {

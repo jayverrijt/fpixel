@@ -113,12 +113,29 @@ public class BedWarsGame extends Arena {
 
     private void giveTeamKit(Player player, BedWarsTeam team) {
         player.getInventory().clear();
-        player.getInventory().setHelmet(new ItemBuilder(Material.LEATHER_HELMET).leatherColor(team.getLeatherColor()).unbreakable(true).build());
-        player.getInventory().setChestplate(new ItemBuilder(Material.LEATHER_CHESTPLATE).leatherColor(team.getLeatherColor()).unbreakable(true).build());
-        player.getInventory().setLeggings(new ItemBuilder(Material.LEATHER_LEGGINGS).leatherColor(team.getLeatherColor()).unbreakable(true).build());
-        player.getInventory().setBoots(new ItemBuilder(Material.LEATHER_BOOTS).leatherColor(team.getLeatherColor()).unbreakable(true).build());
 
-        player.getInventory().setItem(0, new ItemBuilder(Material.WOODEN_SWORD).unbreakable(true).build());
+        ItemStack helmet = new ItemBuilder(Material.LEATHER_HELMET).leatherColor(team.getLeatherColor()).unbreakable(true).build();
+        ItemStack chest = new ItemBuilder(Material.LEATHER_CHESTPLATE).leatherColor(team.getLeatherColor()).unbreakable(true).build();
+        ItemStack legs = new ItemBuilder(Material.LEATHER_LEGGINGS).leatherColor(team.getLeatherColor()).unbreakable(true).build();
+        ItemStack boots = new ItemBuilder(Material.LEATHER_BOOTS).leatherColor(team.getLeatherColor()).unbreakable(true).build();
+
+        if (team.getProtection() > 0) {
+            helmet.addEnchantment(org.bukkit.enchantments.Enchantment.PROTECTION, team.getProtection());
+            chest.addEnchantment(org.bukkit.enchantments.Enchantment.PROTECTION, team.getProtection());
+            legs.addEnchantment(org.bukkit.enchantments.Enchantment.PROTECTION, team.getProtection());
+            boots.addEnchantment(org.bukkit.enchantments.Enchantment.PROTECTION, team.getProtection());
+        }
+
+        player.getInventory().setHelmet(helmet);
+        player.getInventory().setChestplate(chest);
+        player.getInventory().setLeggings(legs);
+        player.getInventory().setBoots(boots);
+
+        ItemStack sword = new ItemBuilder(Material.WOODEN_SWORD).unbreakable(true).build();
+        if (team.getSharpness() > 0) {
+            sword.addEnchantment(org.bukkit.enchantments.Enchantment.SHARPNESS, team.getSharpness());
+        }
+        player.getInventory().setItem(0, sword);
         player.getInventory().setItem(1, new ItemBuilder(Material.SHEARS).unbreakable(true).build());
         player.getInventory().setItem(8, new ItemBuilder(Material.NETHER_STAR)
                 .name("§a§lItem Shop §7(Right Click)")
@@ -131,6 +148,55 @@ public class BedWarsGame extends Arena {
         // Spawners tick
         for (BedWarsSpawner spawner : spawners) {
             spawner.tick();
+        }
+
+        // Apply team upgrades (Haste, Heal Pool, Traps, Forge Boosters)
+        for (BedWarsTeam team : teams.values()) {
+            if (team.getSpawnLocation() == null || team.getSpawnLocation().getWorld() == null) continue;
+
+            // Extra forge ticks for higher forge tiers
+            if (team.getForgeTier() >= 1 && gameTime % 2 == 0) {
+                // Tier 1: +50% iron
+                Location sl = team.getSpawnLocation();
+                sl.getWorld().dropItem(sl, new ItemStack(Material.IRON_INGOT));
+            }
+            if (team.getForgeTier() >= 2 && gameTime % 5 == 0) {
+                // Tier 2: +gold
+                Location sl = team.getSpawnLocation();
+                sl.getWorld().dropItem(sl, new ItemStack(Material.GOLD_INGOT));
+            }
+            if (team.getForgeTier() >= 3 && gameTime % 30 == 0) {
+                // Tier 3: emeralds at base
+                Location sl = team.getSpawnLocation();
+                sl.getWorld().dropItem(sl, new ItemStack(Material.EMERALD));
+            }
+
+            // Check members for Haste & Heal Pool
+            for (Player p : getBukkitPlayers()) {
+                if (team.hasMember(p.getUniqueId())) {
+                    if (team.getHaste() > 0) {
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 45, team.getHaste() - 1, true, false, false));
+                    }
+                    if (team.hasHealPool()) {
+                        if (p.getLocation().distanceSquared(team.getSpawnLocation()) <= 225) { // 15 blocks
+                            p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 45, 0, true, false, false));
+                        }
+                    }
+                } else if (team.hasTrap()) {
+                    // Enemy stepped onto base island!
+                    if (p.getLocation().distanceSquared(team.getSpawnLocation()) <= 144) { // 12 blocks
+                        team.setTrap(false);
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 100, 0));
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 1));
+                        for (Player member : getBukkitPlayers()) {
+                            if (team.hasMember(member.getUniqueId())) {
+                                ChatUtil.sendTitle(member, "§c§lTRAP TRIGGERED!", "§eAn enemy entered your base!", 0, 30, 5);
+                                ChatUtil.playSound(member, Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -153,6 +219,16 @@ public class BedWarsGame extends Arena {
                     // Destroy bed!
                     team.setBedAlive(false);
                     event.setDropItems(false);
+
+                    // Clear both halves of the bed cleanly
+                    Location bedLoc = team.getBedLocation();
+                    if (bedLoc != null && bedLoc.getWorld() != null) {
+                        bedLoc.getBlock().setType(Material.AIR, false);
+                        Block head = bedLoc.getBlock().getRelative(team.getBedFacing());
+                        head.setType(Material.AIR, false);
+                    }
+                    block.setType(Material.AIR, false);
+
                     bedsBroken.put(player.getUniqueId(), bedsBroken.getOrDefault(player.getUniqueId(), 0) + 1);
 
                     FPixelUser user = plugin.getUserManager().getUser(player);
@@ -190,12 +266,23 @@ public class BedWarsGame extends Arena {
 
     private boolean isBedLocation(Location blockLoc, Location bedLoc) {
         if (bedLoc == null || blockLoc == null) return false;
-        return blockLoc.getWorld().equals(bedLoc.getWorld()) && blockLoc.distanceSquared(bedLoc) <= 4;
+        return blockLoc.getWorld().equals(bedLoc.getWorld()) && blockLoc.distanceSquared(bedLoc) <= 6;
     }
 
     @Override
     public void onBlockPlace(BlockPlaceEvent event) {
         Block block = event.getBlock();
+        Player player = event.getPlayer();
+
+        // Prevent building up to or near the waiting lobby (anti-waiting area exploit)
+        if (lobbySpawn != null) {
+            if (block.getY() >= lobbySpawn.getBlockY() - 3 || block.getLocation().distanceSquared(lobbySpawn) <= 64) {
+                event.setCancelled(true);
+                ChatUtil.sendMessage(player, "§cYou cannot build into the waiting lobby!");
+                return;
+            }
+        }
+
         if (block.getType() == Material.TNT) {
             // Auto prime TNT!
             event.setCancelled(true);
@@ -358,12 +445,19 @@ public class BedWarsGame extends Arena {
         for (BedWarsTeam team : teams.values()) {
             team.setBedAlive(true);
             team.getMembers().clear();
+            team.resetUpgrades();
+
+            // Re-place full 2-block bed for the next match
+            if (team.getBedLocation() != null && team.getBedLocation().getWorld() != null) {
+                Location bl = team.getBedLocation();
+                net.fpixel.core.map.MapBuilder.placeBed(bl.getWorld(), bl.getBlockX(), bl.getBlockY(), bl.getBlockZ(), team.getBedFacing(), team.getBedMaterial());
+            }
         }
         for (org.bukkit.entity.Entity e : shopkeepers) {
             if (e != null && e.isValid()) e.remove();
         }
         shopkeepers.clear();
-        spawners.clear();
+        // NOTE: spawners are preserved across rounds!
     }
 
     @Override

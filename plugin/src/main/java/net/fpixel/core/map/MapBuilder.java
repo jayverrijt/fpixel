@@ -15,6 +15,26 @@ public class MapBuilder {
     // 1. Primitive Shapes & Volume Builders
     // ==========================================
 
+    public static void placeBed(World world, int footX, int footY, int footZ, org.bukkit.block.BlockFace facing, Material bedMat) {
+        Block foot = world.getBlockAt(footX, footY, footZ);
+        Block head = foot.getRelative(facing);
+
+        foot.setType(bedMat, false);
+        head.setType(bedMat, false);
+
+        try {
+            org.bukkit.block.data.type.Bed footData = (org.bukkit.block.data.type.Bed) foot.getBlockData();
+            footData.setPart(org.bukkit.block.data.type.Bed.Part.FOOT);
+            footData.setFacing(facing);
+            foot.setBlockData(footData, false);
+
+            org.bukkit.block.data.type.Bed headData = (org.bukkit.block.data.type.Bed) head.getBlockData();
+            headData.setPart(org.bukkit.block.data.type.Bed.Part.HEAD);
+            headData.setFacing(facing);
+            head.setBlockData(headData, false);
+        } catch (Throwable ignored) {}
+    }
+
     public static void fillBox(World world, int x1, int y1, int z1, int x2, int y2, int z2, Material material) {
         int minX = Math.min(x1, x2), maxX = Math.max(x1, x2);
         int minY = Math.min(y1, y2), maxY = Math.max(y1, y2);
