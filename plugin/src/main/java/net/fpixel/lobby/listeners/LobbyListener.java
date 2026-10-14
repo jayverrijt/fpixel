@@ -36,6 +36,9 @@ public class LobbyListener implements Listener {
     }
 
     private boolean isInLobby(Player player) {
+        if (player.getWorld().getName().equalsIgnoreCase("survival")) {
+            return false;
+        }
         return plugin.getGameManager().getPlayerArena(player) == null;
     }
 
@@ -94,8 +97,8 @@ public class LobbyListener implements Listener {
                 double dz = loc.getZ() - spawn.getZ();
                 double distSq = dx * dx + dz * dz;
 
-                // Max lobby radius is 68 blocks, min Y is 95, max Y is 165
-                if (distSq > 68 * 68 || loc.getY() < 95 || loc.getY() > 165) {
+                // Expanded grand hub radius is 135 blocks, min Y is 50, max Y is 240
+                if (distSq > 140 * 140 || loc.getY() < 50 || loc.getY() > 240) {
                     plugin.getLobbyManager().teleportToLobby(player);
                     ChatUtil.sendActionBar(player, "§c§lStay inside the Hub area!");
                     ChatUtil.playSound(player, Sound.ENTITY_ENDERMAN_TELEPORT, 0.7f, 1.2f);
@@ -103,6 +106,7 @@ public class LobbyListener implements Listener {
             }
         }
     }
+
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {

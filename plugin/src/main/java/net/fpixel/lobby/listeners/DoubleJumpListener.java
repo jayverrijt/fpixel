@@ -1,6 +1,7 @@
 package net.fpixel.lobby.listeners;
 
 import net.fpixel.FPixelPlugin;
+import net.fpixel.core.rank.Rank;
 import net.fpixel.game.Arena;
 import net.fpixel.games.tntrun.TNTRunGame;
 import org.bukkit.GameMode;
@@ -30,8 +31,18 @@ public class DoubleJumpListener implements Listener {
             return;
         }
 
-        if (arena == null) {
-            // In lobby double jump
+        if (arena == null && player.getWorld().equals(plugin.getLobbyManager().getSpawnLocation().getWorld())) {
+            Rank rank = plugin.getRankManager().getRank(player);
+            boolean hasFlyRank = (rank != null && rank != Rank.MEMBER) || player.hasPermission("fpixel.fly");
+
+            if (hasFlyRank) {
+                // Ranked players can fly freely in the Lobby!
+                event.setCancelled(false);
+                player.setFlying(event.isFlying());
+                return;
+            }
+
+            // Normal members do a double jump booster
             event.setCancelled(true);
             player.setFlying(false);
             player.setAllowFlight(false);
@@ -47,8 +58,9 @@ public class DoubleJumpListener implements Listener {
         Player player = event.getPlayer();
         if (player.getGameMode() != GameMode.ADVENTURE) return;
 
-        if (plugin.getGameManager().getPlayerArena(player) == null) {
-            // Re-enable flight for double jump when touching ground
+        if (plugin.getGameManager().getPlayerArena(player) == null &&
+                player.getWorld().equals(plugin.getLobbyManager().getSpawnLocation().getWorld())) {
+            // Re-enable flight capability when touching ground
             if (player.isOnGround() && !player.getAllowFlight()) {
                 player.setAllowFlight(true);
             }

@@ -24,6 +24,13 @@ public class WorldManager {
     public void generateAllMaps(World defaultWorld) {
         plugin.getLogger().info("Loading maps, downloaded worlds, and configuring 1v1 duels & global lobbies...");
 
+        // Ensure lobby world is peaceful and sunny
+        defaultWorld.setDifficulty(Difficulty.PEACEFUL);
+        defaultWorld.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+        defaultWorld.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+        defaultWorld.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+        defaultWorld.setTime(6000L);
+
         // 1. Grand Castle Hub in default world at (0, 100, 0)
         buildGrandHub(defaultWorld);
 
@@ -69,70 +76,217 @@ public class WorldManager {
     }
 
     // =========================================================================
-    // 1. Grand Castle Hub
+    // 1. Grand Castle Hub (Vast 5-Island Archipelago - Radius 130 Blocks)
     // =========================================================================
 
     private void buildGrandHub(World world) {
-        int cx = 0, cy = 100, cz = 0;
+        int cy = 100;
 
-        MapBuilder.buildFloatingIslandNatural(world, cx, cy, cz, 60, Material.GRASS_BLOCK, Material.DIRT, Material.DEEPSLATE);
+        // -------------------------------------------------------------
+        // Island 1: Central Grand Plaza (0, 100, 0)
+        // -------------------------------------------------------------
+        MapBuilder.buildFloatingIslandNatural(world, 0, cy, 0, 52, Material.GRASS_BLOCK, Material.DIRT, Material.DEEPSLATE);
 
-        MapBuilder.fillCircle(world, cx, cy, cz, 18, Material.STONE_BRICKS);
-        MapBuilder.fillRing(world, cx, cy, cz, 16, 18, Material.POLISHED_ANDESITE);
-        MapBuilder.fillRing(world, cx, cy, cz, 12, 13, Material.SEA_LANTERN);
+        MapBuilder.fillCircle(world, 0, cy, 0, 18, Material.STONE_BRICKS);
+        MapBuilder.fillRing(world, 0, cy, 0, 16, 18, Material.POLISHED_ANDESITE);
+        MapBuilder.fillRing(world, 0, cy, 0, 12, 13, Material.SEA_LANTERN);
 
-        for (int y = 1; y <= 5; y++) {
-            MapBuilder.fillRing(world, cx, cy + y, cz, 60, 61, Material.STONE_BRICKS);
+        // Grand central water fountain
+        MapBuilder.buildGrandFountain(world, 0, cy, 0, 7);
+
+        // Perimeter decorative low stone balustrade with lantern posts
+        for (int angle = 0; angle < 360; angle += 15) {
+            double rad = Math.toRadians(angle);
+            int bx = (int) Math.round(50 * Math.cos(rad));
+            int bz = (int) Math.round(50 * Math.sin(rad));
+            world.getBlockAt(bx, cy + 1, bz).setType(Material.STONE_BRICK_WALL, false);
+            if (angle % 30 == 0) {
+                world.getBlockAt(bx, cy + 2, bz).setType(Material.LANTERN, false);
+            }
         }
-        for (int y = 6; y <= 35; y++) {
-            MapBuilder.fillRing(world, cx, cy + y, cz, 61, 62, Material.BARRIER);
-        }
 
-        MapBuilder.buildGrandFountain(world, cx, cy, cz, 7);
-
-        int castleZ = -38;
-        MapBuilder.fillBox(world, -12, cy + 1, castleZ - 8, 12, cy + 14, castleZ + 4, Material.STONE_BRICKS);
-        MapBuilder.fillBox(world, -4, cy + 1, castleZ - 9, 4, cy + 8, castleZ + 5, Material.AIR);
-        MapBuilder.fillBox(world, -4, cy + 6, castleZ, 4, cy + 8, castleZ, Material.IRON_BARS);
-        MapBuilder.fillCircle(world, 0, cy + 11, castleZ + 4, 3, Material.PURPLE_STAINED_GLASS);
-        world.getBlockAt(0, cy + 11, castleZ + 4).setType(Material.BEACON, false);
-
-        MapBuilder.buildCastleTower(world, -15, cy + 1, castleZ, 4, 24, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.DARK_OAK_STAIRS);
-        MapBuilder.buildCastleTower(world, 15, cy + 1, castleZ, 4, 24, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.DARK_OAK_STAIRS);
-
-        MapBuilder.buildMedievalHouse(world, -36, cy + 1, -10, 8, 10, Material.CALCITE, Material.STRIPPED_OAK_LOG, Material.SPRUCE_STAIRS, Material.SPRUCE_SLAB);
-        MapBuilder.buildMedievalHouse(world, -36, cy + 1, 10, 8, 10, Material.WHITE_TERRACOTTA, Material.STRIPPED_DARK_OAK_LOG, Material.DARK_OAK_STAIRS, Material.DARK_OAK_SLAB);
-        MapBuilder.buildMedievalHouse(world, 28, cy + 1, -10, 8, 10, Material.STRIPPED_BIRCH_WOOD, Material.OAK_LOG, Material.SPRUCE_STAIRS, Material.SPRUCE_SLAB);
-        MapBuilder.buildMedievalHouse(world, 28, cy + 1, 10, 8, 10, Material.MUD_BRICKS, Material.SPRUCE_LOG, Material.DARK_OAK_STAIRS, Material.DARK_OAK_SLAB);
-
-        MapBuilder.buildMarketStall(world, -16, cy, 14, Material.RED_WOOL, Material.WHITE_WOOL);
-        MapBuilder.buildMarketStall(world, -16, cy, 22, Material.BLUE_WOOL, Material.YELLOW_WOOL);
-        MapBuilder.buildMarketStall(world, 12, cy, 14, Material.GREEN_WOOL, Material.WHITE_WOOL);
-        MapBuilder.buildMarketStall(world, 12, cy, 22, Material.ORANGE_WOOL, Material.CYAN_WOOL);
-
-        MapBuilder.buildCastleTower(world, 40, cy + 1, 35, 5, 18, Material.MOSSY_STONE_BRICKS, Material.COBBLESTONE, Material.SPRUCE_STAIRS);
-        int[][] parkourOffsets = {
-                {40, 30, 2}, {45, 30, 4}, {48, 35, 7}, {45, 40, 10},
-                {40, 42, 13}, {35, 40, 16}, {33, 35, 19}, {40, 35, 22}
-        };
-        for (int[] p : parkourOffsets) {
-            world.getBlockAt(p[0], cy + p[2], p[1]).setType(Material.GOLD_BLOCK, false);
-        }
-        world.getBlockAt(40, cy + 23, 35).setType(Material.EMERALD_BLOCK, false);
-
+        // Decorative fantasy trees around plaza
         MapBuilder.buildOrganicTree(world, -20, cy + 1, -20, Material.OAK_LOG, Material.OAK_LEAVES, 7);
         MapBuilder.buildOrganicTree(world, 20, cy + 1, -20, Material.CHERRY_LOG, Material.CHERRY_LEAVES, 7);
-        MapBuilder.buildOrganicTree(world, 0, cy + 1, 35, Material.OAK_LOG, Material.AZALEA_LEAVES, 8);
+        MapBuilder.buildOrganicTree(world, -20, cy + 1, 20, Material.CHERRY_LOG, Material.CHERRY_LEAVES, 7);
+        MapBuilder.buildOrganicTree(world, 20, cy + 1, 20, Material.OAK_LOG, Material.AZALEA_LEAVES, 8);
 
-        int[][] launchpads = {{0, 22}, {0, -22}, {22, 0}, {-22, 0}};
+        // Launchpads pointing outward to the 4 surrounding districts
+        int[][] launchpads = {{0, 24}, {0, -24}, {24, 0}, {-24, 0}};
         for (int[] lp : launchpads) {
-            world.getBlockAt(cx + lp[0], cy, cz + lp[1]).setType(Material.EMERALD_BLOCK, false);
-            world.getBlockAt(cx + lp[0], cy + 1, cz + lp[1]).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+            world.getBlockAt(lp[0], cy, lp[1]).setType(Material.EMERALD_BLOCK, false);
+            world.getBlockAt(lp[0], cy + 1, lp[1]).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
         }
 
+        // -------------------------------------------------------------
+        // Island 2: North Royal Citadel & Castle (0, 100, -85)
+        // -------------------------------------------------------------
+        MapBuilder.buildFloatingIslandNatural(world, 0, cy, -85, 42, Material.GRASS_BLOCK, Material.DIRT, Material.DEEPSLATE);
+
+        // North Grand Arched Bridge (connecting central plaza to citadel)
+        for (int z = -45; z >= -68; z--) {
+            for (int x = -3; x <= 3; x++) {
+                world.getBlockAt(x, cy, z).setType(Material.STONE_BRICKS, false);
+                if (Math.abs(x) == 3) {
+                    world.getBlockAt(x, cy + 1, z).setType(Material.STONE_BRICK_WALL, false);
+                    if (z % 5 == 0) {
+                        world.getBlockAt(x, cy + 2, z).setType(Material.LANTERN, false);
+                    }
+                }
+            }
+        }
+
+        // Colossal Castle Keep
+        int castleZ = -88;
+        MapBuilder.fillBox(world, -14, cy + 1, castleZ - 10, 14, cy + 16, castleZ + 8, Material.STONE_BRICKS);
+        MapBuilder.fillBox(world, -5, cy + 1, castleZ - 11, 5, cy + 8, castleZ + 9, Material.AIR);
+        MapBuilder.fillBox(world, -5, cy + 6, castleZ, 5, cy + 8, castleZ, Material.IRON_BARS);
+
+        // Stained glass rose window + Beacon light beam
+        MapBuilder.fillCircle(world, 0, cy + 12, castleZ + 8, 3, Material.PURPLE_STAINED_GLASS);
+        world.getBlockAt(0, cy + 12, castleZ + 8).setType(Material.BEACON, false);
+
+        // Red carpet leading into the grand hall
+        for (int z = castleZ - 8; z <= castleZ + 6; z++) {
+            world.getBlockAt(0, cy + 1, z).setType(Material.RED_CARPET, false);
+            world.getBlockAt(-1, cy + 1, z).setType(Material.YELLOW_CARPET, false);
+            world.getBlockAt(1, cy + 1, z).setType(Material.YELLOW_CARPET, false);
+        }
+
+        // 4 Grand Castle Towers
+        MapBuilder.buildCastleTower(world, -16, cy + 1, castleZ - 10, 4, 26, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.DARK_OAK_STAIRS);
+        MapBuilder.buildCastleTower(world, 16, cy + 1, castleZ - 10, 4, 26, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.DARK_OAK_STAIRS);
+        MapBuilder.buildCastleTower(world, -16, cy + 1, castleZ + 8, 4, 26, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.DARK_OAK_STAIRS);
+        MapBuilder.buildCastleTower(world, 16, cy + 1, castleZ + 8, 4, 26, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.DARK_OAK_STAIRS);
+
+        // -------------------------------------------------------------
+        // Island 3: West Medieval Village & Market Bazaar (-85, 100, 0)
+        // -------------------------------------------------------------
+        MapBuilder.buildFloatingIslandNatural(world, -85, cy, 0, 40, Material.GRASS_BLOCK, Material.DIRT, Material.DEEPSLATE);
+
+        // West Grand Arched Bridge
+        for (int x = -45; x >= -68; x--) {
+            for (int z = -3; z <= 3; z++) {
+                world.getBlockAt(x, cy, z).setType(Material.STONE_BRICKS, false);
+                if (Math.abs(z) == 3) {
+                    world.getBlockAt(x, cy + 1, z).setType(Material.STONE_BRICK_WALL, false);
+                    if (x % 5 == 0) {
+                        world.getBlockAt(x, cy + 2, z).setType(Material.LANTERN, false);
+                    }
+                }
+            }
+        }
+
+        // Medieval cottages
+        MapBuilder.buildMedievalHouse(world, -105, cy + 1, -16, 8, 10, Material.CALCITE, Material.STRIPPED_OAK_LOG, Material.SPRUCE_STAIRS, Material.SPRUCE_SLAB);
+        MapBuilder.buildMedievalHouse(world, -105, cy + 1, 8, 8, 10, Material.WHITE_TERRACOTTA, Material.STRIPPED_DARK_OAK_LOG, Material.DARK_OAK_STAIRS, Material.DARK_OAK_SLAB);
+        MapBuilder.buildMedievalHouse(world, -76, cy + 1, -18, 8, 10, Material.STRIPPED_BIRCH_WOOD, Material.OAK_LOG, Material.SPRUCE_STAIRS, Material.SPRUCE_SLAB);
+        MapBuilder.buildMedievalHouse(world, -76, cy + 1, 10, 8, 10, Material.MUD_BRICKS, Material.SPRUCE_LOG, Material.DARK_OAK_STAIRS, Material.DARK_OAK_SLAB);
+
+        // Market Bazaar stalls
+        MapBuilder.buildMarketStall(world, -92, cy, -8, Material.RED_WOOL, Material.WHITE_WOOL);
+        MapBuilder.buildMarketStall(world, -92, cy, 2, Material.BLUE_WOOL, Material.YELLOW_WOOL);
+        MapBuilder.buildMarketStall(world, -82, cy, -8, Material.GREEN_WOOL, Material.WHITE_WOOL);
+        MapBuilder.buildMarketStall(world, -82, cy, 2, Material.ORANGE_WOOL, Material.CYAN_WOOL);
+
+        // Cozy Village Farm Patch
+        MapBuilder.fillBox(world, -100, cy, -28, -90, cy, -22, Material.FARMLAND);
+        world.getBlockAt(-95, cy, -25).setType(Material.WATER, false);
+        for (int fx = -99; fx <= -91; fx++) {
+            for (int fz = -27; fz <= -23; fz++) {
+                if (fx != -95 || fz != -25) {
+                    world.getBlockAt(fx, cy + 1, fz).setType(Material.WHEAT, false);
+                }
+            }
+        }
+        world.getBlockAt(-98, cy + 1, -21).setType(Material.HAY_BLOCK, false);
+        world.getBlockAt(-97, cy + 1, -21).setType(Material.PUMPKIN, false);
+
+        // -------------------------------------------------------------
+        // Island 4: East Ancient Colosseum & Spiral Parkour (85, 100, 0)
+        // -------------------------------------------------------------
+        MapBuilder.buildFloatingIslandNatural(world, 85, cy, 0, 40, Material.GRASS_BLOCK, Material.DIRT, Material.DEEPSLATE);
+
+        // East Grand Arched Bridge
+        for (int x = 45; x <= 68; x++) {
+            for (int z = -3; z <= 3; z++) {
+                world.getBlockAt(x, cy, z).setType(Material.STONE_BRICKS, false);
+                if (Math.abs(z) == 3) {
+                    world.getBlockAt(x, cy + 1, z).setType(Material.STONE_BRICK_WALL, false);
+                    if (x % 5 == 0) {
+                        world.getBlockAt(x, cy + 2, z).setType(Material.LANTERN, false);
+                    }
+                }
+            }
+        }
+
+        // Colosseum ancient stone pillars
+        for (int angle = 0; angle < 360; angle += 30) {
+            double rad = Math.toRadians(angle);
+            int px = (int) Math.round(85 + 26 * Math.cos(rad));
+            int pz = (int) Math.round(26 * Math.sin(rad));
+            MapBuilder.buildPillar(world, px, cy + 1, pz, 8, Material.MOSSY_STONE_BRICKS);
+            world.getBlockAt(px, cy + 9, pz).setType(Material.SEA_LANTERN, false);
+        }
+
+        // Towering spiral parkour challenge
+        MapBuilder.buildCastleTower(world, 85, cy + 1, 0, 5, 20, Material.MOSSY_STONE_BRICKS, Material.COBBLESTONE, Material.SPRUCE_STAIRS);
+        int[][] parkourStages = {
+                {85, -10, 2}, {92, -8, 4}, {95, 0, 7}, {92, 8, 10},
+                {85, 10, 13}, {78, 8, 16}, {75, 0, 19}, {78, -8, 22},
+                {85, -6, 25}, {89, 0, 28}, {85, 6, 31}
+        };
+        for (int[] p : parkourStages) {
+            world.getBlockAt(p[0], cy + p[2], p[1]).setType(Material.GOLD_BLOCK, false);
+        }
+        // Top reward emerald platform with beacon
+        MapBuilder.fillCircle(world, 85, cy + 32, 0, 2, Material.EMERALD_BLOCK);
+        world.getBlockAt(85, cy + 33, 0).setType(Material.BEACON, false);
+
+        // -------------------------------------------------------------
+        // Island 5: South Airship Harbour & High Observatory (0, 100, 85)
+        // -------------------------------------------------------------
+        MapBuilder.buildFloatingIslandNatural(world, 0, cy, 85, 38, Material.GRASS_BLOCK, Material.DIRT, Material.DEEPSLATE);
+
+        // South Grand Arched Bridge
+        for (int z = 45; z <= 68; z++) {
+            for (int x = -3; x <= 3; x++) {
+                world.getBlockAt(x, cy, z).setType(Material.STONE_BRICKS, false);
+                if (Math.abs(x) == 3) {
+                    world.getBlockAt(x, cy + 1, z).setType(Material.STONE_BRICK_WALL, false);
+                    if (z % 5 == 0) {
+                        world.getBlockAt(x, cy + 2, z).setType(Material.LANTERN, false);
+                    }
+                }
+            }
+        }
+
+        // Observatory Tower with glass dome
+        MapBuilder.buildCastleTower(world, 0, cy + 1, 88, 4, 18, Material.SMOOTH_STONE, Material.POLISHED_ANDESITE, Material.CYAN_TERRACOTTA);
+        MapBuilder.fillCircle(world, 0, cy + 20, 88, 3, Material.TINTED_GLASS);
+        world.getBlockAt(0, cy + 21, 88).setType(Material.SPYGLASS != null ? Material.LIGHTNING_ROD : Material.IRON_BARS, false);
+
+        // Airship docking wooden pier
+        MapBuilder.fillBox(world, -18, cy + 1, 95, 18, cy + 1, 102, Material.DARK_OAK_PLANKS);
+        for (int px = -18; px <= 18; px += 6) {
+            world.getBlockAt(px, cy + 2, 95).setType(Material.DARK_OAK_FENCE, false);
+            world.getBlockAt(px, cy + 3, 95).setType(Material.LANTERN, false);
+            world.getBlockAt(px, cy + 2, 102).setType(Material.DARK_OAK_FENCE, false);
+            world.getBlockAt(px, cy + 3, 102).setType(Material.LANTERN, false);
+        }
+
+        // Fantasy airship balloon docked at pier
+        int airshipZ = 110;
+        int airshipY = cy + 12;
+        MapBuilder.fillBox(world, -4, cy + 5, airshipZ - 8, 4, cy + 6, airshipZ + 8, Material.SPRUCE_PLANKS);
+        MapBuilder.fillBox(world, -6, airshipY - 3, airshipZ - 10, 6, airshipY + 3, airshipZ + 10, Material.RED_WOOL);
+        MapBuilder.fillBox(world, -4, airshipY - 2, airshipZ - 8, 4, airshipY + 2, airshipZ + 8, Material.YELLOW_WOOL);
+
+        // Spawn point at Grand Central Plaza
         Location hubSpawn = new Location(world, 0.5, cy + 1, 14.5, 180f, 0f);
         plugin.getLobbyManager().setSpawn(hubSpawn);
     }
+
 
     // =========================================================================
     // 2. Global BedWars Maps (Min 3, Max 16)

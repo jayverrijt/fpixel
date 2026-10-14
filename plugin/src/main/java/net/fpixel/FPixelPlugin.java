@@ -16,6 +16,7 @@ import net.fpixel.lobby.listeners.DoubleJumpListener;
 import net.fpixel.lobby.listeners.LaunchpadListener;
 import net.fpixel.lobby.listeners.LobbyListener;
 import net.fpixel.party.PartyManager;
+import net.fpixel.survival.SurvivalManager;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -34,6 +35,8 @@ public class FPixelPlugin extends JavaPlugin {
     private WorldManager worldManager;
     private DuelManager duelManager;
     private PartyManager partyManager;
+    private SurvivalManager survivalManager;
+
 
     @Override
     public void onEnable() {
@@ -53,6 +56,8 @@ public class FPixelPlugin extends JavaPlugin {
         this.lobbyManager = new LobbyManager(this);
         this.duelManager = new DuelManager(this);
         this.partyManager = new PartyManager(this);
+        this.survivalManager = new SurvivalManager(this);
+        this.survivalManager.init();
 
         // 2. Visual & Display Managers (Scoreboards & Tablist)
         this.scoreboardManager = new ScoreboardManager(this);
@@ -95,6 +100,13 @@ public class FPixelPlugin extends JavaPlugin {
         ForceStartCommand forceStartCmd = new ForceStartCommand(this);
         getCommand("forcestart").setExecutor(forceStartCmd);
 
+        FlyCommand flyCmd = new FlyCommand(this);
+        getCommand("fly").setExecutor(flyCmd);
+
+        SurvivalCommand survivalCmd = new SurvivalCommand(this);
+        getCommand("survival").setExecutor(survivalCmd);
+
+
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);
         Bukkit.getScheduler().runTask(this, () -> {
@@ -133,4 +145,6 @@ public class FPixelPlugin extends JavaPlugin {
     public WorldManager getWorldManager() { return worldManager; }
     public DuelManager getDuelManager() { return duelManager; }
     public PartyManager getPartyManager() { return partyManager; }
+    public SurvivalManager getSurvivalManager() { return survivalManager; }
 }
+

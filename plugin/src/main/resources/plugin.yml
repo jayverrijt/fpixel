@@ -32,3 +32,10 @@ commands:
   forcestart:
     description: Force start the arena countdown immediately
     aliases: [start]
+  fly:
+    description: Toggle flight mode in the Lobby (VIP+ or higher)
+    aliases: [flight]
+  survival:
+    description: Join the Survival SMP world
+    aliases: [smp]
+

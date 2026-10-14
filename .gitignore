@@ -20,3 +20,8 @@ server/paper.jar
 server/plugins/Geyser-Spigot.jar
 server/plugins/floodgate-spigot.jar
 downloaded_maps/
+server/survival/
+*.zip
+*.zip.imported
+import_worlds/*.zip
+server/plugins/SkinsRestorer/cache/

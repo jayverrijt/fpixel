@@ -78,7 +78,23 @@ public class GameSelectorMenu {
                 .build();
         inv.setItem(15, tntrun);
 
-        // 4. The Bridge 1v1 (Slot 29)
+        // 4. Survival SMP (Slot 22 - Centerpiece)
+        ItemStack survival = new ItemBuilder(Material.GRASS_BLOCK)
+                .name("§a§lSurvival SMP")
+                .lore(
+                        "§7Normal Vanilla Survival World!",
+                        "§7Build your base, mine ores, trade & survive.",
+                        "",
+                        "§a✓ Mobs & Animals enabled",
+                        "§a✓ Free Building & Mining",
+                        "§a✓ Vanilla Mechanics",
+                        "",
+                        "§e▶ Click to Play Survival SMP!"
+                )
+                .build();
+        inv.setItem(22, survival);
+
+        // 5. The Bridge 1v1 (Slot 29)
         ItemStack bridge = new ItemBuilder(Material.RED_TERRACOTTA)
                 .name("§6§lThe Bridge 1v1")
                 .lore(
@@ -93,7 +109,7 @@ public class GameSelectorMenu {
                 .build();
         inv.setItem(29, bridge);
 
-        // 5. Sumo 1v1 (Slot 31)
+        // 6. Sumo 1v1 (Slot 31)
         ItemStack sumo = new ItemBuilder(Material.STICK)
                 .name("§e§lSumo 1v1")
                 .lore(
@@ -108,7 +124,7 @@ public class GameSelectorMenu {
                 .build();
         inv.setItem(31, sumo);
 
-        // 6. Parkour Duels (Slot 33)
+        // 7. Parkour Duels (Slot 33)
         ItemStack parkour = new ItemBuilder(Material.DIAMOND_BOOTS)
                 .name("§a§lParkour Duels")
                 .lore(
@@ -134,7 +150,8 @@ public class GameSelectorMenu {
 
             SimpleForm form = SimpleForm.builder()
                     .title("§6§lFPixel Minigames")
-                    .content("Select a minigame to play:")
+                    .content("Select a minigame or world to play:")
+                    .button("§a§lSurvival SMP\n§7Vanilla survival world", FormImage.Type.PATH, "textures/blocks/grass_carried")
                     .button("§c§lBedWars (Quick Join)\n§7Join open match", FormImage.Type.PATH, "textures/items/bed_red")
                     .button("§c§lBedWars (Pick Map)\n§7Choose from 10 maps", FormImage.Type.PATH, "textures/items/bed_red")
                     .button("§b§lSkyWars (Quick Join)\n§7Join open match", FormImage.Type.PATH, "textures/items/ender_eye")
@@ -151,18 +168,19 @@ public class GameSelectorMenu {
                         int id = response.clickedButtonId();
                         Bukkit.getScheduler().runTask(plugin, () -> {
                             switch (id) {
-                                case 0 -> plugin.getGameManager().joinQueue(player, "BEDWARS");
-                                case 1 -> MapSelectMenu.open(plugin, player, "BEDWARS");
-                                case 2 -> plugin.getGameManager().joinQueue(player, "SKYWARS");
-                                case 3 -> MapSelectMenu.open(plugin, player, "SKYWARS");
-                                case 4 -> plugin.getGameManager().joinQueue(player, "TNTRUN");
-                                case 5 -> MapSelectMenu.open(plugin, player, "TNTRUN");
-                                case 6 -> plugin.getGameManager().joinQueue(player, "BRIDGE");
-                                case 7 -> MapSelectMenu.open(plugin, player, "BRIDGE");
-                                case 8 -> plugin.getGameManager().joinQueue(player, "SUMO");
-                                case 9 -> MapSelectMenu.open(plugin, player, "SUMO");
-                                case 10 -> plugin.getGameManager().joinQueue(player, "PARKOUR");
-                                case 11 -> MapSelectMenu.open(plugin, player, "PARKOUR");
+                                case 0 -> plugin.getSurvivalManager().sendToSurvival(player);
+                                case 1 -> plugin.getGameManager().joinQueue(player, "BEDWARS");
+                                case 2 -> MapSelectMenu.open(plugin, player, "BEDWARS");
+                                case 3 -> plugin.getGameManager().joinQueue(player, "SKYWARS");
+                                case 4 -> MapSelectMenu.open(plugin, player, "SKYWARS");
+                                case 5 -> plugin.getGameManager().joinQueue(player, "TNTRUN");
+                                case 6 -> MapSelectMenu.open(plugin, player, "TNTRUN");
+                                case 7 -> plugin.getGameManager().joinQueue(player, "BRIDGE");
+                                case 8 -> MapSelectMenu.open(plugin, player, "BRIDGE");
+                                case 9 -> plugin.getGameManager().joinQueue(player, "SUMO");
+                                case 10 -> MapSelectMenu.open(plugin, player, "SUMO");
+                                case 11 -> plugin.getGameManager().joinQueue(player, "PARKOUR");
+                                case 12 -> MapSelectMenu.open(plugin, player, "PARKOUR");
                             }
                         });
                     })
@@ -175,7 +193,10 @@ public class GameSelectorMenu {
     }
 
     public static void handleClick(FPixelPlugin plugin, Player player, int slot, ClickType clickType) {
-        if (slot == 11) {
+        if (slot == 22) {
+            player.closeInventory();
+            plugin.getSurvivalManager().sendToSurvival(player);
+        } else if (slot == 11) {
             handleOption(plugin, player, "BEDWARS", clickType);
         } else if (slot == 13) {
             handleOption(plugin, player, "SKYWARS", clickType);
