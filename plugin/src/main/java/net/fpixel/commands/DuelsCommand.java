@@ -99,7 +99,7 @@ public class DuelsCommand implements CommandExecutor, TabCompleter {
             case "BEDWARS", "BEDWARD", "BW" -> "BEDWARS";
             case "PVP", "NODEBUFF", "CLASSIC", "SWORD" -> "PVP";
             case "PARKOUR", "PK" -> "PARKOUR";
-            case "TNT", "TNTRUN", "TR" -> "TNT";
+            case "TNT", "TNTRUN", "TR" -> "TNTRUN";
             case "BRIDGE", "THEBRIDGE" -> "BRIDGE";
             default -> "SUMO";
         };

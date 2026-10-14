@@ -41,4 +41,7 @@ commands:
   testing:
     description: Toggle testing mode and manage simulated players for game testing
     aliases: [test]
+  shop:
+    description: Open the BedWars item shop
+
 

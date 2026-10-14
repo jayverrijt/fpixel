@@ -20,6 +20,8 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import net.fpixel.core.testing.SimulatedPlayer;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
 
 import java.util.*;
@@ -222,6 +224,12 @@ public abstract class Arena {
         player.setHealth(20.0);
         player.setFoodLevel(20);
 
+        ItemStack lobbyBed = new net.fpixel.core.util.ItemBuilder(Material.RED_BED)
+                .name("§c§lBack to Lobby §7(Right Click)")
+                .lore("§7Right click to return to the Hub.")
+                .build();
+        player.getInventory().setItem(8, lobbyBed);
+
         if (lobbySpawn != null) {
             player.teleport(lobbySpawn);
         }
@@ -371,6 +379,7 @@ public abstract class Arena {
     public void onPlayerDeath(PlayerDeathEvent event) {}
     public void onPlayerMove(PlayerMoveEvent event) {}
     public void onPlayerInteract(PlayerInteractEvent event) {}
+    public void onPlayerInteractEntity(org.bukkit.event.player.PlayerInteractEntityEvent event) {}
 
     // Getters and setters
     public String getId() { return id; }

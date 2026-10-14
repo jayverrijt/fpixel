@@ -29,6 +29,7 @@ public class BedWarsGame extends Arena {
     private final Map<UUID, Integer> kills = new HashMap<>();
     private final Map<UUID, Integer> finalKills = new HashMap<>();
     private final Map<UUID, Integer> bedsBroken = new HashMap<>();
+    private final List<org.bukkit.entity.Entity> shopkeepers = new ArrayList<>();
 
     public BedWarsGame(FPixelPlugin plugin, String id, String displayName, int minPlayers, int maxPlayers) {
         super(plugin, id, displayName, "BEDWARS", minPlayers, maxPlayers);
@@ -62,6 +63,7 @@ public class BedWarsGame extends Arena {
         kills.clear();
         finalKills.clear();
         bedsBroken.clear();
+        shopkeepers.clear();
 
         // Assign players to teams evenly
         List<Player> playerList = getBukkitPlayers();
@@ -78,6 +80,22 @@ public class BedWarsGame extends Arena {
                 p.teleport(team.getSpawnLocation());
             }
             ChatUtil.sendMessage(p, "§7You are on the " + team.getChatColor() + team.getName() + " Team§7!");
+            ChatUtil.sendMessage(p, "§eRight-click the §a§lShopkeeper Villager §eor your §a§lNether Star §eto buy gear!");
+        }
+
+        // Spawn Shopkeepers at each base
+        for (BedWarsTeam team : teamList) {
+            if (team.getSpawnLocation() != null && team.getSpawnLocation().getWorld() != null) {
+                Location shopLoc = team.getSpawnLocation().clone().add(2.0, 0, 1.5);
+                org.bukkit.entity.Villager v = (org.bukkit.entity.Villager) shopLoc.getWorld().spawnEntity(shopLoc, org.bukkit.entity.EntityType.VILLAGER);
+                v.setCustomName("§a§lITEM SHOP §7(Right Click)");
+                v.setCustomNameVisible(true);
+                v.setAI(false);
+                v.setSilent(true);
+                v.setInvulnerable(true);
+                v.addScoreboardTag("bedwars_shopkeeper");
+                shopkeepers.add(v);
+            }
         }
 
         // Assign simulated players to remaining teams
@@ -101,6 +119,11 @@ public class BedWarsGame extends Arena {
         player.getInventory().setBoots(new ItemBuilder(Material.LEATHER_BOOTS).leatherColor(team.getLeatherColor()).unbreakable(true).build());
 
         player.getInventory().setItem(0, new ItemBuilder(Material.WOODEN_SWORD).unbreakable(true).build());
+        player.getInventory().setItem(1, new ItemBuilder(Material.SHEARS).unbreakable(true).build());
+        player.getInventory().setItem(8, new ItemBuilder(Material.NETHER_STAR)
+                .name("§a§lItem Shop §7(Right Click)")
+                .lore("§7Click to open the BedWars Item Shop.")
+                .build());
     }
 
     @Override
@@ -141,6 +164,16 @@ public class BedWarsGame extends Arena {
                         ChatUtil.sendTitle(p, "§c§lBED DESTROYED!", team.getChatColor() + team.getName() + " Bed §7was destroyed by " + player.getName() + "!", 5, 40, 10);
                     }
                     broadcast("§c§lBED DESTRUCTION §8» " + team.getChatColor() + team.getName() + " Bed §7was broken by " + player.getName() + "!");
+
+                    // In testing mode: breaking the enemy bot's bed automatically eliminates all bots on that team!
+                    if (plugin.getTestingManager() != null && plugin.getTestingManager().isTestingMode()) {
+                        for (UUID member : new ArrayList<>(team.getMembers())) {
+                            net.fpixel.core.testing.SimulatedPlayer bot = simulatedPlayers.get(member);
+                            if (bot != null) {
+                                eliminateSimulatedPlayer(bot);
+                            }
+                        }
+                    }
                     return;
                 }
             }
@@ -183,6 +216,13 @@ public class BedWarsGame extends Arena {
         Player player = event.getPlayer();
         ItemStack item = event.getItem();
 
+        // Item Shop shortcut
+        if (item != null && item.getType() == Material.NETHER_STAR) {
+            event.setCancelled(true);
+            BedWarsShop.open(player);
+            return;
+        }
+
         // Fireball launcher
         if (item != null && item.getType() == Material.FIRE_CHARGE && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
             event.setCancelled(true);
@@ -193,10 +233,15 @@ public class BedWarsGame extends Arena {
             ChatUtil.playSound(player, Sound.ENTITY_GHAST_SHOOT, 1.0f, 1.0f);
             return;
         }
+    }
 
-        // Right clicking NPC/Villager or Shopkeeper
-        if (event.getClickedBlock() != null && (event.getClickedBlock().getType() == Material.CHEST || event.getClickedBlock().getType() == Material.ENDER_CHEST)) {
-            // Can open shop or normal chest
+    @Override
+    public void onPlayerInteractEntity(org.bukkit.event.player.PlayerInteractEntityEvent event) {
+        if (state != GameState.IN_GAME) return;
+        org.bukkit.entity.Entity entity = event.getRightClicked();
+        if (entity != null && (entity.getScoreboardTags().contains("bedwars_shopkeeper") || entity.getType() == org.bukkit.entity.EntityType.VILLAGER)) {
+            event.setCancelled(true);
+            BedWarsShop.open(event.getPlayer());
         }
     }
 
@@ -314,6 +359,10 @@ public class BedWarsGame extends Arena {
             team.setBedAlive(true);
             team.getMembers().clear();
         }
+        for (org.bukkit.entity.Entity e : shopkeepers) {
+            if (e != null && e.isValid()) e.remove();
+        }
+        shopkeepers.clear();
         spawners.clear();
     }
 

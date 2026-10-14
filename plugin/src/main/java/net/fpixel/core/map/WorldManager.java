@@ -39,23 +39,47 @@ public class WorldManager {
         // 1. Grand Castle Hub in default world at (0, 100, 0)
         buildGrandHub(defaultWorld);
 
+        // Dedicated pure void world for all minigames (Sumo, TNT Run, SkyWars, BedWars, Parkour, Bridge)
+        World arenaWorld = getOrCreateArenaWorld(defaultWorld);
+
         // 2. Global Multiplayer BedWars (Min 3, Max 8-16) - Loads downloaded worlds if available
-        setupGlobalBedWarsMaps(defaultWorld);
+        setupGlobalBedWarsMaps(arenaWorld);
 
         // 3. Global Multiplayer SkyWars (Min 3, Max 12)
-        setupGlobalSkyWarsMaps(defaultWorld);
+        setupGlobalSkyWarsMaps(arenaWorld);
 
         // 4. Global Multiplayer TNT Run (Min 3, Max 16)
-        setupGlobalTNTRunMaps(defaultWorld);
+        setupGlobalTNTRunMaps(arenaWorld);
 
         // 5. Global Multiplayer Parkour (Min 3, Max 16)
-        setupGlobalParkourMaps(defaultWorld);
+        setupGlobalParkourMaps(arenaWorld);
 
         // 6. Dedicated 1v1 Duel Arenas (Min 2, Max 2) for:
         //    SkyWars, BedWars, PvP, Parkour, TNT, Sumo, Bridge
-        setupAllDuelArenas(defaultWorld);
+        setupAllDuelArenas(arenaWorld);
 
-        plugin.getLogger().info("Map setup complete! All global lobbies and 1v1 duel arenas are live.");
+        plugin.getLogger().info("Map setup complete! All global lobbies and 1v1 duel arenas are live in void world.");
+    }
+
+    private World getOrCreateArenaWorld(World fallback) {
+        try {
+            WorldCreator wc = new WorldCreator("arenas");
+            wc.generator(new VoidChunkGenerator());
+            World w = wc.createWorld();
+            if (w != null) {
+                w.setAutoSave(false);
+                w.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+                w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+                w.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+                w.setGameRule(GameRule.DO_TILE_DROPS, true);
+                w.setGameRule(GameRule.DO_ENTITY_DROPS, true);
+                w.setTime(6000L);
+                return w;
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to create void arena world: " + e.getMessage());
+        }
+        return fallback;
     }
 
     private World loadOrCreateWorld(String worldName, World fallback) {
@@ -385,6 +409,13 @@ public class WorldManager {
                 MapBuilder.buildMedievalHouse(mapWorld, bx - 4, cy + 1, cz - 4, 8, 8, Material.STONE_BRICKS, Material.OAK_LOG, Material.DARK_OAK_STAIRS, Material.SPRUCE_SLAB);
                 worldAt(mapWorld, bx + 2, cy + 2, cz, Material.BLUE_BED);
                 worldAt(mapWorld, bx - 2, cy + 2, cz, Material.IRON_BLOCK);
+
+                // Two Diamond Islands (North and South of Middle)
+                MapBuilder.buildFloatingIslandNatural(mapWorld, cx, cy, cz - 35, 7, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
+                worldAt(mapWorld, cx, cy + 1, cz - 35, Material.DIAMOND_BLOCK);
+
+                MapBuilder.buildFloatingIslandNatural(mapWorld, cx, cy, cz + 35, 7, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
+                worldAt(mapWorld, cx, cy + 1, cz + 35, Material.DIAMOND_BLOCK);
             }
 
             BedWarsGame game = new BedWarsGame(plugin, id, "BedWars: " + name, 3, 16);
@@ -402,11 +433,16 @@ public class WorldManager {
                 blue.setBedLocation(new Location(mapWorld, cx + 47, cy + 2, cz));
             }
 
+            // Team Base Spawners (Iron & Gold)
             game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx - 42.5, cy + 2.5, cz + 0.5), BedWarsSpawner.SpawnerType.IRON));
             game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx - 42.5, cy + 2.5, cz + 0.5), BedWarsSpawner.SpawnerType.GOLD));
             game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 42.5, cy + 2.5, cz + 0.5), BedWarsSpawner.SpawnerType.IRON));
             game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 42.5, cy + 2.5, cz + 0.5), BedWarsSpawner.SpawnerType.GOLD));
+            // Middle Emerald Spawner
             game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 0.5, cy + 2.5, cz + 0.5), BedWarsSpawner.SpawnerType.EMERALD));
+            // Side Diamond Spawners
+            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 0.5, cy + 2.5, cz - 35 + 0.5), BedWarsSpawner.SpawnerType.DIAMOND));
+            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 0.5, cy + 2.5, cz + 35 + 0.5), BedWarsSpawner.SpawnerType.DIAMOND));
 
             plugin.getGameManager().registerArena(game);
         }
@@ -515,6 +551,7 @@ public class WorldManager {
             TNTRunGame game = new TNTRunGame(plugin, id, "TNT Run: " + names[i], 3, 16, cy - 35);
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
+            game.setArenaSpawn(new Location(defaultWorld, cx + 0.5, cy + 1, cz + 0.5));
             plugin.getGameManager().registerArena(game);
         }
     }
@@ -546,26 +583,29 @@ public class WorldManager {
             game.setStartLocation(new Location(defaultWorld, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f));
 
             int curX = cx;
-            int curZ = cz + 8;
-            for (int cp = 1; cp <= 5; cp++) {
-                for (int step = 1; step <= 3; step++) {
-                    int sx = curX + (step % 2 == 0 ? 2 : -2);
-                    int sz = curZ + step * 4;
-                    defaultWorld.getBlockAt(sx, cy + (step % 2), sz).setType(Material.SPRUCE_PLANKS, false);
-                }
-                curZ += 18;
-                MapBuilder.fillCircle(defaultWorld, curX, cy, curZ, 2, Material.STONE_BRICKS);
-                defaultWorld.getBlockAt(curX, cy + 1, curZ).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
-                game.addCheckpoint(new Location(defaultWorld, curX + 0.5, cy + 1, curZ + 0.5));
+            int curZ = cz + 3;
+            for (int cp = 1; cp <= 4; cp++) {
+                defaultWorld.getBlockAt(curX - 1, cy + 1, curZ + 3).setType(Material.SPRUCE_PLANKS, false);
+                defaultWorld.getBlockAt(curX + 1, cy + 1, curZ + 6).setType(Material.SPRUCE_PLANKS, false);
+                defaultWorld.getBlockAt(curX, cy + 2, curZ + 9).setType(Material.SPRUCE_PLANKS, false);
+                defaultWorld.getBlockAt(curX - 1, cy + 2, curZ + 12).setType(Material.SPRUCE_PLANKS, false);
+                curZ += 15;
+                MapBuilder.fillCircle(defaultWorld, curX, cy + 1, curZ, 2, Material.STONE_BRICKS);
+                defaultWorld.getBlockAt(curX, cy + 2, curZ).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
+                game.addCheckpoint(new Location(defaultWorld, curX + 0.5, cy + 2, curZ + 0.5));
             }
 
-            curZ += 16;
-            MapBuilder.fillCircle(defaultWorld, curX, cy, curZ, 4, Material.QUARTZ_BLOCK);
-            MapBuilder.buildPillar(defaultWorld, curX - 3, cy + 1, curZ, 6, Material.QUARTZ_PILLAR);
-            MapBuilder.buildPillar(defaultWorld, curX + 3, cy + 1, curZ, 6, Material.QUARTZ_PILLAR);
-            MapBuilder.fillBox(defaultWorld, curX - 3, cy + 7, curZ, curX + 3, cy + 7, curZ, Material.GOLD_BLOCK);
-            defaultWorld.getBlockAt(curX, cy + 1, curZ).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
-            game.setFinishLocation(new Location(defaultWorld, curX + 0.5, cy + 1, curZ + 0.5));
+            defaultWorld.getBlockAt(curX + 1, cy + 2, curZ + 3).setType(Material.QUARTZ_BLOCK, false);
+            defaultWorld.getBlockAt(curX - 1, cy + 2, curZ + 6).setType(Material.QUARTZ_BLOCK, false);
+            defaultWorld.getBlockAt(curX, cy + 3, curZ + 9).setType(Material.QUARTZ_BLOCK, false);
+            curZ += 12;
+
+            MapBuilder.fillCircle(defaultWorld, curX, cy + 2, curZ, 3, Material.QUARTZ_BLOCK);
+            MapBuilder.buildPillar(defaultWorld, curX - 2, cy + 3, curZ, 4, Material.QUARTZ_PILLAR);
+            MapBuilder.buildPillar(defaultWorld, curX + 2, cy + 3, curZ, 4, Material.QUARTZ_PILLAR);
+            MapBuilder.fillBox(defaultWorld, curX - 2, cy + 7, curZ, curX + 2, cy + 7, curZ, Material.GOLD_BLOCK);
+            defaultWorld.getBlockAt(curX, cy + 3, curZ).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+            game.setFinishLocation(new Location(defaultWorld, curX + 0.5, cy + 3, curZ + 0.5));
 
             plugin.getGameManager().registerArena(game);
         }
@@ -642,6 +682,13 @@ public class WorldManager {
             worldAt(defaultWorld, bx - 2, cy + 1, cz, Material.IRON_BLOCK);
             worldAt(defaultWorld, cx, cy + 1, cz, Material.EMERALD_BLOCK);
 
+            // Two Diamond Islands (North and South of Mid)
+            MapBuilder.buildFloatingIslandNatural(defaultWorld, cx, cy, cz - 25, 5, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
+            worldAt(defaultWorld, cx, cy + 1, cz - 25, Material.DIAMOND_BLOCK);
+
+            MapBuilder.buildFloatingIslandNatural(defaultWorld, cx, cy, cz + 25, 5, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
+            worldAt(defaultWorld, cx, cy + 1, cz + 25, Material.DIAMOND_BLOCK);
+
             BedWarsTeam red = game.getTeam("RED");
             if (red != null) {
                 red.setSpawnLocation(new Location(defaultWorld, rx + 0.5, cy + 1, cz + 0.5));
@@ -653,9 +700,16 @@ public class WorldManager {
                 blue.setBedLocation(new Location(defaultWorld, bx + 2, cy + 1, cz));
             }
 
+            // Base Spawners (Iron & Gold)
             game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, rx + 2.5, cy + 1.5, cz + 0.5), BedWarsSpawner.SpawnerType.IRON));
+            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, rx + 2.5, cy + 1.5, cz + 0.5), BedWarsSpawner.SpawnerType.GOLD));
             game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, bx - 1.5, cy + 1.5, cz + 0.5), BedWarsSpawner.SpawnerType.IRON));
+            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, bx - 1.5, cy + 1.5, cz + 0.5), BedWarsSpawner.SpawnerType.GOLD));
+            // Middle Emerald Spawner
             game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, cx + 0.5, cy + 1.5, cz + 0.5), BedWarsSpawner.SpawnerType.EMERALD));
+            // Side Diamond Spawners
+            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, cx + 0.5, cy + 2.0, cz - 25 + 0.5), BedWarsSpawner.SpawnerType.DIAMOND));
+            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, cx + 0.5, cy + 2.0, cz + 25 + 0.5), BedWarsSpawner.SpawnerType.DIAMOND));
 
             plugin.getGameManager().registerArena(game);
         }
@@ -705,23 +759,29 @@ public class WorldManager {
             game.setStartLocation(new Location(defaultWorld, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f));
 
             int curX = cx;
-            int curZ = cz + 6;
+            int curZ = cz + 3;
             for (int cp = 1; cp <= 4; cp++) {
-                for (int step = 1; step <= 3; step++) {
-                    int sx = curX + (step % 2 == 0 ? 2 : -2);
-                    int sz = curZ + step * 4;
-                    defaultWorld.getBlockAt(sx, cy + (step % 2), sz).setType(Material.SPRUCE_PLANKS, false);
-                }
-                curZ += 16;
-                MapBuilder.fillCircle(defaultWorld, curX, cy, curZ, 2, Material.STONE_BRICKS);
-                defaultWorld.getBlockAt(curX, cy + 1, curZ).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
-                game.addCheckpoint(new Location(defaultWorld, curX + 0.5, cy + 1, curZ + 0.5));
+                defaultWorld.getBlockAt(curX - 1, cy + 1, curZ + 3).setType(Material.SPRUCE_PLANKS, false);
+                defaultWorld.getBlockAt(curX + 1, cy + 1, curZ + 6).setType(Material.SPRUCE_PLANKS, false);
+                defaultWorld.getBlockAt(curX, cy + 2, curZ + 9).setType(Material.SPRUCE_PLANKS, false);
+                defaultWorld.getBlockAt(curX - 1, cy + 2, curZ + 12).setType(Material.SPRUCE_PLANKS, false);
+                curZ += 15;
+                MapBuilder.fillCircle(defaultWorld, curX, cy + 1, curZ, 2, Material.STONE_BRICKS);
+                defaultWorld.getBlockAt(curX, cy + 2, curZ).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
+                game.addCheckpoint(new Location(defaultWorld, curX + 0.5, cy + 2, curZ + 0.5));
             }
 
-            curZ += 14;
-            MapBuilder.fillCircle(defaultWorld, curX, cy, curZ, 3, Material.QUARTZ_BLOCK);
-            defaultWorld.getBlockAt(curX, cy + 1, curZ).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
-            game.setFinishLocation(new Location(defaultWorld, curX + 0.5, cy + 1, curZ + 0.5));
+            defaultWorld.getBlockAt(curX + 1, cy + 2, curZ + 3).setType(Material.QUARTZ_BLOCK, false);
+            defaultWorld.getBlockAt(curX - 1, cy + 2, curZ + 6).setType(Material.QUARTZ_BLOCK, false);
+            defaultWorld.getBlockAt(curX, cy + 3, curZ + 9).setType(Material.QUARTZ_BLOCK, false);
+            curZ += 12;
+
+            MapBuilder.fillCircle(defaultWorld, curX, cy + 2, curZ, 3, Material.QUARTZ_BLOCK);
+            MapBuilder.buildPillar(defaultWorld, curX - 2, cy + 3, curZ, 4, Material.QUARTZ_PILLAR);
+            MapBuilder.buildPillar(defaultWorld, curX + 2, cy + 3, curZ, 4, Material.QUARTZ_PILLAR);
+            MapBuilder.fillBox(defaultWorld, curX - 2, cy + 7, curZ, curX + 2, cy + 7, curZ, Material.GOLD_BLOCK);
+            defaultWorld.getBlockAt(curX, cy + 3, curZ).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+            game.setFinishLocation(new Location(defaultWorld, curX + 0.5, cy + 3, curZ + 0.5));
 
             plugin.getGameManager().registerArena(game);
         }
@@ -746,6 +806,7 @@ public class WorldManager {
             TNTRunGame game = new TNTRunGame(plugin, id, "TNT Run 1v1 Arena #" + i, 2, 2, cy - 25);
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
+            game.setArenaSpawn(new Location(defaultWorld, cx + 0.5, cy + 1, cz + 0.5));
             plugin.getGameManager().registerArena(game);
         }
 
@@ -792,27 +853,46 @@ public class WorldManager {
             int bx = cx + 30;
 
             if (bWorld.equals(defaultWorld)) {
-                MapBuilder.fillBox(bWorld, rx - 6, cy, cz - 4, rx + 3, cy + 6, cz + 4, Material.STONE_BRICKS);
-                MapBuilder.fillBox(bWorld, rx - 5, cy + 1, cz - 3, rx + 2, cy + 5, cz + 3, Material.AIR);
-                worldAt(bWorld, rx - 4, cy, cz, Material.WATER);
-                worldAt(bWorld, rx - 4, cy - 1, cz, Material.RED_GLAZED_TERRACOTTA);
+                // Red Base (Platform from rx - 14 to rx, open front facing bridge at rx)
+                MapBuilder.fillBox(bWorld, rx - 14, cy, cz - 4, rx, cy, cz + 4, Material.SMOOTH_STONE);
+                MapBuilder.fillBox(bWorld, rx - 14, cy + 1, cz - 4, rx - 14, cy + 4, cz + 4, Material.RED_TERRACOTTA); // back wall
+                MapBuilder.fillBox(bWorld, rx - 13, cy + 1, cz - 4, rx, cy + 4, cz - 4, Material.STONE_BRICKS); // side wall
+                MapBuilder.fillBox(bWorld, rx - 13, cy + 1, cz + 4, rx, cy + 4, cz + 4, Material.STONE_BRICKS); // side wall
+                MapBuilder.fillBox(bWorld, rx - 14, cy + 5, cz - 4, rx, cy + 5, cz + 4, Material.STONE_BRICK_SLAB); // roof
+                // FRONT AT rx IS COMPLETELY OPEN (no front wall)
 
-                MapBuilder.fillBox(bWorld, bx - 3, cy, cz - 4, bx + 6, cy + 6, cz + 4, Material.STONE_BRICKS);
-                MapBuilder.fillBox(bWorld, bx - 2, cy + 1, cz - 3, bx + 5, cy + 5, cz + 3, Material.AIR);
-                worldAt(bWorld, bx + 4, cy, cz, Material.WATER);
-                worldAt(bWorld, bx + 4, cy - 1, cz, Material.BLUE_GLAZED_TERRACOTTA);
+                // 3x3 Red Goal Pit at (rx - 7, cz)
+                MapBuilder.fillBox(bWorld, rx - 8, cy, cz - 1, rx - 6, cy, cz + 1, Material.AIR);
+                MapBuilder.fillBox(bWorld, rx - 9, cy, cz - 2, rx - 5, cy, cz + 2, Material.RED_GLAZED_TERRACOTTA);
+                MapBuilder.fillBox(bWorld, rx - 8, cy - 2, cz - 1, rx - 6, cy - 1, cz + 1, Material.WATER);
+                MapBuilder.fillBox(bWorld, rx - 8, cy - 3, cz - 1, rx - 6, cy - 3, cz + 1, Material.SEA_LANTERN);
 
-                for (int x = rx + 4; x < bx - 3; x++) {
+                // Blue Base (Platform from bx to bx + 14, open front facing bridge at bx)
+                MapBuilder.fillBox(bWorld, bx, cy, cz - 4, bx + 14, cy, cz + 4, Material.SMOOTH_STONE);
+                MapBuilder.fillBox(bWorld, bx + 14, cy + 1, cz - 4, bx + 14, cy + 4, cz + 4, Material.BLUE_TERRACOTTA); // back wall
+                MapBuilder.fillBox(bWorld, bx, cy + 1, cz - 4, bx + 13, cy + 4, cz - 4, Material.STONE_BRICKS); // side wall
+                MapBuilder.fillBox(bWorld, bx, cy + 1, cz + 4, bx + 13, cy + 4, cz + 4, Material.STONE_BRICKS); // side wall
+                MapBuilder.fillBox(bWorld, bx, cy + 5, cz - 4, bx + 14, cy + 5, cz + 4, Material.STONE_BRICK_SLAB); // roof
+                // FRONT AT bx IS COMPLETELY OPEN (no front wall)
+
+                // 3x3 Blue Goal Pit at (bx + 7, cz)
+                MapBuilder.fillBox(bWorld, bx + 6, cy, cz - 1, bx + 8, cy, cz + 1, Material.AIR);
+                MapBuilder.fillBox(bWorld, bx + 5, cy, cz - 2, bx + 9, cy, cz + 2, Material.BLUE_GLAZED_TERRACOTTA);
+                MapBuilder.fillBox(bWorld, bx + 6, cy - 2, cz - 1, bx + 8, cy - 1, cz + 1, Material.WATER);
+                MapBuilder.fillBox(bWorld, bx + 6, cy - 3, cz - 1, bx + 8, cy - 3, cz + 1, Material.SEA_LANTERN);
+
+                // Center 1-block wide bridge of smooth stone connecting red to blue base
+                for (int x = rx; x <= bx; x++) {
                     bWorld.getBlockAt(x, cy, cz).setType(Material.SMOOTH_STONE, false);
                 }
             }
 
-            game.setRedGoal(new Location(bWorld, rx - 4, cy + 1, cz));
-            game.setBlueGoal(new Location(bWorld, bx + 4, cy + 1, cz));
-            game.setRedSpawn(new Location(bWorld, rx + 1.5, cy + 1, cz + 0.5, -90f, 0f));
-            game.setBlueSpawn(new Location(bWorld, bx - 0.5, cy + 1, cz + 0.5, 90f, 0f));
-            game.setRedCage(new Location(bWorld, rx + 1.5, cy + 4, cz + 0.5, -90f, 0f));
-            game.setBlueCage(new Location(bWorld, bx - 0.5, cy + 4, cz + 0.5, 90f, 0f));
+            game.setRedGoal(new Location(bWorld, rx - 7.0, cy, cz + 0.5));
+            game.setBlueGoal(new Location(bWorld, bx + 7.0, cy, cz + 0.5));
+            game.setRedSpawn(new Location(bWorld, rx - 3.5, cy + 1, cz + 0.5, -90f, 0f));
+            game.setBlueSpawn(new Location(bWorld, bx + 3.5, cy + 1, cz + 0.5, 90f, 0f));
+            game.setRedCage(new Location(bWorld, rx - 1.5, cy + 3, cz + 0.5, -90f, 0f));
+            game.setBlueCage(new Location(bWorld, bx + 1.5, cy + 3, cz + 0.5, 90f, 0f));
 
             plugin.getGameManager().registerArena(game);
         }

@@ -10,8 +10,8 @@ public class BedWarsSpawner {
     public enum SpawnerType {
         IRON(Material.IRON_INGOT, 1),
         GOLD(Material.GOLD_INGOT, 4),
-        DIAMOND(Material.DIAMOND, 30),
-        EMERALD(Material.EMERALD, 45);
+        DIAMOND(Material.DIAMOND, 25),
+        EMERALD(Material.EMERALD, 35);
 
         private final Material material;
         private final int intervalSeconds;
@@ -46,6 +46,10 @@ public class BedWarsSpawner {
         if (location == null || location.getWorld() == null) return;
         Item item = location.getWorld().dropItem(location.clone().add(0, 0.5, 0), new ItemStack(type.getMaterial(), 1));
         item.setVelocity(new Vector(0, 0.1, 0));
+
+        if (type == SpawnerType.DIAMOND || type == SpawnerType.EMERALD) {
+            location.getWorld().spawnParticle(org.bukkit.Particle.HAPPY_VILLAGER, location.clone().add(0, 0.8, 0), 4, 0.2, 0.2, 0.2, 0.05);
+        }
     }
 
     public Location getLocation() { return location; }

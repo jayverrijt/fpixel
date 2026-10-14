@@ -43,17 +43,39 @@ public class ParkourGame extends Arena {
     }
 
     @Override
+    public void onPlayerJoin(Player player) {
+        player.getInventory().setItem(8, new net.fpixel.core.util.ItemBuilder(Material.RED_BED)
+                .name("§c§lBack to Lobby §7(Right Click)")
+                .lore("§7Right click to return to the Hub.")
+                .build());
+        ChatUtil.sendMessage(player, " ");
+        ChatUtil.sendMessage(player, "§6§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        ChatUtil.sendMessage(player, "§a§l           PARKOUR RACE");
+        ChatUtil.sendMessage(player, "§7  Sprint and jump through the obstacles to reach the goal!");
+        ChatUtil.sendMessage(player, "§7• Step on §aPressure Plates §7to save your Checkpoint.");
+        ChatUtil.sendMessage(player, "§7• Falling will teleport you back to your last Checkpoint.");
+        ChatUtil.sendMessage(player, "§e• Use your §c§lRed Bed §ein slot 9 or type §b/hub §eto leave.");
+        ChatUtil.sendMessage(player, "§6§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        ChatUtil.sendMessage(player, " ");
+    }
+
+    @Override
     public void onGameStart() {
         playerProgress.clear();
         for (Player p : getBukkitPlayers()) {
             playerProgress.put(p.getUniqueId(), 0);
             p.getInventory().clear();
+            p.getInventory().setItem(8, new net.fpixel.core.util.ItemBuilder(Material.RED_BED)
+                    .name("§c§lBack to Lobby §7(Right Click)")
+                    .lore("§7Right click to return to the Hub.")
+                    .build());
             p.setGameMode(GameMode.ADVENTURE);
             if (startLocation != null) {
                 p.teleport(startLocation.clone().add(0.5, 1, 0.5));
             }
             ChatUtil.sendTitle(p, "§a§lRACE START!", "§eReach the finish line first!", 5, 30, 10);
             ChatUtil.playSound(p, Sound.ITEM_GOAT_HORN_SOUND_0, 0.8f, 1.2f);
+            ChatUtil.sendMessage(p, "§eUse your §c§lRed Bed §e(slot 9) or type §b/hub §eto return to the Lobby.");
         }
     }
 

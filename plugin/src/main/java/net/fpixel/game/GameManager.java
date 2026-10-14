@@ -179,4 +179,13 @@ public class GameManager implements Listener {
             arena.onPlayerInteract(event);
         }
     }
+
+    @EventHandler
+    public void onInteractEntity(org.bukkit.event.player.PlayerInteractEntityEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            arena.onPlayerInteractEntity(event);
+        }
+    }
 }

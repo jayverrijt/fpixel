@@ -85,7 +85,6 @@ public class SimulatedPlayer {
             switch (gameType.toUpperCase()) {
                 case "SUMO" -> {
                     eq.setChestplate(new ItemBuilder(Material.LEATHER_CHESTPLATE).build());
-                    eq.setItemInMainHand(new ItemBuilder(Material.STICK).name("§6§lSumo Stick").build());
                     Attribute maxHealthType = resolveAttribute("GENERIC_MAX_HEALTH", "MAX_HEALTH");
                     if (maxHealthType != null) {
                         var maxHealth = zombie.getAttribute(maxHealthType);

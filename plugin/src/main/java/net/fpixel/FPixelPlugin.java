@@ -118,6 +118,9 @@ public class FPixelPlugin extends JavaPlugin {
         getCommand("testing").setExecutor(testingCmd);
         getCommand("testing").setTabCompleter(testingCmd);
 
+        ShopCommand shopCmd = new ShopCommand(this);
+        getCommand("shop").setExecutor(shopCmd);
+
 
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);

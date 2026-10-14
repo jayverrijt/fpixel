@@ -61,27 +61,20 @@ public class SumoGame extends Arena {
         Player p2 = Bukkit.getPlayer(player2);
         net.fpixel.core.testing.SimulatedPlayer bot = simulatedPlayers.get(player2);
 
-        ItemStack sumoStick = new ItemBuilder(Material.STICK)
-                .name("§6§lSumo Stick")
-                .addEnchant(Enchantment.KNOCKBACK, 2)
-                .build();
-
         if (p1 != null) {
             p1.getInventory().clear();
-            p1.getInventory().setItem(0, sumoStick);
             p1.setHealth(20.0);
             p1.setFoodLevel(20);
             if (spawn1 != null) p1.teleport(spawn1);
-            ChatUtil.sendTitle(p1, "§eROUND " + currentRound, "§7First to knock off opponent wins!", 5, 30, 5);
+            ChatUtil.sendTitle(p1, "§eROUND " + currentRound, "§7Fist fight! Knock opponent into the void!", 5, 30, 5);
         }
 
         if (p2 != null) {
             p2.getInventory().clear();
-            p2.getInventory().setItem(0, sumoStick);
             p2.setHealth(20.0);
             p2.setFoodLevel(20);
             if (spawn2 != null) p2.teleport(spawn2);
-            ChatUtil.sendTitle(p2, "§eROUND " + currentRound, "§7First to knock off opponent wins!", 5, 30, 5);
+            ChatUtil.sendTitle(p2, "§eROUND " + currentRound, "§7Fist fight! Knock opponent into the void!", 5, 30, 5);
         } else if (bot != null && spawn2 != null) {
             bot.spawnEntity(spawn2, "SUMO");
         }

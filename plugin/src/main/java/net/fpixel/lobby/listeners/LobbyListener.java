@@ -157,10 +157,48 @@ public class LobbyListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onBedReturnInteract(PlayerInteractEvent event) {
+        ItemStack item = event.getItem();
+        if (item == null || item.getType() != Material.RED_BED) return;
+
+        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+            String name = item.getItemMeta().getDisplayName();
+            if (name.contains("Lobby") || name.contains("Back") || name.contains("Hub") || name.contains("Return")) {
+                event.setCancelled(true);
+                Player player = event.getPlayer();
+                Arena arena = plugin.getGameManager().getPlayerArena(player);
+                if (arena != null) {
+                    arena.leave(player);
+                }
+                plugin.getLobbyManager().teleportToLobby(player);
+                ChatUtil.sendMessage(player, "§eReturned to the Hub!");
+                ChatUtil.playSound(player, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
+            }
+        }
+    }
+
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         String title = event.getView().getTitle();
+
+        ItemStack clicked = event.getCurrentItem();
+        if (clicked != null && clicked.getType() == Material.RED_BED && clicked.hasItemMeta() && clicked.getItemMeta().hasDisplayName()) {
+            String name = clicked.getItemMeta().getDisplayName();
+            if (name.contains("Lobby") || name.contains("Back") || name.contains("Hub") || name.contains("Return")) {
+                event.setCancelled(true);
+                player.closeInventory();
+                Arena arena = plugin.getGameManager().getPlayerArena(player);
+                if (arena != null) {
+                    arena.leave(player);
+                }
+                plugin.getLobbyManager().teleportToLobby(player);
+                ChatUtil.sendMessage(player, "§eReturned to the Hub!");
+                ChatUtil.playSound(player, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
+                return;
+            }
+        }
 
         if (title.contains("Game Navigator")) {
             event.setCancelled(true);
@@ -191,14 +229,14 @@ public class LobbyListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onLeavesDecay(org.bukkit.event.block.LeavesDecayEvent event) {
-        if (!event.getBlock().getWorld().getName().equalsIgnoreCase("survival")) {
+        if (event.getBlock().getWorld().getName().equalsIgnoreCase("world")) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onItemSpawn(org.bukkit.event.entity.ItemSpawnEvent event) {
-        if (!event.getEntity().getWorld().getName().equalsIgnoreCase("survival")) {
+        if (event.getEntity().getWorld().getName().equalsIgnoreCase("world")) {
             event.setCancelled(true);
         }
     }

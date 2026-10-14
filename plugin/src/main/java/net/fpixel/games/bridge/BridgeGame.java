@@ -196,14 +196,20 @@ public class BridgeGame extends Arena {
         boolean isRed = redTeam.contains(p.getUniqueId());
         Location loc = p.getLocation();
 
-        // Check goal collision (within 2 blocks of enemy goal)
-        if (isRed && blueGoal != null && loc.distanceSquared(blueGoal) <= 4.0) {
-            // Red scored!
+        // Check goal collision (within 3x3 pit bounds of enemy goal)
+        if (isRed && blueGoal != null && isInsideGoal(loc, blueGoal)) {
             scoreGoal("RED", p);
-        } else if (!isRed && redGoal != null && loc.distanceSquared(redGoal) <= 4.0) {
-            // Blue scored!
+        } else if (!isRed && redGoal != null && isInsideGoal(loc, redGoal)) {
             scoreGoal("BLUE", p);
         }
+    }
+
+    private boolean isInsideGoal(Location playerLoc, Location goalLoc) {
+        if (playerLoc.getWorld() == null || !playerLoc.getWorld().equals(goalLoc.getWorld())) return false;
+        double dx = Math.abs(playerLoc.getX() - goalLoc.getX());
+        double dz = Math.abs(playerLoc.getZ() - goalLoc.getZ());
+        double dy = playerLoc.getY() - goalLoc.getY();
+        return dx <= 2.2 && dz <= 2.2 && dy >= -2.0 && dy <= 3.0;
     }
 
     private void scoreGoal(String team, Player scorer) {
@@ -212,6 +218,9 @@ public class BridgeGame extends Arena {
         } else {
             blueScore++;
         }
+
+        // Clean up placed blocks on bridge for next round
+        rollbackEngine.rollback();
 
         broadcast("§6§lGOAL! " + (team.equals("RED") ? "§c[RED] " : "§9[BLUE] ") + scorer.getName() + " §escored a goal! §f(" + redScore + " - " + blueScore + ")");
 

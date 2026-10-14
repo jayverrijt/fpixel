@@ -18,9 +18,15 @@ public class TNTRunGame extends Arena {
     private final Set<Location> decayingBlocks = new HashSet<>();
     private final Map<UUID, Integer> doubleJumps = new HashMap<>();
 
+    private Location arenaSpawn;
+
     public TNTRunGame(FPixelPlugin plugin, String id, String displayName, int minPlayers, int maxPlayers, int deathY) {
         super(plugin, id, displayName, "TNTRUN", minPlayers, maxPlayers);
         this.deathY = deathY;
+    }
+
+    public void setArenaSpawn(Location arenaSpawn) {
+        this.arenaSpawn = arenaSpawn;
     }
 
     @Override
@@ -28,14 +34,28 @@ public class TNTRunGame extends Arena {
         decayingBlocks.clear();
         doubleJumps.clear();
 
+        Location spawnTarget = (arenaSpawn != null) ? arenaSpawn.clone().add(0, 1, 0) : lobbySpawn;
+
         for (Player p : getBukkitPlayers()) {
             doubleJumps.put(p.getUniqueId(), 3);
             p.setAllowFlight(true);
             p.setFlying(false);
-            if (lobbySpawn != null) {
-                p.teleport(lobbySpawn);
+            p.getInventory().clear();
+            p.getInventory().setItem(0, new net.fpixel.core.util.ItemBuilder(Material.FEATHER)
+                    .name("§b§lDouble Jump §7(3 Left)")
+                    .lore("§7Double-tap space to jump into the air!")
+                    .build());
+            if (spawnTarget != null) {
+                p.teleport(spawnTarget);
             }
+            ChatUtil.sendTitle(p, "§6§lTNT RUN", "§eRun and don't stop! The floor is falling!", 5, 40, 10);
             ChatUtil.sendMessage(p, "§aYou have §b3 Double Jumps§a! Double-tap space to use them.");
+        }
+
+        for (net.fpixel.core.testing.SimulatedPlayer bot : simulatedPlayers.values()) {
+            if (spawnTarget != null) {
+                bot.spawnEntity(spawnTarget, "TNTRUN");
+            }
         }
     }
 
