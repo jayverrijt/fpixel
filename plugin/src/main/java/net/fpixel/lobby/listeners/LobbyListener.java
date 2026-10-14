@@ -7,6 +7,7 @@ import net.fpixel.core.util.ChatUtil;
 import net.fpixel.game.Arena;
 import net.fpixel.games.bedwars.BedWarsShop;
 import net.fpixel.lobby.menus.GameSelectorMenu;
+import net.fpixel.lobby.menus.MapSelectMenu;
 import net.fpixel.lobby.menus.PlayerHiderMenu;
 import net.fpixel.lobby.menus.StatsMenu;
 import org.bukkit.GameMode;
@@ -144,7 +145,10 @@ public class LobbyListener implements Listener {
 
         if (title.contains("Game Navigator")) {
             event.setCancelled(true);
-            GameSelectorMenu.handleClick(plugin, player, event.getRawSlot());
+            GameSelectorMenu.handleClick(plugin, player, event.getRawSlot(), event.getClick());
+        } else if (title.contains("Select Map:")) {
+            event.setCancelled(true);
+            MapSelectMenu.handleClick(plugin, player, title, event.getRawSlot());
         } else if (title.contains("Player Visibility")) {
             event.setCancelled(true);
             PlayerHiderMenu.handleClick(plugin, player, event.getRawSlot());

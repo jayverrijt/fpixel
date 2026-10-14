@@ -43,6 +43,10 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             plugin.getRankManager().loadRanks();
             plugin.getLobbyManager().loadSpawn();
             sender.sendMessage(ChatUtil.colorize("§aFPixel configuration and ranks reloaded successfully!"));
+        } else if (sub.equals("buildmaps")) {
+            sender.sendMessage(ChatUtil.colorize("§eBuilding Grand Hub and 30 custom minigame maps..."));
+            plugin.getWorldManager().generateAllMaps(Bukkit.getWorlds().get(0));
+            sender.sendMessage(ChatUtil.colorize("§aAll 30 maps generated and registered successfully!"));
         } else if (sub.equals("list")) {
             sender.sendMessage(ChatUtil.colorize("§6§lActive Arenas:"));
             for (Arena arena : plugin.getGameManager().getArenas()) {
@@ -74,6 +78,7 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(ChatUtil.colorize("§6§lFPixel Admin Commands:"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel setlobby §7- Set hub spawn point"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel buildmaps §7- Generate Grand Hub & 30 minigame maps"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel list §7- List all minigame arenas"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel addcoins <player> <amount> §7- Give coins"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel reload §7- Reload configuration"));
@@ -83,7 +88,7 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> list = Arrays.asList("setlobby", "list", "addcoins", "reload");
+            List<String> list = Arrays.asList("setlobby", "buildmaps", "list", "addcoins", "reload");
             List<String> filtered = new ArrayList<>();
             for (String s : list) {
                 if (s.toLowerCase().startsWith(args[0].toLowerCase())) {

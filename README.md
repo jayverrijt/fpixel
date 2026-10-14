@@ -1,6 +1,6 @@
-# 🎮 FPixel Network - Hypixel-Grade Minigame Server
+# 🎮 FPixel Network - Hypixel-Grade Minigame Server (Minecraft 26.3)
 
-Een 100% server-sided Minecraft minigame netwerk gebouwd op **Paper 1.21.4** met **GeyserMC & Floodgate** crossplay voor Bedrock en Java, en een volledig zelfgebouwde modulaire plugin suite (**FPixelCore**).
+Een 100% server-sided Minecraft minigame netwerk gebouwd op **Paper 26.3 (Java 25+)** met **GeyserMC 26.3 & Floodgate** crossplay voor Bedrock en Java, **SkinsRestorer** voor officiële skins in offline/crossplay modus, en de custom plugin suite **FPixelCore**.
 
 ---
 
@@ -15,57 +15,75 @@ cd server
 ### 2. Verbinden
 - **Java Edition (PC/Mac/Linux)**:
   - Server Adres: `localhost` of `localhost:25565`
-  - Versie: `1.20 - 1.21.4+` (Vanilla client, geen mods nodig!)
+  - Versie: `Minecraft 26.3` (Vanilla client, geen mods nodig!)
 - **Bedrock Edition (Telefoon, Tablet, Windows 10/11, Console)**:
-  - Server IP: `localhost` (of lokaal IP van de computer)
+  - Server IP: `localhost`
   - Poort: `19132` (UDP)
-  - Werkt via **GeyserMC** en **Floodgate**!
+  - Draait via **GeyserMC 26.3 Preview** en **Floodgate**!
 
 ---
 
-## 🌟 Wat is er gebouwd?
+## 🌟 Nieuwste Updates
 
-### 1. 🏰 Hypixel-Style Lobby Systeem
-- **Scoreboard (Sidebar)**: Volledig flikkervrij via Team-prefixes. Toont rang, munten, level, online spelers, server status en IP.
-- **Geanimeerde Tablist**: Gesorteerd op rang (Owner ➔ Admin ➔ VIP ➔ Speler) met server-header en live ping.
-- **Hotbar Items**:
-  - `Slot 0`: **Navigator Compass** (Opent Game Selector)
-  - `Slot 4`: **Spelerskop** (Toont profiel & statistieken)
-  - `Slot 7`: **Player Visibility Dye** (Iedereen zichtbaar / Alleen VIPs / Niemand)
-  - `Slot 8`: **Nether Star** (Snelmenu)
-- **Lobby Mechanieken**:
-  - **Double Jump**: Twee keer op spatie drukken lanceert je door de lucht met wolk-particles en windgeluid.
-  - **Launchpads**: Drukplaten op redstone-blokken lanceren je met hoge snelheid vooruit.
-  - **Void Fall Save**: Val je van de spawn af? Je wordt soepel teruggeteleporteerd naar de spawn met geluidseffect en actie-balk.
-  - **Bescherming**: Geen schade, geen honger, geen blokken breken of plaatsen in de lobby.
+### ⚡ Paper 26.3 & Geyser 26.3
+- Server geüpgraded naar **Paper 26.3 build 181** (draaiend op OpenJDK 25).
+- Geyser geüpgraded naar de officiële **26.3 build** (`pr.6712 #3108`), waardoor Bedrock clients naadloos kunnen verbinden.
+- Plugin toolchain geüpgraded naar Java 25 & `paper-api:26.3.build.181-stable`.
 
-### 2. 📱 Cross-Play & Bedrock Form GUI (Geyser + Floodgate)
-- Bedrock spelers worden automatisch gedetecteerd.
-- Bij het openen van het Game Selector menu krijgen Bedrock-spelers een **native Bedrock SimpleForm dialoog** met klikbare knoppen en game-iconen!
-- Java-spelers zien de vertrouwde en interactieve **Chest GUI**.
+### 👤 Skins Fix (SkinsRestorer)
+- **SkinsRestorer** geïntegreerd in de server:
+  - Spelers krijgen automatisch hun officiële Mojang skin te zien.
+  - Bedrock skins worden vertaald via Floodgate/SkinsRestorer.
+  - Spelers kunnen zelf skins wijzigen met `/skin <naam>` of `/skin url <url>`.
 
-### 3. ⚔️ Minigames
+### 🏰 Grand Floating Hub & Wachtlobby's
+- **Grand Hub (Zwevend Plaza op `0, 100, 0`)**:
+  - Grote ronde plaza van Quartz en Gold met centrale spawn dais.
+  - 4 monumentale poorten met pilaren en Sea Lantern verlichting.
+  - Launchpads op Emerald Blocks aan de randen.
+  - Void protection: val je van het eiland? Je wordt soepel teruggeteleporteerd naar het midden!
+- **Pre-Game Wachtlobby's**:
+  - Elke arena heeft een eigen verhoogde zwevende observatie- en wachtruimte van glas en pilaren waar spelers wachten tot de countdown afloopt.
 
-#### 🛏️ BedWars 1v1 / Teams (`bw-1`)
-- **Eiland Generators**: Spawnt periodiek ijzer en goud bij team-bases, en diamanten in het midden.
-- **Bed Defensie & Respawn**: Zolang je bed heel is, respawn je na 5 seconden (met countdown-scherm en blindness).
-- **Bed Vernietiging**: Als een vijand je bed sloopt klinkt er een Ender Dragon roar en verschijnt er een schermbrede titel. Daarna is elke kill een **Final Kill**!
-- **Shopkeeper GUI**: Koop blokken (wol, hout, end stone, obsidian), zwaarden, armor upgrades, gereedschap, golden apples, instant primed TNT en vuurballen (rechtsklik om te schieten!).
+### 🗺️ 30 Prachtige Custom Maps (10 per Minigame!)
 
-#### 🏃 TNT Run (`tnt-1`)
-- **Decay Mechaniek**: Zodra je over zand of gravel loopt, verdwijnt het blok (en de TNT eronder) na 0.4s (8 ticks).
-- **Double Jump Saves**: Elke speler heeft 3 double jumps om zichzelf te redden bij gevaarlijke sprongen!
-- **Scoreboard**: Live spelers over en overgebleven double jumps.
-- **Win Conditie**: Laatste speler die overblijft wint!
+In het **Game Navigator Compass** kun je nu met **Links-klik** direct Quick-Playen, of met **Rechts-klik** (of `/maps <game>`) zelf een van de 10 maps kiezen!
 
-#### 🥊 Sumo Duels 1v1 (`sumo-1`)
-- **Platform Arena**: Snelle 1-tegen-1 duels op een zwevend eilandje.
-- **Sumo Stick**: Knockback II stick. Spelers nemen 0 health schade, maar wel sterke knockback impulsen.
-- **Best of 3**: Eerste speler met 2 rondes winst pakt de overwinning en verhoogt zijn win streak!
+#### 🛏️ BedWars (10 Themed Maps):
+1. **Sky Castle** (`bw-1`): Koninklijk kasteel van Stone Bricks met goudaccenten en torens.
+2. **Desert Dunes** (`bw-2`): Zandsteen piramides, terracotta accenten en cactussen.
+3. **Neon Matrix** (`bw-3`): Cyber-futuristische arena van Black, Cyan en Magenta Concrete.
+4. **Frost Peak** (`bw-4`): Winter wonderland van Packed Ice, sneeuw en blauw glas.
+5. **Nether Citadel** (`bw-5`): Nether Bricks, Crimson hout en gloeiend magma.
+6. **Fairy Hollow** (`bw-6`): Magische paddenstoeleneilanden met Mycelium en reuzenpaddenstoelen.
+7. **Clockwork Sky** (`bw-7`): Steampunk sfeer met Cut Copper, Mud Bricks en kettingen.
+8. **Sugar Rush** (`bw-8`): Snoepwereld van pastelroze beton, suikerstokken en taart.
+9. **Ancient Shrine** (`bw-9`): Overwoekerde tempel van Mossy Stone, junglelianen en bamboe.
+10. **Sunken Ocean** (`bw-10`): Atlantis thema met Prismarine, koralen en zeelantaarns.
 
-### 4. ⚡ Instant Arena Rollback Engine
-- Alle gebroken, geplaatste en veranderde blokken worden in het geheugen bijgehouden (`RollbackEngine`).
-- Zodra een minigame eindigt, wordt de hele arena in **1 server-tick (0ms)** hersteld naar de originele staat. Geen laggende world-reloads!
+#### 🏃 TNT Run (10 Multi-Tier Maps):
+1. **The Colosseum** (`tnt-1`): Klassieke Romeinse arena met 4 lagen Sand + TNT en marmeren pilaren.
+2. **Cyber Grid** (`tnt-2`): Neon Matrix vloeren van cyaan beton boven TNT.
+3. **Frozen Abyss** (`tnt-3`): Gletsjer arena van sneeuw en ijs boven TNT.
+4. **Lava Chamber** (`tnt-4`): Hete vulkaan kamer met rood zand en magma pilaren.
+5. **Jungle Ruins** (`tnt-5`): Oerwoud tempel met grind en lianen.
+6. **Space Station** (`tnt-6`): Ruimtestation met purpur en ender rod verlichting.
+7. **The Factory** (`tnt-7`): Industriële koperen fabriek met mud bricks.
+8. **Cotton Fall** (`tnt-8`): Suikerspin arena met zacht pastelroze vloeren.
+9. **Sahara Storm** (`tnt-9`): Woestijn storm arena met fijn zandsteen.
+10. **Void Shrine** (`tnt-10`): Zwevend heiligdom van glad kwarts en amethist.
+
+#### 🥊 Sumo 1v1 (10 Dueling Arenas):
+1. **Japanese Dojo** (`sumo-1`): Rond platform van Dark Oak en Red Wool met bamboe lantaarns.
+2. **Neon Ring** (`sumo-2`): Cyber octogoon van Blackstone met oplichtende cyaan rand.
+3. **Roman Pit** (`sumo-3`): Glad graniet duelplatform zwevend in de lucht.
+4. **Slippery Peak** (`sumo-4`): Gladde ijsvloer voor extra spectaculaire knockbacks.
+5. **Fire Caldera** (`sumo-5`): Vulkaanring omringd door vuurpotten en basalt.
+6. **Sky Kingdom** (`sumo-6`): Hemels kwartsplatform met gouden kroonranden.
+7. **Mushroom Cap** (`sumo-7`): Duelleer op de rode hoed van een reuzenpaddenstoel.
+8. **Plank Arena** (`sumo-8`): Piratenschip dek platform met scheepslantaarns.
+9. **Amethyst Spire** (`sumo-9`): Paars kristallen duelring van diepsteen en amethist.
+10. **Oasis Ring** (`sumo-10`): Zandstenen oase ring met palmhout sokkels.
 
 ---
 
@@ -73,21 +91,12 @@ cd server
 
 | Commando | Permissie | Omschrijving |
 | :--- | :--- | :--- |
-| `/lobby` of `/hub` | Iedereen | Teleporteert terug naar de hub |
-| `/join <bedwars\|tntrun\|sumo>` | Iedereen | Zoekt automatisch een open arena en joint |
+| `/lobby` of `/hub` | Iedereen | Teleporteert direct terug naar de Grand Hub |
+| `/join <game>` | Iedereen | Automatische matchmaking (zoekt eerste open arena) |
+| `/maps <game>` | Iedereen | Opent de map selector met alle 10 maps voor de game |
+| `/skin <naam>` | Iedereen | Verandert je Minecraft skin direct |
 | `/setrank <speler> <rank>` | `fpixel.admin` | Wijzigt rang (`OWNER`, `ADMIN`, `MOD`, `VIP_PLUS`, `VIP`, `DEFAULT`) |
-| `/fpixel list` | `fpixel.admin` | Toont status van alle actieve arena's |
-| `/fpixel setlobby` | `fpixel.admin` | Zet de lobby spawn op je huidige positie |
-| `/fpixel addcoins <speler> <aantal>` | `fpixel.admin` | Voegt munten toe aan een speler |
-| `/fpixel reload` | `fpixel.admin` | Herlaadt configuratie en rangen |
-
----
-
-## 🔨 Plugin Aanpassen & Compileren
-
-De broncode bevindt zich in `plugin/`. Je kunt het project altijd opnieuw bouwen met Gradle:
-```bash
-cd plugin
-gradle build
-```
-Het gecompileerde bestand (`FPixelCore.jar`) wordt automatisch direct in `server/plugins/` geplaatst!
+| `/fpixel list` | `fpixel.admin` | Toont status van alle 30 actieve arena's |
+| `/fpixel buildmaps` | `fpixel.admin` | Herbouwt de Grand Hub en alle 30 maps direct in-game |
+| `/fpixel setlobby` | `fpixel.admin` | Zet het lobby spawn punt op je huidige positie |
+| `/fpixel addcoins <speler> <aantal>` | `fpixel.admin` | Voegt coins toe aan een speler |

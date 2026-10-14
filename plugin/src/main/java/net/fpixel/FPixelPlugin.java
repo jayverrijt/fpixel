@@ -3,8 +3,10 @@ package net.fpixel;
 import net.fpixel.commands.FPixelCommand;
 import net.fpixel.commands.JoinCommand;
 import net.fpixel.commands.LobbyCommand;
+import net.fpixel.commands.MapsCommand;
 import net.fpixel.commands.RankCommand;
 import net.fpixel.core.bedrock.BedrockManager;
+import net.fpixel.core.map.WorldManager;
 import net.fpixel.core.rank.RankManager;
 import net.fpixel.core.scoreboard.ScoreboardManager;
 import net.fpixel.core.tablist.TablistManager;
@@ -36,6 +38,7 @@ public class FPixelPlugin extends JavaPlugin {
     private SpectatorManager spectatorManager;
     private GameManager gameManager;
     private LobbyManager lobbyManager;
+    private net.fpixel.core.map.WorldManager worldManager;
 
     @Override
     public void onEnable() {
@@ -79,50 +82,18 @@ public class FPixelPlugin extends JavaPlugin {
         getCommand("setrank").setExecutor(rankCmd);
         getCommand("setrank").setTabCompleter(rankCmd);
 
-        // 5. Register Default Playable Arenas
-        registerDefaultArenas();
+        MapsCommand mapsCmd = new MapsCommand(this);
+        getCommand("maps").setExecutor(mapsCmd);
+        getCommand("maps").setTabCompleter(mapsCmd);
 
-        getLogger().info("FPixelCore has successfully loaded! Ready for players.");
-    }
-
-    private void registerDefaultArenas() {
+        // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
+        this.worldManager = new WorldManager(this);
         Bukkit.getScheduler().runTask(this, () -> {
             World defaultWorld = Bukkit.getWorlds().get(0);
-            Location spawn = defaultWorld.getSpawnLocation();
-
-            // Default BedWars 1v1 Arena
-            BedWarsGame bw = new BedWarsGame(this, "bw-1", "BedWars 1v1", 2, 2);
-            bw.setLobbySpawn(spawn.clone().add(100, 10, 0));
-            bw.setSpectatorSpawn(spawn.clone().add(100, 25, 0));
-            BedWarsTeam red = bw.getTeam("RED");
-            if (red != null) {
-                red.setSpawnLocation(spawn.clone().add(80, 5, 0));
-                red.setBedLocation(spawn.clone().add(78, 5, 0));
-            }
-            BedWarsTeam blue = bw.getTeam("BLUE");
-            if (blue != null) {
-                blue.setSpawnLocation(spawn.clone().add(120, 5, 0));
-                blue.setBedLocation(spawn.clone().add(122, 5, 0));
-            }
-            bw.addSpawner(new BedWarsSpawner(spawn.clone().add(80, 5, 2), BedWarsSpawner.SpawnerType.IRON));
-            bw.addSpawner(new BedWarsSpawner(spawn.clone().add(120, 5, 2), BedWarsSpawner.SpawnerType.IRON));
-            bw.addSpawner(new BedWarsSpawner(spawn.clone().add(100, 5, 0), BedWarsSpawner.SpawnerType.DIAMOND));
-            gameManager.registerArena(bw);
-
-            // Default TNT Run Arena
-            TNTRunGame tnt = new TNTRunGame(this, "tnt-1", "TNT Run Classic", 2, 8, (int) spawn.getY() - 15);
-            tnt.setLobbySpawn(spawn.clone().add(0, 15, 100));
-            tnt.setSpectatorSpawn(spawn.clone().add(0, 25, 100));
-            gameManager.registerArena(tnt);
-
-            // Default Sumo Arena
-            SumoGame sumo = new SumoGame(this, "sumo-1", "Sumo 1v1", (int) spawn.getY() - 5);
-            sumo.setLobbySpawn(spawn.clone().add(-100, 10, 0));
-            sumo.setSpectatorSpawn(spawn.clone().add(-100, 20, 0));
-            sumo.setSpawn1(spawn.clone().add(-97, 5, 0));
-            sumo.setSpawn2(spawn.clone().add(-103, 5, 0));
-            gameManager.registerArena(sumo);
+            worldManager.generateAllMaps(defaultWorld);
         });
+
+        getLogger().info("FPixelCore has successfully loaded! Ready for players.");
     }
 
     @Override
@@ -150,4 +121,5 @@ public class FPixelPlugin extends JavaPlugin {
     public SpectatorManager getSpectatorManager() { return spectatorManager; }
     public GameManager getGameManager() { return gameManager; }
     public LobbyManager getLobbyManager() { return lobbyManager; }
+    public net.fpixel.core.map.WorldManager getWorldManager() { return worldManager; }
 }

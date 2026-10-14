@@ -7,7 +7,7 @@ version = "1.0.0-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
 
@@ -18,13 +18,13 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:26.3.build.181-stable")
     compileOnly("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")
 }
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
-    options.release.set(21)
+    options.release.set(25)
 }
 
 tasks.named<Jar>("jar") {

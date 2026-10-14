@@ -7,6 +7,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.geysermc.cumulus.form.SimpleForm;
@@ -39,9 +40,10 @@ public class GameSelectorMenu {
                         "§7Defend your bed and destroy enemy beds!",
                         "§7Upgrade equipment with iron, gold & emeralds.",
                         "",
-                        "§fMode: §e1v1 / Teams",
+                        "§fMaps: §a10 Themed Arenas",
                         "",
-                        "§e▶ Click to play!"
+                        "§e▶ Left Click: §fQuick Play",
+                        "§e▶ Right Click: §fSelect Map"
                 )
                 .build();
         inv.setItem(11, bedwars);
@@ -53,9 +55,10 @@ public class GameSelectorMenu {
                         "§7The blocks beneath your feet disappear!",
                         "§7Keep sprinting and use double jumps to survive.",
                         "",
-                        "§fMode: §eClassic FFA",
+                        "§fMaps: §a10 Multi-Tier Arenas",
                         "",
-                        "§e▶ Click to play!"
+                        "§e▶ Left Click: §fQuick Play",
+                        "§e▶ Right Click: §fSelect Map"
                 )
                 .build();
         inv.setItem(13, tntrun);
@@ -67,9 +70,10 @@ public class GameSelectorMenu {
                         "§7Fast-paced knockback duels on a floating arena.",
                         "§7First to knock opponent into void wins the round!",
                         "",
-                        "§fMode: §eBest of 3",
+                        "§fMaps: §a10 Dueling Arenas",
                         "",
-                        "§e▶ Click to play!"
+                        "§e▶ Left Click: §fQuick Play",
+                        "§e▶ Right Click: §fSelect Map"
                 )
                 .build();
         inv.setItem(15, sumo);
@@ -86,48 +90,53 @@ public class GameSelectorMenu {
             SimpleForm form = SimpleForm.builder()
                     .title("§6§lFPixel Minigames")
                     .content("Select a minigame to play:")
-                    .button("§c§lBedWars\n§7Click to join", FormImage.Type.PATH, "textures/items/bed_red")
-                    .button("§c§lTNT Run\n§7Click to join", FormImage.Type.PATH, "textures/blocks/tnt_side")
-                    .button("§6§lSumo 1v1\n§7Click to join", FormImage.Type.PATH, "textures/items/stick")
+                    .button("§c§lBedWars (Quick Join)\n§7Join open match", FormImage.Type.PATH, "textures/items/bed_red")
+                    .button("§c§lBedWars (Pick Map)\n§7Choose from 10 maps", FormImage.Type.PATH, "textures/items/bed_red")
+                    .button("§c§lTNT Run (Quick Join)\n§7Join open match", FormImage.Type.PATH, "textures/blocks/tnt_side")
+                    .button("§c§lTNT Run (Pick Map)\n§7Choose from 10 maps", FormImage.Type.PATH, "textures/blocks/tnt_side")
+                    .button("§6§lSumo 1v1 (Quick Join)\n§7Join open match", FormImage.Type.PATH, "textures/items/stick")
+                    .button("§6§lSumo 1v1 (Pick Map)\n§7Choose from 10 maps", FormImage.Type.PATH, "textures/items/stick")
                     .validResultHandler(response -> {
                         int id = response.clickedButtonId();
                         Bukkit.getScheduler().runTask(plugin, () -> {
-                            if (id == 0) {
-                                plugin.getGameManager().joinQueue(player, "BEDWARS");
-                            } else if (id == 1) {
-                                plugin.getGameManager().joinQueue(player, "TNTRUN");
-                            } else if (id == 2) {
-                                plugin.getGameManager().joinQueue(player, "SUMO");
-                            }
+                            if (id == 0) plugin.getGameManager().joinQueue(player, "BEDWARS");
+                            else if (id == 1) MapSelectMenu.open(plugin, player, "BEDWARS");
+                            else if (id == 2) plugin.getGameManager().joinQueue(player, "TNTRUN");
+                            else if (id == 3) MapSelectMenu.open(plugin, player, "TNTRUN");
+                            else if (id == 4) plugin.getGameManager().joinQueue(player, "SUMO");
+                            else if (id == 5) MapSelectMenu.open(plugin, player, "SUMO");
                         });
                     })
                     .build();
 
             fp.sendForm(form);
         } catch (Throwable t) {
-            // Fallback to chest GUI if Floodgate Cumulus throws
-            openJavaFallback(player);
+            open(plugin, player);
         }
     }
 
-    private static void openJavaFallback(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, ChatUtil.component(TITLE));
-        inv.setItem(11, new ItemBuilder(Material.RED_BED).name("§c§lBedWars").build());
-        inv.setItem(13, new ItemBuilder(Material.TNT).name("§c§lTNT Run").build());
-        inv.setItem(15, new ItemBuilder(Material.STICK).name("§6§lSumo 1v1").build());
-        player.openInventory(inv);
-    }
-
-    public static void handleClick(FPixelPlugin plugin, Player player, int slot) {
+    public static void handleClick(FPixelPlugin plugin, Player player, int slot, ClickType clickType) {
         if (slot == 11) {
-            player.closeInventory();
-            plugin.getGameManager().joinQueue(player, "BEDWARS");
+            if (clickType.isRightClick()) {
+                MapSelectMenu.open(plugin, player, "BEDWARS");
+            } else {
+                player.closeInventory();
+                plugin.getGameManager().joinQueue(player, "BEDWARS");
+            }
         } else if (slot == 13) {
-            player.closeInventory();
-            plugin.getGameManager().joinQueue(player, "TNTRUN");
+            if (clickType.isRightClick()) {
+                MapSelectMenu.open(plugin, player, "TNTRUN");
+            } else {
+                player.closeInventory();
+                plugin.getGameManager().joinQueue(player, "TNTRUN");
+            }
         } else if (slot == 15) {
-            player.closeInventory();
-            plugin.getGameManager().joinQueue(player, "SUMO");
+            if (clickType.isRightClick()) {
+                MapSelectMenu.open(plugin, player, "SUMO");
+            } else {
+                player.closeInventory();
+                plugin.getGameManager().joinQueue(player, "SUMO");
+            }
         }
     }
 }

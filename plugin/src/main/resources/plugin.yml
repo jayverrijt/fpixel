@@ -20,3 +20,6 @@ commands:
   setrank:
     description: Set a player's rank
     permission: fpixel.admin
+  maps:
+    description: Browse and select a minigame map
+    aliases: [map]
