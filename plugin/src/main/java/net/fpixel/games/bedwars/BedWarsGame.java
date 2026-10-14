@@ -163,9 +163,9 @@ public class BedWarsGame extends Arena {
             spawner.tick();
         }
 
-        // Check for void death at Y <= -500
+        // Check for void death at Y <= 50.0 (falling off islands at Y=100)
         for (Player p : getBukkitPlayers()) {
-            if (p.getLocation().getY() <= -500.0) {
+            if (p.getLocation().getY() <= 50.0) {
                 handleVoidDeath(p);
             }
         }
@@ -438,7 +438,7 @@ public class BedWarsGame extends Arena {
         if (state != GameState.IN_GAME) return;
         Player player = event.getPlayer();
         if (!players.contains(player.getUniqueId())) return;
-        if (player.getLocation().getY() <= -500.0) {
+        if (player.getLocation().getY() <= 50.0) {
             handleVoidDeath(player);
         }
     }

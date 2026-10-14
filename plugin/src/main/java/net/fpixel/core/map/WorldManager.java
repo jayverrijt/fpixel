@@ -483,14 +483,8 @@ public class WorldManager {
                 int rx = cx - 48;
                 MapBuilder.buildFloatingIslandNatural(mapWorld, rx, cy, cz, 15, pal[0], pal[1], pal[2]);
 
-                // Open-air Bed on decorative pedestal facing East (NOT in any structure!)
-                MapBuilder.fillBox(mapWorld, rx - 9, cy, cz - 1, rx - 6, cy, cz + 1, Material.RED_TERRACOTTA);
-                MapBuilder.fillBox(mapWorld, rx - 9, cy + 1, cz - 1, rx - 6, cy + 1, cz + 1, Material.RED_WOOL);
-                MapBuilder.placeBed(mapWorld, rx - 7, cy + 2, cz, org.bukkit.block.BlockFace.EAST, Material.RED_BED);
-                mapWorld.getBlockAt(rx - 9, cy + 2, cz - 1).setType(Material.LANTERN, false);
-                mapWorld.getBlockAt(rx - 9, cy + 2, cz + 1).setType(Material.LANTERN, false);
-                mapWorld.getBlockAt(rx - 6, cy + 2, cz - 1).setType(Material.LANTERN, false);
-                mapWorld.getBlockAt(rx - 6, cy + 2, cz + 1).setType(Material.LANTERN, false);
+                // Open-air Bed placed directly on flat island ground (NO lanterns or pedestals so players can defend with blocks)
+                MapBuilder.placeBed(mapWorld, rx - 7, cy + 1, cz, org.bukkit.block.BlockFace.EAST, Material.RED_BED);
 
                 // Fortified Base Forge Structure (7x7) housing Spawners, Shopkeeper, and Upgrades NPC inside!
                 MapBuilder.buildBedWarsBaseForge(mapWorld, rx + 2, cy, cz - 3, pal[0], pal[1], pal[2]);
@@ -501,14 +495,8 @@ public class WorldManager {
                 int bx = cx + 48;
                 MapBuilder.buildFloatingIslandNatural(mapWorld, bx, cy, cz, 15, pal[0], pal[1], pal[2]);
 
-                // Open-air Bed on decorative pedestal facing East (NOT in any structure!)
-                MapBuilder.fillBox(mapWorld, bx + 6, cy, cz - 1, bx + 9, cy, cz + 1, Material.BLUE_TERRACOTTA);
-                MapBuilder.fillBox(mapWorld, bx + 6, cy + 1, cz - 1, bx + 9, cy + 1, cz + 1, Material.BLUE_WOOL);
-                MapBuilder.placeBed(mapWorld, bx + 7, cy + 2, cz, org.bukkit.block.BlockFace.EAST, Material.BLUE_BED);
-                mapWorld.getBlockAt(bx + 6, cy + 2, cz - 1).setType(Material.LANTERN, false);
-                mapWorld.getBlockAt(bx + 6, cy + 2, cz + 1).setType(Material.LANTERN, false);
-                mapWorld.getBlockAt(bx + 9, cy + 2, cz - 1).setType(Material.LANTERN, false);
-                mapWorld.getBlockAt(bx + 9, cy + 2, cz + 1).setType(Material.LANTERN, false);
+                // Open-air Bed placed directly on flat island ground (NO lanterns or pedestals so players can defend with blocks)
+                MapBuilder.placeBed(mapWorld, bx + 7, cy + 1, cz, org.bukkit.block.BlockFace.EAST, Material.BLUE_BED);
 
                 // Fortified Base Forge Structure (7x7) housing Spawners, Shopkeeper, and Upgrades NPC inside!
                 MapBuilder.buildBedWarsBaseForge(mapWorld, bx - 8, cy, cz - 3, pal[0], pal[1], pal[2]);
@@ -540,14 +528,14 @@ public class WorldManager {
             if (red != null) {
                 // Spawn inside base forge structure
                 red.setSpawnLocation(new Location(mapWorld, rx + 5.5, cy + 1.2, cz + 0.5, -90f, 0f));
-                red.setBedLocation(new Location(mapWorld, rx - 7, cy + 2, cz));
+                red.setBedLocation(new Location(mapWorld, rx - 7, cy + 1, cz));
                 red.setBedFacing(org.bukkit.block.BlockFace.EAST);
             }
             BedWarsTeam blue = game.getTeam("BLUE");
             if (blue != null) {
                 // Spawn inside base forge structure
                 blue.setSpawnLocation(new Location(mapWorld, bx - 4.5, cy + 1.2, cz + 0.5, 90f, 0f));
-                blue.setBedLocation(new Location(mapWorld, bx + 7, cy + 2, cz));
+                blue.setBedLocation(new Location(mapWorld, bx + 7, cy + 1, cz));
                 blue.setBedFacing(org.bukkit.block.BlockFace.EAST);
             }
 
@@ -887,18 +875,9 @@ public class WorldManager {
             MapBuilder.buildFloatingIslandNatural(defaultWorld, bx, cy, cz, 12, Material.GRASS_BLOCK, Material.DIRT, Material.STONE);
             MapBuilder.buildFloatingIslandNatural(defaultWorld, cx, cy, cz, 9, Material.GRASS_BLOCK, Material.DIRT, Material.STONE);
 
-            // Open-air beds on decorative pedestals (NOT inside any structure)
-            MapBuilder.fillBox(defaultWorld, rx - 7, cy, cz - 1, rx - 5, cy, cz + 1, Material.RED_TERRACOTTA);
-            MapBuilder.fillBox(defaultWorld, rx - 7, cy + 1, cz - 1, rx - 5, cy + 1, cz + 1, Material.RED_WOOL);
-            MapBuilder.placeBed(defaultWorld, rx - 6, cy + 2, cz, org.bukkit.block.BlockFace.EAST, Material.RED_BED);
-            defaultWorld.getBlockAt(rx - 7, cy + 2, cz - 1).setType(Material.LANTERN, false);
-            defaultWorld.getBlockAt(rx - 7, cy + 2, cz + 1).setType(Material.LANTERN, false);
-
-            MapBuilder.fillBox(defaultWorld, bx + 5, cy, cz - 1, bx + 7, cy, cz + 1, Material.BLUE_TERRACOTTA);
-            MapBuilder.fillBox(defaultWorld, bx + 5, cy + 1, cz - 1, bx + 7, cy + 1, cz + 1, Material.BLUE_WOOL);
-            MapBuilder.placeBed(defaultWorld, bx + 6, cy + 2, cz, org.bukkit.block.BlockFace.EAST, Material.BLUE_BED);
-            defaultWorld.getBlockAt(bx + 7, cy + 2, cz - 1).setType(Material.LANTERN, false);
-            defaultWorld.getBlockAt(bx + 7, cy + 2, cz + 1).setType(Material.LANTERN, false);
+            // Open-air beds directly on island floor (NO lanterns, pedestals, or clutter so players can defend)
+            MapBuilder.placeBed(defaultWorld, rx - 6, cy + 1, cz, org.bukkit.block.BlockFace.EAST, Material.RED_BED);
+            MapBuilder.placeBed(defaultWorld, bx + 6, cy + 1, cz, org.bukkit.block.BlockFace.EAST, Material.BLUE_BED);
 
             // Fortified Base Forge Shelters (7x7) housing Spawners, Shopkeeper, Upgrades NPC
             MapBuilder.buildBedWarsBaseForge(defaultWorld, rx + 1, cy, cz - 3, Material.STONE_BRICKS, Material.DEEPSLATE_BRICKS, Material.RED_TERRACOTTA);
@@ -929,13 +908,13 @@ public class WorldManager {
             BedWarsTeam red = game.getTeam("RED");
             if (red != null) {
                 red.setSpawnLocation(new Location(defaultWorld, rx + 4.5, cy + 1.2, cz + 0.5, -90f, 0f));
-                red.setBedLocation(new Location(defaultWorld, rx - 6, cy + 2, cz));
+                red.setBedLocation(new Location(defaultWorld, rx - 6, cy + 1, cz));
                 red.setBedFacing(org.bukkit.block.BlockFace.EAST);
             }
             BedWarsTeam blue = game.getTeam("BLUE");
             if (blue != null) {
                 blue.setSpawnLocation(new Location(defaultWorld, bx - 3.5, cy + 1.2, cz + 0.5, 90f, 0f));
-                blue.setBedLocation(new Location(defaultWorld, bx + 6, cy + 2, cz));
+                blue.setBedLocation(new Location(defaultWorld, bx + 6, cy + 1, cz));
                 blue.setBedFacing(org.bukkit.block.BlockFace.EAST);
             }
 

@@ -96,8 +96,13 @@ public class SurvivalManager {
 
     private void checkAndExtractZip() {
         File container = plugin.getServer().getWorldContainer();
-        File targetDir = new File(container, "survival");
+        File dimDir = new File(container, "dimensions/minecraft/survival");
+        if (new File(dimDir, "region").exists()) {
+            plugin.getLogger().info("Survival SMP world is already installed in " + dimDir.getAbsolutePath());
+            return;
+        }
 
+        File targetDir = new File(container, "survival");
         // If level.dat already exists, the world is already installed
         if (new File(targetDir, "level.dat").exists()) {
             plugin.getLogger().info("Survival SMP world is already extracted and ready in " + targetDir.getAbsolutePath());

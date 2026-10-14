@@ -188,9 +188,9 @@ public class GameManager implements Listener {
                     event.setCancelled(true);
                     return;
                 }
-                // BedWars: Void damage triggers only at Y <= -500
+                // BedWars: Void damage triggers at Y <= 50.0 (promptly upon falling off islands)
                 if (arena.getGameType().equalsIgnoreCase("BEDWARS") && event.getCause() == org.bukkit.event.entity.EntityDamageEvent.DamageCause.VOID) {
-                    if (player.getLocation().getY() > -500.0) {
+                    if (player.getLocation().getY() > 50.0) {
                         event.setCancelled(true);
                         return;
                     }
