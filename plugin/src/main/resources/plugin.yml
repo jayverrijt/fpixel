@@ -23,3 +23,12 @@ commands:
   maps:
     description: Browse and select a minigame map
     aliases: [map]
+  duels:
+    description: Challenge players to 1v1 duels
+    aliases: [duel]
+  party:
+    description: Group up with friends and play minigames together
+    aliases: [p]
+  forcestart:
+    description: Force start the arena countdown immediately
+    aliases: [start]

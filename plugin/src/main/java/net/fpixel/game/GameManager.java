@@ -85,7 +85,14 @@ public class GameManager implements Listener {
         }
 
         if (best != null) {
-            return best.join(player);
+            boolean joined = best.join(player);
+            if (joined && plugin.getPartyManager() != null) {
+                var party = plugin.getPartyManager().getParty(player);
+                if (party != null && party.isLeader(player)) {
+                    party.warpToGame(best);
+                }
+            }
+            return joined;
         } else {
             ChatUtil.sendMessage(player, "§cNo open arena found for " + gameType + "! Please try again soon.");
             return false;

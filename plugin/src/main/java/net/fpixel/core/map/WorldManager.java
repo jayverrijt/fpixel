@@ -39,25 +39,60 @@ public class WorldManager {
     private void buildGrandHub(World world) {
         int cx = 0, cy = 100, cz = 0;
 
-        // Grand floating plaza (radius 22)
-        MapBuilder.fillCircle(world, cx, cy, cz, 22, Material.QUARTZ_BLOCK);
-        MapBuilder.fillRing(world, cx, cy, cz, 20, 22, Material.GOLD_BLOCK);
-        MapBuilder.fillRing(world, cx, cy, cz, 12, 13, Material.SEA_LANTERN);
-        MapBuilder.fillCircle(world, cx, cy, cz, 5, Material.CYAN_CONCRETE);
+        // 1. Grand floating castle plaza (radius 34)
+        MapBuilder.fillCircle(world, cx, cy, cz, 34, Material.QUARTZ_BLOCK);
+        MapBuilder.fillRing(world, cx, cy, cz, 32, 34, Material.GOLD_BLOCK);
+        MapBuilder.fillRing(world, cx, cy, cz, 20, 21, Material.SEA_LANTERN);
+        MapBuilder.fillRing(world, cx, cy, cz, 10, 11, Material.GOLD_BLOCK);
+        MapBuilder.fillCircle(world, cx, cy, cz, 6, Material.CYAN_CONCRETE);
         MapBuilder.fillCircle(world, cx, cy, cz, 2, Material.GOLD_BLOCK);
 
-        // Inverted island cone underneath
-        MapBuilder.buildFloatingIsland(world, cx, cy - 1, cz, 22, Material.SMOOTH_STONE, Material.DEEPSLATE, Material.BEDROCK);
+        // Underside majestic floating island cone
+        MapBuilder.buildFloatingIsland(world, cx, cy - 1, cz, 34, Material.SMOOTH_STONE, Material.DEEPSLATE, Material.BEDROCK);
 
-        // Four grand arched entrance portals / pillars
-        int[][] dirs = {{16, 0}, {-16, 0}, {0, 16}, {0, -16}};
+        // 2. Impenetrable Barrier and Castle Wall Perimeter (Radius 35, Y=101 to Y=120)
+        for (int y = 1; y <= 6; y++) {
+            MapBuilder.fillRing(world, cx, cy + y, cz, 34, 35, Material.STONE_BRICKS);
+        }
+        for (int y = 7; y <= 25; y++) {
+            MapBuilder.fillRing(world, cx, cy + y, cz, 35, 36, Material.BARRIER);
+        }
+
+        // 3. Four Grand Cardinal Towers (North, South, East, West)
+        int[][] dirs = {{28, 0}, {-28, 0}, {0, 28}, {0, -28}};
         for (int[] d : dirs) {
-            MapBuilder.buildPillar(world, cx + d[0], cy + 1, cz + d[1], 8, Material.QUARTZ_PILLAR);
-            world.getBlockAt(cx + d[0], cy + 9, cz + d[1]).setType(Material.SEA_LANTERN, false);
+            MapBuilder.buildPillar(world, cx + d[0], cy + 1, cz + d[1], 12, Material.QUARTZ_PILLAR);
+            MapBuilder.fillCircle(world, cx + d[0], cy + 13, cz + d[1], 2, Material.GOLD_BLOCK);
+            world.getBlockAt(cx + d[0], cy + 14, cz + d[1]).setType(Material.SEA_LANTERN, false);
 
-            // Launchpads on outer edges
-            world.getBlockAt(cx + (int)(d[0] * 1.2), cy, cz + (int)(d[1] * 1.2)).setType(Material.EMERALD_BLOCK, false);
-            world.getBlockAt(cx + (int)(d[0] * 1.2), cy + 1, cz + (int)(d[1] * 1.2)).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+            // Launchpads on pathway
+            world.getBlockAt(cx + (int)(d[0] * 0.7), cy, cz + (int)(d[1] * 0.7)).setType(Material.EMERALD_BLOCK, false);
+            world.getBlockAt(cx + (int)(d[0] * 0.7), cy + 1, cz + (int)(d[1] * 0.7)).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+        }
+
+        // 4. Central Grand Gazebo Arches
+        int[][] gazeboPillars = {{4, 4}, {-4, 4}, {4, -4}, {-4, -4}};
+        for (int[] gp : gazeboPillars) {
+            MapBuilder.buildPillar(world, cx + gp[0], cy + 1, cz + gp[1], 7, Material.QUARTZ_PILLAR);
+            world.getBlockAt(cx + gp[0], cy + 8, cz + gp[1]).setType(Material.GOLD_BLOCK, false);
+        }
+        // Gazebo roof
+        MapBuilder.fillCircle(world, cx, cy + 9, cz, 5, Material.CYAN_STAINED_GLASS);
+        world.getBlockAt(cx, cy + 10, cz).setType(Material.BEACON, false);
+
+        // 5. Parkour Course in the South-East quadrant
+        int[][] parkourSteps = {{12, 12, 2}, {14, 15, 4}, {17, 18, 6}, {20, 20, 9}, {23, 20, 11}, {23, 23, 13}};
+        for (int[] step : parkourSteps) {
+            world.getBlockAt(cx + step[0], cy + step[2], cz + step[1]).setType(Material.GOLD_BLOCK, false);
+        }
+        world.getBlockAt(cx + 23, cy + 14, cz + 23).setType(Material.EMERALD_BLOCK, false);
+
+        // 6. Water Fountains in North-East and North-West quadrants
+        int[][] fountainCenters = {{15, -15}, {-15, -15}};
+        for (int[] fc : fountainCenters) {
+            MapBuilder.fillRing(world, cx + fc[0], cy + 1, cz + fc[1], 2, 3, Material.SMOOTH_QUARTZ);
+            world.getBlockAt(cx + fc[0], cy + 1, cz + fc[1]).setType(Material.SEA_LANTERN, false);
+            world.getBlockAt(cx + fc[0], cy + 2, cz + fc[1]).setType(Material.WATER, false);
         }
 
         // Set plugin lobby spawn at center
@@ -121,8 +156,8 @@ public class WorldManager {
             MapBuilder.buildFloatingIsland(world, cx, cy, cz + 35, 5, pal[0], pal[1], pal[2]);
             world.getBlockAt(cx, cy + 1, cz + 35).setType(Material.DIAMOND_BLOCK, false);
 
-            // Register BedWars Arena
-            BedWarsGame game = new BedWarsGame(plugin, id, "BedWars: " + name, 2, 8);
+            // Register BedWars Arena (Starts from 3 players)
+            BedWarsGame game = new BedWarsGame(plugin, id, "BedWars: " + name, 3, 8);
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
 
@@ -198,8 +233,8 @@ public class WorldManager {
                 }
             }
 
-            // Register TNT Run Arena
-            TNTRunGame game = new TNTRunGame(plugin, id, "TNT Run: " + name, 2, 16, cy - 35);
+            // Register TNT Run Arena (Starts from 3 players)
+            TNTRunGame game = new TNTRunGame(plugin, id, "TNT Run: " + name, 3, 16, cy - 35);
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
             plugin.getGameManager().registerArena(game);

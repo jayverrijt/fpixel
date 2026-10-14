@@ -17,10 +17,13 @@ public class RankManager {
     private final File ranksFile;
     private FileConfiguration ranksConfig;
     private final Map<UUID, Rank> playerRanks = new HashMap<>();
+    private final Map<String, Rank> nameRanks = new HashMap<>();
 
     public RankManager(FPixelPlugin plugin) {
         this.plugin = plugin;
         this.ranksFile = new File(plugin.getDataFolder(), "ranks.yml");
+        // Jay_V0 is always OWNER
+        nameRanks.put("jay_v0", Rank.OWNER);
         loadRanks();
     }
 
@@ -36,16 +39,23 @@ public class RankManager {
         ranksConfig = YamlConfiguration.loadConfiguration(ranksFile);
         for (String key : ranksConfig.getKeys(false)) {
             try {
-                UUID uuid = UUID.fromString(key);
-                Rank rank = Rank.valueOf(ranksConfig.getString(key, "DEFAULT"));
-                playerRanks.put(uuid, rank);
+                Rank rank = Rank.valueOf(ranksConfig.getString(key, "MEMBER"));
+                if (key.contains("-")) {
+                    playerRanks.put(UUID.fromString(key), rank);
+                } else {
+                    nameRanks.put(key.toLowerCase(), rank);
+                }
             } catch (Exception ignored) {}
         }
+        nameRanks.put("jay_v0", Rank.OWNER);
     }
 
     public void saveRanks() {
         for (Map.Entry<UUID, Rank> entry : playerRanks.entrySet()) {
             ranksConfig.set(entry.getKey().toString(), entry.getValue().name());
+        }
+        for (Map.Entry<String, Rank> entry : nameRanks.entrySet()) {
+            ranksConfig.set(entry.getKey(), entry.getValue().name());
         }
         try {
             ranksConfig.save(ranksFile);
@@ -55,20 +65,33 @@ public class RankManager {
     }
 
     public Rank getRank(Player player) {
+        if (player.getName().equalsIgnoreCase("Jay_V0")) {
+            return Rank.OWNER;
+        }
+        if (nameRanks.containsKey(player.getName().toLowerCase())) {
+            return nameRanks.get(player.getName().toLowerCase());
+        }
         return getRank(player.getUniqueId());
     }
 
     public Rank getRank(UUID uuid) {
-        return playerRanks.getOrDefault(uuid, Rank.DEFAULT);
+        return playerRanks.getOrDefault(uuid, Rank.MEMBER);
     }
 
     public void setRank(Player player, Rank rank) {
         setRank(player.getUniqueId(), rank);
+        nameRanks.put(player.getName().toLowerCase(), rank);
+        saveRanks();
         updatePlayerDisplayName(player);
     }
 
     public void setRank(UUID uuid, Rank rank) {
         playerRanks.put(uuid, rank);
+        saveRanks();
+    }
+
+    public void setRankByName(String name, Rank rank) {
+        nameRanks.put(name.toLowerCase(), rank);
         saveRanks();
     }
 

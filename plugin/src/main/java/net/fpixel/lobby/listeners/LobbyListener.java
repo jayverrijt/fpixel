@@ -11,6 +11,7 @@ import net.fpixel.lobby.menus.MapSelectMenu;
 import net.fpixel.lobby.menus.PlayerHiderMenu;
 import net.fpixel.lobby.menus.StatsMenu;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -85,8 +86,21 @@ public class LobbyListener implements Listener {
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
-        if (isInLobby(player) && player.getLocation().getY() < -10) {
-            plugin.getLobbyManager().teleportToLobby(player);
+        if (isInLobby(player)) {
+            Location spawn = plugin.getLobbyManager().getSpawnLocation();
+            Location loc = player.getLocation();
+            if (loc.getWorld() != null && loc.getWorld().equals(spawn.getWorld())) {
+                double dx = loc.getX() - spawn.getX();
+                double dz = loc.getZ() - spawn.getZ();
+                double distSq = dx * dx + dz * dz;
+
+                // Max lobby radius is 42 blocks, min Y is 97, max Y is 140
+                if (distSq > 42 * 42 || loc.getY() < 97 || loc.getY() > 140) {
+                    plugin.getLobbyManager().teleportToLobby(player);
+                    ChatUtil.sendActionBar(player, "§c§lStay inside the Hub area!");
+                    ChatUtil.playSound(player, Sound.ENTITY_ENDERMAN_TELEPORT, 0.7f, 1.2f);
+                }
+            }
         }
     }
 

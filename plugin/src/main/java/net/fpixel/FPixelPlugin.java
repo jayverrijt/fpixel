@@ -1,29 +1,22 @@
 package net.fpixel;
 
-import net.fpixel.commands.FPixelCommand;
-import net.fpixel.commands.JoinCommand;
-import net.fpixel.commands.LobbyCommand;
-import net.fpixel.commands.MapsCommand;
-import net.fpixel.commands.RankCommand;
+import net.fpixel.commands.*;
 import net.fpixel.core.bedrock.BedrockManager;
 import net.fpixel.core.map.WorldManager;
+import net.fpixel.core.rank.ChatListener;
 import net.fpixel.core.rank.RankManager;
 import net.fpixel.core.scoreboard.ScoreboardManager;
 import net.fpixel.core.tablist.TablistManager;
 import net.fpixel.core.user.UserManager;
+import net.fpixel.duels.DuelManager;
 import net.fpixel.game.GameManager;
 import net.fpixel.game.spectator.SpectatorManager;
-import net.fpixel.games.bedwars.BedWarsGame;
-import net.fpixel.games.bedwars.BedWarsSpawner;
-import net.fpixel.games.bedwars.BedWarsTeam;
-import net.fpixel.games.sumo.SumoGame;
-import net.fpixel.games.tntrun.TNTRunGame;
 import net.fpixel.lobby.LobbyManager;
 import net.fpixel.lobby.listeners.DoubleJumpListener;
 import net.fpixel.lobby.listeners.LaunchpadListener;
 import net.fpixel.lobby.listeners.LobbyListener;
+import net.fpixel.party.PartyManager;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -38,7 +31,9 @@ public class FPixelPlugin extends JavaPlugin {
     private SpectatorManager spectatorManager;
     private GameManager gameManager;
     private LobbyManager lobbyManager;
-    private net.fpixel.core.map.WorldManager worldManager;
+    private WorldManager worldManager;
+    private DuelManager duelManager;
+    private PartyManager partyManager;
 
     @Override
     public void onEnable() {
@@ -56,15 +51,18 @@ public class FPixelPlugin extends JavaPlugin {
         this.spectatorManager = new SpectatorManager(this);
         this.gameManager = new GameManager(this);
         this.lobbyManager = new LobbyManager(this);
+        this.duelManager = new DuelManager(this);
+        this.partyManager = new PartyManager(this);
 
         // 2. Visual & Display Managers (Scoreboards & Tablist)
         this.scoreboardManager = new ScoreboardManager(this);
         this.tablistManager = new TablistManager(this);
 
-        // 3. Register Lobby & Gameplay Listeners
+        // 3. Register Lobby, Chat & Gameplay Listeners
         Bukkit.getPluginManager().registerEvents(new LobbyListener(this), this);
         Bukkit.getPluginManager().registerEvents(new DoubleJumpListener(this), this);
         Bukkit.getPluginManager().registerEvents(new LaunchpadListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new ChatListener(this), this);
 
         // 4. Register Commands
         FPixelCommand fpixelCmd = new FPixelCommand(this);
@@ -85,6 +83,17 @@ public class FPixelPlugin extends JavaPlugin {
         MapsCommand mapsCmd = new MapsCommand(this);
         getCommand("maps").setExecutor(mapsCmd);
         getCommand("maps").setTabCompleter(mapsCmd);
+
+        DuelsCommand duelsCmd = new DuelsCommand(this);
+        getCommand("duels").setExecutor(duelsCmd);
+        getCommand("duels").setTabCompleter(duelsCmd);
+
+        PartyCommand partyCmd = new PartyCommand(this);
+        getCommand("party").setExecutor(partyCmd);
+        getCommand("party").setTabCompleter(partyCmd);
+
+        ForceStartCommand forceStartCmd = new ForceStartCommand(this);
+        getCommand("forcestart").setExecutor(forceStartCmd);
 
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);
@@ -121,5 +130,7 @@ public class FPixelPlugin extends JavaPlugin {
     public SpectatorManager getSpectatorManager() { return spectatorManager; }
     public GameManager getGameManager() { return gameManager; }
     public LobbyManager getLobbyManager() { return lobbyManager; }
-    public net.fpixel.core.map.WorldManager getWorldManager() { return worldManager; }
+    public WorldManager getWorldManager() { return worldManager; }
+    public DuelManager getDuelManager() { return duelManager; }
+    public PartyManager getPartyManager() { return partyManager; }
 }

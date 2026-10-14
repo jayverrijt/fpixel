@@ -4,9 +4,12 @@ public enum Rank {
     OWNER("§c[OWNER] ", "§c", 100, "fpixel.rank.owner"),
     ADMIN("§c[ADMIN] ", "§c", 90, "fpixel.rank.admin"),
     MOD("§2[MOD] ", "§2", 80, "fpixel.rank.mod"),
-    VIP_PLUS("§a[VIP§6+§a] ", "§a", 60, "fpixel.rank.vipplus"),
-    VIP("§a[VIP] ", "§a", 50, "fpixel.rank.vip"),
-    DEFAULT("§7", "§7", 0, "");
+    YOUTUBE("§c[§fYOUTUBE§c] ", "§c", 75, "fpixel.rank.youtube"),
+    MVP_PLUS("§b[MVP§c+§b] ", "§b", 70, "fpixel.rank.mvpplus"),
+    MVP("§b[MVP] ", "§b", 60, "fpixel.rank.mvp"),
+    VIP_PLUS("§a[VIP§6+§a] ", "§a", 50, "fpixel.rank.vipplus"),
+    VIP("§a[VIP] ", "§a", 40, "fpixel.rank.vip"),
+    MEMBER("§7", "§7", 0, "");
 
     private final String prefix;
     private final String color;

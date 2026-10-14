@@ -62,6 +62,14 @@ public abstract class Arena {
         }
     }
 
+    public void forceStart() {
+        if (state == GameState.WAITING || state == GameState.STARTING) {
+            countdown = 3;
+            state = GameState.STARTING;
+            broadcast("§a§lSTART §8» §eGame countdown has been force-started!");
+        }
+    }
+
     protected void handleCountdownTick() {
         if (players.size() < minPlayers) {
             state = GameState.WAITING;
