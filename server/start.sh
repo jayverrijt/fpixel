@@ -7,7 +7,8 @@ fi
 
 export PATH="$JAVA_HOME/bin:$PATH"
 
-java -Xms2G -Xmx4G \
+java -Dterminal.jline=false -Dterminal.ansi=true \
+  -Xms2G -Xmx4G \
   -XX:+UseG1GC \
   -XX:+ParallelRefProcEnabled \
   -XX:MaxGCPauseMillis=200 \
