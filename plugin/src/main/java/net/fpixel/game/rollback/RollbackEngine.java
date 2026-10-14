@@ -26,6 +26,14 @@ public class RollbackEngine {
         placedBlocks.add(loc);
     }
 
+    public void recordBreak(Block block) {
+        logBlockBreak(block);
+    }
+
+    public void recordPlace(Block block) {
+        logBlockPlace(block);
+    }
+
     public void logCustomChange(Block block) {
         Location loc = block.getLocation();
         originalBlocks.putIfAbsent(loc, new BlockSnapshot(loc, block.getBlockData().clone()));

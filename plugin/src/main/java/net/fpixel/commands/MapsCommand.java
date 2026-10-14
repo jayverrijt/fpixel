@@ -2,6 +2,7 @@ package net.fpixel.commands;
 
 import net.fpixel.FPixelPlugin;
 import net.fpixel.core.util.ChatUtil;
+import net.fpixel.lobby.menus.GameSelectorMenu;
 import net.fpixel.lobby.menus.MapSelectMenu;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -28,13 +29,14 @@ public class MapsCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 1) {
-            ChatUtil.sendMessage(player, "§cUsage: /maps <bedwars|tntrun|sumo>");
+            GameSelectorMenu.open(plugin, player);
             return true;
         }
 
         String gameType = args[0].toUpperCase();
-        if (!gameType.equals("BEDWARS") && !gameType.equals("TNTRUN") && !gameType.equals("SUMO")) {
-            ChatUtil.sendMessage(player, "§cInvalid minigame! Choose from: bedwars, tntrun, sumo");
+        List<String> valid = Arrays.asList("BEDWARS", "SKYWARS", "TNTRUN", "BRIDGE", "SUMO", "PARKOUR");
+        if (!valid.contains(gameType)) {
+            ChatUtil.sendMessage(player, "§cInvalid minigame! Choose: bedwars, skywars, tntrun, bridge, sumo, parkour");
             return true;
         }
 
@@ -45,7 +47,7 @@ public class MapsCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> list = Arrays.asList("bedwars", "tntrun", "sumo");
+            List<String> list = Arrays.asList("bedwars", "skywars", "tntrun", "bridge", "sumo", "parkour");
             List<String> filtered = new ArrayList<>();
             for (String s : list) {
                 if (s.toLowerCase().startsWith(args[0].toLowerCase())) {

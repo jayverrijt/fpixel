@@ -2,6 +2,9 @@ package net.fpixel.commands;
 
 import net.fpixel.FPixelPlugin;
 import net.fpixel.core.util.ChatUtil;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -40,12 +43,12 @@ public class DuelsCommand implements CommandExecutor, TabCompleter {
             }
 
             if (others.size() == 1) {
-                // Exactly 1 other player, duel them!
-                plugin.getDuelManager().sendChallenge(player, others.get(0), "SUMO");
+                Player target = others.get(0);
+                sendDuelChoices(player, target);
                 return true;
             }
 
-            ChatUtil.sendMessage(player, "§6Usage: §e/duel <player> [sumo|bedwars]");
+            ChatUtil.sendMessage(player, "§6Usage: §e/duel <player> [bridge|sumo|parkour|bedwars|skywars]");
             return true;
         }
 
@@ -65,13 +68,41 @@ public class DuelsCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        String type = args.length >= 2 ? args[1].toUpperCase() : "SUMO";
-        if (!type.equals("SUMO") && !type.equals("BEDWARS")) {
-            type = "SUMO";
+        if (args.length == 1) {
+            sendDuelChoices(player, target);
+            return true;
+        }
+
+        String type = args[1].toUpperCase();
+        if (!Arrays.asList("BRIDGE", "SUMO", "PARKOUR", "BEDWARS", "SKYWARS").contains(type)) {
+            type = "BRIDGE";
         }
 
         plugin.getDuelManager().sendChallenge(player, target, type);
         return true;
+    }
+
+    private void sendDuelChoices(Player player, Player target) {
+        ChatUtil.sendMessage(player, "§6§lDUELS §8» §eSelect a duel mode to challenge §a" + target.getName() + "§e:");
+
+        Component choices = Component.text(" ")
+                .append(createChoiceButton(target.getName(), "BRIDGE", "§6§l[THE BRIDGE]"))
+                .append(Component.text(" "))
+                .append(createChoiceButton(target.getName(), "SUMO", "§e§l[SUMO]"))
+                .append(Component.text(" "))
+                .append(createChoiceButton(target.getName(), "PARKOUR", "§a§l[PARKOUR]"))
+                .append(Component.text(" "))
+                .append(createChoiceButton(target.getName(), "SKYWARS", "§b§l[SKYWARS]"))
+                .append(Component.text(" "))
+                .append(createChoiceButton(target.getName(), "BEDWARS", "§c§l[BEDWARS]"));
+
+        player.sendMessage(choices);
+    }
+
+    private Component createChoiceButton(String target, String mode, String text) {
+        return Component.text(text)
+                .clickEvent(ClickEvent.runCommand("/duel " + target + " " + mode.toLowerCase()))
+                .hoverEvent(HoverEvent.showText(Component.text("§eClick to challenge in §a" + mode + "!")));
     }
 
     @Override
@@ -87,7 +118,7 @@ public class DuelsCommand implements CommandExecutor, TabCompleter {
             }
             return list;
         } else if (args.length == 2) {
-            return Arrays.asList("sumo", "bedwars");
+            return Arrays.asList("bridge", "sumo", "parkour", "bedwars", "skywars");
         }
         return new ArrayList<>();
     }

@@ -94,8 +94,8 @@ public class LobbyListener implements Listener {
                 double dz = loc.getZ() - spawn.getZ();
                 double distSq = dx * dx + dz * dz;
 
-                // Max lobby radius is 42 blocks, min Y is 97, max Y is 140
-                if (distSq > 42 * 42 || loc.getY() < 97 || loc.getY() > 140) {
+                // Max lobby radius is 68 blocks, min Y is 95, max Y is 165
+                if (distSq > 68 * 68 || loc.getY() < 95 || loc.getY() > 165) {
                     plugin.getLobbyManager().teleportToLobby(player);
                     ChatUtil.sendActionBar(player, "§c§lStay inside the Hub area!");
                     ChatUtil.playSound(player, Sound.ENTITY_ENDERMAN_TELEPORT, 0.7f, 1.2f);

@@ -33,8 +33,14 @@ public class MapSelectMenu {
 
         // Display up to 10 maps in slots 9-18 or 10-16
         int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21};
-        Material icon = gameType.equalsIgnoreCase("BEDWARS") ? Material.RED_BED :
-                        gameType.equalsIgnoreCase("TNTRUN") ? Material.TNT : Material.STICK;
+        Material icon = switch (gameType.toUpperCase()) {
+            case "BEDWARS" -> Material.RED_BED;
+            case "SKYWARS" -> Material.ENDER_EYE;
+            case "TNTRUN" -> Material.TNT;
+            case "BRIDGE" -> Material.RED_TERRACOTTA;
+            case "PARKOUR" -> Material.DIAMOND_BOOTS;
+            default -> Material.STICK;
+        };
 
         for (int i = 0; i < Math.min(gameArenas.size(), slots.length); i++) {
             Arena arena = gameArenas.get(i);

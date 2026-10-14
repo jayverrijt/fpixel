@@ -27,7 +27,7 @@ public class JoinCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 1) {
-            ChatUtil.sendMessage(player, "§cUsage: /join <bedwars|tntrun|sumo>");
+            ChatUtil.sendMessage(player, "§cUsage: /join <bedwars|skywars|tntrun|bridge|sumo|parkour>");
             return true;
         }
 
@@ -39,7 +39,7 @@ public class JoinCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> list = Arrays.asList("bedwars", "tntrun", "sumo");
+            List<String> list = Arrays.asList("bedwars", "skywars", "tntrun", "bridge", "sumo", "parkour");
             List<String> filtered = new ArrayList<>();
             for (String s : list) {
                 if (s.toLowerCase().startsWith(args[0].toLowerCase())) {
