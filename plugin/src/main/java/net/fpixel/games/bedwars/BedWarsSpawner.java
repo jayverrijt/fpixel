@@ -2,27 +2,31 @@ package net.fpixel.games.bedwars;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 public class BedWarsSpawner {
     public enum SpawnerType {
-        IRON(Material.IRON_INGOT, 1),
-        GOLD(Material.GOLD_INGOT, 4),
-        DIAMOND(Material.DIAMOND, 25),
-        EMERALD(Material.EMERALD, 35);
+        IRON(Material.IRON_INGOT, 3, 48),
+        GOLD(Material.GOLD_INGOT, 8, 16),
+        DIAMOND(Material.DIAMOND, 35, 6),
+        EMERALD(Material.EMERALD, 50, 4);
 
         private final Material material;
         private final int intervalSeconds;
+        private final int maxCap;
 
-        SpawnerType(Material material, int intervalSeconds) {
+        SpawnerType(Material material, int intervalSeconds, int maxCap) {
             this.material = material;
             this.intervalSeconds = intervalSeconds;
+            this.maxCap = maxCap;
         }
 
         public Material getMaterial() { return material; }
         public int getIntervalSeconds() { return intervalSeconds; }
+        public int getMaxCap() { return maxCap; }
     }
 
     private final Location location;
@@ -44,6 +48,18 @@ public class BedWarsSpawner {
 
     private void spawn() {
         if (location == null || location.getWorld() == null) return;
+
+        // Generator max cap check: prevents excessive item spam
+        int nearbyCount = 0;
+        for (Entity e : location.getWorld().getNearbyEntities(location, 2.5, 2.5, 2.5)) {
+            if (e instanceof Item item && item.getItemStack().getType() == type.getMaterial()) {
+                nearbyCount += item.getItemStack().getAmount();
+            }
+        }
+        if (nearbyCount >= type.getMaxCap()) {
+            return;
+        }
+
         Item item = location.getWorld().dropItem(location.clone().add(0, 0.5, 0), new ItemStack(type.getMaterial(), 1));
         item.setVelocity(new Vector(0, 0.1, 0));
 
