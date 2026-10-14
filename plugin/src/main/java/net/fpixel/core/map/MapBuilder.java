@@ -375,25 +375,26 @@ public class MapBuilder {
 
     /**
      * Builds a Waiting Lobby capsule/pavilion for players waiting for games to start.
+     * Guaranteed multi-layer solid floor, high unbroken glass walls, and barrier ceiling.
      */
     public static void buildWaitingLobby(World world, Location center, Material floorMat, Material pillarMat, Material glassMat) {
         int cx = center.getBlockX();
         int cy = center.getBlockY();
         int cz = center.getBlockZ();
 
-        // 1. Floating round base with deep underside
-        fillCircle(world, cx, cy, cz, 7, floorMat);
-        fillRing(world, cx, cy, cz, 6, 7, Material.GOLD_BLOCK);
-        fillCircle(world, cx, cy - 1, cz, 6, Material.SMOOTH_STONE);
-        fillCircle(world, cx, cy - 2, cz, 4, Material.DEEPSLATE);
-        fillCircle(world, cx, cy - 3, cz, 2, Material.BEDROCK);
+        // 1. Triple-layer unbreakable solid floating base (Radius 8)
+        fillCircle(world, cx, cy, cz, 8, floorMat);
+        fillRing(world, cx, cy, cz, 7, 8, Material.GOLD_BLOCK);
+        fillCircle(world, cx, cy - 1, cz, 8, Material.SMOOTH_STONE);
+        fillCircle(world, cx, cy - 2, cz, 8, Material.BEDROCK);
+        fillCircle(world, cx, cy - 3, cz, 6, Material.DEEPSLATE);
 
-        // 2. Glass barrier walls around waiting area
-        for (int y = 1; y <= 4; y++) {
-            fillRing(world, cx, cy + y, cz, 6, 7, glassMat);
+        // 2. Unbroken 5-block high glass barrier perimeter walls (Rings 7 & 8)
+        for (int y = 1; y <= 5; y++) {
+            fillRing(world, cx, cy + y, cz, 7, 8, glassMat);
         }
 
-        // 3. Four corner pillars with lighting
+        // 3. Four fortified corner pillars with warm lighting
         int[] dx = {-5, 5, -5, 5};
         int[] dz = {-5, -5, 5, 5};
         for (int i = 0; i < 4; i++) {
@@ -401,8 +402,11 @@ public class MapBuilder {
             world.getBlockAt(cx + dx[i], cy + 6, cz + dz[i]).setType(Material.SEA_LANTERN, false);
         }
 
-        // 4. Center beacon / glowstone marker
+        // 4. Center beacon marker
         world.getBlockAt(cx, cy, cz).setType(Material.BEACON, false);
+
+        // 5. Barrier ceiling at cy + 6 to prevent jumping or flying out
+        fillCircle(world, cx, cy + 6, cz, 8, Material.BARRIER);
     }
 
     /**
@@ -1380,5 +1384,51 @@ public class MapBuilder {
         world.getBlockAt(x + width - 2, y + 1, z + length - 2).setType(Material.CHEST, false);
         world.getBlockAt(x + width - 3, y + 1, z + length - 2).setType(Material.BARREL, false);
         world.getBlockAt(x + 3, y + height, z + 3).setType(Material.LANTERN, false);
+    }
+
+    /**
+     * Builds a grand circular fortified castle curtain wall with battlements and wall-walk ramparts.
+     */
+    public static void buildCastleWallRing(World world, int cx, int cz, int cy, int innerR, int outerR, int wallHeight) {
+        for (int x = -outerR; x <= outerR; x++) {
+            for (int z = -outerR; z <= outerR; z++) {
+                double dist = Math.hypot(x, z);
+                if (dist >= innerR && dist <= outerR) {
+                    int bx = cx + x;
+                    int bz = cz + z;
+                    for (int y = cy - 2; y <= cy + wallHeight; y++) {
+                        Material mat = (y == cy + wallHeight) ? Material.POLISHED_ANDESITE :
+                                (((bx + bz + y) % 5 == 0) ? Material.MOSSY_STONE_BRICKS : Material.STONE_BRICKS);
+                        world.getBlockAt(bx, y, bz).setType(mat, false);
+                    }
+                    if (dist >= outerR - 0.7) {
+                        int angleDeg = (int) Math.toDegrees(Math.atan2(z, x)) + 180;
+                        if ((angleDeg / 4) % 2 == 0) {
+                            world.getBlockAt(bx, cy + wallHeight + 1, bz).setType(Material.STONE_BRICK_WALL, false);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Builds a fortified round medieval tower with battlements and roof.
+     */
+    public static void buildCastleTowerRound(World world, int tx, int ty, int tz, int radius, int height, Material wallMat, Material roofMat) {
+        fillCircle(world, tx, ty - 2, tz, radius, Material.COBBLESTONE);
+        for (int y = ty - 1; y <= ty + height; y++) {
+            fillRing(world, tx, y, tz, radius - 1, radius, wallMat);
+            world.getBlockAt(tx, y, tz).setType(Material.STONE_BRICKS, false);
+        }
+        fillCircle(world, tx, ty + height, tz, radius + 1, Material.STONE_BRICKS);
+        fillRing(world, tx, ty + height + 1, tz, radius, radius + 1, Material.STONE_BRICK_WALL);
+
+        int roofSteps = radius + 2;
+        for (int s = 0; s < roofSteps; s++) {
+            int r = Math.max(1, radius + 1 - s);
+            fillCircle(world, tx, ty + height + 1 + s, tz, r, roofMat);
+        }
+        world.getBlockAt(tx, ty + height + roofSteps + 1, tz).setType(Material.LIGHTNING_ROD, false);
     }
 }

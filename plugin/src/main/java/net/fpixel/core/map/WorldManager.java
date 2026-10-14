@@ -121,7 +121,7 @@ public class WorldManager {
 
     private void buildGrandHub(World world) {
         int cy = 100;
-        plugin.getLogger().info("Rebuilding Grand Hub with Hypixel & CubeCraft Autumn vibes, Steampunk Airship, and dense medieval town...");
+        plugin.getLogger().info("Rebuilding Grand Hub with Hypixel & CubeCraft medieval castle city, Steampunk Airship, and zero empty lawns...");
 
         // 1. Purge all ground items and stray non-player entities in default world
         for (Entity e : world.getEntities()) {
@@ -132,49 +132,70 @@ public class WorldManager {
         world.setGameRule(GameRule.DO_TILE_DROPS, false);
         world.setGameRule(GameRule.DO_ENTITY_DROPS, false);
 
-        // 2. Clear all vanilla generated world terrain within a 140 block radius
+        // 2. Clear all vanilla generated world terrain and previous hub structures
         MapBuilder.clearVanillaTerrain(world, 0, 0, 140);
+        for (int y = cy; y <= cy + 45; y++) {
+            MapBuilder.fillCircle(world, 0, y, 0, 80, Material.AIR);
+        }
 
-        // 3. Vast Natural Floating Island & Valley Floor (Radius 72 blocks)
-        MapBuilder.buildFloatingIslandNatural(world, 0, cy, 0, 72, Material.GRASS_BLOCK, Material.DIRT, Material.DEEPSLATE);
+        // 3. Floating Island Underside (Radius 56 blocks)
+        MapBuilder.fillCircle(world, 0, cy - 1, 0, 56, Material.SMOOTH_STONE);
+        MapBuilder.fillCircle(world, 0, cy - 2, 0, 54, Material.DEEPSLATE);
+        MapBuilder.fillCircle(world, 0, cy - 3, 0, 50, Material.COBBLED_DEEPSLATE);
+        MapBuilder.fillCircle(world, 0, cy - 4, 0, 44, Material.DEEPSLATE);
+        MapBuilder.fillCircle(world, 0, cy - 5, 0, 36, Material.BEDROCK);
 
-        // Autumn Terrain Texturing across the valley floor (Podzol, Coarse Dirt, Mud, Moss)
-        for (int x = -55; x <= 55; x += 2) {
-            for (int z = -55; z <= 55; z += 2) {
+        // 4. Dense Medieval City Paved Floor (Radius 0 to 48) - NO BARE LAWN!
+        // Intricate medieval blend of Stone Bricks, Cobblestone, Mud Bricks, Spruce Wood, and Gravel
+        for (int x = -48; x <= 48; x++) {
+            for (int z = -48; z <= 48; z++) {
                 int distSq = x * x + z * z;
-                if (distSq <= 55 * 55 && distSq >= 18 * 18) {
-                    int hash = Math.abs(x * 31 + z * 17);
-                    if (hash % 5 == 0) {
-                        world.getBlockAt(x, cy, z).setType(Material.PODZOL, false);
-                    } else if (hash % 7 == 0) {
-                        world.getBlockAt(x, cy, z).setType(Material.COBBLESTONE, false);
+                if (distSq <= 48 * 48) {
+                    int hash = Math.abs(x * 37 + z * 23);
+                    Material paveMat;
+                    if (distSq <= 14 * 14) {
+                        paveMat = (hash % 3 == 0) ? Material.POLISHED_DEEPSLATE : ((hash % 5 == 0) ? Material.DEEPSLATE_TILES : Material.MUD_BRICKS);
                     } else if (hash % 11 == 0) {
-                        world.getBlockAt(x, cy, z).setType(Material.MUD_BRICKS, false);
-                    } else if (hash % 13 == 0) {
-                        world.getBlockAt(x, cy, z).setType(Material.MOSS_BLOCK, false);
+                        paveMat = Material.MUD_BRICKS;
+                    } else if (hash % 7 == 0) {
+                        paveMat = Material.SPRUCE_PLANKS;
+                    } else if (hash % 5 == 0) {
+                        paveMat = Material.MOSSY_STONE_BRICKS;
+                    } else if (hash % 3 == 0) {
+                        paveMat = Material.COBBLESTONE;
+                    } else {
+                        paveMat = Material.STONE_BRICKS;
                     }
-                    // Scattered Autumn Fallen Leaves and Pumpkins
-                    if (hash % 23 == 0 && world.getBlockAt(x, cy + 1, z).getType() == Material.AIR) {
+                    world.getBlockAt(x, cy, z).setType(paveMat, false);
+
+                    // Scattered Autumn Fallen Leaves and Pumpkins along town streets
+                    if (hash % 19 == 0 && distSq > 15 * 15 && world.getBlockAt(x, cy + 1, z).getType() == Material.AIR) {
                         world.getBlockAt(x, cy + 1, z).setType((hash % 2 == 0) ? Material.ORANGE_CARPET : Material.YELLOW_CARPET, false);
-                    } else if (hash % 41 == 0 && world.getBlockAt(x, cy + 1, z).getType() == Material.AIR) {
+                    } else if (hash % 47 == 0 && distSq > 15 * 15 && world.getBlockAt(x, cy + 1, z).getType() == Material.AIR) {
                         world.getBlockAt(x, cy + 1, z).setType(Material.PUMPKIN, false);
                     }
                 }
             }
         }
 
-        // 4. Continuous Colossal Mountain Amphitheater (Radius 72 to 115, height up to 153)
-        MapBuilder.buildMountainRing(world, 0, 0, cy, 72, 92, 115);
+        // 5. Fortified Medieval Castle Curtain Wall (Radius 48 to 52, Height 8)
+        MapBuilder.buildCastleWallRing(world, 0, 0, cy, 47, 51, 8);
 
-        // 5. Clear outside perimeter beyond mountains (Radius 115 to 160)
-        MapBuilder.clearSurroundingVanillaTerrain(world, 0, 0, 115, 160);
+        // 4 Grand Castle Corner Bastion Towers at the wall corners
+        int[][] bastionCoords = {{-36, -36}, {36, -36}, {-36, 36}, {36, 36}};
+        for (int[] bc : bastionCoords) {
+            MapBuilder.buildCastleTowerRound(world, bc[0], cy, bc[1], 4, 15, Material.STONE_BRICKS, Material.DARK_OAK_PLANKS);
+        }
 
-        // 6. Central Grand Harvest Plaza (Radius 18 blocks)
-        MapBuilder.fillCircle(world, 0, cy, 0, 18, Material.MUD_BRICKS);
-        MapBuilder.fillRing(world, 0, cy, 0, 16, 18, Material.DEEPSLATE_TILES);
-        MapBuilder.fillRing(world, 0, cy, 0, 13, 14, Material.SPRUCE_PLANKS);
-        MapBuilder.fillRing(world, 0, cy, 0, 10, 12, Material.POLISHED_ANDESITE);
-        MapBuilder.fillRing(world, 0, cy, 0, 7, 9, Material.CHISELED_STONE_BRICKS);
+        // 6. Natural Mountain Ring surrounding outside of the castle walls (Radius 52 to 95)
+        MapBuilder.buildMountainRing(world, 0, 0, cy, 52, 75, 95);
+        MapBuilder.clearSurroundingVanillaTerrain(world, 0, 0, 95, 140);
+
+        // 7. Central Grand Harvest Plaza (Radius 14 blocks)
+        MapBuilder.fillCircle(world, 0, cy, 0, 14, Material.POLISHED_DEEPSLATE);
+        MapBuilder.fillRing(world, 0, cy, 0, 12, 14, Material.MUD_BRICKS);
+        MapBuilder.fillRing(world, 0, cy, 0, 10, 11, Material.SPRUCE_PLANKS);
+        MapBuilder.fillRing(world, 0, cy, 0, 7, 9, Material.POLISHED_ANDESITE);
 
         // Grand Central Tiered Harvest Fountain & Beacon Spire
         MapBuilder.buildGrandFountain(world, 0, cy, 0, 5);
@@ -184,34 +205,34 @@ public class WorldManager {
         // Low stone balustrade around plaza perimeter with warm hanging lanterns
         for (int angle = 0; angle < 360; angle += 15) {
             double rad = Math.toRadians(angle);
-            int bx = (int) Math.round(18 * Math.cos(rad));
-            int bz = (int) Math.round(18 * Math.sin(rad));
+            int bx = (int) Math.round(14 * Math.cos(rad));
+            int bz = (int) Math.round(14 * Math.sin(rad));
             world.getBlockAt(bx, cy + 1, bz).setType(Material.STONE_BRICK_WALL, false);
             if (angle % 30 == 0) {
                 world.getBlockAt(bx, cy + 2, bz).setType(Material.LANTERN, false);
             }
         }
 
-        // 7. Directional Road Signposts around Plaza perimeter
-        MapBuilder.placeDirectionalSign(world, 0, cy + 1, -15, "§a§l▲ NORTH ▲", "§2§lSURVIVAL SMP", "§7Vanilla World");
-        MapBuilder.placeDirectionalSign(world, 11, cy + 1, -11, "§c§l↗ NORTH-EAST", "§c§lBEDWARS", "§7Multiplayer & 1v1");
-        MapBuilder.placeDirectionalSign(world, 15, cy + 1, 0, "§b§l➡ EAST ➡", "§b§lSKYWARS", "§7Multiplayer & 1v1");
-        MapBuilder.placeDirectionalSign(world, 11, cy + 1, 11, "§6§l↘ SOUTH-EAST", "§6§lTNT RUN", "§7Multiplayer & 1v1");
-        MapBuilder.placeDirectionalSign(world, 0, cy + 1, 15, "§d§l▼ SOUTH ▼", "§d§lDUELS & PVP", "§71v1 Competitive");
-        MapBuilder.placeDirectionalSign(world, -11, cy + 1, 11, "§e§l↙ SOUTH-WEST", "§e§lTHE BRIDGE", "§71v1 Bridges");
-        MapBuilder.placeDirectionalSign(world, -15, cy + 1, 0, "§f§l⬅ WEST ⬅", "§f§lSUMO 1V1", "§7Ring Knockoff");
-        MapBuilder.placeDirectionalSign(world, -11, cy + 1, -11, "§a§l↖ NORTH-WEST", "§a§lPARKOUR DUELS", "§7Obstacle Race");
+        // Directional Road Signposts around Plaza perimeter
+        MapBuilder.placeDirectionalSign(world, 0, cy + 1, -12, "§a§l▲ NORTH ▲", "§2§lSURVIVAL SMP", "§7Vanilla World");
+        MapBuilder.placeDirectionalSign(world, 9, cy + 1, -9, "§c§l↗ NORTH-EAST", "§c§lBEDWARS", "§7Multiplayer & 1v1");
+        MapBuilder.placeDirectionalSign(world, 12, cy + 1, 0, "§b§l➡ EAST ➡", "§b§lSKYWARS", "§7Multiplayer & 1v1");
+        MapBuilder.placeDirectionalSign(world, 9, cy + 1, 9, "§6§l↘ SOUTH-EAST", "§6§lTNT RUN", "§7Multiplayer & 1v1");
+        MapBuilder.placeDirectionalSign(world, 0, cy + 1, 12, "§d§l▼ SOUTH ▼", "§d§lDUELS & PVP", "§71v1 Competitive");
+        MapBuilder.placeDirectionalSign(world, -9, cy + 1, 9, "§e§l↙ SOUTH-WEST", "§e§lTHE BRIDGE", "§71v1 Bridges");
+        MapBuilder.placeDirectionalSign(world, -12, cy + 1, 0, "§f§l⬅ WEST ⬅", "§f§lSUMO 1V1", "§7Ring Knockoff");
+        MapBuilder.placeDirectionalSign(world, -9, cy + 1, -9, "§a§l↖ NORTH-WEST", "§a§lPARKOUR DUELS", "§7Obstacle Race");
 
-        // 8. The 8 Super Launchpads Radiating from Central Plaza
+        // The 8 Super Launchpads Radiating from Central Plaza
         int[][] launchpadCoords = {
-                {0, -13},   // North -> Survival SMP
-                {9, -9},    // North-East -> BedWars
-                {13, 0},    // East -> SkyWars
-                {9, 9},     // South-East -> TNT Run
-                {0, 13},    // South -> Duels & PvP
-                {-9, 9},    // South-West -> The Bridge
-                {-13, 0},   // West -> Sumo
-                {-9, -9}    // North-West -> Parkour
+                {0, -10},   // North -> Survival SMP
+                {7, -7},    // North-East -> BedWars
+                {10, 0},    // East -> SkyWars
+                {7, 7},     // South-East -> TNT Run
+                {0, 10},    // South -> Duels & PvP
+                {-7, 7},    // South-West -> The Bridge
+                {-10, 0},   // West -> Sumo
+                {-7, -7}    // North-West -> Parkour
         };
         for (int[] lp : launchpadCoords) {
             int lx = lp[0], lz = lp[1];
@@ -221,66 +242,25 @@ public class WorldManager {
             world.getBlockAt(lx, cy - 1, lz).setType(Material.SEA_LANTERN, false);
         }
 
-        // 9. CubeCraft-style Steampunk Autumn Airship suspended high above the Courtyard
-        MapBuilder.buildSteampunkAirship(world, 0, cy + 24, -2);
+        // 8. Suspended Steampunk Autumn Airship (CubeCraft style) overhead
+        MapBuilder.buildSteampunkAirship(world, 0, cy + 22, -2);
 
-        // 10. Hypixel-Style Autumn Medieval Townhouses ("Volgebouwd" - Dense Village)
-        // House 1: Harvest Tavern & Inn (North-East Street)
-        MapBuilder.buildAutumnTownHouse(world, 13, cy, -19, 6, 6, Material.MUD_BRICKS, Material.SPRUCE_STAIRS);
-        // House 2: Autumn Alchemist Lodge (South-East Street)
-        MapBuilder.buildAutumnTownHouse(world, 16, cy, 12, 6, 6, Material.TERRACOTTA, Material.DARK_OAK_STAIRS);
-        // House 3: Cartographer & Study (South-West Street)
-        MapBuilder.buildAutumnTownHouse(world, -21, cy, 12, 6, 6, Material.WHITE_TERRACOTTA, Material.SPRUCE_STAIRS);
-        // House 4: Guildhall & Outpost (North-West Street)
-        MapBuilder.buildAutumnTownHouse(world, -19, cy, -19, 6, 6, Material.MUD_BRICKS, Material.DARK_OAK_STAIRS);
-        // House 5: Toolmaker & Smithy Cottage (East Promenade)
-        MapBuilder.buildAutumnTownHouse(world, 24, cy, -14, 5, 5, Material.STONE_BRICKS, Material.SPRUCE_STAIRS);
-        // House 6: Woodcrafter Lodge (West Promenade)
-        MapBuilder.buildAutumnTownHouse(world, -28, cy, -14, 5, 5, Material.SPRUCE_PLANKS, Material.DARK_OAK_STAIRS);
-
-        // 11. Connecting Scenic Pathways & 360-Degree Outer Promenade Loop
-        // Spoke paths radiating outward from Plaza
-        MapBuilder.buildScenicPath(world, 0, -14, 0, -28, cy, 3);      // North
-        MapBuilder.buildScenicPath(world, 10, -10, 22, -22, cy, 3);    // North-East
-        MapBuilder.buildScenicPath(world, 14, 0, 28, 0, cy, 3);        // East
-        MapBuilder.buildScenicPath(world, 10, 10, 22, 22, cy, 3);      // South-East
-        MapBuilder.buildScenicPath(world, 0, 14, 0, 28, cy, 3);        // South
-        MapBuilder.buildScenicPath(world, -10, 10, -22, 22, cy, 3);    // South-West
-        MapBuilder.buildScenicPath(world, -14, 0, -28, 0, cy, 3);      // West
-        MapBuilder.buildScenicPath(world, -10, -10, -22, -22, cy, 3);  // North-West
-
-        // Complete 360-degree Outer Promenade Loop connecting all 8 pavilions without dead ends
-        MapBuilder.buildScenicPath(world, 0, -34, -22, -22, cy, 3);    // Survival Gateway -> Parkour Spire
-        MapBuilder.buildScenicPath(world, -22, -22, -30, 0, cy, 3);    // Parkour Spire -> Sumo Dojo
-        MapBuilder.buildScenicPath(world, -30, 0, -22, 22, cy, 3);     // Sumo Dojo -> The Bridge
-        MapBuilder.buildScenicPath(world, -22, 22, 0, 30, cy, 3);      // The Bridge -> Duels & PvP
-        MapBuilder.buildScenicPath(world, 0, 30, 22, 22, cy, 3);       // Duels & PvP -> TNT Run
-        MapBuilder.buildScenicPath(world, 22, 22, 30, 0, cy, 3);       // TNT Run -> SkyWars
-        MapBuilder.buildScenicPath(world, 30, 0, 22, -22, cy, 3);      // SkyWars -> BedWars
-        MapBuilder.buildScenicPath(world, 22, -22, 0, -34, cy, 3);     // BedWars -> Survival Gateway
-
-        // Landmark branch trails
-        MapBuilder.buildScenicPath(world, -22, -22, -41, -48, cy, 3);  // Trail to Founders Manor entrance
-        MapBuilder.buildScenicPath(world, 22, -22, 42, -38, cy, 3);    // Trail to Golden Windmill entrance
-        MapBuilder.buildScenicPath(world, -30, 0, -56, -12, cy, 3);    // Trail to Waterfall & Crystal Grotto
-
-        // 12. Natural Curving River & Freshwater Canal
-        for (int rz = -38; rz <= -24; rz++) {
-            for (int rx = -16; rx <= 16; rx++) {
-                int distFromCenter = Math.abs(rz - (-31));
-                if (Math.abs(rx) <= 8 && distFromCenter <= 2) {
-                    world.getBlockAt(rx, cy, rz).setType(Material.WATER, false);
-                    world.getBlockAt(rx, cy - 1, rz).setType(Material.SAND, false);
-                    if ((rx + rz) % 3 == 0) {
-                        world.getBlockAt(rx, cy + 1, rz).setType(Material.LILY_PAD, false);
-                    }
-                }
-            }
+        // 9. North District: Colossal Castle Gatehouse & Twin Towers (0, -28)
+        MapBuilder.buildCastleTowerRound(world, -9, cy, -28, 4, 16, Material.STONE_BRICKS, Material.DARK_OAK_PLANKS);
+        MapBuilder.buildCastleTowerRound(world, 9, cy, -28, 4, 16, Material.STONE_BRICKS, Material.DARK_OAK_PLANKS);
+        // Vaulted Gatehouse Arch connecting the twin towers
+        MapBuilder.fillBox(world, -5, cy + 1, -29, 5, cy + 10, -27, Material.STONE_BRICKS);
+        MapBuilder.fillBox(world, -3, cy + 1, -29, 3, cy + 6, -27, Material.AIR); // archway tunnel
+        MapBuilder.fillBox(world, -3, cy + 5, -28, 3, cy + 5, -28, Material.IRON_BARS); // portcullis top
+        MapBuilder.fillBox(world, -5, cy + 11, -30, 5, cy + 11, -26, Material.POLISHED_ANDESITE); // battlements
+        for (int gx = -5; gx <= 5; gx += 2) {
+            world.getBlockAt(gx, cy + 12, -30).setType(Material.STONE_BRICK_WALL, false);
+            world.getBlockAt(gx, cy + 12, -26).setType(Material.STONE_BRICK_WALL, false);
         }
-        MapBuilder.buildArchedWoodenBridge(world, 0, -35, 0, -26, cy, 3);
+        world.getBlockAt(-5, cy + 13, -30).setType(Material.LANTERN, false);
+        world.getBlockAt(5, cy + 13, -30).setType(Material.LANTERN, false);
 
-        // 13. Dedicated Gamemode Pavilions + Active Colored Beacons + Giant Thematic Sculptures
-        // 1. Survival SMP (North: 0, cy, -34)
+        // Survival SMP Gateway Courtyard (Inside Castle: 0, -36)
         int sgZ = -34;
         MapBuilder.buildPillar(world, -4, cy + 1, sgZ, 7, Material.STRIPPED_OAK_LOG);
         MapBuilder.buildPillar(world, 4, cy + 1, sgZ, 7, Material.STRIPPED_OAK_LOG);
@@ -297,101 +277,105 @@ public class WorldManager {
         world.getBlockAt(5, cy + 1, sgZ).setType(Material.CHEST, false);
         world.getBlockAt(-5, cy + 2, sgZ).setType(Material.LANTERN, false);
         world.getBlockAt(0, cy, -30).setType(Material.DIAMOND_BLOCK, false);
-        world.getBlockAt(0, cy + 1, -30).setType(Material.AIR, false);
         MapBuilder.buildColoredBeacon(world, 0, cy, -38, Material.LIME_STAINED_GLASS);
         MapBuilder.buildGiantPickaxe(world, 0, cy + 13, -34);
 
-        // 2. BedWars Fortress & Forge (North-East: 22, cy, -22)
+        // 10. Hypixel-Style Connected Autumn Townhouses ("Volgebouwd")
+        // Row 1: Royal Bakery & Patisserie (13, cy, -17)
+        MapBuilder.buildAutumnTownHouse(world, 13, cy, -17, 6, 6, Material.MUD_BRICKS, Material.SPRUCE_STAIRS);
+        // Row 2: Blacksmith & Weapon Forge (19, cy, -23)
+        MapBuilder.buildBedWarsBaseForge(world, 19, cy, -23, Material.STONE_BRICKS, Material.DEEPSLATE_BRICKS, Material.RED_TERRACOTTA);
+        // Row 3: Harvest Tavern & Inn (-19, cy, -17)
+        MapBuilder.buildAutumnTownHouse(world, -19, cy, -17, 6, 6, Material.MUD_BRICKS, Material.SPRUCE_STAIRS);
+        // Row 4: Guildhall & Outpost (-25, cy, -23)
+        MapBuilder.buildAutumnTownHouse(world, -25, cy, -23, 6, 6, Material.STONE_BRICKS, Material.DARK_OAK_STAIRS);
+        // Row 5: Alchemist Apothecary (15, cy, 13)
+        MapBuilder.buildAutumnTownHouse(world, 15, cy, 13, 6, 6, Material.TERRACOTTA, Material.DARK_OAK_STAIRS);
+        // Row 6: Cartographer & Study (-21, cy, 13)
+        MapBuilder.buildAutumnTownHouse(world, -21, cy, 13, 6, 6, Material.WHITE_TERRACOTTA, Material.SPRUCE_STAIRS);
+
+        // 11. Gamemode Pavilions & Interactive Relic Shrines
+        // BedWars Fortress (22, cy, -22)
         MapBuilder.buildGamePavilion(world, 22, cy, -22, 5, Material.STONE_BRICKS, Material.DEEPSLATE_BRICK_WALL, Material.RED_TERRACOTTA, Material.RED_GLAZED_TERRACOTTA);
-        world.getBlockAt(25, cy + 1, -22).setType(Material.ANVIL, false);
-        world.getBlockAt(25, cy + 1, -23).setType(Material.CAULDRON, false);
-        world.getBlockAt(25, cy + 1, -21).setType(Material.BARREL, false);
         world.getBlockAt(22, cy + 1, -25).setType(Material.RED_BED, false);
         MapBuilder.buildColoredBeacon(world, 26, cy, -26, Material.RED_STAINED_GLASS);
         MapBuilder.buildGiantBed(world, 22, cy + 12, -22);
 
-        // BedWars Secret Forge Cellar & Ember Shrine (Relic 3)
+        // BedWars Secret Forge Cellar (Relic 3 at 25, cy + 1, -25)
         MapBuilder.fillBox(world, 24, cy + 1, -26, 27, cy + 4, -24, Material.AIR);
         world.getBlockAt(25, cy, -25).setType(Material.CRYING_OBSIDIAN, false);
         world.getBlockAt(25, cy + 1, -25).setType(Material.SOUL_CAMPFIRE, false);
         world.getBlockAt(26, cy + 1, -25).setType(Material.BLAST_FURNACE, false);
         world.getBlockAt(24, cy + 1, -25).setType(Material.ANVIL, false);
-        world.getBlockAt(25, cy + 1, -26).setType(Material.MAGMA_BLOCK, false);
-        world.getBlockAt(25, cy + 2, -26).setType(Material.CAMPFIRE, false);
         world.getBlockAt(25, cy + 3, -25).setType(Material.IRON_CHAIN, false);
         world.getBlockAt(25, cy + 2, -25).setType(Material.SOUL_LANTERN, false);
 
-        // 3. SkyWars Mystical Shrine (East: 30, cy, 0)
+        // SkyWars Mystic Shrine (30, cy, 0)
         MapBuilder.buildGamePavilion(world, 30, cy, 0, 5, Material.SMOOTH_QUARTZ, Material.QUARTZ_PILLAR, Material.PURPUR_BLOCK, Material.AMETHYST_BLOCK);
         world.getBlockAt(30, cy + 1, 3).setType(Material.ENCHANTING_TABLE, false);
         world.getBlockAt(30, cy + 1, -3).setType(Material.ENDER_CHEST, false);
-        world.getBlockAt(30, cy + 2, 3).setType(Material.SOUL_LANTERN, false);
-        world.getBlockAt(30, cy + 2, -3).setType(Material.SOUL_LANTERN, false);
         MapBuilder.buildColoredBeacon(world, 35, cy, 0, Material.LIGHT_BLUE_STAINED_GLASS);
         MapBuilder.buildGiantEnderEye(world, 30, cy + 12, 0);
 
-        // 4. TNT Run Volcanic Colosseum (South-East: 22, cy, 22)
+        // TNT Run Volcanic Colosseum (22, cy, 22)
         MapBuilder.buildGamePavilion(world, 22, cy, 22, 5, Material.NETHER_BRICKS, Material.NETHER_BRICK_WALL, Material.RED_NETHER_BRICKS, Material.MAGMA_BLOCK);
         world.getBlockAt(25, cy + 1, 22).setType(Material.TNT, false);
-        world.getBlockAt(25, cy + 2, 22).setType(Material.TNT, false);
-        world.getBlockAt(22, cy + 1, 25).setType(Material.CAMPFIRE, false);
         MapBuilder.buildColoredBeacon(world, 26, cy, 26, Material.ORANGE_STAINED_GLASS);
         MapBuilder.buildGiantTNT(world, 22, cy + 12, 22);
 
-        // TNT Run Volcanic Fissure (Relic 6)
+        // TNT Run Volcanic Fissure (Relic 6 at 27, cy + 1, 27)
         world.getBlockAt(27, cy, 27).setType(Material.MAGMA_BLOCK, false);
         world.getBlockAt(27, cy + 1, 27).setType(Material.SOUL_CAMPFIRE, false);
         world.getBlockAt(28, cy + 1, 27).setType(Material.BASALT, false);
-        world.getBlockAt(28, cy + 2, 27).setType(Material.BASALT, false);
         world.getBlockAt(27, cy + 1, 28).setType(Material.CRYING_OBSIDIAN, false);
-        world.getBlockAt(26, cy + 1, 27).setType(Material.NETHERRACK, false);
-        world.getBlockAt(26, cy + 2, 27).setType(Material.FIRE, false);
 
-        // 5. Duels & PvP Knight's Armory (South: 0, cy, 30)
+        // Duels & PvP Knight's Armory (0, cy, 30)
         MapBuilder.buildGamePavilion(world, 0, cy, 30, 5, Material.POLISHED_ANDESITE, Material.STONE_BRICK_WALL, Material.DARK_OAK_PLANKS, Material.IRON_BLOCK);
         world.getBlockAt(-3, cy + 1, 30).setType(Material.HAY_BLOCK, false);
         world.getBlockAt(-3, cy + 2, 30).setType(Material.TARGET, false);
         world.getBlockAt(3, cy + 1, 30).setType(Material.SMITHING_TABLE, false);
-        world.getBlockAt(3, cy + 2, 30).setType(Material.LANTERN, false);
         MapBuilder.buildColoredBeacon(world, 0, cy, 35, Material.MAGENTA_STAINED_GLASS);
         MapBuilder.buildGiantCrossedSwords(world, 0, cy + 13, 30);
 
-        // 6. The Bridge 1v1 Arena Pavilion (South-West: -22, cy, 22)
+        // The Bridge 1v1 Arena Pavilion (-22, cy, 22)
         MapBuilder.buildGamePavilion(world, -22, cy, 22, 5, Material.SPRUCE_PLANKS, Material.OAK_FENCE, Material.DARK_OAK_STAIRS, Material.LAPIS_BLOCK);
         world.getBlockAt(-25, cy + 1, 22).setType(Material.RED_TERRACOTTA, false);
-        world.getBlockAt(-25, cy + 2, 22).setType(Material.RED_GLAZED_TERRACOTTA, false);
         world.getBlockAt(-19, cy + 1, 22).setType(Material.BLUE_TERRACOTTA, false);
-        world.getBlockAt(-19, cy + 2, 22).setType(Material.BLUE_GLAZED_TERRACOTTA, false);
         MapBuilder.buildColoredBeacon(world, -26, cy, 26, Material.YELLOW_STAINED_GLASS);
         MapBuilder.buildGiantBridgeArch(world, -22, cy + 12, 22);
 
-        // 7. Sumo Dojo & Sacred Ring (West: -30, cy, 0)
+        // Sumo Dojo & Sacred Ring (-30, cy, 0)
         MapBuilder.fillCircle(world, -30, cy, 0, 5, Material.POLISHED_ANDESITE);
         MapBuilder.fillRing(world, -30, cy, 0, 4, 5, Material.GOLD_BLOCK);
         MapBuilder.buildToriiArch(world, -30, cy, -6);
-        world.getBlockAt(-30, cy, 0).setType(Material.YELLOW_TERRACOTTA, false);
         MapBuilder.buildColoredBeacon(world, -35, cy, 0, Material.WHITE_STAINED_GLASS);
         MapBuilder.buildGiantToriiEmblem(world, -30, cy + 12, 0);
 
-        // 8. Parkour Duels Tower (North-West: -22, cy, -22)
+        // Sumo Sacred Cherry Blossom Trunk Hollow (Relic 5 at -36, cy + 1, 6)
+        MapBuilder.buildOrganicTree(world, -36, cy + 1, 6, Material.CHERRY_LOG, Material.CHERRY_LEAVES, 7);
+        world.getBlockAt(-36, cy + 1, 6).setType(Material.AIR, false);
+        world.getBlockAt(-36, cy, 6).setType(Material.CHERRY_PLANKS, false);
+        world.getBlockAt(-35, cy + 1, 6).setType(Material.PINK_PETALS, false);
+        world.getBlockAt(-37, cy + 1, 6).setType(Material.BAMBOO, false);
+        world.getBlockAt(-36, cy + 1, 7).setType(Material.LANTERN, false);
+
+        // Parkour Duels Tower (-22, cy, -22)
         MapBuilder.buildGamePavilion(world, -22, cy, -22, 5, Material.OAK_PLANKS, Material.OAK_LOG, Material.SPRUCE_STAIRS, Material.EMERALD_BLOCK);
         world.getBlockAt(-25, cy + 1, -22).setType(Material.SLIME_BLOCK, false);
         world.getBlockAt(-25, cy + 2, -22).setType(Material.GOLD_BLOCK, false);
-        world.getBlockAt(-25, cy + 3, -22).setType(Material.EMERALD_BLOCK, false);
         MapBuilder.buildColoredBeacon(world, -26, cy, -26, Material.GREEN_STAINED_GLASS);
         MapBuilder.buildGiantBoot(world, -22, cy + 12, -22);
-        // External Parkour Climb Route allowing rooftop ascension (Relic 7)
+        // External Parkour Climb Route leading to Cloudrunner's Feather (Relic 7 at -22, cy + 14, -22)
         MapBuilder.buildParkourClimbRoute(world, -22, cy, -22);
 
-        // 14. Survival-World-Inspired Surroundings & Masterpiece Buildings
-        // Grand Survival Estate Manor (-46, cy, -48) with Library (Relic 1)
+        // 12. Surroundings & Masterpiece Buildings
+        // Grand Survival Estate Manor (-46, cy, -48) with Library (Relic 1 at -44, cy + 1, -44)
         MapBuilder.buildSurvivalEstateManor(world, -46, cy, -48, 11, 13);
 
-        // Rustic Wooden Windmill & Golden Farmland with High Loft (Relic 4)
+        // Rustic Wooden Windmill (42, cy, -42) with High Loft (Relic 4 at 42, cy + 14, -42)
         MapBuilder.buildWindmill(world, 42, cy, -42);
         MapBuilder.fillBox(world, 32, cy, -46, 48, cy, -34, Material.FARMLAND);
         world.getBlockAt(36, cy, -40).setType(Material.WATER, false);
-        world.getBlockAt(44, cy, -40).setType(Material.WATER, false);
         for (int fx = 33; fx <= 47; fx++) {
             for (int fz = -45; fz <= -35; fz++) {
                 if (world.getBlockAt(fx, cy, fz).getType() == Material.FARMLAND) {
@@ -401,93 +385,67 @@ public class WorldManager {
         }
         world.getBlockAt(33, cy + 1, -34).setType(Material.PUMPKIN, false);
         world.getBlockAt(34, cy + 1, -34).setType(Material.HAY_BLOCK, false);
-        world.getBlockAt(35, cy + 1, -34).setType(Material.HAY_BLOCK, false);
 
-        // Mountain Waterfall & Secret Crystal Grotto
+        // Mountain Waterfall & Secret Crystal Grotto (-60, -12, cy)
         MapBuilder.buildCrystalGrottoAndWaterfall(world, -60, -12, cy);
 
-        // 4 Autumn Market Bazaar Stalls flanking main promenade paths
-        MapBuilder.buildMarketStall(world, 18, cy, -8, Material.ORANGE_WOOL, Material.WHITE_WOOL);       // Royal Autumn Bakery
-        MapBuilder.buildMarketStall(world, 18, cy, 8, Material.YELLOW_WOOL, Material.ORANGE_WOOL);       // Alchemist & Potions
-        MapBuilder.buildMarketStall(world, -18, cy, -8, Material.RED_WOOL, Material.YELLOW_WOOL);        // Farmer's Produce
-        MapBuilder.buildMarketStall(world, -18, cy, 8, Material.BROWN_WOOL, Material.ORANGE_WOOL);       // Mystic Enchanter
+        // Natural River & Sunken Chalice (Relic 2 at 0, cy - 1, -31)
+        for (int rz = -36; rz <= -26; rz++) {
+            for (int rx = -14; rx <= 14; rx++) {
+                int distFromCenter = Math.abs(rz - (-31));
+                if (Math.abs(rx) <= 7 && distFromCenter <= 2) {
+                    world.getBlockAt(rx, cy, rz).setType(Material.WATER, false);
+                    world.getBlockAt(rx, cy - 1, rz).setType(Material.SAND, false);
+                    if ((rx + rz) % 3 == 0) {
+                        world.getBlockAt(rx, cy + 1, rz).setType(Material.LILY_PAD, false);
+                    }
+                }
+            }
+        }
+        MapBuilder.buildArchedWoodenBridge(world, 0, -35, 0, -26, cy, 3);
+
+        // 13. Autumn Market Bazaar Stalls & Produce Carts
+        MapBuilder.buildMarketStall(world, 16, cy, -6, Material.ORANGE_WOOL, Material.WHITE_WOOL);       // Royal Bakery Stall
+        MapBuilder.buildMarketStall(world, 16, cy, 6, Material.YELLOW_WOOL, Material.ORANGE_WOOL);       // Alchemist Potion Stall
+        MapBuilder.buildMarketStall(world, -16, cy, -6, Material.RED_WOOL, Material.YELLOW_WOOL);        // Farmer's Harvest Produce
+        MapBuilder.buildMarketStall(world, -16, cy, 6, Material.BROWN_WOOL, Material.ORANGE_WOOL);       // Mystic Enchanter
 
         // Autumn Hay & Pumpkin Carts around town
-        world.getBlockAt(15, cy + 1, -12).setType(Material.HAY_BLOCK, false);
-        world.getBlockAt(15, cy + 2, -12).setType(Material.CARVED_PUMPKIN, false);
-        world.getBlockAt(16, cy + 1, -12).setType(Material.PUMPKIN, false);
-        world.getBlockAt(16, cy + 1, -11).setType(Material.BARREL, false);
-        world.getBlockAt(-15, cy + 1, -12).setType(Material.HAY_BLOCK, false);
-        world.getBlockAt(-15, cy + 2, -12).setType(Material.JACK_O_LANTERN, false);
-        world.getBlockAt(-16, cy + 1, -12).setType(Material.PUMPKIN, false);
+        world.getBlockAt(14, cy + 1, -10).setType(Material.HAY_BLOCK, false);
+        world.getBlockAt(14, cy + 2, -10).setType(Material.CARVED_PUMPKIN, false);
+        world.getBlockAt(15, cy + 1, -10).setType(Material.PUMPKIN, false);
+        world.getBlockAt(-14, cy + 1, -10).setType(Material.HAY_BLOCK, false);
+        world.getBlockAt(-14, cy + 2, -10).setType(Material.JACK_O_LANTERN, false);
 
-        // Lampposts & Cozy Park Benches along the Promenades
-        MapBuilder.buildLamppost(world, -12, cy, -12);
-        MapBuilder.buildLamppost(world, 12, cy, -12);
-        MapBuilder.buildLamppost(world, -12, cy, 12);
-        MapBuilder.buildLamppost(world, 12, cy, 12);
-        MapBuilder.buildLamppost(world, 0, cy, -20);
-        MapBuilder.buildLamppost(world, 0, cy, 20);
-        MapBuilder.buildLamppost(world, -20, cy, 0);
-        MapBuilder.buildLamppost(world, 20, cy, 0);
-
-        MapBuilder.buildLamppost(world, -12, cy, -28);
-        MapBuilder.buildLamppost(world, 12, cy, -28);
-        MapBuilder.buildLamppost(world, -28, cy, -11);
-        MapBuilder.buildLamppost(world, -28, cy, 11);
-        MapBuilder.buildLamppost(world, -11, cy, 28);
-        MapBuilder.buildLamppost(world, 11, cy, 28);
-        MapBuilder.buildLamppost(world, 28, cy, -11);
-        MapBuilder.buildLamppost(world, 28, cy, 11);
-
-        MapBuilder.buildParkBench(world, -6, cy, -15);
-        MapBuilder.buildParkBench(world, 6, cy, -15);
-        MapBuilder.buildParkBench(world, -6, cy, 15);
-        MapBuilder.buildParkBench(world, 6, cy, 15);
-        MapBuilder.buildParkBench(world, -15, cy, -25);
-        MapBuilder.buildParkBench(world, 15, cy, -25);
-        MapBuilder.buildParkBench(world, -25, cy, 15);
-        MapBuilder.buildParkBench(world, 25, cy, 15);
-
-        // Custom Giant Autumn Trees with Glowing Shroomlight Cores
-        MapBuilder.buildAutumnTree(world, -14, cy + 1, -10, Material.DARK_OAK_LOG, Material.ORANGE_WOOL, Material.YELLOW_TERRACOTTA, 8);
-        MapBuilder.buildAutumnTree(world, 14, cy + 1, -10, Material.DARK_OAK_LOG, Material.RED_TERRACOTTA, Material.ORANGE_TERRACOTTA, 8);
-        MapBuilder.buildAutumnTree(world, -14, cy + 1, 10, Material.DARK_OAK_LOG, Material.YELLOW_TERRACOTTA, Material.ORANGE_WOOL, 8);
-        MapBuilder.buildAutumnTree(world, 14, cy + 1, 10, Material.DARK_OAK_LOG, Material.ORANGE_TERRACOTTA, Material.RED_WOOL, 8);
-        MapBuilder.buildAutumnTree(world, 0, cy + 1, -44, Material.DARK_OAK_LOG, Material.ORANGE_WOOL, Material.YELLOW_TERRACOTTA, 9);
-        MapBuilder.buildAutumnTree(world, 0, cy + 1, 44, Material.DARK_OAK_LOG, Material.RED_TERRACOTTA, Material.ORANGE_WOOL, 9);
-        MapBuilder.buildAutumnTree(world, -38, cy + 1, -22, Material.DARK_OAK_LOG, Material.ORANGE_WOOL, Material.YELLOW_WOOL, 8);
-        MapBuilder.buildAutumnTree(world, 38, cy + 1, 22, Material.DARK_OAK_LOG, Material.RED_WOOL, Material.ORANGE_TERRACOTTA, 8);
-
-        // Sumo Sacred Cherry Blossom Trunk Hollow (Relic 5)
-        MapBuilder.buildOrganicTree(world, -36, cy + 1, 6, Material.CHERRY_LOG, Material.CHERRY_LEAVES, 7);
-        world.getBlockAt(-36, cy + 1, 6).setType(Material.AIR, false);
-        world.getBlockAt(-36, cy, 6).setType(Material.CHERRY_PLANKS, false);
-        world.getBlockAt(-35, cy + 1, 6).setType(Material.PINK_PETALS, false);
-        world.getBlockAt(-37, cy + 1, 6).setType(Material.BAMBOO, false);
-        world.getBlockAt(-36, cy + 1, 7).setType(Material.LANTERN, false);
-
-        // Flowerbeds around Central Plaza (Autumn Warm Tones)
-        for (int angle = 7; angle < 360; angle += 15) {
-            double rad = Math.toRadians(angle);
-            int fx = (int) Math.round(17 * Math.cos(rad));
-            int fz = (int) Math.round(17 * Math.sin(rad));
-            Material flower = (angle % 2 == 0) ? Material.POPPY : Material.DANDELION;
-            world.getBlockAt(fx, cy + 1, fz).setType(flower, false);
+        // Lampposts along the paved streets
+        int[][] lampCoords = {
+                {-10, -10}, {10, -10}, {-10, 10}, {10, 10},
+                {0, -18}, {0, 18}, {-18, 0}, {18, 0},
+                {-12, -24}, {12, -24}, {-24, -10}, {24, -10},
+                {-10, 24}, {10, 24}, {-24, 10}, {24, 10}
+        };
+        for (int[] lp : lampCoords) {
+            MapBuilder.buildLamppost(world, lp[0], cy, lp[1]);
         }
 
-        // 15. Spawn Point at Grand Central Plaza facing North (towards Survival Gateway, Airship & Fountain)
+        // Custom Giant Autumn Trees with Glowing Shroomlight Cores
+        MapBuilder.buildAutumnTree(world, -12, cy + 1, -7, Material.DARK_OAK_LOG, Material.ORANGE_WOOL, Material.YELLOW_TERRACOTTA, 7);
+        MapBuilder.buildAutumnTree(world, 12, cy + 1, -7, Material.DARK_OAK_LOG, Material.RED_TERRACOTTA, Material.ORANGE_TERRACOTTA, 7);
+        MapBuilder.buildAutumnTree(world, -12, cy + 1, 7, Material.DARK_OAK_LOG, Material.YELLOW_TERRACOTTA, Material.ORANGE_WOOL, 7);
+        MapBuilder.buildAutumnTree(world, 12, cy + 1, 7, Material.DARK_OAK_LOG, Material.ORANGE_TERRACOTTA, Material.RED_WOOL, 7);
+
+        // 14. Spawn Point at Grand Central Plaza facing North (towards Fountain, Airship & Castle Gatehouse)
         Location hubSpawn = new Location(world, 0.5, cy + 1.5, 6.5, 0f, 0f);
         world.setSpawnLocation(0, cy + 2, 6);
         plugin.getLobbyManager().setSpawn(hubSpawn);
 
-        // 16. Spawn All Interactive Gamemode & Lore NPCs with Floating Holograms!
+        // 15. Spawn All Interactive Gamemode & Lore NPCs with Floating Holograms!
         plugin.getHubNPCManager().spawnAllNPCs(world);
 
-        // 17. Spawn All 7 Ancient Lore Relics & Secrets Displays!
+        // 16. Spawn All 7 Ancient Lore Relics & Secrets Displays!
         plugin.getHubLoreManager().spawnAllRelics(world);
 
-        plugin.getLogger().info("Grand Hub rebuild complete! Autumn medieval village, Steampunk Airship, mountain amphitheater, promenade loop, grotto, stalls, and lore relics are live.");
+        plugin.getLogger().info("Grand Hub rebuild complete! Hypixel & CubeCraft medieval castle city, Steampunk Airship, and 12 NPCs are live.");
     }
 
 
@@ -533,8 +491,7 @@ public class WorldManager {
             int cy = 100;
             int cz = (mapWorld.equals(defaultWorld)) ? 0 : 0;
 
-            Location waitingLoc = new Location(mapWorld, cx + 0.5, cy + 35, cz + 0.5);
-            MapBuilder.buildWaitingLobby(mapWorld, waitingLoc, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.WHITE_STAINED_GLASS);
+            Location waitingLoc = new Location(mapWorld, cx + 0.5, cy + 55, cz + 0.5);
 
             Material[] pal = bwPalettes[i % bwPalettes.length];
 
@@ -611,6 +568,8 @@ public class WorldManager {
                 MapBuilder.buildPillar(mapWorld, cx - 2, cy + 1, cz + 40, 3, Material.STONE_BRICK_WALL);
                 MapBuilder.buildPillar(mapWorld, cx + 2, cy + 1, cz + 40, 3, Material.STONE_BRICK_WALL);
             }
+
+            MapBuilder.buildWaitingLobby(mapWorld, waitingLoc, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.WHITE_STAINED_GLASS);
 
             BedWarsGame game = new BedWarsGame(plugin, id, "BedWars: " + name, 3, 16);
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
@@ -697,7 +656,10 @@ public class WorldManager {
             int cz = 350;
             String id = "sw-" + (i + 1);
 
-            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 35, cz + 0.5);
+            // Clear old blocks before building
+            MapBuilder.fillBox(defaultWorld, cx - 75, cy - 25, cz - 75, cx + 75, cy + 45, cz + 75, Material.AIR);
+
+            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 55, cz + 0.5);
             MapBuilder.buildWaitingLobby(defaultWorld, waitingLoc, Material.POLISHED_ANDESITE, Material.STONE_BRICKS, cageGlasses[i]);
 
             SkyWarsGame game = new SkyWarsGame(plugin, id, "SkyWars: " + names[i], 2, 12, cy - 40);
@@ -705,9 +667,6 @@ public class WorldManager {
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
 
             Material[] pal = swPalettes[i];
-
-            // Clear old blocks before building
-            MapBuilder.fillBox(defaultWorld, cx - 75, cy - 25, cz - 75, cx + 75, cy + 45, cz + 75, Material.AIR);
 
             // Middle Island
             MapBuilder.buildFloatingIslandNatural(defaultWorld, cx, cy, cz, 16, pal[0], pal[1], pal[2]);
@@ -766,7 +725,7 @@ public class WorldManager {
             int cz = (i + 1) * 350;
             String id = "tnt-" + (i + 1);
 
-            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 30, cz + 0.5);
+            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 55, cz + 0.5);
             MapBuilder.buildWaitingLobby(defaultWorld, waitingLoc, Material.POLISHED_DEEPSLATE, Material.QUARTZ_PILLAR, Material.ORANGE_STAINED_GLASS);
 
             int[] floorYs = {cy, cy - 9, cy - 18, cy - 27};
@@ -814,15 +773,15 @@ public class WorldManager {
             int cz = 350;
             String id = "pk-" + (i + 1);
 
-            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 25, cz + 0.5);
+            // Clear any old blocks/checkpoints from previous builds to prevent 2 maps in 1
+            MapBuilder.fillBox(defaultWorld, cx - 40, cy - 15, cz - 10, cx + 40, cy + 30, cz + 180, Material.AIR);
+
+            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 55, cz + 0.5);
             MapBuilder.buildWaitingLobby(defaultWorld, waitingLoc, Material.SMOOTH_STONE, Material.OAK_FENCE, Material.LIME_STAINED_GLASS);
 
             ParkourGame game = new ParkourGame(plugin, id, "Parkour: " + names[i], 2, 16, cy - 15);
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
-
-            // Clear any old blocks/checkpoints from previous builds to prevent 2 maps in 1
-            MapBuilder.fillBox(defaultWorld, cx - 40, cy - 15, cz - 10, cx + 40, cy + 30, cz + 180, Material.AIR);
 
             MapBuilder.fillCircle(defaultWorld, cx, cy, cz, 4, Material.POLISHED_ANDESITE);
             game.setStartLocation(new Location(defaultWorld, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f));
@@ -911,7 +870,10 @@ public class WorldManager {
             int cz = -350;
             String id = "duel-skywars-" + i;
 
-            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 25, cz + 0.5);
+            // Clear old blocks before building
+            MapBuilder.fillBox(defaultWorld, cx - 30, cy - 20, cz - 15, cx + 30, cy + 25, cz + 15, Material.AIR);
+
+            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 55, cz + 0.5);
             MapBuilder.buildWaitingLobby(defaultWorld, waitingLoc, Material.POLISHED_ANDESITE, Material.STONE_BRICKS, Material.YELLOW_STAINED_GLASS);
 
             SkyWarsGame game = new SkyWarsGame(plugin, id, "SkyWars 1v1 Arena #" + i, 2, 2, cy - 25);
@@ -950,15 +912,15 @@ public class WorldManager {
             int cz = -650;
             String id = "duel-bedwars-" + i;
 
-            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 25, cz + 0.5);
+            // Clear old blocks before building
+            MapBuilder.fillBox(defaultWorld, cx - 60, cy - 20, cz - 45, cx + 60, cy + 30, cz + 45, Material.AIR);
+
+            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 55, cz + 0.5);
             MapBuilder.buildWaitingLobby(defaultWorld, waitingLoc, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.RED_STAINED_GLASS);
 
             BedWarsGame game = new BedWarsGame(plugin, id, "BedWars 1v1 Arena #" + i, 2, 2);
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
-
-            // Clear old blocks before building
-            MapBuilder.fillBox(defaultWorld, cx - 60, cy - 20, cz - 45, cx + 60, cy + 30, cz + 45, Material.AIR);
 
             // Red & Blue 1v1 islands: Natural floating islands
             int rx = cx - 32;
@@ -1040,7 +1002,7 @@ public class WorldManager {
             int cz = -950;
             String id = "duel-pvp-" + i;
 
-            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 25, cz + 0.5);
+            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 55, cz + 0.5);
             MapBuilder.buildWaitingLobby(defaultWorld, waitingLoc, Material.POLISHED_BLACKSTONE, Material.OBSIDIAN, Material.RED_STAINED_GLASS);
 
             PvPGame game = new PvPGame(plugin, id, "PvP 1v1 Arena #" + i);
@@ -1067,15 +1029,15 @@ public class WorldManager {
             int cz = -1250;
             String id = "duel-parkour-" + i;
 
-            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 25, cz + 0.5);
+            // Clear any old duel parkour blocks
+            MapBuilder.fillBox(defaultWorld, cx - 30, cy - 15, cz - 10, cx + 30, cy + 30, cz + 130, Material.AIR);
+
+            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 55, cz + 0.5);
             MapBuilder.buildWaitingLobby(defaultWorld, waitingLoc, Material.SMOOTH_STONE, Material.OAK_FENCE, Material.LIME_STAINED_GLASS);
 
             ParkourGame game = new ParkourGame(plugin, id, "Parkour 1v1 Arena #" + i, 2, 2, cy - 15);
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
-
-            // Clear any old duel parkour blocks
-            MapBuilder.fillBox(defaultWorld, cx - 30, cy - 15, cz - 10, cx + 30, cy + 30, cz + 130, Material.AIR);
 
             MapBuilder.fillCircle(defaultWorld, cx, cy, cz, 3, Material.POLISHED_ANDESITE);
             game.setStartLocation(new Location(defaultWorld, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f));
@@ -1133,7 +1095,7 @@ public class WorldManager {
             int cz = -1550;
             String id = "duel-tnt-" + i;
 
-            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 25, cz + 0.5);
+            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 55, cz + 0.5);
             MapBuilder.buildWaitingLobby(defaultWorld, waitingLoc, Material.POLISHED_DEEPSLATE, Material.QUARTZ_PILLAR, Material.ORANGE_STAINED_GLASS);
 
             int[] floorYs = {cy, cy - 8, cy - 16};
@@ -1160,7 +1122,7 @@ public class WorldManager {
             int cz = -1850;
             String id = "duel-sumo-" + i;
 
-            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 20, cz + 0.5);
+            Location waitingLoc = new Location(defaultWorld, cx + 0.5, cy + 55, cz + 0.5);
             MapBuilder.buildWaitingLobby(defaultWorld, waitingLoc, Material.SMOOTH_STONE, Material.DEEPSLATE_BRICK_WALL, Material.YELLOW_STAINED_GLASS);
 
             MapBuilder.buildFloatingIslandNatural(defaultWorld, cx, cy, cz, 7, Material.RED_WOOL, Material.DEEPSLATE, Material.BEDROCK);
@@ -1185,7 +1147,12 @@ public class WorldManager {
             int cy = 100;
             int cz = (bWorld.equals(defaultWorld)) ? -2150 : 0;
 
-            Location waitingLoc = new Location(bWorld, cx + 0.5, cy + 20, cz + 0.5);
+            if (bWorld.equals(defaultWorld)) {
+                // Clear old arena blocks
+                MapBuilder.fillBox(bWorld, cx - 65, cy - 25, cz - 20, cx + 65, cy + 40, cz + 20, Material.AIR);
+            }
+
+            Location waitingLoc = new Location(bWorld, cx + 0.5, cy + 55, cz + 0.5);
             MapBuilder.buildWaitingLobby(bWorld, waitingLoc, Material.QUARTZ_BLOCK, Material.POLISHED_BLACKSTONE, Material.RED_STAINED_GLASS);
 
             BridgeGame game = new BridgeGame(plugin, id, "The Bridge 1v1: " + bName, cy - 15);
@@ -1197,8 +1164,6 @@ public class WorldManager {
             int bx = cx + 16;
 
             if (bWorld.equals(defaultWorld)) {
-                // Clear old arena blocks
-                MapBuilder.fillBox(bWorld, cx - 65, cy - 25, cz - 20, cx + 65, cy + 40, cz + 20, Material.AIR);
 
                 // --- 1. Red Base (Spans 26x15: rx - 25 to rx, cz - 7 to cz + 7) ---
                 // Island floor

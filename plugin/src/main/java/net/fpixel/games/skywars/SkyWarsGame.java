@@ -107,8 +107,11 @@ public class SkyWarsGame extends Arena {
         var world = loc.getWorld();
         if (world == null) return;
 
+        // Ensure permanent solid foundation block under player cage
+        world.getBlockAt(x, y - 1, z).setType(Material.SMOOTH_STONE, false);
+
         int[][] offsets = {
-                {0, -1, 0}, {0, 3, 0},
+                {0, 3, 0},
                 {1, 0, 0}, {-1, 0, 0}, {0, 0, 1}, {0, 0, -1},
                 {1, 1, 0}, {-1, 1, 0}, {0, 1, 1}, {0, 1, -1},
                 {1, 2, 0}, {-1, 2, 0}, {0, 2, 1}, {0, 2, -1}

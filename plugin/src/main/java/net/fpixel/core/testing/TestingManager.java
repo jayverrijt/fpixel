@@ -182,7 +182,19 @@ public class TestingManager implements Listener {
         if (arena != null) {
             SimulatedPlayer bot = findBotByEntity(arena, entity);
             if (bot != null) {
-                arena.eliminateSimulatedPlayer(bot);
+                if (arena instanceof BridgeGame bridge) {
+                    // In Bridge, bots respawn just like players instead of being eliminated
+                    Location cage = bridge.getBlueCage();
+                    if (cage != null) {
+                        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                            if (bridge.getState() == GameState.IN_GAME) {
+                                bot.spawnEntity(cage.clone().add(0.5, 0.5, 0.5), "BRIDGE");
+                            }
+                        }, 40L);
+                    }
+                } else {
+                    arena.eliminateSimulatedPlayer(bot);
+                }
             }
         }
     }

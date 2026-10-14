@@ -76,6 +76,7 @@ public class BridgeGame extends Arena {
     private void startRound() {
         inRoundCountdown = true;
         roundCountdown = 3;
+        rollbackEngine.rollback();
 
         for (Player p : getBukkitPlayers()) {
             boolean isRed = redTeam.contains(p.getUniqueId());
@@ -207,6 +208,15 @@ public class BridgeGame extends Arena {
                     ChatUtil.playSound(p, Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.8f);
                 } else {
                     arrowTicks.put(p.getUniqueId(), ticks);
+                }
+            }
+        }
+
+        // Void detection for simulated bots in testing mode
+        for (net.fpixel.core.testing.SimulatedPlayer bot : simulatedPlayers.values()) {
+            if (bot.getEntity() != null && bot.getEntity().isValid() && bot.getEntity().getLocation().getY() < voidY) {
+                if (blueCage != null) {
+                    bot.spawnEntity(blueCage.clone().add(0.5, 0.5, 0.5), "BRIDGE");
                 }
             }
         }
@@ -379,9 +389,10 @@ public class BridgeGame extends Arena {
     @Override
     public void checkWinCondition() {
         if (state != GameState.IN_GAME) return;
-        List<Player> bPlayers = getBukkitPlayers();
-        if (bPlayers.size() <= 1) {
-            endGame(bPlayers.isEmpty() ? null : bPlayers.get(0));
+        // In testing mode or multiplayer, check total alive players including bots
+        if (getAlivePlayerCount() <= 1) {
+            List<Player> alive = getBukkitPlayers();
+            endGame(alive.isEmpty() ? null : alive.get(0));
         }
     }
 
