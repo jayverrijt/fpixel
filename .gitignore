@@ -31,3 +31,6 @@ server/plugins/spark/tmp-client/
 backups/
 server/plugins/FPixelCore/web_auth.json
 server/whitelist_requests.json
+server/plugins/squaremap/
+server/plugins/squaremap*.jar
+server/plugins/SkinsRestorer/skins/
