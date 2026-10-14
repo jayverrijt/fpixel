@@ -1,0 +1,111 @@
+name: FPixel CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Plugin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          check-latest: true
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x plugin/gradlew
+
+      - name: Build FPixelCore JAR with Gradle
+        run: |
+          cd plugin
+          ./gradlew build --no-daemon
+
+      - name: Verify Built Plugin JAR
+        run: |
+          ls -lh server/plugins/FPixelCore.jar
+
+      - name: Upload Plugin Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FPixelCore-jar
+          path: server/plugins/FPixelCore.jar
+          retention-days: 7
+
+  deploy:
+    name: Backup & Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Plugin Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: FPixelCore-jar
+          path: artifacts/
+
+      - name: Verify SSH Secrets Configuration
+        run: |
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo "::error::GitHub Secret 'SSH_PRIVATE_KEY' is not configured! Please navigate to GitHub Repository Settings -> Secrets and variables -> Actions, and add secret 'SSH_PRIVATE_KEY' containing your SSH private key (~/.ssh/id_ed25519)."
+            exit 1
+          fi
+
+      - name: Deploy to fpixel.nl via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST || 'fpixel.nl' }}
+          username: ${{ secrets.SSH_USER || 'jayv' }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+            echo "=========================================="
+            echo ">>> [1/5] Connected to server for deployment"
+            echo "=========================================="
+
+            BASE_DIR="/home/jayv/fpixel"
+            BACKUP_DIR="/home/jayv/backups"
+            mkdir -p "${BACKUP_DIR}"
+
+            # Step 1: Execute Pre-Deploy Backup
+            echo ">>> [2/5] Running Pre-Deploy Backup..."
+            if [ -f "${BASE_DIR}/scripts/backup.sh" ]; then
+              bash "${BASE_DIR}/scripts/backup.sh"
+            else
+              TIMESTAMP=$(date +'%Y%m%d_%H%M%S')
+              tar --exclude='.git' -czf "${BACKUP_DIR}/fpixel_backup_${TIMESTAMP}.tar.gz" -C /home/jayv fpixel || true
+              echo "Created initial snapshot: ${BACKUP_DIR}/fpixel_backup_${TIMESTAMP}.tar.gz"
+            fi
+
+            # Step 2: Fetch and update to latest main
+            echo ">>> [3/5] Updating repository to latest commit..."
+            cd "${BASE_DIR}"
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Step 3: Run automated deploy verification
+            echo ">>> [4/5] Executing deployment script..."
+            chmod +x "${BASE_DIR}"/scripts/*.sh "${BASE_DIR}"/server/*.sh "${BASE_DIR}"/plugin/gradlew 2>/dev/null || true
+            bash "${BASE_DIR}/scripts/deploy.sh"
+
+            echo "=========================================="
+            echo ">>> [5/5] Deployment & Backup Finished!"
+            echo "=========================================="

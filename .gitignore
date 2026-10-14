@@ -25,3 +25,7 @@ server/survival/
 *.zip.imported
 import_worlds/*.zip
 server/plugins/SkinsRestorer/cache/
+server/plugins/spark/tmp/
+server/plugins/spark/tmp-client/
+*.tmp
+backups/

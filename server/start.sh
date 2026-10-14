@@ -1,11 +1,11 @@
 #!/bin/bash
 if [ -d "/opt/homebrew/opt/openjdk@25" ]; then
   export JAVA_HOME="/opt/homebrew/opt/openjdk@25"
+  export PATH="$JAVA_HOME/bin:$PATH"
 elif [ -d "/opt/homebrew/opt/openjdk" ]; then
   export JAVA_HOME="/opt/homebrew/opt/openjdk"
+  export PATH="$JAVA_HOME/bin:$PATH"
 fi
-
-export PATH="$JAVA_HOME/bin:$PATH"
 
 java -Dterminal.jline=false -Dterminal.ansi=true \
   -Xms2G -Xmx4G \
