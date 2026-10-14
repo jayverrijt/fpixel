@@ -1098,14 +1098,15 @@ public class MapBuilder {
      */
     public static void clearVanillaTerrain(World world, int cx, int cz, int radius) {
         int rSq = radius * radius;
+        int minY = world.getMinHeight();
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
                 if (x * x + z * z <= rSq) {
                     int bx = cx + x;
                     int bz = cz + z;
                     int highestY = world.getHighestBlockYAt(bx, bz);
-                    if (highestY >= 40) {
-                        for (int y = Math.min(highestY, 180); y >= 40; y--) {
+                    if (highestY > minY) {
+                        for (int y = Math.min(highestY, 200); y >= minY; y--) {
                             Block b = world.getBlockAt(bx, y, bz);
                             if (b.getType() != Material.AIR) {
                                 b.setType(Material.AIR, false);

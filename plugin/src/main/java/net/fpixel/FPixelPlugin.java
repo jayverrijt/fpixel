@@ -178,5 +178,11 @@ public class FPixelPlugin extends JavaPlugin {
     public net.fpixel.lobby.HubLoreManager getHubLoreManager() { return hubLoreManager; }
     public net.fpixel.core.testing.TestingManager getTestingManager() { return testingManager; }
     public net.fpixel.core.security.HostnameListener getHostnameListener() { return hostnameListener; }
+
+    @Override
+    public org.bukkit.generator.ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
+        return new net.fpixel.core.map.VoidChunkGenerator();
+    }
 }
+
 
