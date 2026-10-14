@@ -1,0 +1,22 @@
+name: FPixelCore
+version: '1.0.0'
+main: net.fpixel.FPixelPlugin
+api-version: '1.21'
+author: FPixelTeam
+description: Complete Hypixel-grade minigame server framework with Geyser/Floodgate crossplay
+softdepend:
+  - floodgate
+  - Geyser-Spigot
+commands:
+  fpixel:
+    description: Main FPixel Network command
+    permission: fpixel.admin
+  lobby:
+    description: Teleport to network hub / lobby
+    aliases: [hub, l, spawn]
+  join:
+    description: Join a minigame arena
+    aliases: [play]
+  setrank:
+    description: Set a player's rank
+    permission: fpixel.admin

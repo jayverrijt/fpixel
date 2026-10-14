@@ -1,0 +1,21 @@
+# Gradle
+.gradle/
+build/
+plugin/build/
+plugin/.gradle/
+
+# Server runtime files & worlds
+server/world/
+server/world_nether/
+server/world_the_end/
+server/logs/
+server/crash-reports/
+server/cache/
+server/libraries/
+server/plugins/.paper-remapped/
+server/plugins/Geyser-Spigot/
+server/plugins/floodgate/
+server/plugins/FPixelCore/userdata/
+server/paper.jar
+server/plugins/Geyser-Spigot.jar
+server/plugins/floodgate-spigot.jar
