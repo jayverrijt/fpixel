@@ -41,7 +41,7 @@ function readVarInt(buffer, offset = 0) {
 }
 
 // Ping Minecraft Server via native SLP protocol
-function pingMinecraft(host, port, timeoutMs = 2500) {
+function pingMinecraft(host, port, timeoutMs = 3000) {
   return new Promise((resolve) => {
     const startTime = Date.now();
     const socket = new net.Socket();
@@ -52,14 +52,15 @@ function pingMinecraft(host, port, timeoutMs = 2500) {
 
     socket.on('connect', () => {
       try {
-        const hostBuf = Buffer.from(host, 'utf8');
+        // Always send mc.fpixel.nl in handshake
+        const hostBuf = Buffer.from('mc.fpixel.nl', 'utf8');
         const portBuf = Buffer.alloc(2);
         portBuf.writeUInt16BE(port);
 
-        // Handshake packet (packetId 0x00, protocol 767, host, port, nextState 1)
+        // Handshake packet (packetId 0x00, protocol 777, host, port, nextState 1)
         const handshakeBody = Buffer.concat([
           encodeVarInt(0x00),
-          encodeVarInt(767),
+          encodeVarInt(777),
           encodeVarInt(hostBuf.length),
           hostBuf,
           portBuf,
@@ -88,23 +89,12 @@ function pingMinecraft(host, port, timeoutMs = 2500) {
 
     socket.on('data', (chunk) => {
       received = Buffer.concat([received, chunk]);
-      // Attempt parse
       try {
-        let offset = 0;
-        const packetLen = readVarInt(received, offset);
-        if (!packetLen) return;
-        offset += packetLen.bytesRead;
-
-        const packetId = readVarInt(received, offset);
-        if (!packetId) return;
-        offset += packetId.bytesRead;
-
-        const stringLen = readVarInt(received, offset);
-        if (!stringLen) return;
-        offset += stringLen.bytesRead;
-
-        if (received.length >= offset + stringLen.value) {
-          const jsonStr = received.toString('utf8', offset, offset + stringLen.value);
+        const str = received.toString('utf8');
+        const start = str.indexOf('{');
+        const end = str.lastIndexOf('}');
+        if (start !== -1 && end !== -1 && end > start) {
+          const jsonStr = str.substring(start, end + 1);
           const data = JSON.parse(jsonStr);
           resolved = true;
           socket.destroy();
@@ -115,7 +105,7 @@ function pingMinecraft(host, port, timeoutMs = 2500) {
           });
         }
       } catch (e) {
-        // waiting for more chunks
+        // waiting for full buffer
       }
     });
 
@@ -204,6 +194,8 @@ function getSurvivalProfiles() {
 function getUserCache() {
   const cache = {};
   const cacheFiles = [
+    '/data/usercache.json',
+    path.join(DATA_DIR, '../../usercache.json'),
     path.join(DATA_DIR, '../usercache.json'),
     path.join(__dirname, '../server/usercache.json')
   ];

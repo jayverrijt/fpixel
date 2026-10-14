@@ -30,6 +30,7 @@ if [ ! -d "${SERVER_DIR}" ]; then
 fi
 
 # Create compressed backup excluding caches, logs, libraries, and tmp files
+# GNU tar exits with 1 if files change while archiving a live server; treat as non-fatal warning
 tar --exclude='logs/*' \
     --exclude='cache/*' \
     --exclude='libraries/*' \
@@ -41,7 +42,7 @@ tar --exclude='logs/*' \
     --exclude='.git' \
     -czf "${BACKUP_FILE}" \
     -C "$(dirname "${SERVER_DIR}")" \
-    "$(basename "${SERVER_DIR}")"
+    "$(basename "${SERVER_DIR}")" || [ $? -eq 1 ] || true
 
 BACKUP_SIZE="$(du -h "${BACKUP_FILE}" | cut -f1)"
 echo " Backup created successfully: ${BACKUP_FILE} (${BACKUP_SIZE})"
