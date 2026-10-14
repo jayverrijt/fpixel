@@ -292,8 +292,29 @@ public class MapBuilder {
         world.getBlockAt(x + 2, y + 1, z + 1).setType(Material.HAY_BLOCK, false);
     }
 
+    public static void setLeaves(World world, int x, int y, int z, Material leafMat) {
+        Block b = world.getBlockAt(x, y, z);
+        b.setType(leafMat, false);
+        if (b.getBlockData() instanceof org.bukkit.block.data.type.Leaves leaves) {
+            leaves.setPersistent(true);
+            leaves.setDistance(1);
+            b.setBlockData(leaves, false);
+        }
+    }
+
+    public static void fillLeavesCircle(World world, int cx, int cy, int cz, int radius, Material leafMat) {
+        int rSq = radius * radius;
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                if (x * x + z * z <= rSq) {
+                    setLeaves(world, cx + x, cy, cz + z, leafMat);
+                }
+            }
+        }
+    }
+
     /**
-     * Builds an organic decorative fantasy tree with curved trunk and cloud-like foliage.
+     * Builds an organic decorative fantasy tree with curved trunk and cloud-like foliage (persistent leaves).
      */
     public static void buildOrganicTree(World world, int x, int y, int z, Material logMat, Material leafMat, int height) {
         // Curved trunk
@@ -303,11 +324,11 @@ public class MapBuilder {
         }
 
         int topY = y + height;
-        // Canopy spheres
-        fillCircle(world, x + 1, topY, z, 3, leafMat);
-        fillCircle(world, x + 1, topY + 1, z, 2, leafMat);
-        fillCircle(world, x + 1, topY + 2, z, 1, leafMat);
-        fillCircle(world, x + 1, topY - 1, z, 2, leafMat);
+        // Canopy spheres with persistent leaves
+        fillLeavesCircle(world, x + 1, topY, z, 3, leafMat);
+        fillLeavesCircle(world, x + 1, topY + 1, z, 2, leafMat);
+        fillLeavesCircle(world, x + 1, topY + 2, z, 1, leafMat);
+        fillLeavesCircle(world, x + 1, topY - 1, z, 2, leafMat);
 
         // Hanging lantern
         world.getBlockAt(x + 1, topY - 2, z + 1).setType(Material.LANTERN, false);
@@ -650,5 +671,280 @@ public class MapBuilder {
 
         // Center dais for NPC
         world.getBlockAt(cx, y + 1, cz).setType(accentMat, false);
+    }
+
+    /**
+     * Builds a real active colored beacon shooting a colored light beam into the sky.
+     */
+    public static void buildColoredBeacon(World world, int x, int y, int z, Material glassColor) {
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                world.getBlockAt(x + dx, y - 1, z + dz).setType(Material.IRON_BLOCK, false);
+            }
+        }
+        world.getBlockAt(x, y, z).setType(Material.BEACON, false);
+        world.getBlockAt(x, y + 1, z).setType(glassColor, false);
+    }
+
+    /**
+     * Builds a continuous 360-degree colossal mountain amphitheater enclosing the entire hub valley.
+     */
+    public static void buildMountainRing(World world, int cx, int cz, int cy, int innerR, int peakR, int outerR) {
+        for (int x = -outerR; x <= outerR; x++) {
+            for (int z = -outerR; z <= outerR; z++) {
+                double dist = Math.hypot(x, z);
+                if (dist >= innerR && dist <= outerR) {
+                    double angle = Math.atan2(z, x);
+                    double noise = Math.sin(angle * 5) * 7.0 + Math.cos(angle * 9) * 5.0 + Math.sin(angle * 13) * 3.0;
+                    double peakHeight = 138.0 + noise; // Varies naturally between 123 and 153
+
+                    double targetH;
+                    if (dist < peakR) {
+                        double t = (dist - innerR) / (double) (peakR - innerR);
+                        targetH = cy + (peakHeight - cy) * Math.sin(t * Math.PI / 2);
+                    } else {
+                        double t = (dist - peakR) / (double) (outerR - peakR);
+                        targetH = peakHeight - (peakHeight - (cy - 10)) * Math.sin(t * Math.PI / 2);
+                    }
+
+                    int maxY = (int) Math.round(targetH);
+                    int bx = cx + x;
+                    int bz = cz + z;
+                    int minY = Math.max(50, cy - 25);
+
+                    for (int y = minY; y <= maxY; y++) {
+                        Material mat;
+                        if (y >= 132) {
+                            mat = (y == maxY && ((bx + bz) % 3 != 0)) ? Material.SNOW_BLOCK : Material.CALCITE;
+                        } else if (y >= 118) {
+                            mat = ((bx * 7 + bz * 13) % 4 == 0) ? Material.COBBLESTONE : Material.STONE;
+                        } else if (y >= 108) {
+                            mat = ((bx + bz) % 5 == 0) ? Material.ANDESITE : Material.STONE;
+                        } else {
+                            mat = Material.DEEPSLATE;
+                        }
+
+                        if (y == maxY && y < 118) {
+                            mat = Material.GRASS_BLOCK;
+                        }
+
+                        world.getBlockAt(bx, y, bz).setType(mat, false);
+                    }
+
+                    // Snow cap or alpine spruce pine tree on mountain ledges
+                    if (maxY >= 132) {
+                        world.getBlockAt(bx, maxY + 1, bz).setType(Material.SNOW, false);
+                    } else if (maxY >= 108 && maxY < 125 && ((bx * 31 + bz * 17) % 73 == 0)) {
+                        buildSprucePine(world, bx, maxY + 1, bz, 5);
+                    }
+                }
+            }
+        }
+
+        // Waterfall cascades pouring down from high mountain ledges into the valley
+        double[][] waterfallAngles = {{-0.6, 0.8}, {0.8, -0.6}, {-0.8, -0.6}, {0.6, 0.8}};
+        for (double[] dir : waterfallAngles) {
+            int wx = (int) Math.round(cx + dir[0] * (innerR + 1));
+            int wz = (int) Math.round(cz + dir[1] * (innerR + 1));
+            for (int wy = cy + 18; wy >= cy; wy--) {
+                world.getBlockAt(wx, wy, wz).setType(Material.WATER, false);
+            }
+            world.getBlockAt(wx, cy - 1, wz).setType(Material.COBBLESTONE, false);
+        }
+    }
+
+    public static void buildSprucePine(World world, int x, int y, int z, int height) {
+        for (int i = 0; i < height; i++) {
+            world.getBlockAt(x, y + i, z).setType(Material.SPRUCE_LOG, false);
+        }
+        for (int h = 1; h <= height; h++) {
+            int radius = (height - h) / 2 + 1;
+            fillLeavesCircle(world, x, y + h, z, radius, Material.SPRUCE_LEAVES);
+        }
+        setLeaves(world, x, y + height, z, Material.SPRUCE_LEAVES);
+    }
+
+    /**
+     * Clears all default vanilla chunks and generated terrain outside the mountain amphitheater.
+     */
+    public static void clearSurroundingVanillaTerrain(World world, int cx, int cz, int outerR, int clearR) {
+        int outerSq = outerR * outerR;
+        int clearSq = clearR * clearR;
+        for (int x = -clearR; x <= clearR; x++) {
+            for (int z = -clearR; z <= clearR; z++) {
+                int distSq = x * x + z * z;
+                if (distSq > outerSq && distSq <= clearSq) {
+                    int bx = cx + x;
+                    int bz = cz + z;
+                    int highestY = world.getHighestBlockYAt(bx, bz);
+                    if (highestY >= 40) {
+                        for (int y = Math.min(highestY, 180); y >= 40; y--) {
+                            Block b = world.getBlockAt(bx, y, bz);
+                            if (b.getType() != Material.AIR) {
+                                b.setType(Material.AIR, false);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Clears all default vanilla terrain within a given radius.
+     */
+    public static void clearVanillaTerrain(World world, int cx, int cz, int radius) {
+        int rSq = radius * radius;
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                if (x * x + z * z <= rSq) {
+                    int bx = cx + x;
+                    int bz = cz + z;
+                    int highestY = world.getHighestBlockYAt(bx, bz);
+                    if (highestY >= 40) {
+                        for (int y = Math.min(highestY, 180); y >= 40; y--) {
+                            Block b = world.getBlockAt(bx, y, bz);
+                            if (b.getType() != Material.AIR) {
+                                b.setType(Material.AIR, false);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Places a directional wooden signpost with glowing text.
+     */
+    public static void placeDirectionalSign(World world, int x, int y, int z, String line1, String line2, String line3) {
+        world.getBlockAt(x, y, z).setType(Material.DARK_OAK_FENCE, false);
+        Block signBlock = world.getBlockAt(x, y + 1, z);
+        signBlock.setType(Material.OAK_SIGN, false);
+        if (signBlock.getState() instanceof org.bukkit.block.Sign sign) {
+            sign.setLine(0, line1);
+            sign.setLine(1, line2);
+            sign.setLine(2, line3);
+            sign.setGlowingText(true);
+            sign.update(true, false);
+        }
+    }
+
+    // ==========================================
+    // Giant Thematic 3D Sculptures
+    // ==========================================
+
+    public static void buildGiantBed(World world, int cx, int y, int cz) {
+        // Legs
+        world.getBlockAt(cx - 2, y, cz - 3).setType(Material.OAK_FENCE, false);
+        world.getBlockAt(cx + 2, y, cz - 3).setType(Material.OAK_FENCE, false);
+        world.getBlockAt(cx - 2, y, cz + 3).setType(Material.OAK_FENCE, false);
+        world.getBlockAt(cx + 2, y, cz + 3).setType(Material.OAK_FENCE, false);
+
+        // Frame
+        fillBox(world, cx - 2, y + 1, cz - 3, cx + 2, y + 1, cz + 3, Material.OAK_PLANKS);
+        // Pillow
+        fillBox(world, cx - 2, y + 2, cz - 3, cx + 2, y + 2, cz - 2, Material.WHITE_WOOL);
+        // Blanket
+        fillBox(world, cx - 2, y + 2, cz - 1, cx + 2, y + 2, cz + 3, Material.RED_WOOL);
+    }
+
+    public static void buildGiantEnderEye(World world, int cx, int y, int cz) {
+        fillSphere(world, cx, y, cz, 3, Material.GREEN_TERRACOTTA);
+        fillSphere(world, cx, y, cz, 1, Material.BLACK_CONCRETE);
+        world.getBlockAt(cx, y, cz).setType(Material.OBSIDIAN, false);
+
+        // Sweeping quartz wings extending left and right
+        for (int i = 1; i <= 4; i++) {
+            world.getBlockAt(cx - 3 - i, y + i, cz).setType(Material.SMOOTH_QUARTZ, false);
+            world.getBlockAt(cx + 3 + i, y + i, cz).setType(Material.SMOOTH_QUARTZ, false);
+            world.getBlockAt(cx - 3 - i, y + i - 1, cz).setType(Material.QUARTZ_SLAB, false);
+            world.getBlockAt(cx + 3 + i, y + i - 1, cz).setType(Material.QUARTZ_SLAB, false);
+        }
+    }
+
+    public static void buildGiantPickaxe(World world, int cx, int y, int cz) {
+        // Diagonal handle of oak wood
+        for (int i = -3; i <= 3; i++) {
+            world.getBlockAt(cx + i, y + i, cz).setType(Material.STRIPPED_OAK_LOG, false);
+        }
+        // Pickaxe head of diamond blocks
+        int headX = cx + 3, headY = y + 3;
+        for (int dx = -2; dx <= 2; dx++) {
+            world.getBlockAt(headX - dx, headY + dx, cz).setType(Material.DIAMOND_BLOCK, false);
+            world.getBlockAt(headX - dx, headY + dx + 1, cz).setType(Material.DIAMOND_BLOCK, false);
+        }
+    }
+
+    public static void buildGiantTNT(World world, int cx, int y, int cz) {
+        fillBox(world, cx - 1, y, cz - 1, cx + 1, y, cz + 1, Material.RED_CONCRETE);
+        fillBox(world, cx - 1, y + 1, cz - 1, cx + 1, y + 1, cz + 1, Material.WHITE_CONCRETE);
+        fillBox(world, cx - 1, y + 2, cz - 1, cx + 1, y + 2, cz + 1, Material.RED_CONCRETE);
+        // Fuse on top
+        world.getBlockAt(cx, y + 3, cz).setType(Material.DARK_OAK_FENCE, false);
+        world.getBlockAt(cx, y + 4, cz).setType(Material.CAMPFIRE, false);
+    }
+
+    public static void buildGiantCrossedSwords(World world, int cx, int y, int cz) {
+        // Sword 1 (\)
+        for (int i = -3; i <= 3; i++) {
+            world.getBlockAt(cx + i, y + i, cz).setType(Material.IRON_BLOCK, false);
+        }
+        // Sword 2 (/)
+        for (int i = -3; i <= 3; i++) {
+            world.getBlockAt(cx - i, y + i, cz).setType(Material.IRON_BLOCK, false);
+        }
+        // Pommels and tips
+        world.getBlockAt(cx - 3, y - 3, cz).setType(Material.GOLD_BLOCK, false);
+        world.getBlockAt(cx + 3, y - 3, cz).setType(Material.GOLD_BLOCK, false);
+        world.getBlockAt(cx - 3, y + 3, cz).setType(Material.DIAMOND_BLOCK, false);
+        world.getBlockAt(cx + 3, y + 3, cz).setType(Material.DIAMOND_BLOCK, false);
+    }
+
+    public static void buildGiantBridgeArch(World world, int cx, int y, int cz) {
+        // Red pillar
+        for (int dy = 0; dy <= 4; dy++) {
+            world.getBlockAt(cx - 2, y + dy, cz).setType(Material.RED_CONCRETE, false);
+            world.getBlockAt(cx + 2, y + dy, cz).setType(Material.BLUE_CONCRETE, false);
+        }
+        // Arch bridge on top
+        for (int dx = -2; dx <= 2; dx++) {
+            world.getBlockAt(cx + dx, y + 5, cz).setType(Material.GOLD_BLOCK, false);
+        }
+    }
+
+    public static void buildGiantToriiEmblem(World world, int cx, int y, int cz) {
+        // Torii crossbars
+        for (int dx = -3; dx <= 3; dx++) {
+            world.getBlockAt(cx + dx, y + 2, cz).setType(Material.RED_TERRACOTTA, false);
+            world.getBlockAt(cx + dx, y + 4, cz).setType(Material.DARK_OAK_PLANKS, false);
+        }
+        // Golden sun in the middle
+        fillCircle(world, cx, y + 3, cz, 1, Material.GOLD_BLOCK);
+    }
+
+    public static void buildGiantBoot(World world, int cx, int y, int cz) {
+        // Leg shaft
+        fillBox(world, cx - 1, y + 2, cz, cx + 1, y + 4, cz + 1, Material.DIAMOND_BLOCK);
+        // Foot
+        fillBox(world, cx - 1, y, cz - 2, cx + 1, y + 1, cz + 1, Material.DIAMOND_BLOCK);
+        // White sneaker sole
+        fillBox(world, cx - 1, y - 1, cz - 2, cx + 1, y - 1, cz + 1, Material.WHITE_CONCRETE);
+        // Golden wing / feather on heel
+        world.getBlockAt(cx + 2, y + 2, cz + 1).setType(Material.GOLD_BLOCK, false);
+        world.getBlockAt(cx + 2, y + 3, cz + 2).setType(Material.GOLD_BLOCK, false);
+    }
+
+    public static void fillSphere(World world, int cx, int cy, int cz, int radius, Material material) {
+        int rSq = radius * radius;
+        for (int x = -radius; x <= radius; x++) {
+            for (int y = -radius; y <= radius; y++) {
+                for (int z = -radius; z <= radius; z++) {
+                    if (x * x + y * y + z * z <= rSq) {
+                        world.getBlockAt(cx + x, cy + y, cz + z).setType(material, false);
+                    }
+                }
+            }
+        }
     }
 }

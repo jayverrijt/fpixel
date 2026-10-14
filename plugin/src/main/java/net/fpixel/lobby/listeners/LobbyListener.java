@@ -188,4 +188,25 @@ public class LobbyListener implements Listener {
             event.setCancelled(true);
         }
     }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onLeavesDecay(org.bukkit.event.block.LeavesDecayEvent event) {
+        if (!event.getBlock().getWorld().getName().equalsIgnoreCase("survival")) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onItemSpawn(org.bukkit.event.entity.ItemSpawnEvent event) {
+        if (!event.getEntity().getWorld().getName().equalsIgnoreCase("survival")) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerDropItem(PlayerDropItemEvent event) {
+        if (isInLobby(event.getPlayer())) {
+            event.setCancelled(true);
+        }
+    }
 }
