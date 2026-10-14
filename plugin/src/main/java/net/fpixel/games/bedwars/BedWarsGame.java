@@ -79,6 +79,18 @@ public class BedWarsGame extends Arena {
             }
             ChatUtil.sendMessage(p, "§7You are on the " + team.getChatColor() + team.getName() + " Team§7!");
         }
+
+        // Assign simulated players to remaining teams
+        int teamIdx = playerList.size();
+        for (net.fpixel.core.testing.SimulatedPlayer bot : simulatedPlayers.values()) {
+            BedWarsTeam team = teamList.get(teamIdx % teamList.size());
+            team.addMember(bot.getUuid());
+            team.setBedAlive(true);
+            if (team.getSpawnLocation() != null) {
+                bot.spawnEntity(team.getSpawnLocation(), "BEDWARS");
+            }
+            teamIdx++;
+        }
     }
 
     private void giveTeamKit(Player player, BedWarsTeam team) {
@@ -259,7 +271,7 @@ public class BedWarsGame extends Arena {
         for (BedWarsTeam team : teams.values()) {
             boolean hasAliveMembers = false;
             for (UUID uuid : team.getMembers()) {
-                if (players.contains(uuid)) {
+                if (players.contains(uuid) || simulatedPlayers.containsKey(uuid)) {
                     hasAliveMembers = true;
                     break;
                 }

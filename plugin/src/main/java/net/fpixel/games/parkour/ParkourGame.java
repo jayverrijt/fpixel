@@ -132,7 +132,7 @@ public class ParkourGame extends Arena {
     @Override
     public void checkWinCondition() {
         if (state != GameState.IN_GAME) return;
-        if (getBukkitPlayers().size() <= 1) {
+        if (getAlivePlayerCount() <= 1) {
             endGame(getBukkitPlayers().isEmpty() ? null : getBukkitPlayers().get(0));
         }
     }

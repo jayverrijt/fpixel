@@ -38,4 +38,7 @@ commands:
   survival:
     description: Join the Survival SMP world
     aliases: [smp]
+  testing:
+    description: Toggle testing mode and manage simulated players for game testing
+    aliases: [test]
 

@@ -38,6 +38,11 @@ public class PvPGame extends Arena {
         if (bPlayers.size() >= 2) {
             bPlayers.get(0).teleport(spawn1);
             bPlayers.get(1).teleport(spawn2);
+        } else if (!bPlayers.isEmpty()) {
+            bPlayers.get(0).teleport(spawn1);
+            if (!simulatedPlayers.isEmpty() && spawn2 != null) {
+                simulatedPlayers.values().iterator().next().spawnEntity(spawn2, "PVP");
+            }
         }
 
         for (Player p : bPlayers) {
@@ -126,8 +131,8 @@ public class PvPGame extends Arena {
     @Override
     public void checkWinCondition() {
         if (state != GameState.IN_GAME) return;
-        List<Player> alive = getBukkitPlayers();
-        if (alive.size() <= 1) {
+        if (getAlivePlayerCount() <= 1) {
+            List<Player> alive = getBukkitPlayers();
             endGame(alive.isEmpty() ? null : alive.get(0));
         }
     }
@@ -183,4 +188,7 @@ public class PvPGame extends Arena {
         lines.add("§emc.fpixel.net");
         return lines;
     }
+
+    public Location getSpawn1() { return spawn1; }
+    public Location getSpawn2() { return spawn2; }
 }

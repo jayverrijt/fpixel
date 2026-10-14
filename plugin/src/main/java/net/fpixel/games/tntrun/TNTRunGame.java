@@ -47,6 +47,13 @@ public class TNTRunGame extends Arena {
                 eliminatePlayer(p);
             }
         }
+        for (net.fpixel.core.testing.SimulatedPlayer bot : new ArrayList<>(simulatedPlayers.values())) {
+            if (bot.getEntity() != null && bot.getEntity().isValid()) {
+                if (bot.getEntity().getLocation().getY() <= deathY) {
+                    eliminateSimulatedPlayer(bot);
+                }
+            }
+        }
     }
 
     @Override
@@ -134,7 +141,7 @@ public class TNTRunGame extends Arena {
     @Override
     public void checkWinCondition() {
         if (state != GameState.IN_GAME) return;
-        if (players.size() <= 1) {
+        if (getAlivePlayerCount() <= 1) {
             Player winner = null;
             if (!players.isEmpty()) {
                 winner = Bukkit.getPlayer(players.iterator().next());

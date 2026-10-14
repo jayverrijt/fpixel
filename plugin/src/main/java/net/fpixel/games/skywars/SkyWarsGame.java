@@ -63,6 +63,16 @@ public class SkyWarsGame extends Arena {
             ChatUtil.playSound(p, Sound.ENTITY_ENDER_DRAGON_GROWL, 0.7f, 1.2f);
         }
 
+        // Spawn simulated players on other islands
+        int botSpawnIdx = bPlayers.size();
+        for (net.fpixel.core.testing.SimulatedPlayer bot : simulatedPlayers.values()) {
+            Location bSpawn = (botSpawnIdx < islandSpawns.size()) ? islandSpawns.get(botSpawnIdx) : lobbySpawn;
+            if (bSpawn != null) {
+                bot.spawnEntity(bSpawn.clone().add(0.5, 1, 0.5), "SKYWARS");
+            }
+            botSpawnIdx++;
+        }
+
         // Fill chests with items
         populateChests();
     }
@@ -154,6 +164,13 @@ public class SkyWarsGame extends Arena {
                 eliminatePlayer(p);
             }
         }
+        for (net.fpixel.core.testing.SimulatedPlayer bot : new ArrayList<>(simulatedPlayers.values())) {
+            if (bot.getEntity() != null && bot.getEntity().isValid()) {
+                if (bot.getEntity().getLocation().getY() < voidKillY) {
+                    eliminateSimulatedPlayer(bot);
+                }
+            }
+        }
 
         // Chest refill every 180 seconds (3 min)
         if (gameTime > 0 && gameTime % 180 == 0) {
@@ -211,8 +228,8 @@ public class SkyWarsGame extends Arena {
     @Override
     public void checkWinCondition() {
         if (state != GameState.IN_GAME) return;
-        List<Player> alive = getBukkitPlayers();
-        if (alive.size() <= 1) {
+        if (getAlivePlayerCount() <= 1) {
+            List<Player> alive = getBukkitPlayers();
             Player winner = alive.isEmpty() ? null : alive.get(0);
             endGame(winner);
         }
@@ -255,4 +272,6 @@ public class SkyWarsGame extends Arena {
         lines.add("§emc.fpixel.net");
         return lines;
     }
+
+    public List<Location> getIslandSpawns() { return islandSpawns; }
 }

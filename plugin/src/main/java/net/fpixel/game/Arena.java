@@ -19,6 +19,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import net.fpixel.core.testing.SimulatedPlayer;
 import org.bukkit.inventory.meta.FireworkMeta;
 
 import java.util.*;
@@ -36,6 +37,7 @@ public abstract class Arena {
     protected GameState state = GameState.WAITING;
     protected final Set<UUID> players = new HashSet<>();
     protected final Set<UUID> spectators = new HashSet<>();
+    protected final Map<UUID, SimulatedPlayer> simulatedPlayers = new HashMap<>();
 
     protected int countdown = 10;
     protected int gameTime = 0;
@@ -71,7 +73,7 @@ public abstract class Arena {
     }
 
     protected void handleCountdownTick() {
-        if (players.size() < minPlayers) {
+        if (getPlayerCount() < minPlayers) {
             state = GameState.WAITING;
             countdown = 10;
             broadcast("§cNot enough players! Countdown cancelled.");
@@ -129,6 +131,9 @@ public abstract class Arena {
             ChatUtil.playSound(p, Sound.ENTITY_ENDER_DRAGON_GROWL, 0.8f, 1.2f);
         }
         onGameStart();
+        if (plugin.getTestingManager() != null) {
+            plugin.getTestingManager().onArenaStart(this);
+        }
     }
 
     public void endGame(Player winner) {
@@ -159,6 +164,12 @@ public abstract class Arena {
 
     public void resetArena() {
         state = GameState.RESETTING;
+
+        // Clean up simulated bot entities
+        for (SimulatedPlayer bot : simulatedPlayers.values()) {
+            bot.removeEntity();
+        }
+        simulatedPlayers.clear();
 
         // Teleport all players back to Hub
         for (Player p : getAllBukkitPlayers()) {
@@ -194,7 +205,7 @@ public abstract class Arena {
             return true;
         }
 
-        if (players.size() >= maxPlayers) {
+        if (getPlayerCount() >= maxPlayers) {
             ChatUtil.sendMessage(player, "§cThis arena is full!");
             return false;
         }
@@ -215,15 +226,21 @@ public abstract class Arena {
             player.teleport(lobbySpawn);
         }
 
+        broadcast("§7" + player.getName() + " §ejoined the game (§b" + getPlayerCount() + "§e/§b" + maxPlayers + "§e)!");
 
-        broadcast("§7" + player.getName() + " §ejoined the game (§b" + players.size() + "§e/§b" + maxPlayers + "§e)!");
-
-        if (players.size() >= minPlayers && state == GameState.WAITING) {
+        if (getPlayerCount() >= minPlayers && state == GameState.WAITING) {
             state = GameState.STARTING;
             countdown = (minPlayers == 2 && maxPlayers == 2) ? 3 : 10;
+            if (plugin.getTestingManager() != null && plugin.getTestingManager().isTestingMode()) {
+                countdown = 3;
+            }
         }
 
         onPlayerJoin(player);
+
+        if (plugin.getTestingManager() != null && plugin.getTestingManager().isTestingMode()) {
+            plugin.getTestingManager().onPlayerJoinArena(this, player);
+        }
         return true;
     }
 
@@ -237,7 +254,7 @@ public abstract class Arena {
 
         if (state == GameState.IN_GAME) {
             checkWinCondition();
-        } else if (state == GameState.STARTING && players.size() < minPlayers) {
+        } else if (state == GameState.STARTING && getPlayerCount() < minPlayers) {
             state = GameState.WAITING;
             countdown = 10;
             broadcast("§cNot enough players! Countdown cancelled.");
@@ -250,6 +267,50 @@ public abstract class Arena {
         plugin.getSpectatorManager().makeSpectator(player, this);
         broadcast("§c" + player.getName() + " §7has been eliminated!");
         checkWinCondition();
+    }
+
+    public void addSimulatedPlayer(SimulatedPlayer bot) {
+        if (getPlayerCount() >= maxPlayers) return;
+        simulatedPlayers.put(bot.getUuid(), bot);
+        broadcast("§7" + bot.getName() + " §ejoined the game (§b" + getPlayerCount() + "§e/§b" + maxPlayers + "§e)!");
+
+        if (getPlayerCount() >= minPlayers && state == GameState.WAITING) {
+            state = GameState.STARTING;
+            countdown = 3;
+        }
+    }
+
+    public void removeSimulatedPlayer(UUID uuid) {
+        SimulatedPlayer bot = simulatedPlayers.remove(uuid);
+        if (bot != null) {
+            bot.removeEntity();
+            broadcast("§7" + bot.getName() + " §eleft the game.");
+            if (state == GameState.IN_GAME) {
+                checkWinCondition();
+            } else if (state == GameState.STARTING && getPlayerCount() < minPlayers) {
+                state = GameState.WAITING;
+                countdown = 10;
+            }
+        }
+    }
+
+    public void eliminateSimulatedPlayer(SimulatedPlayer bot) {
+        simulatedPlayers.remove(bot.getUuid());
+        bot.removeEntity();
+        broadcast("§c" + bot.getName() + " §7has been eliminated!");
+        checkWinCondition();
+    }
+
+    public Map<UUID, SimulatedPlayer> getSimulatedPlayers() {
+        return simulatedPlayers;
+    }
+
+    public int getAlivePlayerCount() {
+        return players.size() + simulatedPlayers.size();
+    }
+
+    public void setCountdown(int countdown) {
+        this.countdown = countdown;
     }
 
     public void broadcast(String message) {
@@ -320,8 +381,8 @@ public abstract class Arena {
     public void setLobbySpawn(Location lobbySpawn) { this.lobbySpawn = lobbySpawn; }
     public void setSpectatorSpawn(Location spectatorSpawn) { this.spectatorSpawn = spectatorSpawn; }
     public Location getLobbySpawn() { return lobbySpawn; }
-    public Location getSpectatorSpawn() { return spectatorSpawn; }
-    public int getPlayerCount() { return players.size(); }
+    public int getPlayerCount() { return players.size() + simulatedPlayers.size(); }
+    public int getMinPlayers() { return minPlayers; }
     public int getMaxPlayers() { return maxPlayers; }
     public boolean contains(Player player) {
         return players.contains(player.getUniqueId()) || spectators.contains(player.getUniqueId());

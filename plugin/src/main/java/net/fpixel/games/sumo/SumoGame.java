@@ -48,6 +48,9 @@ public class SumoGame extends Arena {
         if (playerList.size() >= 2) {
             player1 = playerList.get(0).getUniqueId();
             player2 = playerList.get(1).getUniqueId();
+        } else if (!playerList.isEmpty() && !simulatedPlayers.isEmpty()) {
+            player1 = playerList.get(0).getUniqueId();
+            player2 = simulatedPlayers.keySet().iterator().next();
         }
 
         startRound();
@@ -56,6 +59,7 @@ public class SumoGame extends Arena {
     private void startRound() {
         Player p1 = Bukkit.getPlayer(player1);
         Player p2 = Bukkit.getPlayer(player2);
+        net.fpixel.core.testing.SimulatedPlayer bot = simulatedPlayers.get(player2);
 
         ItemStack sumoStick = new ItemBuilder(Material.STICK)
                 .name("§6§lSumo Stick")
@@ -78,6 +82,8 @@ public class SumoGame extends Arena {
             p2.setFoodLevel(20);
             if (spawn2 != null) p2.teleport(spawn2);
             ChatUtil.sendTitle(p2, "§eROUND " + currentRound, "§7First to knock off opponent wins!", 5, 30, 5);
+        } else if (bot != null && spawn2 != null) {
+            bot.spawnEntity(spawn2, "SUMO");
         }
     }
 
@@ -85,7 +91,15 @@ public class SumoGame extends Arena {
     public void handleGameTick() {
         for (Player p : getBukkitPlayers()) {
             if (p.getLocation().getY() <= deathY) {
-                handleFall(p);
+                handleFall(p.getUniqueId());
+            }
+        }
+        for (net.fpixel.core.testing.SimulatedPlayer bot : new ArrayList<>(simulatedPlayers.values())) {
+            if (bot.getEntity() != null && bot.getEntity().isValid()) {
+                if (bot.getEntity().getLocation().getY() <= deathY) {
+                    bot.removeEntity();
+                    handleFall(bot.getUuid());
+                }
             }
         }
     }
@@ -95,7 +109,7 @@ public class SumoGame extends Arena {
         if (state != GameState.IN_GAME) return;
         Player player = event.getPlayer();
         if (player.getLocation().getY() <= deathY) {
-            handleFall(player);
+            handleFall(player.getUniqueId());
         }
     }
 
@@ -108,24 +122,25 @@ public class SumoGame extends Arena {
         }
     }
 
-    private void handleFall(Player fallen) {
+    private void handleFall(UUID fallenUuid) {
         if (state != GameState.IN_GAME) return;
 
-        Player winner;
-        if (fallen.getUniqueId().equals(player1)) {
+        UUID winnerUuid;
+        if (fallenUuid.equals(player1)) {
             score2++;
-            winner = Bukkit.getPlayer(player2);
+            winnerUuid = player2;
         } else {
             score1++;
-            winner = Bukkit.getPlayer(player1);
+            winnerUuid = player1;
         }
 
-        String winnerName = winner != null ? winner.getName() : "Opponent";
+        Player winner = Bukkit.getPlayer(winnerUuid);
+        String winnerName = winner != null ? winner.getName() : (simulatedPlayers.containsKey(winnerUuid) ? simulatedPlayers.get(winnerUuid).getName() : "Opponent");
         broadcast("§a" + winnerName + " §ewon Round " + currentRound + "!");
 
         if (score1 >= MAX_WINS || score2 >= MAX_WINS) {
-            // Match over!
-            endGame(score1 >= MAX_WINS ? Bukkit.getPlayer(player1) : Bukkit.getPlayer(player2));
+            Player matchWinner = score1 >= MAX_WINS ? Bukkit.getPlayer(player1) : Bukkit.getPlayer(player2);
+            endGame(matchWinner);
         } else {
             currentRound++;
             startRound();
@@ -135,7 +150,7 @@ public class SumoGame extends Arena {
     @Override
     public void checkWinCondition() {
         if (state != GameState.IN_GAME) return;
-        if (players.size() <= 1) {
+        if (getAlivePlayerCount() <= 1) {
             Player winner = null;
             if (!players.isEmpty()) {
                 winner = Bukkit.getPlayer(players.iterator().next());

@@ -62,7 +62,11 @@ public class BridgeGame extends Arena {
 
         List<Player> bPlayers = getBukkitPlayers();
         if (!bPlayers.isEmpty()) redTeam.add(bPlayers.get(0).getUniqueId());
-        if (bPlayers.size() > 1) blueTeam.add(bPlayers.get(1).getUniqueId());
+        if (bPlayers.size() > 1) {
+            blueTeam.add(bPlayers.get(1).getUniqueId());
+        } else if (!simulatedPlayers.isEmpty()) {
+            blueTeam.add(simulatedPlayers.keySet().iterator().next());
+        }
 
         startRound();
     }
@@ -80,6 +84,14 @@ public class BridgeGame extends Arena {
             p.getInventory().clear();
             giveKit(p, isRed);
             spawnCage(cageLoc, isRed ? Material.RED_STAINED_GLASS : Material.BLUE_STAINED_GLASS);
+        }
+
+        for (UUID botUuid : blueTeam) {
+            net.fpixel.core.testing.SimulatedPlayer bot = simulatedPlayers.get(botUuid);
+            if (bot != null && blueCage != null) {
+                bot.spawnEntity(blueCage.clone().add(0.5, 0.5, 0.5), "BRIDGE");
+                spawnCage(blueCage, Material.BLUE_STAINED_GLASS);
+            }
         }
     }
 
@@ -307,4 +319,9 @@ public class BridgeGame extends Arena {
         lines.add("§emc.fpixel.net");
         return lines;
     }
+
+    public Location getBlueCage() { return blueCage; }
+    public Location getBlueSpawn() { return blueSpawn; }
+    public Location getRedCage() { return redCage; }
+    public Location getRedSpawn() { return redSpawn; }
 }
