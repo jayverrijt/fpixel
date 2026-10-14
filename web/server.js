@@ -267,6 +267,15 @@ function getUserCache() {
   return cache;
 }
 
+// Offline UUID helper (matches Java nameUUIDFromBytes("OfflinePlayer:" + name))
+function getOfflinePlayerUUID(username) {
+  const hash = crypto.createHash('md5').update('OfflinePlayer:' + username, 'utf8').digest();
+  hash[6] = (hash[6] & 0x0f) | 0x30; // Version 3
+  hash[8] = (hash[8] & 0x3f) | 0x80; // Variant RFC 4122
+  const hex = hash.toString('hex');
+  return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}`;
+}
+
 // Whitelist helper
 function getWhitelist() {
   const file = resolveFilePath('whitelist.json');
@@ -755,11 +764,12 @@ app.post('/api/admin/whitelist/approve', async (req, res) => {
     return res.status(404).json({ error: 'Aanvraag niet gevonden.' });
   }
 
-  // Add to whitelist.json
+  // Add to whitelist.json with proper offline UUID
   const whitelist = getWhitelist();
-  if (!whitelist.some(w => w.name && w.name.toLowerCase() === target.username.toLowerCase())) {
+  const offlineUuid = getOfflinePlayerUUID(target.username);
+  if (!whitelist.some(w => w.uuid === offlineUuid || (w.name && w.name.toLowerCase() === target.username.toLowerCase()))) {
     whitelist.push({
-      uuid: '00000000-0000-0000-0000-' + Math.random().toString(16).substring(2, 14).padEnd(12, '0'),
+      uuid: offlineUuid,
       name: target.username
     });
     saveWhitelist(whitelist);
