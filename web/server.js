@@ -49,6 +49,7 @@ function pingMinecraft(host, port, timeoutMs = 3000) {
     let resolved = false;
 
     socket.setTimeout(timeoutMs);
+    socket.connect(port, host);
 
     socket.on('connect', () => {
       try {
