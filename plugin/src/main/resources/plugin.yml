@@ -43,5 +43,8 @@ commands:
     aliases: [test]
   shop:
     description: Open the BedWars item shop
+  webpass:
+    description: Stel je wachtwoord in voor het FPixel webportaal
+    aliases: [setwebpass, webpassword]
 
 

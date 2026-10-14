@@ -223,26 +223,21 @@
           <div class="form-header">
             <span class="tag-pill">Toegang Verzoek</span>
             <h2>📝 Vraag Toegang Tot De Server</h2>
-            <p>Omdat dit een gezellige privé vriendenserver is, staat de whitelist altijd aan. Vul hieronder je Minecraft naam in zodat een admin je kan goedkeuren.</p>
+            <p>De server heeft een actieve whitelist. Vul hieronder je Minecraft gebruikersnaam in om toegang aan te vragen.</p>
           </div>
 
           <form id="whitelist-form" onsubmit="handleWhitelistSubmit(event)">
             <div class="form-group">
-              <label for="wl-username">Jouw Minecraft Naam (Precies zoals in de game)</label>
+              <label for="wl-username">Minecraft Gebruikersnaam</label>
               <div class="input-with-preview">
-                <input type="text" id="wl-username" required placeholder="bijv. Jay_V0 of SmileyGaming27" oninput="previewSkin(this.value)">
+                <input type="text" id="wl-username" required placeholder="Jouw Minecraft naam" oninput="previewSkin(this.value)">
                 <img id="skin-preview-head" class="input-avatar" src="https://mc-heads.net/avatar/MHF_Steve/64" alt="skin">
               </div>
             </div>
 
             <div class="form-group">
-              <label for="wl-who">Wie ben je? (Voornaam / Vriend van wie / Discord)</label>
-              <input type="text" id="wl-who" required placeholder="bijv. Thomas (vriend van Jay) of Discord tag">
-            </div>
-
-            <div class="form-group">
-              <label for="wl-reason">Kort bericht / Wat kom je bouwen?</label>
-              <textarea id="wl-reason" rows="3" placeholder="Gezellig survivalen, farmen, minigames spelen..."></textarea>
+              <label for="wl-reason">Toelichting / Motivatie</label>
+              <textarea id="wl-reason" rows="3" placeholder="Waarom wil je meedoen? (Optioneel)"></textarea>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block">🚀 Aanvraag Versturen</button>
@@ -304,33 +299,61 @@
   <div id="login-modal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>🔑 Inloggen op FPixel</h3>
+        <h3 id="modal-title">🔑 Inloggen op FPixel</h3>
         <button class="modal-close" onclick="closeLoginModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-desc">Kies hoe je wilt inloggen om je coins, survival statistieken en beheerdersrechten te bekijken:</p>
         
-        <!-- Microsoft OAuth Option -->
-        <div class="auth-option ms-option" onclick="simulateMicrosoftLogin()">
-          <div class="ms-logo">
-            <svg width="20" height="20" viewBox="0 0 20 20"><path fill="#f25022" d="M1 1h8v8H1z"/><path fill="#00a4ef" d="M1 11h8v8H1z"/><path fill="#7fba00" d="M11 1h8v8h-8z"/><path fill="#ffb900" d="M11 11h8v8h-8z"/></svg>
-          </div>
-          <div class="ms-text">
-            <strong>Inloggen met Microsoft</strong>
-            <span>Direct koppelen met je officiële Minecraft account</span>
-          </div>
+        <!-- Modal Tabs -->
+        <div class="modal-tabs">
+          <button id="modal-tab-login" class="modal-tab active" onclick="switchLoginMode('login')">🔑 Inloggen met Wachtwoord</button>
+          <button id="modal-tab-code" class="modal-tab" onclick="switchLoginMode('code')">✉️ In-Game Verificatiecode</button>
         </div>
 
-        <div class="divider"><span>OF DIRECT MET JE SPELERSNAAM</span></div>
-
-        <!-- Direct Username Option -->
-        <form onsubmit="handleDirectLogin(event)">
+        <!-- Mode 1: Standard Password Login -->
+        <form id="form-login" onsubmit="handlePasswordLogin(event)">
           <div class="form-group">
             <label for="login-username">Minecraft Gebruikersnaam</label>
-            <input type="text" id="login-username" required placeholder="bijv. Jay_V0">
+            <input type="text" id="login-username" required placeholder="Jouw Minecraft naam">
+          </div>
+          <div class="form-group">
+            <label for="login-password">Wachtwoord</label>
+            <input type="password" id="login-password" required placeholder="Jouw wachtwoord">
           </div>
           <button type="submit" class="btn btn-primary btn-block">Inloggen</button>
+          <p class="modal-help-text">
+            Nog geen wachtwoord ingesteld of vergeten? <a href="#" onclick="switchLoginMode('code'); return false;">Stel in met in-game code</a> of gebruik in Minecraft chat <code>/webpass &lt;wachtwoord&gt;</code>.
+          </p>
         </form>
+
+        <!-- Mode 2: In-Game Verification Setup -->
+        <div id="form-code-section" style="display: none;">
+          <p class="modal-desc">
+            Om te bewijzen dat dit jouw account is, sturen we een verificatiecode naar je in-game chat in Minecraft.
+          </p>
+
+          <div class="form-group">
+            <label for="setup-username">Minecraft Gebruikersnaam</label>
+            <div class="input-with-button">
+              <input type="text" id="setup-username" placeholder="Jouw Minecraft naam">
+              <button type="button" class="btn btn-secondary" onclick="requestInGameCode()">Stuur Code 📩</button>
+            </div>
+            <p class="modal-tip">💡 Zorg dat je online bent op <strong>mc.fpixel.nl</strong> om de code op je scherm te ontvangen.</p>
+          </div>
+
+          <form id="form-verify-code" onsubmit="handleVerifyCodeAndSetPassword(event)">
+            <div class="form-group">
+              <label for="verify-code">6-Cijferige Verificatiecode</label>
+              <input type="text" id="verify-code" required placeholder="bijv. 482910" maxlength="6" style="letter-spacing: 4px; font-weight: 700; text-align: center; font-size: 1.1rem;">
+            </div>
+            <div class="form-group">
+              <label for="setup-new-password">Nieuw Wachtwoord</label>
+              <input type="password" id="setup-new-password" required placeholder="Kies een veilig wachtwoord" minlength="4">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Wachtwoord Opslaan & Direct Inloggen</button>
+          </form>
+        </div>
+
       </div>
     </div>
   </div>

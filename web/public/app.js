@@ -183,7 +183,10 @@ function renderLoggedOut() {
 
 function openLoginModal() {
   const modal = document.getElementById('login-modal');
-  if (modal) modal.classList.add('open');
+  if (modal) {
+    switchLoginMode('login');
+    modal.classList.add('open');
+  }
 }
 
 function closeLoginModal() {
@@ -191,17 +194,47 @@ function closeLoginModal() {
   if (modal) modal.classList.remove('open');
 }
 
-async function handleDirectLogin(event) {
+function switchLoginMode(mode) {
+  const tabLogin = document.getElementById('modal-tab-login');
+  const tabCode = document.getElementById('modal-tab-code');
+  const formLogin = document.getElementById('form-login');
+  const formCode = document.getElementById('form-code-section');
+
+  if (!tabLogin || !tabCode || !formLogin || !formCode) return;
+
+  if (mode === 'code') {
+    tabLogin.classList.remove('active');
+    tabCode.classList.add('active');
+    formLogin.style.display = 'none';
+    formCode.style.display = 'block';
+
+    const loginUser = document.getElementById('login-username')?.value.trim();
+    if (loginUser && document.getElementById('setup-username')) {
+      document.getElementById('setup-username').value = loginUser;
+    }
+  } else {
+    tabCode.classList.remove('active');
+    tabLogin.classList.add('active');
+    formCode.style.display = 'none';
+    formLogin.style.display = 'block';
+  }
+}
+
+async function handlePasswordLogin(event) {
   event.preventDefault();
-  const input = document.getElementById('login-username');
-  const username = input ? input.value.trim() : '';
-  if (!username) return;
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  if (!username || !password) {
+    showToast('Vul je gebruikersnaam en wachtwoord in.');
+    return;
+  }
 
   try {
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({ username, password })
     });
     const data = await res.json();
     if (res.ok && data.success) {
@@ -217,32 +250,71 @@ async function handleDirectLogin(event) {
   }
 }
 
-function simulateMicrosoftLogin() {
-  const choice = prompt('Kies een vriendenaccount om direct in te loggen:\n1. Jay_V0 (Owner / Admin)\n2. SmileyGaming27\n3. Amigapower2018\n4. .minnieheks\n\nOf typ een Minecraft gamertag:', 'Jay_V0');
-  if (!choice) return;
+async function requestInGameCode() {
+  const input = document.getElementById('setup-username');
+  const username = input ? input.value.trim() : '';
+  if (!username) {
+    showToast('Vul eerst je Minecraft gebruikersnaam in.');
+    return;
+  }
 
-  let targetName = choice.trim();
-  if (targetName === '1') targetName = 'Jay_V0';
-  else if (targetName === '2') targetName = 'SmileyGaming27';
-  else if (targetName === '3') targetName = 'Amigapower2018';
-  else if (targetName === '4') targetName = '.minnieheks';
+  try {
+    showToast('Verificatiecode verzenden naar Minecraft...');
+    const res = await fetch('/api/auth/send-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(data.message);
+      const verifyInput = document.getElementById('verify-code');
+      if (verifyInput) verifyInput.focus();
+    } else {
+      showToast(data.error || 'Kan verificatiecode niet sturen.');
+    }
+  } catch (err) {
+    showToast('Fout bij verzenden van verificatiecode.');
+  }
+}
 
-  fetch('/api/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: targetName })
-  }).then(r => r.json()).then(data => {
-    if (data.success) {
+async function handleVerifyCodeAndSetPassword(event) {
+  event.preventDefault();
+  const username = document.getElementById('setup-username').value.trim();
+  const code = document.getElementById('verify-code').value.trim();
+  const password = document.getElementById('setup-new-password').value;
+
+  if (!username) {
+    showToast('Vul je Minecraft gebruikersnaam in.');
+    return;
+  }
+  if (!code || code.length !== 6) {
+    showToast('Vul de 6-cijferige verificatiecode in.');
+    return;
+  }
+  if (!password || password.length < 4) {
+    showToast('Wachtwoord moet minimaal 4 tekens bevatten.');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/auth/verify-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, code, password })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
       closeLoginModal();
       checkAuth();
-      showToast(`Microsoft koppeling geslaagd: Welkom ${data.user.username}!`);
+      showToast(data.message || 'Wachtwoord ingesteld en ingelogd!');
       fetchStats();
     } else {
-      showToast(data.error || 'Inloggen mislukt.');
+      showToast(data.error || 'Verificatie mislukt.');
     }
-  }).catch(() => {
-    showToast('Fout bij Microsoft login verbinding.');
-  });
+  } catch (err) {
+    showToast('Fout bij verifiëren van code.');
+  }
 }
 
 async function logout() {
@@ -433,7 +505,6 @@ function previewSkin(username) {
 async function handleWhitelistSubmit(event) {
   event.preventDefault();
   const username = document.getElementById('wl-username').value.trim();
-  const whoAreYou = document.getElementById('wl-who').value.trim();
   const reason = document.getElementById('wl-reason').value.trim();
 
   if (!username) {
@@ -445,7 +516,7 @@ async function handleWhitelistSubmit(event) {
     const res = await fetch('/api/whitelist/request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, whoAreYou, reason })
+      body: JSON.stringify({ username, reason })
     });
     const data = await res.json();
     if (res.ok && data.success) {
@@ -528,7 +599,7 @@ function renderAdminRequests(requests) {
         <img class="req-avatar" src="https://mc-heads.net/avatar/${encodeURIComponent(r.username)}/64" alt="${r.username}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/64'">
         <div>
           <div class="req-name">${r.username}</div>
-          <div class="req-who">👤 ${r.whoAreYou}</div>
+          <div class="req-who" style="color: var(--text-dim);">Aangevraagd op ${new Date(r.createdAt).toLocaleDateString('nl-NL')}</div>
         </div>
       </div>
       <div class="req-body">

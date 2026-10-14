@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const net = require('net');
+const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 
 const app = express();
@@ -20,6 +21,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // In-memory sessions (token -> user)
 const sessions = new Map();
+
+// In-memory one-time verification codes (username_lower -> { code, expiresAt })
+const pendingCodes = new Map();
 
 // Helper: VarInt encode
 function encodeVarInt(value) {
@@ -290,6 +294,47 @@ function saveWhitelistRequests(requests) {
   }
 }
 
+// Web Authentication & Password Management
+function getWebAuth() {
+  const file = resolveFilePath('plugins/FPixelCore/web_auth.json');
+  if (fs.existsSync(file)) {
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf8')) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+  return {};
+}
+
+function saveWebAuth(authData) {
+  const file = resolveFilePath('plugins/FPixelCore/web_auth.json');
+  try {
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(authData, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Failed to save web_auth.json:', e);
+    return false;
+  }
+}
+
+function hashPassword(password, existingSalt = null) {
+  const salt = existingSalt || crypto.randomBytes(16).toString('hex');
+  const hash = crypto.createHash('sha256').update(salt + password).digest('hex');
+  return { salt, hash };
+}
+
+function verifyPassword(password, salt, storedHash) {
+  try {
+    const computedHash = crypto.createHash('sha256').update(salt + password).digest('hex');
+    return crypto.timingSafeEqual(Buffer.from(computedHash, 'hex'), Buffer.from(storedHash, 'hex'));
+  } catch (e) {
+    return false;
+  }
+}
+
 // Read Player Full Profile (Coins, Level, Survival Data, Inventory)
 function getPlayerProfile(username) {
   const lowerName = username.toLowerCase();
@@ -408,17 +453,33 @@ app.get('/api/me', (req, res) => {
   res.json({ loggedIn: true, user: fresh });
 });
 
-// API: /api/login
+// API: /api/login (Password protected)
 app.post('/api/login', (req, res) => {
-  const { username } = req.body;
+  const { username, password } = req.body;
   if (!username || username.trim().length < 2) {
-    return res.status(400).json({ error: 'Ongeldige Minecraft gebruikersnaam.' });
+    return res.status(400).json({ error: 'Vul een geldige Minecraft gebruikersnaam in.' });
+  }
+  if (!password || password.trim().length === 0) {
+    return res.status(400).json({ error: 'Vul je wachtwoord in om in te loggen.' });
   }
 
   const cleanName = username.trim();
-  const profile = getPlayerProfile(cleanName);
+  const authData = getWebAuth();
+  const userAuth = authData[cleanName.toLowerCase()];
 
-  const token = 'token_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+  if (!userAuth) {
+    return res.status(401).json({
+      error: 'Voor dit account is nog geen wachtwoord ingesteld. Gebruik in Minecraft het commando /webpass <wachtwoord> of vraag hieronder een in-game verificatiecode aan.'
+    });
+  }
+
+  const isValid = verifyPassword(password, userAuth.salt, userAuth.hash);
+  if (!isValid) {
+    return res.status(401).json({ error: 'Onjuist wachtwoord voor ' + cleanName + '.' });
+  }
+
+  const profile = getPlayerProfile(cleanName);
+  const token = 'token_' + crypto.randomBytes(24).toString('hex');
   sessions.set(token, profile);
 
   res.cookie('fpixel_session', token, {
@@ -428,6 +489,98 @@ app.post('/api/login', (req, res) => {
   });
 
   res.json({ success: true, user: profile });
+});
+
+// API: /api/auth/send-code (Sends 6-digit verification code to player in-game via RCON)
+app.post('/api/auth/send-code', async (req, res) => {
+  const { username } = req.body;
+  if (!username || username.trim().length < 2) {
+    return res.status(400).json({ error: 'Vul een geldige Minecraft gebruikersnaam in.' });
+  }
+
+  const cleanName = username.trim();
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+  try {
+    const tellrawJson = JSON.stringify([
+      { text: "[FPixel Web] ", color: "gold", bold: true },
+      { text: "Jouw eenmalige verificatiecode is: ", color: "yellow" },
+      { text: code, color: "green", bold: true, underlined: true },
+      { text: " (5 min geldig). Deel deze nooit!", color: "gray" }
+    ]);
+    const rconRes = await sendRconCommand(`tellraw ${cleanName} ${tellrawJson}`);
+    if (rconRes && rconRes.toLowerCase().includes('no player was found')) {
+      return res.status(404).json({
+        error: `Speler '${cleanName}' is momenteel niet online op mc.fpixel.nl. Log eerst in op de Minecraft server om de code in je chat te ontvangen, of gebruik in Minecraft het commando /webpass <wachtwoord>.`
+      });
+    }
+
+    pendingCodes.set(cleanName.toLowerCase(), {
+      code,
+      expiresAt: Date.now() + 5 * 60 * 1000
+    });
+
+    res.json({
+      success: true,
+      message: `Verificatiecode verzonden naar Minecraft chat van ${cleanName}! Kijk in-game op je scherm.`
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: 'Kan geen verificatiecode sturen: controleer of de server online is of gebruik in-game /webpass <wachtwoord>.'
+    });
+  }
+});
+
+// API: /api/auth/verify-code (Verifies in-game code and sets new password)
+app.post('/api/auth/verify-code', (req, res) => {
+  const { username, code, password } = req.body;
+  if (!username || !code || !password) {
+    return res.status(400).json({ error: 'Vul alle velden in (gebruikersnaam, verificatiecode en nieuw wachtwoord).' });
+  }
+  if (password.length < 4) {
+    return res.status(400).json({ error: 'Wachtwoord moet minimaal 4 tekens bevatten.' });
+  }
+
+  const cleanName = username.trim();
+  const pending = pendingCodes.get(cleanName.toLowerCase());
+
+  if (!pending || pending.code !== code.trim()) {
+    return res.status(400).json({ error: 'Ongeldige verificatiecode. Vraag eventueel een nieuwe code aan.' });
+  }
+  if (Date.now() > pending.expiresAt) {
+    pendingCodes.delete(cleanName.toLowerCase());
+    return res.status(400).json({ error: 'Deze verificatiecode is verlopen. Vraag een nieuwe code aan.' });
+  }
+
+  pendingCodes.delete(cleanName.toLowerCase());
+
+  // Save hashed password
+  const authData = getWebAuth();
+  const { salt, hash } = hashPassword(password);
+  authData[cleanName.toLowerCase()] = {
+    username: cleanName,
+    salt,
+    hash,
+    updatedAt: new Date().toISOString()
+  };
+  saveWebAuth(authData);
+
+  // Automatically authenticate user
+  const profile = getPlayerProfile(cleanName);
+  const token = 'token_' + crypto.randomBytes(24).toString('hex');
+  sessions.set(token, profile);
+
+  res.cookie('fpixel_session', token, {
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    sameSite: 'lax'
+  });
+
+  res.json({
+    success: true,
+    user: profile,
+    message: 'Wachtwoord succesvol ingesteld! Je bent nu veilig ingelogd.'
+  });
 });
 
 // API: /api/logout
@@ -495,7 +648,7 @@ app.get('/api/map/data', (req, res) => {
 
 // API: /api/whitelist/request (Submit new whitelist request)
 app.post('/api/whitelist/request', (req, res) => {
-  const { username, whoAreYou, reason } = req.body;
+  const { username, reason } = req.body;
   if (!username || username.trim().length < 2) {
     return res.status(400).json({ error: 'Vul een geldige Minecraft gebruikersnaam in.' });
   }
@@ -518,7 +671,6 @@ app.post('/api/whitelist/request', (req, res) => {
   const newRequest = {
     id: 'req_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
     username: cleanName,
-    whoAreYou: whoAreYou ? whoAreYou.trim() : 'Vriend',
     reason: reason ? reason.trim() : '',
     status: 'PENDING',
     createdAt: new Date().toISOString()
@@ -568,11 +720,11 @@ app.post('/api/admin/whitelist/approve', async (req, res) => {
     saveWhitelist(whitelist);
   }
 
-  // Execute in Minecraft via RCON
+  // Execute in Minecraft via RCON (neutral broadcast, no name dropping)
   try {
     await sendRconCommand(`whitelist add ${target.username}`);
     await sendRconCommand('whitelist reload');
-    await sendRconCommand(`say §a[Whitelist] §e${target.username}§a is zojuist goedgekeurd door §6${user.username}§a! Welkom!`);
+    await sendRconCommand(`say §a[Whitelist] §e${target.username}§a is goedgekeurd en toegevoegd aan de whitelist! Welkom!`);
   } catch (err) {
     console.warn('RCON notification warning:', err.message);
   }

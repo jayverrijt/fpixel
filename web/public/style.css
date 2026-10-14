@@ -910,58 +910,75 @@ input[type="text"]:focus, textarea:focus {
   margin-bottom: 20px;
 }
 
-.ms-option {
+.modal-tabs {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  gap: 6px;
   background: var(--bg-card);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 22px;
   border: 1px solid var(--border);
-  padding: 16px;
-  border-radius: var(--radius-md);
+}
+
+.modal-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 8px 10px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.ms-option:hover {
-  background: var(--bg-card-hover);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-}
-
-.ms-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.ms-text strong {
-  font-size: 0.95rem;
-  color: #fff;
-}
-
-.ms-text span {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.divider {
-  display: flex;
-  align-items: center;
   text-align: center;
-  margin: 20px 0;
 }
 
-.divider::before, .divider::after {
-  content: '';
+.modal-tab.active {
+  background: var(--gold);
+  color: #000;
+}
+
+.input-with-button {
+  display: flex;
+  gap: 8px;
+}
+
+.input-with-button input {
   flex: 1;
-  border-bottom: 1px solid var(--border);
 }
 
-.divider span {
-  padding: 0 10px;
-  font-size: 0.7rem;
+.modal-help-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 14px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.modal-help-text a {
+  color: var(--gold);
+  text-decoration: none;
   font-weight: 700;
-  color: var(--text-dim);
-  letter-spacing: 0.5px;
+}
+
+.modal-help-text a:hover {
+  text-decoration: underline;
+}
+
+.modal-help-text code {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--cyan);
+}
+
+.modal-tip {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+  line-height: 1.4;
 }
 
 /* Toast */

@@ -85,6 +85,7 @@ rm -f "${SERVER_DIR}"/world/session.lock "${SERVER_DIR}"/Urban/session.lock "${S
 cd "${BASE_DIR}"
 docker compose build
 docker compose up -d
+docker compose restart
 
 # 6. Run post-deploy backup confirmation
 if [ -f "${SCRIPTS_DIR}/backup.sh" ]; then
