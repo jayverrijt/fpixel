@@ -66,8 +66,8 @@ public class SumoGame extends Arena {
             List<UUID> uList = new ArrayList<>(players);
             player1 = uList.get(0);
             player2 = uList.get(1);
-            Player p1 = Bukkit.getPlayer(player1);
-            Player p2 = Bukkit.getPlayer(player2);
+            Player p1 = player1 != null ? Bukkit.getPlayer(player1) : null;
+            Player p2 = player2 != null ? Bukkit.getPlayer(player2) : null;
             if (p1 != null) player1Name = p1.getName();
             if (p2 != null) player2Name = p2.getName();
         }
@@ -203,20 +203,20 @@ public class SumoGame extends Arena {
         if (state != GameState.IN_GAME || roundEnding) return;
         roundEnding = true;
 
-        Player fallen = Bukkit.getPlayer(fallenUuid);
+        Player fallen = fallenUuid != null ? Bukkit.getPlayer(fallenUuid) : null;
         if (fallen != null) {
             fallen.setFallDistance(0);
             fallen.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
             fallen.setHealth(20.0);
             fallen.setFoodLevel(20);
-            Location safeLoc = fallenUuid.equals(player1) ? spawn1 : spawn2;
+            Location safeLoc = (fallenUuid != null && fallenUuid.equals(player1)) ? spawn1 : spawn2;
             if (safeLoc != null) {
                 fallen.teleport(safeLoc);
             }
         }
 
         UUID winnerUuid;
-        if (fallenUuid.equals(player1)) {
+        if (fallenUuid != null && fallenUuid.equals(player1)) {
             score2++;
             winnerUuid = player2;
         } else {
@@ -224,7 +224,7 @@ public class SumoGame extends Arena {
             winnerUuid = player1;
         }
 
-        Player winner = Bukkit.getPlayer(winnerUuid);
+        Player winner = winnerUuid != null ? Bukkit.getPlayer(winnerUuid) : null;
         String winnerName = winner != null ? winner.getName() : (winnerUuid != null && winnerUuid.equals(player1) ? player1Name : player2Name);
         broadcast("§a" + winnerName + " §ewon Round " + currentRound + "!");
 
@@ -307,10 +307,10 @@ public class SumoGame extends Arena {
         lines.add("");
         lines.add("§fRound: §e" + currentRound + "/3");
 
-        Player p1 = Bukkit.getPlayer(player1);
-        Player p2 = Bukkit.getPlayer(player2);
-        String name1 = p1 != null ? p1.getName() : "P1";
-        String name2 = p2 != null ? p2.getName() : "P2";
+        Player p1 = player1 != null ? Bukkit.getPlayer(player1) : null;
+        Player p2 = player2 != null ? Bukkit.getPlayer(player2) : null;
+        String name1 = p1 != null ? p1.getName() : (player1Name != null ? player1Name : "P1");
+        String name2 = p2 != null ? p2.getName() : (player2Name != null ? player2Name : "P2");
 
         lines.add("§f" + name1 + ": §a" + score1);
         lines.add("§f" + name2 + ": §a" + score2);

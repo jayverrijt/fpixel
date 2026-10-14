@@ -198,7 +198,8 @@ public class TNTRunGame extends Arena {
         if (getAlivePlayerCount() <= 1) {
             Player winner = null;
             if (!players.isEmpty()) {
-                winner = Bukkit.getPlayer(players.iterator().next());
+                UUID wUuid = players.iterator().next();
+                winner = wUuid != null ? Bukkit.getPlayer(wUuid) : null;
             }
             endGame(winner);
         }

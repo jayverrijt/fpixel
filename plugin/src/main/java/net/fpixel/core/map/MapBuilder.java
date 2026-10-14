@@ -451,6 +451,86 @@ public class MapBuilder {
     }
 
     /**
+     * Builds a grand arched stone bridge with stone brick deck and wall balustrades.
+     */
+    public static void buildArchedStoneBridge(World world, int x1, int z1, int x2, int z2, int y, int width) {
+        int dx = x2 - x1;
+        int dz = z2 - z1;
+        int steps = (int) Math.hypot(dx, dz);
+        if (steps <= 0) return;
+
+        double xStep = (double) dx / steps;
+        double zStep = (double) dz / steps;
+
+        for (int i = 0; i <= steps; i++) {
+            double curX = x1 + i * xStep;
+            double curZ = z1 + i * zStep;
+            double progress = (double) i / steps;
+            int archLift = (int) Math.round(Math.sin(progress * Math.PI) * 2.0);
+            int curY = y + archLift;
+
+            int bx = (int) Math.round(curX);
+            int bz = (int) Math.round(curZ);
+
+            int halfW = width / 2;
+            for (int w = -halfW; w <= halfW; w++) {
+                int px = (Math.abs(dx) < Math.abs(dz)) ? bx + w : bx;
+                int pz = (Math.abs(dx) >= Math.abs(dz)) ? bz + w : bz;
+
+                world.getBlockAt(px, curY, pz).setType(Material.STONE_BRICKS, false);
+                world.getBlockAt(px, curY - 1, pz).setType(Material.POLISHED_ANDESITE, false);
+
+                if (w == -halfW || w == halfW) {
+                    world.getBlockAt(px, curY + 1, pz).setType(Material.STONE_BRICK_WALL, false);
+                    if (i == 0 || i == steps || i == steps / 2) {
+                        world.getBlockAt(px, curY + 2, pz).setType(Material.LANTERN, false);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Builds an authentic Japanese arched crimson vermilion bridge.
+     */
+    public static void buildArchedCrimsonBridge(World world, int x1, int z1, int x2, int z2, int y, int width) {
+        int dx = x2 - x1;
+        int dz = z2 - z1;
+        int steps = (int) Math.hypot(dx, dz);
+        if (steps <= 0) return;
+
+        double xStep = (double) dx / steps;
+        double zStep = (double) dz / steps;
+
+        for (int i = 0; i <= steps; i++) {
+            double curX = x1 + i * xStep;
+            double curZ = z1 + i * zStep;
+            double progress = (double) i / steps;
+            int archLift = (int) Math.round(Math.sin(progress * Math.PI) * 2.0);
+            int curY = y + archLift;
+
+            int bx = (int) Math.round(curX);
+            int bz = (int) Math.round(curZ);
+
+            int halfW = width / 2;
+            for (int w = -halfW; w <= halfW; w++) {
+                int px = (Math.abs(dx) < Math.abs(dz)) ? bx + w : bx;
+                int pz = (Math.abs(dx) >= Math.abs(dz)) ? bz + w : bz;
+
+                world.getBlockAt(px, curY, pz).setType(Material.CRIMSON_PLANKS, false);
+                world.getBlockAt(px, curY - 1, pz).setType(Material.RED_TERRACOTTA, false);
+
+                if (w == -halfW || w == halfW) {
+                    world.getBlockAt(px, curY + 1, pz).setType(Material.CRIMSON_FENCE, false);
+                    if (i == 0 || i == steps || i == steps / 2) {
+                        world.getBlockAt(px, curY + 2, pz).setType(Material.LANTERN, false);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Builds the Grand Survival Estate Manor inspired directly by the user's survival world:
      * Cobblestone base, stripped oak frame, spruce gable roof, glass windows, rooftop viewing terrace, smoking chimney.
      */
@@ -1431,4 +1511,97 @@ public class MapBuilder {
         }
         world.getBlockAt(tx, ty + height + roofSteps + 1, tz).setType(Material.LIGHTNING_ROD, false);
     }
+
+    /**
+     * Builds a blooming Japanese Cherry Blossom Tree with spreading cloud foliage and pink petal ground scatter.
+     */
+    public static void buildCherryTree(World world, int x, int y, int z, int height) {
+        // 1. Organic curved trunk
+        for (int dy = 0; dy < height; dy++) {
+            int ox = (dy > height / 2) ? 1 : 0;
+            int oz = (dy > height * 0.7) ? 1 : 0;
+            world.getBlockAt(x + ox, y + dy, z + oz).setType(Material.CHERRY_LOG, false);
+        }
+
+        int topY = y + height;
+        // 2. Cloud-like cherry foliage
+        fillLeavesCircle(world, x + 1, topY, z + 1, 3, Material.CHERRY_LEAVES);
+        fillLeavesCircle(world, x + 1, topY + 1, z + 1, 2, Material.CHERRY_LEAVES);
+        fillLeavesCircle(world, x + 1, topY + 2, z + 1, 1, Material.CHERRY_LEAVES);
+        fillLeavesCircle(world, x + 1, topY - 1, z + 1, 2, Material.CHERRY_LEAVES);
+
+        // 3. Hanging lantern underneath bough
+        world.getBlockAt(x + 1, topY - 2, z + 2).setType(Material.LANTERN, false);
+
+        // 4. Ground scatter of fallen pink petals
+        for (int dx = -3; dx <= 3; dx++) {
+            for (int dz = -3; dz <= 3; dz++) {
+                if (Math.abs(dx * dz) % 3 == 0) {
+                    Block ground = world.getBlockAt(x + dx, y - 1, z + dz);
+                    Block above = world.getBlockAt(x + dx, y, z + dz);
+                    if (ground.getType() != Material.AIR && above.getType() == Material.AIR) {
+                        above.setType(Material.PINK_PETALS, false);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Builds a grand curved Roman Colosseum arcade facade with 2 tiers of classical arches.
+     */
+    public static void buildRomanColosseumCurved(World world, int cx, int cy, int cz, int radius, int startDeg, int endDeg) {
+        for (int deg = startDeg; deg <= endDeg; deg += 6) {
+            double rad = Math.toRadians(deg);
+            int bx = (int) Math.round(cx + radius * Math.cos(rad));
+            int bz = (int) Math.round(cz + radius * Math.sin(rad));
+
+            // Tier 1 Pillars (Height 5)
+            for (int y = cy; y <= cy + 4; y++) {
+                world.getBlockAt(bx, y, bz).setType(Material.CUT_SANDSTONE, false);
+            }
+            // Tier 1 Archway & Cornice
+            world.getBlockAt(bx, cy + 5, bz).setType(Material.SMOOTH_SANDSTONE, false);
+            world.getBlockAt(bx, cy + 5, bz).setType(Material.SANDSTONE_STAIRS, false);
+
+            // Tier 2 Pillars (Height 4)
+            for (int y = cy + 6; y <= cy + 9; y++) {
+                world.getBlockAt(bx, y, bz).setType(Material.SMOOTH_SANDSTONE, false);
+            }
+            // Top Entablature & Battlements
+            world.getBlockAt(bx, cy + 10, bz).setType(Material.CUT_SANDSTONE, false);
+            if (deg % 12 == 0) {
+                world.getBlockAt(bx, cy + 11, bz).setType(Material.CUT_SANDSTONE_SLAB, false);
+            }
+        }
+    }
+
+    /**
+     * Builds a Celestial Observatory with a circular quartz foundation, copper rim, and stained glass dome.
+     */
+    public static void buildObservatory(World world, int cx, int cy, int cz, int radius) {
+        // Circular foundation
+        fillCircle(world, cx, cy, cz, radius, Material.SMOOTH_QUARTZ);
+        fillRing(world, cx, cy + 1, cz, radius - 1, radius, Material.QUARTZ_BRICKS);
+        fillRing(world, cx, cy + 2, cz, radius - 1, radius, Material.QUARTZ_BRICKS);
+        fillRing(world, cx, cy + 3, cz, radius - 1, radius, Material.CUT_COPPER);
+
+        // Hemispherical Stained Glass Dome
+        int domeBaseY = cy + 4;
+        for (int y = 0; y <= radius; y++) {
+            int r = (int) Math.round(Math.sqrt(Math.max(0, radius * radius - y * y)));
+            fillRing(world, cx, domeBaseY + y, cz, Math.max(0, r - 1), r, Material.LIGHT_BLUE_STAINED_GLASS);
+        }
+
+        // Central Great Brass Telescope pointing towards zenith
+        world.getBlockAt(cx, cy + 1, cz).setType(Material.COPPER_BLOCK, false);
+        world.getBlockAt(cx, cy + 2, cz).setType(Material.COPPER_BLOCK, false);
+        world.getBlockAt(cx + 1, cy + 3, cz).setType(Material.LIGHTNING_ROD, false);
+        world.getBlockAt(cx + 2, cy + 4, cz).setType(Material.LIGHTNING_ROD, false);
+        world.getBlockAt(cx + 3, cy + 5, cz).setType(Material.SEA_LANTERN, false);
+
+        // Interior lantern
+        world.getBlockAt(cx, cy + 3, cz).setType(Material.LANTERN, false);
+    }
 }
+
