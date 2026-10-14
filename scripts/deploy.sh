@@ -42,17 +42,23 @@ fi
 
 # Check Geyser-Spigot.jar
 if [ ! -f "${SERVER_DIR}/plugins/Geyser-Spigot.jar" ]; then
-  if [ -f "${BASE_DIR}/survival/plugins/Geyser-Spigot.jar" ]; then
-    echo "Copying Geyser-Spigot.jar from survival/plugins/..."
-    cp "${BASE_DIR}/survival/plugins/Geyser-Spigot.jar" "${SERVER_DIR}/plugins/Geyser-Spigot.jar"
+  if [ -f "/shared/fpixel/survival/plugins/Geyser-Spigot.jar" ]; then
+    echo "Copying Geyser-Spigot.jar from /shared/fpixel..."
+    cp "/shared/fpixel/survival/plugins/Geyser-Spigot.jar" "${SERVER_DIR}/plugins/Geyser-Spigot.jar"
+  else
+    echo "Downloading latest Geyser-Spigot.jar..."
+    curl -sSL "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot" -o "${SERVER_DIR}/plugins/Geyser-Spigot.jar" || true
   fi
 fi
 
 # Check floodgate-spigot.jar
 if [ ! -f "${SERVER_DIR}/plugins/floodgate-spigot.jar" ]; then
-  if [ -f "${BASE_DIR}/survival/plugins/floodgate-spigot.jar" ]; then
-    echo "Copying floodgate-spigot.jar from survival/plugins/..."
-    cp "${BASE_DIR}/survival/plugins/floodgate-spigot.jar" "${SERVER_DIR}/plugins/floodgate-spigot.jar"
+  if [ -f "/shared/fpixel/survival/plugins/floodgate.jar" ]; then
+    echo "Copying floodgate.jar from /shared/fpixel..."
+    cp "/shared/fpixel/survival/plugins/floodgate.jar" "${SERVER_DIR}/plugins/floodgate-spigot.jar"
+  else
+    echo "Downloading latest floodgate-spigot.jar..."
+    curl -sSL "https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot" -o "${SERVER_DIR}/plugins/floodgate-spigot.jar" || true
   fi
 fi
 
