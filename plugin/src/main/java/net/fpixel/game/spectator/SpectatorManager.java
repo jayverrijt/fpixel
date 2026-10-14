@@ -29,12 +29,18 @@ public class SpectatorManager {
                 .lore("§7Click to teleport to an alive player.")
                 .build();
 
+        ItemStack playAgain = new ItemBuilder(Material.PAPER)
+                .name("§b§lPlay Again §7(Right Click)")
+                .lore("§7Click to queue for another match.")
+                .build();
+
         ItemStack lobbyBed = new ItemBuilder(Material.RED_BED)
                 .name("§c§lBack to Lobby §7(Right Click)")
                 .lore("§7Click to return to the Hub.")
                 .build();
 
         player.getInventory().setItem(0, compass);
+        player.getInventory().setItem(7, playAgain);
         player.getInventory().setItem(8, lobbyBed);
 
         // Hide from alive players

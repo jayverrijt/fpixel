@@ -46,6 +46,17 @@ public class BedWarsSpawner {
         }
     }
 
+    public void reset() {
+        this.timer = 0;
+        if (location != null && location.getWorld() != null) {
+            for (Entity e : location.getWorld().getNearbyEntities(location, 4.0, 4.0, 4.0)) {
+                if (e instanceof Item item && item.getItemStack().getType() == type.getMaterial()) {
+                    item.remove();
+                }
+            }
+        }
+    }
+
     private void spawn() {
         if (location == null || location.getWorld() == null) return;
 

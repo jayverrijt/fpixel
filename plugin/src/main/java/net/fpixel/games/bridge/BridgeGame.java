@@ -5,6 +5,7 @@ import net.fpixel.core.util.ChatUtil;
 import net.fpixel.core.util.ItemBuilder;
 import net.fpixel.game.Arena;
 import net.fpixel.game.GameState;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -141,6 +142,25 @@ public class BridgeGame extends Arena {
         activeCages.clear();
     }
 
+    private void removeCageAt(Location loc) {
+        if (loc == null || loc.getWorld() == null) return;
+        int cx = loc.getBlockX();
+        int cy = loc.getBlockY();
+        int cz = loc.getBlockZ();
+        var world = loc.getWorld();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                for (int dy = -1; dy <= 3; dy++) {
+                    Location bLoc = new Location(world, cx + dx, cy + dy, cz + dz);
+                    if (activeCages.remove(bLoc)) {
+                        bLoc.getBlock().setType(Material.AIR, false);
+                    }
+                }
+            }
+        }
+        world.playSound(loc, Sound.BLOCK_GLASS_BREAK, 0.8f, 1.2f);
+    }
+
     @Override
     public void handleGameTick() {
         // Round countdown logic
@@ -182,13 +202,32 @@ public class BridgeGame extends Arena {
     }
 
     private void respawnPlayer(Player player) {
+        if (state != GameState.IN_GAME) return;
         boolean isRed = redTeam.contains(player.getUniqueId());
-        Location spawn = isRed ? redSpawn : blueSpawn;
-        player.teleport(spawn.clone().add(0.5, 1, 0.5));
+        Location cage = isRed ? redCage : blueCage;
+        if (cage == null) return;
+
+        player.setFallDistance(0);
+        player.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
         player.setHealth(20.0);
         player.setFoodLevel(20);
-        ChatUtil.sendActionBar(player, "§eRespawned!");
-        ChatUtil.playSound(player, Sound.ENTITY_ENDERMAN_TELEPORT, 0.7f, 1.2f);
+        player.setFireTicks(0);
+        player.getInventory().clear();
+        giveKit(player, isRed);
+        player.teleport(cage.clone().add(0.5, 0.5, 0.5));
+
+        // Spawn protective team cage around player
+        spawnCage(cage, isRed ? Material.RED_STAINED_GLASS : Material.BLUE_STAINED_GLASS);
+        ChatUtil.sendTitle(player, "§cRESPAWNING...", "§eCage opens in 2s", 0, 30, 0);
+        ChatUtil.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
+
+        // Release cage after 2 seconds (40 ticks)
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (state == GameState.IN_GAME && player.isOnline()) {
+                removeCageAt(cage);
+                ChatUtil.sendTitle(player, "§a§lRELEASED!", "§7Cross the bridge!", 0, 20, 5);
+            }
+        }, 40L);
     }
 
     @Override

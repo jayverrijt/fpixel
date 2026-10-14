@@ -172,6 +172,43 @@ public class GameManager implements Listener {
     public void onGeneralDamage(org.bukkit.event.entity.EntityDamageEvent event) {
         if (event instanceof EntityDamageByEntityEvent edbe && edbe.getDamager() instanceof org.bukkit.entity.Firework) {
             event.setCancelled(true);
+            return;
+        }
+
+        if (event.getEntity() instanceof Player player) {
+            Arena arena = getPlayerArena(player);
+            if (arena != null) {
+                // Sumo: No fall damage
+                if (arena.getGameType().equalsIgnoreCase("SUMO") && event.getCause() == org.bukkit.event.entity.EntityDamageEvent.DamageCause.FALL) {
+                    event.setCancelled(true);
+                    return;
+                }
+                // Parkour: No fall damage or environmental damage
+                if (arena.getGameType().equalsIgnoreCase("PARKOUR")) {
+                    event.setCancelled(true);
+                    return;
+                }
+                // BedWars: Void damage triggers only at Y <= -500
+                if (arena.getGameType().equalsIgnoreCase("BEDWARS") && event.getCause() == org.bukkit.event.entity.EntityDamageEvent.DamageCause.VOID) {
+                    if (player.getLocation().getY() > -500.0) {
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onRegainHealth(org.bukkit.event.entity.EntityRegainHealthEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            Arena arena = getPlayerArena(player);
+            // BedWars: Disable instant/satiated health regeneration
+            if (arena != null && arena.getGameType().equalsIgnoreCase("BEDWARS")) {
+                if (event.getRegainReason() == org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.SATIATED) {
+                    event.setCancelled(true);
+                }
+            }
         }
     }
 

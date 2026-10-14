@@ -95,6 +95,11 @@ public class ParkourGame extends Arena {
                 : startLocation;
 
         if (target != null) {
+            player.setFallDistance(0);
+            player.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
+            player.setHealth(20.0);
+            player.setFoodLevel(20);
+            player.setFireTicks(0);
             player.teleport(target.clone().add(0.5, 1, 0.5));
             ChatUtil.playSound(player, Sound.ENTITY_ENDERMAN_TELEPORT, 0.7f, 1.2f);
             ChatUtil.sendActionBar(player, "§cRespawned at Checkpoint " + cpIndex + "!");

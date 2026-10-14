@@ -10,6 +10,7 @@ import net.fpixel.lobby.menus.GameSelectorMenu;
 import net.fpixel.lobby.menus.MapSelectMenu;
 import net.fpixel.lobby.menus.PlayerHiderMenu;
 import net.fpixel.lobby.menus.StatsMenu;
+import java.util.List;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -195,6 +196,59 @@ public class LobbyListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPlayAgainInteract(PlayerInteractEvent event) {
+        ItemStack item = event.getItem();
+        if (item == null || item.getType() != Material.PAPER) return;
+
+        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+            String name = item.getItemMeta().getDisplayName();
+            if (name.contains("Play Again")) {
+                event.setCancelled(true);
+                Player player = event.getPlayer();
+                Arena arena = plugin.getGameManager().getPlayerArena(player);
+                if (arena != null) {
+                    String gameType = arena.getGameType();
+                    arena.leave(player);
+                    ChatUtil.sendMessage(player, "§aSearching for a new §e" + gameType + " §agame...");
+                    org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        if (player.isOnline()) {
+                            plugin.getGameManager().joinQueue(player, gameType);
+                        }
+                    }, 5L);
+                } else {
+                    ChatUtil.sendMessage(player, "§cYou are not currently in a minigame!");
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onSpectatorTeleporterInteract(PlayerInteractEvent event) {
+        ItemStack item = event.getItem();
+        if (item == null || item.getType() != Material.COMPASS) return;
+
+        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+            String name = item.getItemMeta().getDisplayName();
+            if (name.contains("Teleporter")) {
+                event.setCancelled(true);
+                Player player = event.getPlayer();
+                Arena arena = plugin.getGameManager().getPlayerArena(player);
+                if (arena != null) {
+                    List<Player> alive = arena.getAlivePlayers();
+                    if (!alive.isEmpty()) {
+                        Player target = alive.get(new java.util.Random().nextInt(alive.size()));
+                        player.teleport(target.getLocation());
+                        ChatUtil.sendMessage(player, "§aTeleported to §e" + target.getName() + "§a!");
+                        ChatUtil.playSound(player, Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.2f);
+                    } else {
+                        ChatUtil.sendMessage(player, "§cNo alive players found to spectate.");
+                    }
+                }
+            }
+        }
+    }
+
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
@@ -213,6 +267,26 @@ public class LobbyListener implements Listener {
                 plugin.getLobbyManager().teleportToLobby(player);
                 ChatUtil.sendMessage(player, "§eReturned to the Hub!");
                 ChatUtil.playSound(player, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
+                return;
+            }
+        }
+
+        if (clicked != null && clicked.getType() == Material.PAPER && clicked.hasItemMeta() && clicked.getItemMeta().hasDisplayName()) {
+            String name = clicked.getItemMeta().getDisplayName();
+            if (name.contains("Play Again")) {
+                event.setCancelled(true);
+                player.closeInventory();
+                Arena arena = plugin.getGameManager().getPlayerArena(player);
+                if (arena != null) {
+                    String gameType = arena.getGameType();
+                    arena.leave(player);
+                    ChatUtil.sendMessage(player, "§aSearching for a new §e" + gameType + " §agame...");
+                    org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        if (player.isOnline()) {
+                            plugin.getGameManager().joinQueue(player, gameType);
+                        }
+                    }, 5L);
+                }
                 return;
             }
         }

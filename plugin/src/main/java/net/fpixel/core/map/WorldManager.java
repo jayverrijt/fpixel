@@ -394,41 +394,42 @@ public class WorldManager {
             MapBuilder.buildWaitingLobby(mapWorld, waitingLoc, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.WHITE_STAINED_GLASS);
 
             if (mapWorld.equals(defaultWorld)) {
-                // Procedural generation if world was not downloaded
-                // Middle Island with Open Emerald Pedestal (No suffocating towers!)
-                MapBuilder.buildFloatingIslandNatural(mapWorld, cx, cy, cz, 16, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
-                MapBuilder.fillCircle(mapWorld, cx, cy + 1, cz, 4, Material.POLISHED_ANDESITE);
-                worldAt(mapWorld, cx, cy + 2, cz, Material.EMERALD_BLOCK);
-                // Open decorative corner pillars with lanterns
-                worldAt(mapWorld, cx - 2, cy + 2, cz - 2, Material.STONE_BRICK_WALL);
-                worldAt(mapWorld, cx + 2, cy + 2, cz - 2, Material.STONE_BRICK_WALL);
-                worldAt(mapWorld, cx - 2, cy + 2, cz + 2, Material.STONE_BRICK_WALL);
-                worldAt(mapWorld, cx + 2, cy + 2, cz + 2, Material.STONE_BRICK_WALL);
-                worldAt(mapWorld, cx - 2, cy + 3, cz - 2, Material.LANTERN);
-                worldAt(mapWorld, cx + 2, cy + 3, cz - 2, Material.LANTERN);
-                worldAt(mapWorld, cx - 2, cy + 3, cz + 2, Material.LANTERN);
-                worldAt(mapWorld, cx + 2, cy + 3, cz + 2, Material.LANTERN);
+                // Clear old blocks before building
+                MapBuilder.fillBox(mapWorld, cx - 75, cy - 20, cz - 60, cx + 75, cy + 30, cz + 60, Material.AIR);
 
-                // Red Island (Open Air Bed - No enclosing medieval houses!)
+                // Middle Island: Hypixel-style floating natural island with lush grass
+                MapBuilder.buildFloatingIslandNatural(mapWorld, cx, cy, cz, 16, Material.GRASS_BLOCK, Material.DIRT, Material.STONE);
+                // Flush Emerald generator right in the open center (no suffocating walls or pillars!)
+                worldAt(mapWorld, cx, cy, cz, Material.EMERALD_BLOCK);
+                MapBuilder.fillCircle(mapWorld, cx, cy, cz, 2, Material.POLISHED_ANDESITE);
+                worldAt(mapWorld, cx, cy, cz, Material.EMERALD_BLOCK);
+
+                // Red Island: Floating island with open-air bed on End Stone
                 int rx = cx - 45;
-                MapBuilder.buildFloatingIslandNatural(mapWorld, rx, cy, cz, 12, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
-                MapBuilder.fillBox(mapWorld, rx - 4, cy + 1, cz - 1, rx - 1, cy + 1, cz + 1, Material.RED_WOOL);
-                MapBuilder.placeBed(mapWorld, rx - 3, cy + 2, cz, org.bukkit.block.BlockFace.EAST, Material.RED_BED);
-                worldAt(mapWorld, rx + 2, cy + 1, cz, Material.IRON_BLOCK);
+                MapBuilder.buildFloatingIslandNatural(mapWorld, rx, cy, cz, 13, Material.GRASS_BLOCK, Material.DIRT, Material.STONE);
+                // Open air bed on end stone base
+                MapBuilder.fillBox(mapWorld, rx - 6, cy, cz - 1, rx - 3, cy, cz + 1, Material.END_STONE);
+                MapBuilder.placeBed(mapWorld, rx - 5, cy + 1, cz, org.bukkit.block.BlockFace.EAST, Material.RED_BED);
+                // Base forge (Iron & Gold blocks in floor)
+                worldAt(mapWorld, rx + 4, cy, cz, Material.IRON_BLOCK);
+                worldAt(mapWorld, rx + 5, cy, cz, Material.GOLD_BLOCK);
 
-                // Blue Island (Open Air Bed - No enclosing medieval houses!)
+                // Blue Island: Floating island with open-air bed on End Stone
                 int bx = cx + 45;
-                MapBuilder.buildFloatingIslandNatural(mapWorld, bx, cy, cz, 12, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
-                MapBuilder.fillBox(mapWorld, bx + 1, cy + 1, cz - 1, bx + 4, cy + 1, cz + 1, Material.BLUE_WOOL);
-                MapBuilder.placeBed(mapWorld, bx + 2, cy + 2, cz, org.bukkit.block.BlockFace.EAST, Material.BLUE_BED);
-                worldAt(mapWorld, bx - 2, cy + 1, cz, Material.IRON_BLOCK);
+                MapBuilder.buildFloatingIslandNatural(mapWorld, bx, cy, cz, 13, Material.GRASS_BLOCK, Material.DIRT, Material.STONE);
+                // Open air bed on end stone base
+                MapBuilder.fillBox(mapWorld, bx + 3, cy, cz - 1, bx + 6, cy, cz + 1, Material.END_STONE);
+                MapBuilder.placeBed(mapWorld, bx + 4, cy + 1, cz, org.bukkit.block.BlockFace.EAST, Material.BLUE_BED);
+                // Base forge (Iron & Gold blocks in floor)
+                worldAt(mapWorld, bx - 4, cy, cz, Material.IRON_BLOCK);
+                worldAt(mapWorld, bx - 5, cy, cz, Material.GOLD_BLOCK);
 
                 // Two Diamond Islands (North and South of Middle)
-                MapBuilder.buildFloatingIslandNatural(mapWorld, cx, cy, cz - 35, 7, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
-                worldAt(mapWorld, cx, cy + 1, cz - 35, Material.DIAMOND_BLOCK);
+                MapBuilder.buildFloatingIslandNatural(mapWorld, cx, cy, cz - 35, 7, Material.GRASS_BLOCK, Material.DIRT, Material.STONE);
+                worldAt(mapWorld, cx, cy, cz - 35, Material.DIAMOND_BLOCK);
 
-                MapBuilder.buildFloatingIslandNatural(mapWorld, cx, cy, cz + 35, 7, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
-                worldAt(mapWorld, cx, cy + 1, cz + 35, Material.DIAMOND_BLOCK);
+                MapBuilder.buildFloatingIslandNatural(mapWorld, cx, cy, cz + 35, 7, Material.GRASS_BLOCK, Material.DIRT, Material.STONE);
+                worldAt(mapWorld, cx, cy, cz + 35, Material.DIAMOND_BLOCK);
             }
 
             BedWarsGame game = new BedWarsGame(plugin, id, "BedWars: " + name, 3, 16);
@@ -437,27 +438,27 @@ public class WorldManager {
 
             BedWarsTeam red = game.getTeam("RED");
             if (red != null) {
-                red.setSpawnLocation(new Location(mapWorld, cx - 45 + 0.5, cy + 2, cz + 0.5));
-                red.setBedLocation(new Location(mapWorld, cx - 48, cy + 2, cz));
+                red.setSpawnLocation(new Location(mapWorld, cx - 45 + 0.5, cy + 1.5, cz + 0.5));
+                red.setBedLocation(new Location(mapWorld, cx - 50, cy + 1, cz));
                 red.setBedFacing(org.bukkit.block.BlockFace.EAST);
             }
             BedWarsTeam blue = game.getTeam("BLUE");
             if (blue != null) {
-                blue.setSpawnLocation(new Location(mapWorld, cx + 45 + 0.5, cy + 2, cz + 0.5));
-                blue.setBedLocation(new Location(mapWorld, cx + 47, cy + 2, cz));
+                blue.setSpawnLocation(new Location(mapWorld, cx + 45 + 0.5, cy + 1.5, cz + 0.5));
+                blue.setBedLocation(new Location(mapWorld, cx + 49, cy + 1, cz));
                 blue.setBedFacing(org.bukkit.block.BlockFace.EAST);
             }
 
             // Team Base Spawners (Iron & Gold)
-            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx - 42.5, cy + 2.5, cz + 0.5), BedWarsSpawner.SpawnerType.IRON));
-            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx - 42.5, cy + 2.5, cz + 0.5), BedWarsSpawner.SpawnerType.GOLD));
-            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 42.5, cy + 2.5, cz + 0.5), BedWarsSpawner.SpawnerType.IRON));
-            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 42.5, cy + 2.5, cz + 0.5), BedWarsSpawner.SpawnerType.GOLD));
-            // Middle Emerald Spawner (Elevated & Open Air)
-            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 0.5, cy + 3.0, cz + 0.5), BedWarsSpawner.SpawnerType.EMERALD));
-            // Side Diamond Spawners
-            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 0.5, cy + 2.5, cz - 35 + 0.5), BedWarsSpawner.SpawnerType.DIAMOND));
-            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 0.5, cy + 2.5, cz + 35 + 0.5), BedWarsSpawner.SpawnerType.DIAMOND));
+            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx - 40.5, cy + 1.2, cz + 0.5), BedWarsSpawner.SpawnerType.IRON));
+            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx - 40.5, cy + 1.2, cz + 0.5), BedWarsSpawner.SpawnerType.GOLD));
+            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 40.5, cy + 1.2, cz + 0.5), BedWarsSpawner.SpawnerType.IRON));
+            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 40.5, cy + 1.2, cz + 0.5), BedWarsSpawner.SpawnerType.GOLD));
+            // Middle Emerald Spawner (Flush with ground and accessible!)
+            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 0.5, cy + 1.2, cz + 0.5), BedWarsSpawner.SpawnerType.EMERALD));
+            // Side Diamond Spawners (Flush with ground and accessible!)
+            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 0.5, cy + 1.2, cz - 35 + 0.5), BedWarsSpawner.SpawnerType.DIAMOND));
+            game.addSpawner(new BedWarsSpawner(new Location(mapWorld, cx + 0.5, cy + 1.2, cz + 35 + 0.5), BedWarsSpawner.SpawnerType.DIAMOND));
 
             plugin.getGameManager().registerArena(game);
         }
@@ -597,6 +598,9 @@ public class WorldManager {
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
 
+            // Clear any old blocks/checkpoints from previous builds to prevent 2 maps in 1
+            MapBuilder.fillBox(defaultWorld, cx - 40, cy - 15, cz - 10, cx + 40, cy + 30, cz + 180, Material.AIR);
+
             MapBuilder.fillCircle(defaultWorld, cx, cy, cz, 4, Material.POLISHED_ANDESITE);
             game.setStartLocation(new Location(defaultWorld, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f));
 
@@ -730,47 +734,58 @@ public class WorldManager {
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
 
-            // Red & Blue 1v1 islands
+            // Clear old blocks before building
+            MapBuilder.fillBox(defaultWorld, cx - 50, cy - 20, cz - 40, cx + 50, cy + 30, cz + 40, Material.AIR);
+
+            // Red & Blue 1v1 islands: Natural floating islands with grass
             int rx = cx - 25;
             int bx = cx + 25;
-            MapBuilder.buildFloatingIslandNatural(defaultWorld, rx, cy, cz, 8, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
-            MapBuilder.buildFloatingIslandNatural(defaultWorld, bx, cy, cz, 8, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
-            MapBuilder.buildFloatingIslandNatural(defaultWorld, cx, cy, cz, 6, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.BEDROCK);
+            MapBuilder.buildFloatingIslandNatural(defaultWorld, rx, cy, cz, 9, Material.GRASS_BLOCK, Material.DIRT, Material.STONE);
+            MapBuilder.buildFloatingIslandNatural(defaultWorld, bx, cy, cz, 9, Material.GRASS_BLOCK, Material.DIRT, Material.STONE);
+            MapBuilder.buildFloatingIslandNatural(defaultWorld, cx, cy, cz, 7, Material.GRASS_BLOCK, Material.DIRT, Material.STONE);
 
-            worldAt(defaultWorld, rx - 2, cy + 1, cz, Material.RED_BED);
-            worldAt(defaultWorld, rx + 2, cy + 1, cz, Material.IRON_BLOCK);
-            worldAt(defaultWorld, bx + 2, cy + 1, cz, Material.BLUE_BED);
-            worldAt(defaultWorld, bx - 2, cy + 1, cz, Material.IRON_BLOCK);
-            worldAt(defaultWorld, cx, cy + 1, cz, Material.EMERALD_BLOCK);
+            // Open air beds on End Stone
+            MapBuilder.fillBox(defaultWorld, rx - 4, cy, cz - 1, rx - 2, cy, cz + 1, Material.END_STONE);
+            MapBuilder.placeBed(defaultWorld, rx - 3, cy + 1, cz, org.bukkit.block.BlockFace.EAST, Material.RED_BED);
+            worldAt(defaultWorld, rx + 2, cy, cz, Material.IRON_BLOCK);
+
+            MapBuilder.fillBox(defaultWorld, bx + 2, cy, cz - 1, bx + 4, cy, cz + 1, Material.END_STONE);
+            MapBuilder.placeBed(defaultWorld, bx + 3, cy + 1, cz, org.bukkit.block.BlockFace.EAST, Material.BLUE_BED);
+            worldAt(defaultWorld, bx - 2, cy, cz, Material.IRON_BLOCK);
+
+            // Flush Emerald Generator at Middle
+            worldAt(defaultWorld, cx, cy, cz, Material.EMERALD_BLOCK);
 
             // Two Diamond Islands (North and South of Mid)
-            MapBuilder.buildFloatingIslandNatural(defaultWorld, cx, cy, cz - 25, 5, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
-            worldAt(defaultWorld, cx, cy + 1, cz - 25, Material.DIAMOND_BLOCK);
+            MapBuilder.buildFloatingIslandNatural(defaultWorld, cx, cy, cz - 25, 5, Material.GRASS_BLOCK, Material.DIRT, Material.STONE);
+            worldAt(defaultWorld, cx, cy, cz - 25, Material.DIAMOND_BLOCK);
 
-            MapBuilder.buildFloatingIslandNatural(defaultWorld, cx, cy, cz + 25, 5, Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE);
-            worldAt(defaultWorld, cx, cy + 1, cz + 25, Material.DIAMOND_BLOCK);
+            MapBuilder.buildFloatingIslandNatural(defaultWorld, cx, cy, cz + 25, 5, Material.GRASS_BLOCK, Material.DIRT, Material.STONE);
+            worldAt(defaultWorld, cx, cy, cz + 25, Material.DIAMOND_BLOCK);
 
             BedWarsTeam red = game.getTeam("RED");
             if (red != null) {
-                red.setSpawnLocation(new Location(defaultWorld, rx + 0.5, cy + 1, cz + 0.5));
-                red.setBedLocation(new Location(defaultWorld, rx - 2, cy + 1, cz));
+                red.setSpawnLocation(new Location(defaultWorld, rx + 0.5, cy + 1.5, cz + 0.5));
+                red.setBedLocation(new Location(defaultWorld, rx - 3, cy + 1, cz));
+                red.setBedFacing(org.bukkit.block.BlockFace.EAST);
             }
             BedWarsTeam blue = game.getTeam("BLUE");
             if (blue != null) {
-                blue.setSpawnLocation(new Location(defaultWorld, bx + 0.5, cy + 1, cz + 0.5));
-                blue.setBedLocation(new Location(defaultWorld, bx + 2, cy + 1, cz));
+                blue.setSpawnLocation(new Location(defaultWorld, bx - 0.5, cy + 1.5, cz + 0.5));
+                blue.setBedLocation(new Location(defaultWorld, bx + 3, cy + 1, cz));
+                blue.setBedFacing(org.bukkit.block.BlockFace.EAST);
             }
 
             // Base Spawners (Iron & Gold)
-            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, rx + 2.5, cy + 1.5, cz + 0.5), BedWarsSpawner.SpawnerType.IRON));
-            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, rx + 2.5, cy + 1.5, cz + 0.5), BedWarsSpawner.SpawnerType.GOLD));
-            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, bx - 1.5, cy + 1.5, cz + 0.5), BedWarsSpawner.SpawnerType.IRON));
-            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, bx - 1.5, cy + 1.5, cz + 0.5), BedWarsSpawner.SpawnerType.GOLD));
-            // Middle Emerald Spawner
-            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, cx + 0.5, cy + 1.5, cz + 0.5), BedWarsSpawner.SpawnerType.EMERALD));
-            // Side Diamond Spawners
-            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, cx + 0.5, cy + 2.0, cz - 25 + 0.5), BedWarsSpawner.SpawnerType.DIAMOND));
-            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, cx + 0.5, cy + 2.0, cz + 25 + 0.5), BedWarsSpawner.SpawnerType.DIAMOND));
+            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, rx + 2.5, cy + 1.2, cz + 0.5), BedWarsSpawner.SpawnerType.IRON));
+            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, rx + 2.5, cy + 1.2, cz + 0.5), BedWarsSpawner.SpawnerType.GOLD));
+            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, bx - 1.5, cy + 1.2, cz + 0.5), BedWarsSpawner.SpawnerType.IRON));
+            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, bx - 1.5, cy + 1.2, cz + 0.5), BedWarsSpawner.SpawnerType.GOLD));
+            // Middle Emerald Spawner (Flush and accessible)
+            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, cx + 0.5, cy + 1.2, cz + 0.5), BedWarsSpawner.SpawnerType.EMERALD));
+            // Side Diamond Spawners (Flush and accessible)
+            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, cx + 0.5, cy + 1.2, cz - 25 + 0.5), BedWarsSpawner.SpawnerType.DIAMOND));
+            game.addSpawner(new BedWarsSpawner(new Location(defaultWorld, cx + 0.5, cy + 1.2, cz + 25 + 0.5), BedWarsSpawner.SpawnerType.DIAMOND));
 
             plugin.getGameManager().registerArena(game);
         }
@@ -815,6 +830,9 @@ public class WorldManager {
             ParkourGame game = new ParkourGame(plugin, id, "Parkour 1v1 Arena #" + i, 2, 2, cy - 15);
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
+
+            // Clear any old duel parkour blocks
+            MapBuilder.fillBox(defaultWorld, cx - 30, cy - 15, cz - 10, cx + 30, cy + 30, cz + 130, Material.AIR);
 
             MapBuilder.fillCircle(defaultWorld, cx, cy, cz, 3, Material.POLISHED_ANDESITE);
             game.setStartLocation(new Location(defaultWorld, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f));
@@ -935,13 +953,14 @@ public class WorldManager {
             int bx = cx + 30;
 
             if (bWorld.equals(defaultWorld)) {
-                // Red Base (Platform from rx - 14 to rx, open front facing bridge at rx)
+                // Clear old arena blocks before building
+                MapBuilder.fillBox(bWorld, cx - 60, cy - 20, cz - 20, cx + 60, cy + 35, cz + 20, Material.AIR);
+
+                // Red Base (Platform from rx - 14 to rx, open courtyard, NO low roof)
                 MapBuilder.fillBox(bWorld, rx - 14, cy, cz - 4, rx, cy, cz + 4, Material.SMOOTH_STONE);
-                MapBuilder.fillBox(bWorld, rx - 14, cy + 1, cz - 4, rx - 14, cy + 4, cz + 4, Material.RED_TERRACOTTA); // back wall
-                MapBuilder.fillBox(bWorld, rx - 13, cy + 1, cz - 4, rx, cy + 4, cz - 4, Material.STONE_BRICKS); // side wall
-                MapBuilder.fillBox(bWorld, rx - 13, cy + 1, cz + 4, rx, cy + 4, cz + 4, Material.STONE_BRICKS); // side wall
-                MapBuilder.fillBox(bWorld, rx - 14, cy + 5, cz - 4, rx, cy + 5, cz + 4, Material.STONE_BRICK_SLAB); // roof
-                // FRONT AT rx IS COMPLETELY OPEN (no front wall)
+                MapBuilder.fillBox(bWorld, rx - 14, cy + 1, cz - 4, rx - 14, cy + 6, cz + 4, Material.RED_TERRACOTTA); // back wall
+                MapBuilder.fillBox(bWorld, rx - 13, cy + 1, cz - 4, rx, cy + 2, cz - 4, Material.STONE_BRICKS); // side railing
+                MapBuilder.fillBox(bWorld, rx - 13, cy + 1, cz + 4, rx, cy + 2, cz + 4, Material.STONE_BRICKS); // side railing
 
                 // 3x3 Red Goal Pit at (rx - 7, cz)
                 MapBuilder.fillBox(bWorld, rx - 8, cy, cz - 1, rx - 6, cy, cz + 1, Material.AIR);
@@ -949,13 +968,11 @@ public class WorldManager {
                 MapBuilder.fillBox(bWorld, rx - 8, cy - 2, cz - 1, rx - 6, cy - 1, cz + 1, Material.WATER);
                 MapBuilder.fillBox(bWorld, rx - 8, cy - 3, cz - 1, rx - 6, cy - 3, cz + 1, Material.SEA_LANTERN);
 
-                // Blue Base (Platform from bx to bx + 14, open front facing bridge at bx)
+                // Blue Base (Platform from bx to bx + 14, open courtyard, NO low roof)
                 MapBuilder.fillBox(bWorld, bx, cy, cz - 4, bx + 14, cy, cz + 4, Material.SMOOTH_STONE);
-                MapBuilder.fillBox(bWorld, bx + 14, cy + 1, cz - 4, bx + 14, cy + 4, cz + 4, Material.BLUE_TERRACOTTA); // back wall
-                MapBuilder.fillBox(bWorld, bx, cy + 1, cz - 4, bx + 13, cy + 4, cz - 4, Material.STONE_BRICKS); // side wall
-                MapBuilder.fillBox(bWorld, bx, cy + 1, cz + 4, bx + 13, cy + 4, cz + 4, Material.STONE_BRICKS); // side wall
-                MapBuilder.fillBox(bWorld, bx, cy + 5, cz - 4, bx + 14, cy + 5, cz + 4, Material.STONE_BRICK_SLAB); // roof
-                // FRONT AT bx IS COMPLETELY OPEN (no front wall)
+                MapBuilder.fillBox(bWorld, bx + 14, cy + 1, cz - 4, bx + 14, cy + 6, cz + 4, Material.BLUE_TERRACOTTA); // back wall
+                MapBuilder.fillBox(bWorld, bx, cy + 1, cz - 4, bx + 13, cy + 2, cz - 4, Material.STONE_BRICKS); // side railing
+                MapBuilder.fillBox(bWorld, bx, cy + 1, cz + 4, bx + 13, cy + 2, cz + 4, Material.STONE_BRICKS); // side railing
 
                 // 3x3 Blue Goal Pit at (bx + 7, cz)
                 MapBuilder.fillBox(bWorld, bx + 6, cy, cz - 1, bx + 8, cy, cz + 1, Material.AIR);
@@ -973,8 +990,8 @@ public class WorldManager {
             game.setBlueGoal(new Location(bWorld, bx + 7.0, cy, cz + 0.5));
             game.setRedSpawn(new Location(bWorld, rx - 3.5, cy + 1, cz + 0.5, -90f, 0f));
             game.setBlueSpawn(new Location(bWorld, bx + 3.5, cy + 1, cz + 0.5, 90f, 0f));
-            game.setRedCage(new Location(bWorld, rx - 1.5, cy + 3, cz + 0.5, -90f, 0f));
-            game.setBlueCage(new Location(bWorld, bx + 1.5, cy + 3, cz + 0.5, 90f, 0f));
+            game.setRedCage(new Location(bWorld, rx - 10.0, cy + 6, cz + 0.5, -90f, 0f));
+            game.setBlueCage(new Location(bWorld, bx + 10.0, cy + 6, cz + 0.5, 90f, 0f));
 
             plugin.getGameManager().registerArena(game);
         }

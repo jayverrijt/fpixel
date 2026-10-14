@@ -125,6 +125,15 @@ public class BedWarsShop {
             inv.setItem(entry.getKey(), entry.getValue().getDisplayItem());
         }
 
+        var arena = net.fpixel.FPixelPlugin.getInstance().getGameManager().getPlayerArena(player);
+        BedWarsTeam team = (arena instanceof BedWarsGame bwGame) ? bwGame.getPlayerTeam(player) : null;
+        if (team != null) {
+            inv.setItem(10, new ItemBuilder(team.getWoolMaterial(), 16)
+                    .name(team.getChatColor() + team.getName() + " Wool (16x)")
+                    .lore("§7Cost: §f4 Iron Ingots", "", "§eClick to purchase!")
+                    .build());
+        }
+
         // Slot 49: Team Upgrades button
         ItemStack upgradesBtn = new ItemBuilder(Material.DIAMOND)
                 .name("§b§lTeam Upgrades §7(Diamonds)")
@@ -140,6 +149,16 @@ public class BedWarsShop {
 
         player.openInventory(inv);
         ChatUtil.playSound(player, Sound.BLOCK_CHEST_OPEN, 0.7f, 1.2f);
+    }
+
+    public static void openUpgrades(Player player) {
+        var arena = net.fpixel.FPixelPlugin.getInstance().getGameManager().getPlayerArena(player);
+        if (arena instanceof BedWarsGame bwGame) {
+            BedWarsTeam team = bwGame.getPlayerTeam(player);
+            if (team != null) {
+                openTeamUpgrades(player, team);
+            }
+        }
     }
 
     public static void openTeamUpgrades(Player player, BedWarsTeam team) {
@@ -305,6 +324,9 @@ public class BedWarsShop {
             player.getInventory().setBoots(boots);
         } else {
             ItemStack reward = item.getRewardItem().clone();
+            if (reward.getType() == Material.WHITE_WOOL && team != null) {
+                reward.setType(team.getWoolMaterial());
+            }
             if (reward.getType().name().contains("SWORD") && team.getSharpness() > 0) {
                 reward.addEnchantment(Enchantment.SHARPNESS, team.getSharpness());
             }

@@ -85,7 +85,7 @@ public class PartyManager {
         }
 
         long time = playerInvites.remove(leader.getUniqueId());
-        if (System.currentTimeMillis() - time > 60_000) {
+        if (System.currentTimeMillis() - time > 300_000) { // 5 minutes
             ChatUtil.sendMessage(target, "§cThat party invite has expired.");
             return;
         }
@@ -167,5 +167,45 @@ public class PartyManager {
 
         party.broadcast("§cThe party was disbanded by " + leader.getName() + ".");
         parties.remove(party);
+    }
+
+    public void warpParty(Player leader) {
+        Party party = getParty(leader);
+        if (party == null) {
+            ChatUtil.sendMessage(leader, "§cYou are not in a party.");
+            return;
+        }
+        if (!party.isLeader(leader)) {
+            ChatUtil.sendMessage(leader, "§cOnly the party leader can warp the party!");
+            return;
+        }
+
+        var arena = plugin.getGameManager().getPlayerArena(leader);
+        if (arena != null) {
+            party.warpToGame(arena);
+            ChatUtil.sendMessage(leader, "§aWarped your party into the game!");
+            return;
+        }
+
+        org.bukkit.Location dest = leader.getLocation();
+        for (Player member : party.getOnlineMembers()) {
+            if (!member.equals(leader)) {
+                if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().isSurvivalWorld(dest.getWorld())) {
+                    if (plugin.getSurvivalManager().getProfileManager() != null) {
+                        plugin.getSurvivalManager().getProfileManager().loadProfile(member, dest.getWorld());
+                    }
+                    member.teleport(dest);
+                } else if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().isSurvivalWorld(member.getWorld())) {
+                    plugin.getSurvivalManager().getProfileManager().saveProfile(member);
+                    plugin.getSurvivalManager().removeSurvivalPlayer(member);
+                    member.teleport(dest);
+                    plugin.getLobbyManager().giveLobbyItems(member);
+                } else {
+                    member.teleport(dest);
+                }
+                ChatUtil.sendMessage(member, "§aYou were warped to your party leader!");
+            }
+        }
+        ChatUtil.sendMessage(leader, "§aWarped all party members to your location!");
     }
 }

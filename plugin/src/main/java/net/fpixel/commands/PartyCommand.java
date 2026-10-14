@@ -83,6 +83,8 @@ public class PartyCommand implements CommandExecutor, TabCompleter {
                 }
             }
             ChatUtil.sendRawMessage(player, "§9§m----------------------------------------");
+        } else if (sub.equals("warp")) {
+            plugin.getPartyManager().warpParty(player);
         } else if (sub.equals("chat") && args.length >= 2) {
             Party party = plugin.getPartyManager().getParty(player);
             if (party == null) {
@@ -99,7 +101,7 @@ public class PartyCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean isPartySubcommand(String arg) {
-        List<String> subs = Arrays.asList("invite", "accept", "decline", "leave", "kick", "disband", "list", "chat", "help");
+        List<String> subs = Arrays.asList("invite", "accept", "decline", "leave", "kick", "disband", "list", "chat", "warp", "help");
         return subs.contains(arg.toLowerCase());
     }
 
@@ -107,6 +109,7 @@ public class PartyCommand implements CommandExecutor, TabCompleter {
         ChatUtil.sendRawMessage(player, "§9§lParty Commands:");
         ChatUtil.sendRawMessage(player, " §e/party invite <player> §7- Invite a player to your party");
         ChatUtil.sendRawMessage(player, " §e/party accept <player> §7- Accept a party invite");
+        ChatUtil.sendRawMessage(player, " §e/party warp §7- Warp all party members to your location");
         ChatUtil.sendRawMessage(player, " §e/party leave §7- Leave your current party");
         ChatUtil.sendRawMessage(player, " §e/party kick <player> §7- Kick a member from party");
         ChatUtil.sendRawMessage(player, " §e/party disband §7- Disband your party");
@@ -117,7 +120,7 @@ public class PartyCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> list = Arrays.asList("invite", "accept", "decline", "leave", "kick", "disband", "list", "chat");
+            List<String> list = Arrays.asList("invite", "accept", "decline", "leave", "kick", "disband", "list", "chat", "warp");
             List<String> filtered = new ArrayList<>();
             for (String s : list) {
                 if (s.toLowerCase().startsWith(args[0].toLowerCase())) {

@@ -86,6 +86,18 @@ public class BedWarsTeam {
         this.trap = false;
     }
 
+    public String getStatusSymbol(net.fpixel.game.Arena arena) {
+        if (bedAlive) return "§a✔";
+        if (arena == null) return members.isEmpty() ? "§c✖" : "§a" + members.size();
+        int alive = 0;
+        for (UUID uuid : members) {
+            if (arena.getPlayers().contains(uuid) || arena.getSimulatedPlayers().containsKey(uuid)) {
+                alive++;
+            }
+        }
+        return alive > 0 ? ("§a" + alive) : "§c✖";
+    }
+
     public String getStatusSymbol() {
         return bedAlive ? "§a✔" : (members.isEmpty() ? "§c✖" : "§e" + members.size());
     }

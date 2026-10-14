@@ -145,6 +145,12 @@ public class SumoGame extends Arena {
         if (fallen != null) {
             fallen.setFallDistance(0);
             fallen.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
+            fallen.setHealth(20.0);
+            fallen.setFoodLevel(20);
+            Location safeLoc = fallenUuid.equals(player1) ? spawn1 : spawn2;
+            if (safeLoc != null) {
+                fallen.teleport(safeLoc);
+            }
         }
 
         UUID winnerUuid;

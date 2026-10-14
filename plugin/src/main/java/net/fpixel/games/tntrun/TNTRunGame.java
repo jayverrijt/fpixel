@@ -111,8 +111,8 @@ public class TNTRunGame extends Arena {
 
     private void decayBlock(Block block) {
         if (block == null || block.getType() == Material.AIR || !block.getType().isSolid()) return;
-        // Don't decay bedrock floor or outer glass enclosure walls
-        if (block.getType() == Material.BEDROCK || block.getType() == Material.BARRIER || block.getType().name().contains("GLASS")) {
+        // Don't decay bedrock floor or barriers; glass will decay if walked on
+        if (block.getType() == Material.BEDROCK || block.getType() == Material.BARRIER) {
             return;
         }
 

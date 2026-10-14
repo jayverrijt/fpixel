@@ -3,6 +3,7 @@ package net.fpixel.game;
 import net.fpixel.FPixelPlugin;
 import net.fpixel.core.user.FPixelUser;
 import net.fpixel.core.util.ChatUtil;
+import net.fpixel.core.util.ItemBuilder;
 import net.fpixel.game.rollback.RollbackEngine;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -109,9 +110,18 @@ public abstract class Arena {
     }
 
     protected void handleEndingTick() {
+        Location safeEndingLoc = (spectatorSpawn != null) ? spectatorSpawn : (lobbySpawn != null ? lobbySpawn.clone().add(0, 5, 0) : null);
+        for (Player p : getAllBukkitPlayers()) {
+            if (safeEndingLoc != null && p.getLocation().getY() < 50) {
+                p.setFallDistance(0);
+                p.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
+                p.teleport(safeEndingLoc);
+            }
+        }
+
         // Spawn fireworks in celebration
         if (endCountdown % 2 == 0) {
-            for (Player p : getBukkitPlayers()) {
+            for (Player p : getAllBukkitPlayers()) {
                 spawnFirework(p.getLocation());
             }
         }
@@ -143,6 +153,8 @@ public abstract class Arena {
         state = GameState.ENDING;
         endCountdown = 10;
 
+        Location safeEndingLoc = (spectatorSpawn != null) ? spectatorSpawn : (lobbySpawn != null ? lobbySpawn.clone().add(0, 5, 0) : null);
+
         String winnerName = winner != null ? winner.getName() : "Nobody";
         broadcast("§6§m--------------------------------------------------");
         broadcast("§e§l              GAME OVER!");
@@ -151,6 +163,23 @@ public abstract class Arena {
         broadcast("§6§m--------------------------------------------------");
 
         for (Player p : getAllBukkitPlayers()) {
+            p.setFallDistance(0);
+            p.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
+            p.setHealth(20.0);
+            p.setFoodLevel(20);
+            p.setFireTicks(0);
+            p.setAllowFlight(true);
+            p.setFlying(true);
+            if (safeEndingLoc != null) {
+                p.teleport(safeEndingLoc);
+            }
+
+            // Hotbar items for ending state: Compass, Play Again, Lobby Bed
+            p.getInventory().clear();
+            p.getInventory().setItem(0, new ItemBuilder(Material.COMPASS).name("§a§lTeleporter §7(Right Click)").build());
+            p.getInventory().setItem(7, new ItemBuilder(Material.PAPER).name("§b§lPlay Again §7(Right Click)").lore("§7Click to play another " + gameType + " match!").build());
+            p.getInventory().setItem(8, new ItemBuilder(Material.RED_BED).name("§c§lBack to Lobby §7(Right Click)").lore("§7Click to return to the Hub.").build());
+
             if (winner != null && p.getUniqueId().equals(winner.getUniqueId())) {
                 ChatUtil.sendTitle(p, "§6§lVICTORY!", "§eYou won the game!", 10, 60, 20);
                 ChatUtil.playSound(p, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
@@ -404,6 +433,8 @@ public abstract class Arena {
     public int getPlayerCount() { return players.size() + simulatedPlayers.size(); }
     public int getMinPlayers() { return minPlayers; }
     public int getMaxPlayers() { return maxPlayers; }
+    public Set<UUID> getPlayers() { return players; }
+    public Set<UUID> getSpectators() { return spectators; }
     public boolean contains(Player player) {
         return players.contains(player.getUniqueId()) || spectators.contains(player.getUniqueId());
     }

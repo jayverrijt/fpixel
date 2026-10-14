@@ -65,6 +65,11 @@ public class BedWarsGame extends Arena {
         bedsBroken.clear();
         shopkeepers.clear();
 
+        // Reset all resource spawners
+        for (BedWarsSpawner spawner : spawners) {
+            spawner.reset();
+        }
+
         // Assign players to teams evenly
         List<Player> playerList = getBukkitPlayers();
         List<BedWarsTeam> teamList = new ArrayList<>(teams.values());
@@ -80,12 +85,13 @@ public class BedWarsGame extends Arena {
                 p.teleport(team.getSpawnLocation());
             }
             ChatUtil.sendMessage(p, "§7You are on the " + team.getChatColor() + team.getName() + " Team§7!");
-            ChatUtil.sendMessage(p, "§eRight-click the §a§lShopkeeper Villager §eor your §a§lNether Star §eto buy gear!");
+            ChatUtil.sendMessage(p, "§eRight-click the §a§lItem Shop §eor §b§lTeam Upgrades §evillagers!");
         }
 
-        // Spawn Shopkeepers at each base
+        // Spawn Shopkeeper & Team Upgrade NPCs at each base
         for (BedWarsTeam team : teamList) {
             if (team.getSpawnLocation() != null && team.getSpawnLocation().getWorld() != null) {
+                // 1. Item Shop Villager
                 Location shopLoc = team.getSpawnLocation().clone().add(2.0, 0, 1.5);
                 org.bukkit.entity.Villager v = (org.bukkit.entity.Villager) shopLoc.getWorld().spawnEntity(shopLoc, org.bukkit.entity.EntityType.VILLAGER);
                 v.setCustomName("§a§lITEM SHOP §7(Right Click)");
@@ -95,6 +101,17 @@ public class BedWarsGame extends Arena {
                 v.setInvulnerable(true);
                 v.addScoreboardTag("bedwars_shopkeeper");
                 shopkeepers.add(v);
+
+                // 2. Team Upgrades Villager
+                Location upLoc = team.getSpawnLocation().clone().add(-2.0, 0, 1.5);
+                org.bukkit.entity.Villager uv = (org.bukkit.entity.Villager) upLoc.getWorld().spawnEntity(upLoc, org.bukkit.entity.EntityType.VILLAGER);
+                uv.setCustomName("§b§lTEAM UPGRADES §7(Right Click)");
+                uv.setCustomNameVisible(true);
+                uv.setAI(false);
+                uv.setSilent(true);
+                uv.setInvulnerable(true);
+                uv.addScoreboardTag("bedwars_upgrades");
+                shopkeepers.add(uv);
             }
         }
 
@@ -137,10 +154,6 @@ public class BedWarsGame extends Arena {
         }
         player.getInventory().setItem(0, sword);
         player.getInventory().setItem(1, new ItemBuilder(Material.SHEARS).unbreakable(true).build());
-        player.getInventory().setItem(8, new ItemBuilder(Material.NETHER_STAR)
-                .name("§a§lItem Shop §7(Right Click)")
-                .lore("§7Click to open the BedWars Item Shop.")
-                .build());
     }
 
     @Override
@@ -148,6 +161,13 @@ public class BedWarsGame extends Arena {
         // Spawners tick
         for (BedWarsSpawner spawner : spawners) {
             spawner.tick();
+        }
+
+        // Check for void death at Y <= -500
+        for (Player p : getBukkitPlayers()) {
+            if (p.getLocation().getY() <= -500.0) {
+                handleVoidDeath(p);
+            }
         }
 
         // Apply team upgrades (Haste, Heal Pool, Traps, Forge Boosters)
@@ -326,9 +346,47 @@ public class BedWarsGame extends Arena {
     public void onPlayerInteractEntity(org.bukkit.event.player.PlayerInteractEntityEvent event) {
         if (state != GameState.IN_GAME) return;
         org.bukkit.entity.Entity entity = event.getRightClicked();
-        if (entity != null && (entity.getScoreboardTags().contains("bedwars_shopkeeper") || entity.getType() == org.bukkit.entity.EntityType.VILLAGER)) {
-            event.setCancelled(true);
-            BedWarsShop.open(event.getPlayer());
+        if (entity != null) {
+            if (entity.getScoreboardTags().contains("bedwars_upgrades") || (entity.getCustomName() != null && entity.getCustomName().contains("UPGRADES"))) {
+                event.setCancelled(true);
+                BedWarsShop.openUpgrades(event.getPlayer());
+                return;
+            }
+            if (entity.getScoreboardTags().contains("bedwars_shopkeeper") || entity.getType() == org.bukkit.entity.EntityType.VILLAGER) {
+                event.setCancelled(true);
+                BedWarsShop.open(event.getPlayer());
+                return;
+            }
+        }
+    }
+
+    @Override
+    public void onPlayerMove(org.bukkit.event.player.PlayerMoveEvent event) {
+        if (state != GameState.IN_GAME) return;
+        Player player = event.getPlayer();
+        if (!players.contains(player.getUniqueId())) return;
+        if (player.getLocation().getY() <= -500.0) {
+            handleVoidDeath(player);
+        }
+    }
+
+    public void handleVoidDeath(Player player) {
+        if (state != GameState.IN_GAME || !players.contains(player.getUniqueId())) return;
+        player.setFallDistance(0);
+        player.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
+        player.setHealth(20.0);
+        player.setFoodLevel(20);
+        player.setFireTicks(0);
+
+        BedWarsTeam team = getPlayerTeam(player);
+        if (team != null && team.isBedAlive()) {
+            broadcast(team.getChatColor() + player.getName() + " §7fell into the void. §aRespawning in 5s...");
+            startRespawnCountdown(player, team);
+        } else {
+            broadcast("§c§lFINAL KILL! " + (team != null ? team.getChatColor() : "§7") + player.getName() + " §7fell into the void!");
+            FPixelUser pUser = plugin.getUserManager().getUser(player);
+            pUser.addBedwarsDeath();
+            eliminatePlayer(player);
         }
     }
 
@@ -385,7 +443,12 @@ public class BedWarsGame extends Arena {
                     plugin.getSpectatorManager().removeSpectator(player);
                     player.setGameMode(GameMode.SURVIVAL);
                     if (team.getSpawnLocation() != null) {
-                        player.teleport(team.getSpawnLocation());
+                        Location spawn = team.getSpawnLocation().clone().add(0, 1.5, 0);
+                        spawn.getBlock().setType(Material.AIR, false);
+                        spawn.clone().add(0, 1, 0).getBlock().setType(Material.AIR, false);
+                        player.setFallDistance(0);
+                        player.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
+                        player.teleport(spawn);
                     }
                     giveTeamKit(player, team);
                     ChatUtil.sendTitle(player, "§a§lRESPAWNED!", "§7Go back into the battle!", 5, 20, 5);
@@ -457,7 +520,11 @@ public class BedWarsGame extends Arena {
             if (e != null && e.isValid()) e.remove();
         }
         shopkeepers.clear();
-        // NOTE: spawners are preserved across rounds!
+
+        // Reset all resource spawners
+        for (BedWarsSpawner spawner : spawners) {
+            spawner.reset();
+        }
     }
 
     @Override
@@ -468,7 +535,7 @@ public class BedWarsGame extends Arena {
         lines.add("");
 
         for (BedWarsTeam team : teams.values()) {
-            lines.add(team.getChatColor() + team.getName().substring(0, 1) + " §f" + team.getName() + ": " + team.getStatusSymbol());
+            lines.add(team.getChatColor() + team.getName().substring(0, 1) + " §f" + team.getName() + ": " + team.getStatusSymbol(this));
         }
 
         lines.add(" ");
