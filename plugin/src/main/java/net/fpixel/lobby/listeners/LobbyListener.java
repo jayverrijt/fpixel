@@ -230,6 +230,17 @@ public class LobbyListener implements Listener {
 
         if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
             String name = item.getItemMeta().getDisplayName();
+            if (name.contains("Select Map")) {
+                event.setCancelled(true);
+                Player player = event.getPlayer();
+                Arena arena = plugin.getGameManager().getPlayerArena(player);
+                if (arena != null) {
+                    MapSelectMenu.open(plugin, player, arena.getGameType());
+                } else {
+                    GameSelectorMenu.open(plugin, player);
+                }
+                return;
+            }
             if (name.contains("Teleporter")) {
                 event.setCancelled(true);
                 Player player = event.getPlayer();
@@ -286,6 +297,21 @@ public class LobbyListener implements Listener {
                             plugin.getGameManager().joinQueue(player, gameType);
                         }
                     }, 5L);
+                }
+                return;
+            }
+        }
+
+        if (clicked != null && clicked.getType() == Material.COMPASS && clicked.hasItemMeta() && clicked.getItemMeta().hasDisplayName()) {
+            String name = clicked.getItemMeta().getDisplayName();
+            if (name.contains("Select Map")) {
+                event.setCancelled(true);
+                player.closeInventory();
+                Arena arena = plugin.getGameManager().getPlayerArena(player);
+                if (arena != null) {
+                    MapSelectMenu.open(plugin, player, arena.getGameType());
+                } else {
+                    GameSelectorMenu.open(plugin, player);
                 }
                 return;
             }

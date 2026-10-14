@@ -32,15 +32,24 @@ public class BedWarsSpawner {
     private final Location location;
     private final SpawnerType type;
     private int timer = 0;
+    private int customInterval = -1;
 
     public BedWarsSpawner(Location location, SpawnerType type) {
         this.location = location;
         this.type = type;
     }
 
+    public void setCustomInterval(int seconds) {
+        this.customInterval = seconds;
+    }
+
+    public int getEffectiveInterval() {
+        return customInterval > 0 ? customInterval : type.getIntervalSeconds();
+    }
+
     public void tick() {
         timer++;
-        if (timer >= type.getIntervalSeconds()) {
+        if (timer >= getEffectiveInterval()) {
             timer = 0;
             spawn();
         }
@@ -48,6 +57,7 @@ public class BedWarsSpawner {
 
     public void reset() {
         this.timer = 0;
+        this.customInterval = -1;
         if (location != null && location.getWorld() != null) {
             for (Entity e : location.getWorld().getNearbyEntities(location, 4.0, 4.0, 4.0)) {
                 if (e instanceof Item item && item.getItemStack().getType() == type.getMaterial()) {

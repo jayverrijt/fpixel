@@ -218,6 +218,79 @@ public class BedWarsGame extends Arena {
                 }
             }
         }
+
+        // --- DYNAMIC TIMED EVENTS ---
+        if (gameTime == 180) { // 3:00 - Diamond II
+            for (BedWarsSpawner s : spawners) {
+                if (s.getType() == BedWarsSpawner.SpawnerType.DIAMOND) s.setCustomInterval(18);
+            }
+            broadcast("§b§lEVENT §8» §fDiamond Generators upgraded to §bTier II§f!");
+            for (Player p : getAllBukkitPlayers()) {
+                ChatUtil.sendTitle(p, "§b§lDIAMOND II!", "§7Diamond generators produce faster!", 5, 40, 10);
+                ChatUtil.playSound(p, Sound.BLOCK_NOTE_BLOCK_CHIME, 1.0f, 1.5f);
+            }
+        } else if (gameTime == 360) { // 6:00 - Emerald II
+            for (BedWarsSpawner s : spawners) {
+                if (s.getType() == BedWarsSpawner.SpawnerType.EMERALD) s.setCustomInterval(25);
+            }
+            broadcast("§a§lEVENT §8» §fEmerald Generators upgraded to §aTier II§f!");
+            for (Player p : getAllBukkitPlayers()) {
+                ChatUtil.sendTitle(p, "§a§lEMERALD II!", "§7Emerald generators produce faster!", 5, 40, 10);
+                ChatUtil.playSound(p, Sound.BLOCK_NOTE_BLOCK_CHIME, 1.0f, 1.5f);
+            }
+        } else if (gameTime == 540) { // 9:00 - Diamond III
+            for (BedWarsSpawner s : spawners) {
+                if (s.getType() == BedWarsSpawner.SpawnerType.DIAMOND) s.setCustomInterval(10);
+            }
+            broadcast("§b§lEVENT §8» §fDiamond Generators upgraded to §bTier III§f (MAX)!");
+            for (Player p : getAllBukkitPlayers()) {
+                ChatUtil.sendTitle(p, "§b§lDIAMOND III!", "§7Maximum diamond generation!", 5, 40, 10);
+                ChatUtil.playSound(p, Sound.BLOCK_NOTE_BLOCK_CHIME, 1.0f, 2.0f);
+            }
+        } else if (gameTime == 720) { // 12:00 - Emerald III
+            for (BedWarsSpawner s : spawners) {
+                if (s.getType() == BedWarsSpawner.SpawnerType.EMERALD) s.setCustomInterval(15);
+            }
+            broadcast("§a§lEVENT §8» §fEmerald Generators upgraded to §aTier III§f (MAX)!");
+            for (Player p : getAllBukkitPlayers()) {
+                ChatUtil.sendTitle(p, "§a§lEMERALD III!", "§7Maximum emerald generation!", 5, 40, 10);
+                ChatUtil.playSound(p, Sound.BLOCK_NOTE_BLOCK_CHIME, 1.0f, 2.0f);
+            }
+        } else if (gameTime == 900) { // 15:00 - Bed Destruction
+            for (BedWarsTeam team : teams.values()) {
+                if (team.isBedAlive()) {
+                    team.setBedAlive(false);
+                    Location bedLoc = team.getBedLocation();
+                    if (bedLoc != null && bedLoc.getWorld() != null) {
+                        bedLoc.getBlock().setType(Material.AIR, false);
+                        Block head = bedLoc.getBlock().getRelative(team.getBedFacing());
+                        head.setType(Material.AIR, false);
+                        bedLoc.getWorld().strikeLightningEffect(bedLoc);
+                    }
+                }
+            }
+            broadcast("§c§lBED DESTRUCTION §8» §cAll beds have been destroyed! No more respawns!");
+            for (Player p : getAllBukkitPlayers()) {
+                ChatUtil.sendTitle(p, "§c§lBEDS DESTROYED!", "§7All beds have vanished! Final lives only!", 5, 50, 15);
+                ChatUtil.playSound(p, Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.8f);
+                ChatUtil.playSound(p, Sound.ENTITY_WITHER_SPAWN, 1.0f, 1.0f);
+            }
+        } else if (gameTime == 1080) { // 18:00 - Sudden Death Dragons
+            broadcast("§4§lSUDDEN DEATH §8» §cEnder Dragons have arrived!");
+            Location center = lobbySpawn != null ? lobbySpawn.clone().subtract(0, 30, 0) : null;
+            if (center != null && center.getWorld() != null) {
+                try {
+                    center.getWorld().spawn(center.clone().add(0, 15, 0), org.bukkit.entity.EnderDragon.class);
+                } catch (Exception ignored) {}
+            }
+            for (Player p : getAllBukkitPlayers()) {
+                ChatUtil.sendTitle(p, "§4§lSUDDEN DEATH!", "§cSurvive the dragons!", 5, 50, 15);
+                ChatUtil.playSound(p, Sound.ENTITY_ENDER_DRAGON_GROWL, 1.2f, 0.6f);
+            }
+        } else if (gameTime >= 1200) { // 20:00 - Game Draw
+            broadcast("§c§lGAME OVER §8» §7Time limit reached!");
+            endGame(null);
+        }
     }
 
     @Override
@@ -525,13 +598,47 @@ public class BedWarsGame extends Arena {
         for (BedWarsSpawner spawner : spawners) {
             spawner.reset();
         }
+
+        // Clean up any remaining dragons
+        if (lobbySpawn != null && lobbySpawn.getWorld() != null) {
+            for (org.bukkit.entity.Entity e : lobbySpawn.getWorld().getEntities()) {
+                if (e instanceof org.bukkit.entity.EnderDragon) {
+                    e.remove();
+                }
+            }
+        }
+    }
+
+    public String getNextEventString() {
+        if (gameTime < 180) {
+            int rem = 180 - gameTime;
+            return "§fEvent: §bDiamond II §7(" + String.format("%02d:%02d", rem / 60, rem % 60) + ")";
+        } else if (gameTime < 360) {
+            int rem = 360 - gameTime;
+            return "§fEvent: §aEmerald II §7(" + String.format("%02d:%02d", rem / 60, rem % 60) + ")";
+        } else if (gameTime < 540) {
+            int rem = 540 - gameTime;
+            return "§fEvent: §bDiamond III §7(" + String.format("%02d:%02d", rem / 60, rem % 60) + ")";
+        } else if (gameTime < 720) {
+            int rem = 720 - gameTime;
+            return "§fEvent: §aEmerald III §7(" + String.format("%02d:%02d", rem / 60, rem % 60) + ")";
+        } else if (gameTime < 900) {
+            int rem = 900 - gameTime;
+            return "§fEvent: §cBed Gone §7(" + String.format("%02d:%02d", rem / 60, rem % 60) + ")";
+        } else if (gameTime < 1080) {
+            int rem = 1080 - gameTime;
+            return "§fEvent: §4Sudden Death §7(" + String.format("%02d:%02d", rem / 60, rem % 60) + ")";
+        } else {
+            int rem = Math.max(0, 1200 - gameTime);
+            return "§fEvent: §cGame End §7(" + String.format("%02d:%02d", rem / 60, rem % 60) + ")";
+        }
     }
 
     @Override
     public List<String> getScoreboardLines(Player player) {
         List<String> lines = new ArrayList<>();
         lines.add("§7BedWars");
-        lines.add("§fTime: §a" + String.format("%02d:%02d", gameTime / 60, gameTime % 60));
+        lines.add(getNextEventString());
         lines.add("");
 
         for (BedWarsTeam team : teams.values()) {

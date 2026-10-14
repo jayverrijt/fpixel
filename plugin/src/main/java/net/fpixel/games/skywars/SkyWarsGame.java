@@ -173,13 +173,43 @@ public class SkyWarsGame extends Arena {
             }
         }
 
-        // Chest refill every 180 seconds (3 min)
-        if (gameTime > 0 && gameTime % 180 == 0) {
+        // Timed SkyWars Events
+        if (gameTime == 120) {
             populateChests();
-            broadcast("§a§lCHEST REFILL §8» §eAll chests have been refilled with loot!");
+            broadcast("§a§lCHEST REFILL §8» §eAll chests have been refilled!");
             for (Player p : getAllBukkitPlayers()) {
+                ChatUtil.sendTitle(p, "§a§lCHEST REFILL!", "§7Chests have been replenished!", 5, 30, 10);
                 ChatUtil.playSound(p, Sound.BLOCK_CHEST_OPEN, 1.0f, 1.2f);
             }
+        } else if (gameTime == 240) {
+            populateChests();
+            for (Location loc : midChests) {
+                if (loc.getBlock().getState() instanceof Chest chest) {
+                    fillMidChest(chest.getBlockInventory());
+                    chest.getBlockInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 1));
+                    chest.getBlockInventory().addItem(new ItemStack(Material.ENDER_PEARL, 4));
+                }
+            }
+            broadcast("§c§lOP CHEST REFILL §8» §6Mid chests filled with overpowered items!");
+            for (Player p : getAllBukkitPlayers()) {
+                ChatUtil.sendTitle(p, "§c§lOP REFILL!", "§6Go to mid for overpowered loot!", 5, 30, 10);
+                ChatUtil.playSound(p, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
+            }
+        } else if (gameTime == 360) {
+            broadcast("§4§lDOOM DRAGON §8» §cSudden Death! An Ender Dragon has awakened!");
+            if (lobbySpawn != null && lobbySpawn.getWorld() != null) {
+                Location dragonSpawn = lobbySpawn.clone().subtract(0, 20, 0);
+                try {
+                    lobbySpawn.getWorld().spawn(dragonSpawn, org.bukkit.entity.EnderDragon.class);
+                } catch (Exception ignored) {}
+            }
+            for (Player p : getAllBukkitPlayers()) {
+                ChatUtil.sendTitle(p, "§4§lDOOM DRAGON!", "§cWatch out from above!", 5, 40, 10);
+                ChatUtil.playSound(p, Sound.ENTITY_ENDER_DRAGON_GROWL, 1.2f, 0.7f);
+            }
+        } else if (gameTime >= 600) {
+            broadcast("§c§lTIME LIMIT §8» §7Match ended in a draw!");
+            endGame(null);
         }
     }
 
@@ -293,6 +323,29 @@ public class SkyWarsGame extends Arena {
         for (Location loc : midChests) {
             if (loc.getBlock().getState() instanceof Chest chest) chest.getBlockInventory().clear();
         }
+        if (lobbySpawn != null && lobbySpawn.getWorld() != null) {
+            for (org.bukkit.entity.Entity e : lobbySpawn.getWorld().getEntities()) {
+                if (e instanceof org.bukkit.entity.EnderDragon) {
+                    e.remove();
+                }
+            }
+        }
+    }
+
+    public String getNextEventString() {
+        if (gameTime < 120) {
+            int rem = 120 - gameTime;
+            return "§fEvent: §aRefill §7(" + String.format("%02d:%02d", rem / 60, rem % 60) + ")";
+        } else if (gameTime < 240) {
+            int rem = 240 - gameTime;
+            return "§fEvent: §cOP Refill §7(" + String.format("%02d:%02d", rem / 60, rem % 60) + ")";
+        } else if (gameTime < 360) {
+            int rem = 360 - gameTime;
+            return "§fEvent: §4Doom Dragon §7(" + String.format("%02d:%02d", rem / 60, rem % 60) + ")";
+        } else {
+            int rem = Math.max(0, 600 - gameTime);
+            return "§fEvent: §cGame End §7(" + String.format("%02d:%02d", rem / 60, rem % 60) + ")";
+        }
     }
 
     @Override
@@ -304,10 +357,9 @@ public class SkyWarsGame extends Arena {
             lines.add("§fPlayers: §a" + players.size() + "/" + maxPlayers);
             lines.add("§fStarting in: §a" + countdown + "s");
         } else if (state == GameState.IN_GAME) {
-            int refill = Math.max(0, 180 - (gameTime % 180));
+            lines.add(getNextEventString());
             lines.add("§fPlayers Left: §a" + players.size());
             lines.add("§fKills: §a" + kills.getOrDefault(player.getUniqueId(), 0));
-            lines.add("§fRefill in: §e" + (refill / 60) + ":" + String.format("%02d", refill % 60));
         } else {
             lines.add("§fGame: §eEnding");
         }

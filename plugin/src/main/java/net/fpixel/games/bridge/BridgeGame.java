@@ -41,6 +41,7 @@ public class BridgeGame extends Arena {
     private int roundCountdown = 3;
     private final List<Location> activeCages = new ArrayList<>();
     private final Map<UUID, Integer> arrowTicks = new HashMap<>();
+    private final Map<UUID, Integer> kills = new HashMap<>();
 
     public BridgeGame(FPixelPlugin plugin, String id, String displayName, int voidY) {
         super(plugin, id, displayName, "BRIDGE", 2, 2);
@@ -271,7 +272,11 @@ public class BridgeGame extends Arena {
             blueScore++;
         }
 
-        // Note: Bridge blocks persist across rounds as in standard competitive The Bridge!
+        Location goalLoc = team.equals("RED") ? blueGoal : redGoal;
+        if (goalLoc != null && goalLoc.getWorld() != null) {
+            goalLoc.getWorld().strikeLightningEffect(goalLoc);
+            spawnFirework(goalLoc.clone().add(0, 2, 0));
+        }
 
         broadcast("§6§lGOAL! " + (team.equals("RED") ? "§c[RED] " : "§9[BLUE] ") + scorer.getName() + " §escored a goal! §f(" + redScore + " - " + blueScore + ")");
 
@@ -328,6 +333,20 @@ public class BridgeGame extends Arena {
     public void onPlayerDamage(EntityDamageByEntityEvent event) {
         if (state != GameState.IN_GAME || inRoundCountdown) {
             event.setCancelled(true);
+            return;
+        }
+
+        if (event.getEntity() instanceof Player victim && event.getDamager() instanceof Player killer) {
+            if (victim.getHealth() - event.getFinalDamage() <= 0) {
+                event.setCancelled(true);
+                kills.put(killer.getUniqueId(), kills.getOrDefault(killer.getUniqueId(), 0) + 1);
+                killer.getInventory().addItem(new ItemStack(Material.GOLDEN_APPLE, 1));
+                killer.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.REGENERATION, 60, 1));
+                ChatUtil.sendActionBar(killer, "§6§lKILL! §a+1 Golden Apple §d(Regen II)!");
+                ChatUtil.playSound(killer, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.6f);
+                broadcast("§c" + victim.getName() + " §7was slain by §a" + killer.getName() + "§7!");
+                respawnPlayer(victim);
+            }
         }
     }
 
@@ -335,7 +354,16 @@ public class BridgeGame extends Arena {
     public void onPlayerDeath(PlayerDeathEvent event) {
         event.getDrops().clear();
         event.setCancelled(true);
-        respawnPlayer(event.getPlayer());
+        Player victim = event.getPlayer();
+        Player killer = victim.getKiller();
+        if (killer != null && !killer.equals(victim)) {
+            kills.put(killer.getUniqueId(), kills.getOrDefault(killer.getUniqueId(), 0) + 1);
+            killer.getInventory().addItem(new ItemStack(Material.GOLDEN_APPLE, 1));
+            killer.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.REGENERATION, 60, 1));
+            ChatUtil.sendActionBar(killer, "§6§lKILL! §a+1 Golden Apple §d(Regen II)!");
+            ChatUtil.playSound(killer, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.6f);
+        }
+        respawnPlayer(victim);
     }
 
     @Override
@@ -361,6 +389,7 @@ public class BridgeGame extends Arena {
         inRoundCountdown = false;
         removeCages();
         arrowTicks.clear();
+        kills.clear();
     }
 
     @Override
@@ -377,6 +406,7 @@ public class BridgeGame extends Arena {
             lines.add("§9[B] Goals: §f" + blueScore + "/5");
             lines.add(" ");
             lines.add("§fTeam: " + (isRed ? "§cRED" : "§9BLUE"));
+            lines.add("§fKills: §a" + kills.getOrDefault(player.getUniqueId(), 0));
         } else {
             lines.add("§fGame: §eEnding");
         }

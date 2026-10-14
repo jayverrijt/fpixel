@@ -117,6 +117,7 @@ public class ParkourGame extends Arena {
         // 1. Check finish line
         if (finishLocation != null && loc.distanceSquared(finishLocation) <= 3.0) {
             broadcast("§6§lPARKOUR §8» §a" + p.getName() + " §ehas crossed the finish line in §6" + gameTime + "s§e!");
+            spawnFirework(loc);
             endGame(p);
             return;
         }
@@ -131,7 +132,21 @@ public class ParkourGame extends Arena {
                 ChatUtil.playSound(p, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.8f);
                 ChatUtil.sendTitle(p, "§a§lCHECKPOINT " + newCp, "§7" + newCp + " / " + checkpoints.size(), 0, 20, 5);
                 ChatUtil.sendActionBar(p, "§aCheckpoint " + newCp + " / " + checkpoints.size() + " reached!");
+                spawnFirework(nextCp);
             }
+        }
+
+        // 3. Dynamic Interactive Map Pads (Launch Pads & Speed Boosters)
+        Material standOn = loc.clone().subtract(0, 0.5, 0).getBlock().getType();
+        if (standOn == Material.SLIME_BLOCK || standOn == Material.EMERALD_BLOCK) {
+            p.setVelocity(p.getLocation().getDirection().multiply(1.35).setY(0.8));
+            ChatUtil.playSound(p, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 0.8f, 1.4f);
+            ChatUtil.sendActionBar(p, "§a⚡ Super Launch Pad! ⚡");
+            p.getWorld().spawnParticle(org.bukkit.Particle.FIREWORK, loc, 15, 0.2, 0.2, 0.2, 0.1);
+        } else if (standOn == Material.GOLD_BLOCK || standOn == Material.REDSTONE_BLOCK) {
+            p.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SPEED, 80, 1, false, false, true));
+            ChatUtil.playSound(p, Sound.BLOCK_BEACON_POWER_SELECT, 0.6f, 1.8f);
+            ChatUtil.sendActionBar(p, "§e⚡ Speed Boost! ⚡");
         }
     }
 

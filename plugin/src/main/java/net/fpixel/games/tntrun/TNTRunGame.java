@@ -19,6 +19,7 @@ public class TNTRunGame extends Arena {
     private final Map<UUID, Integer> doubleJumps = new HashMap<>();
 
     private Location arenaSpawn;
+    private int decayTicks = 8;
 
     public TNTRunGame(FPixelPlugin plugin, String id, String displayName, int minPlayers, int maxPlayers, int deathY) {
         super(plugin, id, displayName, "TNTRUN", minPlayers, maxPlayers);
@@ -33,6 +34,7 @@ public class TNTRunGame extends Arena {
     public void onGameStart() {
         decayingBlocks.clear();
         doubleJumps.clear();
+        decayTicks = 8;
 
         Location spawnTarget = (arenaSpawn != null) ? arenaSpawn.clone().add(0, 1, 0) : lobbySpawn;
 
@@ -72,6 +74,30 @@ public class TNTRunGame extends Arena {
                 if (bot.getEntity().getLocation().getY() <= deathY) {
                     eliminateSimulatedPlayer(bot);
                 }
+            }
+        }
+
+        // Timed Events: Speed Surges & Collapse
+        if (gameTime == 45) {
+            broadcast("§e§lSPEED SURGE §8» §aAll runners gained Speed II for 15s!");
+            for (Player p : getBukkitPlayers()) {
+                p.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SPEED, 300, 1));
+                ChatUtil.sendTitle(p, "§e§lSPEED SURGE!", "§7Run faster! Floor falls quick!", 5, 30, 10);
+                ChatUtil.playSound(p, Sound.ENTITY_BAT_TAKEOFF, 1.0f, 1.6f);
+            }
+        } else if (gameTime == 90) {
+            broadcast("§c§lMEGA SPEED SURGE §8» §aAll runners gained Speed III for 15s!");
+            for (Player p : getBukkitPlayers()) {
+                p.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SPEED, 300, 2));
+                ChatUtil.sendTitle(p, "§c§lSPEED SURGE II!", "§6Maximum sprint mode engaged!", 5, 30, 10);
+                ChatUtil.playSound(p, Sound.ENTITY_BAT_TAKEOFF, 1.2f, 1.8f);
+            }
+        } else if (gameTime == 120) {
+            decayTicks = 4;
+            broadcast("§4§lCOLLAPSE §8» §cFloor decay speed has doubled!");
+            for (Player p : getAllBukkitPlayers()) {
+                ChatUtil.sendTitle(p, "§4§lCOLLAPSE!", "§cBlocks fall twice as fast!", 5, 30, 10);
+                ChatUtil.playSound(p, Sound.ENTITY_WITHER_SHOOT, 1.0f, 1.5f);
             }
         }
     }
@@ -140,7 +166,7 @@ public class TNTRunGame extends Arena {
                 loc.getWorld().playSound(loc, Sound.BLOCK_SAND_BREAK, 0.6f, 1.2f);
             }
             decayingBlocks.remove(loc);
-        }, 8L);
+        }, (long) decayTicks);
     }
 
     public void handleDoubleJump(PlayerToggleFlightEvent event) {
@@ -194,13 +220,29 @@ public class TNTRunGame extends Arena {
     public void onArenaReset() {
         decayingBlocks.clear();
         doubleJumps.clear();
+        decayTicks = 8;
+    }
+
+    public String getNextEventString() {
+        if (gameTime < 45) {
+            int rem = 45 - gameTime;
+            return "§fEvent: §eSpeed Surge §7(" + rem + "s)";
+        } else if (gameTime < 90) {
+            int rem = 90 - gameTime;
+            return "§fEvent: §cSpeed Surge II §7(" + rem + "s)";
+        } else if (gameTime < 120) {
+            int rem = 120 - gameTime;
+            return "§fEvent: §4Collapse §7(" + rem + "s)";
+        } else {
+            return "§fEvent: §4Rapid Decay";
+        }
     }
 
     @Override
     public List<String> getScoreboardLines(Player player) {
         List<String> lines = new ArrayList<>();
         lines.add("§7TNT Run");
-        lines.add("§fTime: §a" + String.format("%02d:%02d", gameTime / 60, gameTime % 60));
+        lines.add(getNextEventString());
         lines.add("");
         lines.add("§fPlayers Left: §a" + players.size());
         lines.add("§fDouble Jumps: §b" + doubleJumps.getOrDefault(player.getUniqueId(), 0));

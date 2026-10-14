@@ -57,6 +57,10 @@ public abstract class Arena {
     }
 
     public void tick() {
+        if ((state == GameState.IN_GAME || state == GameState.STARTING) && players.isEmpty() && simulatedPlayers.isEmpty()) {
+            resetArena();
+            return;
+        }
         if (state == GameState.STARTING) {
             handleCountdownTick();
         } else if (state == GameState.IN_GAME) {
@@ -223,18 +227,22 @@ public abstract class Arena {
 
     public boolean join(Player player) {
         if (state == GameState.IN_GAME || state == GameState.ENDING || state == GameState.RESETTING) {
-            // Join as spectator
-            if (player.getWorld() != null && player.getWorld().getName().equalsIgnoreCase("survival")) {
-                if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().getProfileManager() != null) {
-                    plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+            if (players.isEmpty() && simulatedPlayers.isEmpty()) {
+                resetArena();
+            } else {
+                // Join as spectator
+                if (player.getWorld() != null && player.getWorld().getName().equalsIgnoreCase("survival")) {
+                    if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().getProfileManager() != null) {
+                        plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+                    }
                 }
+                spectators.add(player.getUniqueId());
+                plugin.getSpectatorManager().makeSpectator(player, this);
+                if (spectatorSpawn != null) {
+                    player.teleport(spectatorSpawn);
+                }
+                return true;
             }
-            spectators.add(player.getUniqueId());
-            plugin.getSpectatorManager().makeSpectator(player, this);
-            if (spectatorSpawn != null) {
-                player.teleport(spectatorSpawn);
-            }
-            return true;
         }
 
         if (getPlayerCount() >= maxPlayers) {
@@ -254,10 +262,15 @@ public abstract class Arena {
         player.setHealth(20.0);
         player.setFoodLevel(20);
 
-        ItemStack lobbyBed = new net.fpixel.core.util.ItemBuilder(Material.RED_BED)
+        ItemStack mapSelector = new ItemBuilder(Material.COMPASS)
+                .name("§a§lSelect Map §7(Right Click)")
+                .lore("§7Click to browse and switch maps!")
+                .build();
+        ItemStack lobbyBed = new ItemBuilder(Material.RED_BED)
                 .name("§c§lBack to Lobby §7(Right Click)")
                 .lore("§7Right click to return to the Hub.")
                 .build();
+        player.getInventory().setItem(0, mapSelector);
         player.getInventory().setItem(8, lobbyBed);
 
         if (lobbySpawn != null) {
@@ -291,6 +304,10 @@ public abstract class Arena {
         onPlayerLeave(player);
 
         if (state == GameState.IN_GAME) {
+            if (players.isEmpty() && simulatedPlayers.isEmpty()) {
+                resetArena();
+                return;
+            }
             checkWinCondition();
         } else if (state == GameState.STARTING && getPlayerCount() < minPlayers) {
             state = GameState.WAITING;

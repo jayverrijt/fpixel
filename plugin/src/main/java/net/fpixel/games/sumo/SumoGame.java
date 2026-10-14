@@ -30,8 +30,10 @@ public class SumoGame extends Arena {
     private int score1 = 0;
     private int score2 = 0;
     private int currentRound = 1;
+    private int roundTime = 0;
     private boolean roundEnding = false;
     private static final int MAX_WINS = 2; // Best of 3
+    private final Map<UUID, Integer> combos = new HashMap<>();
 
     public SumoGame(FPixelPlugin plugin, String id, String displayName, int deathY) {
         super(plugin, id, displayName, "SUMO", 2, 2);
@@ -47,6 +49,7 @@ public class SumoGame extends Arena {
         score2 = 0;
         currentRound = 1;
         roundEnding = false;
+        combos.clear();
 
         List<Player> playerList = getBukkitPlayers();
         if (playerList.size() >= 2) {
@@ -73,6 +76,9 @@ public class SumoGame extends Arena {
     }
 
     private void startRound() {
+        roundTime = 0;
+        combos.clear();
+
         Player p1 = player1 != null ? Bukkit.getPlayer(player1) : null;
         Player p2 = player2 != null ? Bukkit.getPlayer(player2) : null;
         net.fpixel.core.testing.SimulatedPlayer bot = player2 != null ? simulatedPlayers.get(player2) : null;
@@ -104,6 +110,24 @@ public class SumoGame extends Arena {
 
     @Override
     public void handleGameTick() {
+        if (!roundEnding) {
+            roundTime++;
+
+            // Timed Event: Sudden Death Platform Shrink
+            if (roundTime == 35) {
+                broadcast("§c§lWARNING §8» §eSumo ring shrinking in 5 seconds!");
+                for (Player p : getAllBukkitPlayers()) {
+                    ChatUtil.playSound(p, Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
+                }
+            } else if (roundTime == 40) {
+                broadcast("§c§lSHRINKING §8» §cOuter ring is collapsing!");
+                shrinkRing(true); // Warning: turn outer rim red
+            } else if (roundTime == 43) {
+                broadcast("§4§lSUDDEN DEATH §8» §cOuter ring has collapsed!");
+                shrinkRing(false); // Collapse: turn to air
+            }
+        }
+
         for (Player p : getBukkitPlayers()) {
             if (p.getLocation().getY() <= deathY) {
                 handleFall(p.getUniqueId());
@@ -114,6 +138,34 @@ public class SumoGame extends Arena {
                 if (bot.getEntity().getLocation().getY() <= deathY) {
                     bot.removeEntity();
                     handleFall(bot.getUuid());
+                }
+            }
+        }
+    }
+
+    private void shrinkRing(boolean warningPhase) {
+        if (spawn1 == null || spawn2 == null) return;
+        Location center = spawn1.clone().add(spawn2).multiply(0.5);
+        int cy = center.getBlockY() - 1; // The platform floor layer
+        int cx = center.getBlockX();
+        int cz = center.getBlockZ();
+        var world = center.getWorld();
+        if (world == null) return;
+
+        for (int x = -6; x <= 6; x++) {
+            for (int z = -6; z <= 6; z++) {
+                double dist = Math.sqrt(x * x + z * z);
+                if (dist >= 3.8 && dist <= 5.8) {
+                    org.bukkit.block.Block b = world.getBlockAt(cx + x, cy, cz + z);
+                    if (b.getType() != Material.AIR) {
+                        rollbackEngine.logCustomChange(b);
+                        if (warningPhase) {
+                            b.setType(Material.RED_CONCRETE, false);
+                        } else {
+                            b.setType(Material.AIR, false);
+                            world.playSound(b.getLocation(), Sound.ENTITY_WITHER_BREAK_BLOCK, 0.4f, 1.2f);
+                        }
+                    }
                 }
             }
         }
@@ -134,6 +186,16 @@ public class SumoGame extends Arena {
         event.setDamage(0);
         if (event.getDamager() instanceof Player damager) {
             ChatUtil.playSound(damager, Sound.ENTITY_PLAYER_ATTACK_KNOCKBACK, 0.8f, 1.2f);
+            if (event.getEntity() instanceof Player victim) {
+                combos.put(victim.getUniqueId(), 0);
+            }
+            int combo = combos.getOrDefault(damager.getUniqueId(), 0) + 1;
+            combos.put(damager.getUniqueId(), combo);
+            if (combo >= 3) {
+                float pitch = Math.min(2.0f, 1.0f + (combo * 0.1f));
+                ChatUtil.playSound(damager, Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, pitch);
+                ChatUtil.sendActionBar(damager, "§6§l" + combo + " HIT COMBO! §e⚡");
+            }
         }
     }
 
@@ -226,7 +288,9 @@ public class SumoGame extends Arena {
         score1 = 0;
         score2 = 0;
         currentRound = 1;
+        roundTime = 0;
         roundEnding = false;
+        combos.clear();
         player1 = null;
         player2 = null;
     }
@@ -235,7 +299,11 @@ public class SumoGame extends Arena {
     public List<String> getScoreboardLines(Player player) {
         List<String> lines = new ArrayList<>();
         lines.add("§7Sumo 1v1");
-        lines.add("§fTime: §a" + String.format("%02d:%02d", gameTime / 60, gameTime % 60));
+        if (roundTime < 40) {
+            lines.add("§fShrink in: §e" + (40 - roundTime) + "s");
+        } else {
+            lines.add("§4§lSUDDEN DEATH");
+        }
         lines.add("");
         lines.add("§fRound: §e" + currentRound + "/3");
 

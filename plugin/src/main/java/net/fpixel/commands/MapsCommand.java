@@ -29,7 +29,12 @@ public class MapsCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 1) {
-            GameSelectorMenu.open(plugin, player);
+            var current = plugin.getGameManager().getPlayerArena(player);
+            if (current != null) {
+                MapSelectMenu.open(plugin, player, current.getGameType());
+            } else {
+                GameSelectorMenu.open(plugin, player);
+            }
             return true;
         }
 
