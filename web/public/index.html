@@ -3,197 +3,337 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FPixel Network | Live Server Stats</title>
+  <title>FPixel SMP | Vrienden Portaal & Kaart</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <!-- Leaflet for Survival Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
   <!-- Top Navigation -->
   <header class="navbar">
     <div class="nav-container">
-      <div class="brand">
-        <span class="brand-icon">⚡</span>
-        <span class="brand-name">FPIXEL<span class="highlight">NETWORK</span></span>
+      <div class="brand" onclick="switchTab('dashboard')">
+        <span class="brand-icon">🌲</span>
+        <span class="brand-name">FPIXEL<span class="highlight">SMP</span></span>
       </div>
-      <div class="nav-status">
-        <div id="status-badge" class="status-badge online">
-          <span class="status-dot"></span>
-          <span id="status-text">ONLINE</span>
+
+      <nav class="nav-links">
+        <button class="nav-link active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+        <button class="nav-link" onclick="switchTab('map')">🗺️ Survival Kaart</button>
+        <button class="nav-link" onclick="switchTab('whitelist-req')">📝 Whitelist Aanvragen</button>
+        <button id="nav-admin-btn" class="nav-link admin-link" style="display: none;" onclick="switchTab('admin')">
+          ⚙️ Admin Beheer <span id="admin-badge" class="counter-pill">0</span>
+        </button>
+      </nav>
+
+      <div class="nav-auth">
+        <!-- Logged Out State -->
+        <div id="auth-logged-out" class="auth-box">
+          <button class="btn btn-sm btn-secondary" onclick="openLoginModal()">🔑 Inloggen</button>
         </div>
-        <div class="player-counter">
-          <span id="nav-player-count">0 / 100</span> spelers
+
+        <!-- Logged In State -->
+        <div id="auth-logged-in" class="auth-box" style="display: none;">
+          <div class="user-pill" onclick="switchTab('dashboard')">
+            <img id="nav-user-avatar" class="user-avatar" src="" alt="avatar">
+            <div class="user-details">
+              <span id="nav-username" class="user-name">...</span>
+              <span id="nav-user-coins" class="coins-badge">🪙 0</span>
+            </div>
+            <span id="nav-user-rank" class="rank-badge rank-default">MEMBER</span>
+          </div>
+          <button class="btn btn-sm btn-icon-only" title="Uitloggen" onclick="logout()">🚪</button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Hero Section -->
-  <section class="hero">
-    <div class="hero-content">
-      <div class="badge-pill">🚀 Minecraft 26.3 & Crossplay Actief</div>
-      <h1 class="hero-title">Welkom op <span class="glow-text">FPixel Network</span></h1>
-      <p class="hero-subtitle">
-        Minigames, BedWars, Duels & Survival SMP in een pure Custom Void omgeving met 100% Java & Bedrock ondersteuning.
-      </p>
+  <!-- Notification Toast -->
+  <div id="toast" class="toast">Bericht</div>
 
-      <!-- Connection Box -->
-      <div class="connection-card">
-        <div class="connection-header">
-          <span class="server-label">OFFICIEEL SERVER ADRES</span>
-          <span class="enforced-tag">🔒 Enforced Domain</span>
-        </div>
-        <div class="connection-body">
-          <div class="ip-display">
-            <span class="ip-domain" id="server-domain">mc.fpixel.nl</span>
-            <span class="ip-note">Alleen verbinding via dit domein toegestaan</span>
+  <!-- MAIN VIEW CONTAINER -->
+  <main class="main-content">
+
+    <!-- TAB 1: DASHBOARD & STATS -->
+    <section id="tab-dashboard" class="tab-pane active">
+      
+      <!-- Personal Player Card (Visible when Logged In) -->
+      <div id="personal-card" class="personal-card" style="display: none;">
+        <div class="personal-header">
+          <div class="personal-identity">
+            <img id="profile-bust" class="player-bust" src="" alt="body">
+            <div>
+              <div class="name-row">
+                <h2 id="profile-name">Speler</h2>
+                <span id="profile-rank" class="rank-badge rank-default">MEMBER</span>
+              </div>
+              <p class="uuid-text" id="profile-uuid">UUID: ...</p>
+            </div>
           </div>
-          <div class="action-buttons">
-            <button class="btn btn-primary" onclick="copyToClipboard('mc.fpixel.nl', 'Java adres gekopieerd!')">
-              <span class="btn-icon">📋</span> Kopieer Java IP
-            </button>
-            <button class="btn btn-secondary" onclick="copyToClipboard('19132', 'Bedrock poort 19132 gekopieerd!')">
-              <span class="btn-icon">🎮</span> Bedrock Poort: 19132
-            </button>
+          <div class="coins-hero">
+            <span class="coins-title">JOUW COINS</span>
+            <div class="coins-val"><span class="coin-icon">🪙</span> <span id="profile-coins">0</span></div>
+            <span class="coins-sub">Verdien coins door minigames te winnen & handel in /shop</span>
           </div>
         </div>
-        <div id="copy-toast" class="toast">Gekopieerd naar klembord!</div>
+
+        <!-- Individual World Stats Cards -->
+        <div class="world-stats-grid">
+          <div class="world-card urban-theme">
+            <div class="world-card-header">
+              <span class="world-badge">🏙️ HOOFDWERELD</span>
+              <h3>Urban SMP</h3>
+            </div>
+            <div class="world-card-body">
+              <div class="stat-line">
+                <span class="stat-k">Locatie / Basis:</span>
+                <span class="stat-v" id="urban-coords">X: -653, Y: -22, Z: -116</span>
+              </div>
+              <div class="stat-line">
+                <span class="stat-k">Survival Level:</span>
+                <span class="stat-v highlight" id="urban-level">Lvl 68</span>
+              </div>
+              <div class="stat-line">
+                <span class="stat-k">Levens:</span>
+                <span class="stat-v" id="urban-health">❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️ (20 HP)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="world-card galaxy-theme">
+            <div class="world-card-header">
+              <span class="world-badge">🌌 EXPEDITIE WERELD</span>
+              <h3>Galaxy Survival</h3>
+            </div>
+            <div class="world-card-body">
+              <div class="stat-line">
+                <span class="stat-k">Wereld Status:</span>
+                <span class="stat-v text-green">Actief & Verbonden</span>
+              </div>
+              <div class="stat-line">
+                <span class="stat-k">Spawn Coördinaten:</span>
+                <span class="stat-v">X: 0, Y: 70, Z: 0</span>
+              </div>
+              <div class="stat-line">
+                <span class="stat-k">Wereld Type:</span>
+                <span class="stat-v">Wilderness SMP</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Quick Metrics Grid -->
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-icon">👥</div>
-          <div class="metric-info">
-            <div class="metric-value" id="metric-players">0 / 100</div>
-            <div class="metric-label">Online Spelers</div>
-          </div>
-          <div class="progress-bar-bg">
-            <div id="player-progress" class="progress-bar-fill" style="width: 0%;"></div>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-icon">📶</div>
-          <div class="metric-info">
-            <div class="metric-value" id="metric-ping">-- ms</div>
-            <div class="metric-label">Server Ping / Latency</div>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-icon">⚙️</div>
-          <div class="metric-info">
-            <div class="metric-value" id="metric-version">Paper 26.3</div>
-            <div class="metric-label">Server Software</div>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-icon">📱</div>
-          <div class="metric-info">
-            <div class="metric-value">Geyser + Floodgate</div>
-            <div class="metric-label">Bedrock Crossplay</div>
+      <!-- Friend Group Welcome Banner (If Logged Out) -->
+      <div id="welcome-banner" class="welcome-banner">
+        <div class="welcome-inner">
+          <span class="tag-pill">🔒 Besloten Vrienden SMP</span>
+          <h1>Welkom bij de <span class="glow-text">FPixel Vrienden Server</span></h1>
+          <p>Overleef samen in <strong>Urban SMP</strong> & <strong>Galaxy</strong>, ontdek elkaars bases op de live wereldkaart en doe mee met minigames.</p>
+          <div class="welcome-cta">
+            <button class="btn btn-primary" onclick="openLoginModal()">🔑 Log in met je Minecraft Account</button>
+            <button class="btn btn-secondary" onclick="switchTab('whitelist-req')">📝 Geen toegang? Vraag Whitelist Aan</button>
           </div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- Gamemodes Section -->
-  <section class="section">
-    <div class="section-container">
-      <div class="section-header">
-        <h2 class="section-title">🎮 Gamemodes & Arenas</h2>
-        <p class="section-desc">Kies je favoriete speltype of ontdek onze survival werelden</p>
+      <!-- Quick Server Info Box -->
+      <div class="connection-bar">
+        <div class="conn-item">
+          <span class="conn-label">SERVER STATUS</span>
+          <div id="server-status-pill" class="status-pill online">
+            <span class="dot"></span> <span id="status-text">ONLINE</span>
+          </div>
+        </div>
+        <div class="conn-item">
+          <span class="conn-label">WHITELIST</span>
+          <span class="whitelist-badge">🔒 ACTIEF (Beveiligd)</span>
+        </div>
+        <div class="conn-item">
+          <span class="conn-label">MINECRAFT ADRES</span>
+          <code class="server-ip-box" onclick="copyIp('mc.fpixel.nl')">mc.fpixel.nl 📋</code>
+        </div>
+        <div class="conn-item">
+          <span class="conn-label">BEDROCK POORT</span>
+          <code class="server-ip-box" onclick="copyIp('19132')">19132 📋</code>
+        </div>
       </div>
 
-      <div id="gamemodes-grid" class="gamemodes-grid">
-        <!-- Rendered via JS -->
+      <!-- Friends Leaderboard & Roster -->
+      <div class="section-card">
+        <div class="section-card-header">
+          <h3>👥 Vriendengroep Spelers & Voortgang</h3>
+          <span class="subtitle">Live survival levels, rangen en coins</span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Speler</th>
+                <th>Rang</th>
+                <th>Coins</th>
+                <th>Survival Level</th>
+                <th>Urban Basis</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="friends-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Leaderboards & Player Stats -->
-  <section class="section alt-bg">
-    <div class="section-container">
-      <div class="section-header">
-        <h2 class="section-title">🏆 Spelers & Survival Stats</h2>
-        <p class="section-desc">Bekijk actieve spelers, ranks en voortgang in Survival SMP</p>
+    <!-- TAB 2: INTERACTIVE SURVIVAL MAP -->
+    <section id="tab-map" class="tab-pane">
+      <div class="map-wrapper">
+        <div class="map-controls-bar">
+          <div class="map-title-box">
+            <h2>🗺️ Survival Wereld Kaart</h2>
+            <p>Verken de wereld, dorpen en bases van de vriendengroep</p>
+          </div>
+          <div class="map-actions">
+            <div class="segmented-control">
+              <button id="btn-world-urban" class="segment-btn active" onclick="changeMapWorld('urban')">🏙️ Urban SMP</button>
+              <button id="btn-world-galaxy" class="segment-btn" onclick="changeMapWorld('galaxy')">🌌 Galaxy SMP</button>
+            </div>
+            <button class="btn btn-sm btn-secondary" onclick="resetMapView()">🎯 Reset Weergave</button>
+          </div>
+        </div>
+
+        <!-- The Leaflet Map Canvas -->
+        <div id="survival-map-container" class="map-container"></div>
+
+        <div class="map-footer-bar">
+          <span id="map-coords" class="coords-pill">X: 0, Z: 0</span>
+          <span class="map-hint">💡 Klik op een speler icoon om de basislocatie en details te bekijken</span>
+        </div>
       </div>
+    </section>
 
-      <div class="stats-table-wrapper">
-        <table class="stats-table">
-          <thead>
-            <tr>
-              <th>Speler</th>
-              <th>Rang</th>
-              <th>Survival Level</th>
-              <th>Levens</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="leaderboard-body">
+    <!-- TAB 3: WHITELIST AANVRAGEN -->
+    <section id="tab-whitelist-req" class="tab-pane">
+      <div class="form-container">
+        <div class="form-card">
+          <div class="form-header">
+            <span class="tag-pill">Toegang Verzoek</span>
+            <h2>📝 Vraag Toegang Tot De Server</h2>
+            <p>Omdat dit een gezellige privé vriendenserver is, staat de whitelist altijd aan. Vul hieronder je Minecraft naam in zodat een admin je kan goedkeuren.</p>
+          </div>
+
+          <form id="whitelist-form" onsubmit="handleWhitelistSubmit(event)">
+            <div class="form-group">
+              <label for="wl-username">Jouw Minecraft Naam (Precies zoals in de game)</label>
+              <div class="input-with-preview">
+                <input type="text" id="wl-username" required placeholder="bijv. Jay_V0 of SmileyGaming27" oninput="previewSkin(this.value)">
+                <img id="skin-preview-head" class="input-avatar" src="https://mc-heads.net/avatar/MHF_Steve/64" alt="skin">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="wl-who">Wie ben je? (Voornaam / Vriend van wie / Discord)</label>
+              <input type="text" id="wl-who" required placeholder="bijv. Thomas (vriend van Jay) of Discord tag">
+            </div>
+
+            <div class="form-group">
+              <label for="wl-reason">Kort bericht / Wat kom je bouwen?</label>
+              <textarea id="wl-reason" rows="3" placeholder="Gezellig survivalen, farmen, minigames spelen..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">🚀 Aanvraag Versturen</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: ADMIN PANEEL (VISIBLE FOR ADMIN / OWNER ONLY) -->
+    <section id="tab-admin" class="tab-pane">
+      <div class="admin-wrapper">
+        <div class="admin-header">
+          <div>
+            <span class="admin-badge">🛡️ ADMIN CONTROLPANEL</span>
+            <h2>Whitelist Goedkeuringen & Beheer</h2>
+            <p>Beoordeel openstaande verzoeken en beheer wie toegang heeft tot de Minecraft server.</p>
+          </div>
+          <button class="btn btn-sm btn-secondary" onclick="loadAdminData()">🔄 Verversen</button>
+        </div>
+
+        <!-- Pending Requests Section -->
+        <div class="admin-section">
+          <h3>📬 Openstaande Aanvragen</h3>
+          <div id="pending-requests-list" class="requests-grid">
             <!-- Rendered via JS -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- Crossplay Guide Section -->
-  <section class="section">
-    <div class="section-container">
-      <div class="section-header">
-        <h2 class="section-title">📖 Hoe Join Je FPixel?</h2>
-        <p class="section-desc">Instructies voor Java Edition en Bedrock Edition (Console, Mobile & Windows)</p>
-      </div>
-
-      <div class="guide-grid">
-        <div class="guide-card">
-          <div class="guide-header">
-            <span class="guide-badge java">☕ Java Edition</span>
-            <h3>PC / Mac / Linux</h3>
           </div>
-          <ol class="guide-steps">
-            <li>Start Minecraft (versie 1.21.x / 26.3).</li>
-            <li>Klik op <strong>Multiplayer</strong> &rarr; <strong>Server Toevoegen</strong>.</li>
-            <li>Server Adres: <code class="code-pill">mc.fpixel.nl</code></li>
-            <li>Klik op <strong>Gereed</strong> en verbind direct!</li>
-          </ol>
         </div>
 
-        <div class="guide-card">
-          <div class="guide-header">
-            <span class="guide-badge bedrock">🎮 Bedrock Edition</span>
-            <h3>Mobile / Windows / Consoles</h3>
+        <!-- Current Whitelisted Players Table -->
+        <div class="admin-section">
+          <div class="sub-header">
+            <h3>✅ Actieve Whitelist Spelers</h3>
+            <div class="manual-add-box">
+              <input type="text" id="manual-wl-input" placeholder="Minecraft naam...">
+              <button class="btn btn-sm btn-primary" onclick="manualAddWhitelist()">+ Voeg Toe</button>
+            </div>
           </div>
-          <ol class="guide-steps">
-            <li>Start Minecraft op je telefoon, console of Windows.</li>
-            <li>Ga naar <strong>Spelen</strong> &rarr; <strong>Servers</strong> &rarr; <strong>Server Toevoegen</strong>.</li>
-            <li>Server Naam: <code class="code-pill">FPixel Network</code></li>
-            <li>Server Adres: <code class="code-pill">mc.fpixel.nl</code></li>
-            <li>Poort: <code class="code-pill">19132</code> (Standaard Bedrock poort).</li>
-          </ol>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Speler</th>
+                  <th>UUID</th>
+                  <th>Actie</th>
+                </tr>
+              </thead>
+              <tbody id="whitelist-table-body">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="footer-container">
-      <div class="footer-brand">
-        <span class="brand-name">FPIXEL<span class="highlight">NETWORK</span></span>
-        <p>© 2026 FPixel Network. 100% Server-Sided Minigames & Crossplay.</p>
+  </main>
+
+  <!-- LOGIN MODAL -->
+  <div id="login-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🔑 Inloggen op FPixel</h3>
+        <button class="modal-close" onclick="closeLoginModal()">&times;</button>
       </div>
-      <div class="footer-meta">
-        <span class="enforced-domain-pill">🔒 Alleen verbinding via <strong>mc.fpixel.nl</strong></span>
+      <div class="modal-body">
+        <p class="modal-desc">Kies hoe je wilt inloggen om je coins, survival statistieken en beheerdersrechten te bekijken:</p>
+        
+        <!-- Microsoft OAuth Option -->
+        <div class="auth-option ms-option" onclick="simulateMicrosoftLogin()">
+          <div class="ms-logo">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path fill="#f25022" d="M1 1h8v8H1z"/><path fill="#00a4ef" d="M1 11h8v8H1z"/><path fill="#7fba00" d="M11 1h8v8h-8z"/><path fill="#ffb900" d="M11 11h8v8h-8z"/></svg>
+          </div>
+          <div class="ms-text">
+            <strong>Inloggen met Microsoft</strong>
+            <span>Direct koppelen met je officiële Minecraft account</span>
+          </div>
+        </div>
+
+        <div class="divider"><span>OF DIRECT MET JE SPELERSNAAM</span></div>
+
+        <!-- Direct Username Option -->
+        <form onsubmit="handleDirectLogin(event)">
+          <div class="form-group">
+            <label for="login-username">Minecraft Gebruikersnaam</label>
+            <input type="text" id="login-username" required placeholder="bijv. Jay_V0">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Inloggen</button>
+        </form>
       </div>
     </div>
-  </footer>
+  </div>
 
   <script src="app.js"></script>
 </body>

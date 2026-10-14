@@ -35,7 +35,7 @@ services:
       - MINECRAFT_PORT=25565
       - DATA_DIR=/data/plugins/FPixelCore
     volumes:
-      - ./server:/data:ro
+      - ./server:/data
     depends_on:
       - minecraft
     networks:
