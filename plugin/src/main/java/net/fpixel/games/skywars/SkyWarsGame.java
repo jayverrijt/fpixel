@@ -28,12 +28,21 @@ public class SkyWarsGame extends Arena {
     private final List<Location> midChests = new ArrayList<>();
     private final List<Location> cageBlocks = new ArrayList<>();
     private final Map<UUID, Integer> kills = new HashMap<>();
+    private final Map<UUID, SkyWarsKit> selectedKits = new HashMap<>();
 
     private static final Random RNG = new Random();
 
     public SkyWarsGame(FPixelPlugin plugin, String id, String displayName, int minPlayers, int maxPlayers, int voidKillY) {
         super(plugin, id, displayName, "SKYWARS", minPlayers, maxPlayers);
         this.voidKillY = voidKillY;
+    }
+
+    public void setSelectedKit(UUID uuid, SkyWarsKit kit) {
+        selectedKits.put(uuid, kit);
+    }
+
+    public SkyWarsKit getSelectedKit(UUID uuid) {
+        return selectedKits.getOrDefault(uuid, SkyWarsKit.KNIGHT);
     }
 
     public void addIslandSpawn(Location loc) {
@@ -60,7 +69,12 @@ public class SkyWarsGame extends Arena {
             Location spawn = (i < islandSpawns.size()) ? islandSpawns.get(i) : lobbySpawn;
             p.teleport(spawn.clone().add(0.5, 1, 0.5));
             p.getInventory().clear();
-            ChatUtil.sendTitle(p, "§6§lSKYWARS", "§eLoot chests and survive to the end!", 10, 40, 10);
+
+            SkyWarsKit kit = getSelectedKit(p.getUniqueId());
+            kit.apply(p);
+
+            ChatUtil.sendTitle(p, "§6§lSKYWARS", "§aKit: " + kit.getDisplayName() + " §7- Loot & survive!", 10, 40, 10);
+            ChatUtil.sendMessage(p, "§aYou are playing with the " + kit.getDisplayName() + " §akit!");
             ChatUtil.playSound(p, Sound.ENTITY_ENDER_DRAGON_GROWL, 0.7f, 1.2f);
         }
 

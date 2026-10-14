@@ -260,6 +260,24 @@ public class LobbyListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onSkyWarsKitInteract(PlayerInteractEvent event) {
+        ItemStack item = event.getItem();
+        if (item == null || item.getType() != Material.BOW) return;
+
+        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+            String name = item.getItemMeta().getDisplayName();
+            if (name.contains("Kit") || name.contains("Select Kit")) {
+                event.setCancelled(true);
+                Player player = event.getPlayer();
+                Arena arena = plugin.getGameManager().getPlayerArena(player);
+                if (arena instanceof net.fpixel.games.skywars.SkyWarsGame sw) {
+                    net.fpixel.games.skywars.SkyWarsKitMenu.open(plugin, player, sw);
+                }
+            }
+        }
+    }
+
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
@@ -334,6 +352,9 @@ public class LobbyListener implements Listener {
         } else if (title.contains("BedWars Item Shop") || title.contains("BedWars Team Upgrades")) {
             event.setCancelled(true);
             BedWarsShop.handleClick(player, event.getRawSlot());
+        } else if (title.contains("Select SkyWars Kit")) {
+            event.setCancelled(true);
+            net.fpixel.games.skywars.SkyWarsKitMenu.handleClick(plugin, player, event.getRawSlot());
         } else if (isInLobby(player) && player.getGameMode() != GameMode.CREATIVE) {
             // Lock lobby inventory
             event.setCancelled(true);

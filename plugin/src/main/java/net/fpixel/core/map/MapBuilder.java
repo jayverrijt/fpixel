@@ -1166,4 +1166,219 @@ public class MapBuilder {
             }
         }
     }
+
+    /**
+     * Builds a vibrant, lush Autumn Tree with glowing warm canopy and fallen leaf carpets.
+     */
+    public static void buildAutumnTree(World world, int x, int y, int z, Material logMat, Material leafMat, Material accentMat, int height) {
+        // Trunk
+        for (int h = 0; h < height; h++) {
+            world.getBlockAt(x, y + h, z).setType(logMat, false);
+        }
+
+        // Roots
+        world.getBlockAt(x + 1, y, z).setType(logMat, false);
+        world.getBlockAt(x - 1, y, z).setType(logMat, false);
+        world.getBlockAt(x, y, z + 1).setType(logMat, false);
+        world.getBlockAt(x, y, z - 1).setType(logMat, false);
+
+        // Branches
+        int branchY = y + height - 2;
+        world.getBlockAt(x + 1, branchY, z).setType(logMat, false);
+        world.getBlockAt(x - 1, branchY, z).setType(logMat, false);
+        world.getBlockAt(x, branchY, z + 1).setType(logMat, false);
+        world.getBlockAt(x, branchY, z - 1).setType(logMat, false);
+
+        // Warm Glowing Core inside canopy
+        world.getBlockAt(x, y + height, z).setType(Material.SHROOMLIGHT, false);
+
+        // Multi-layer Autumn Foliage (Spherical naturally textured)
+        int canopyCenterY = y + height;
+        for (int ox = -3; ox <= 3; ox++) {
+            for (int oy = -2; oy <= 3; oy++) {
+                for (int oz = -3; oz <= 3; oz++) {
+                    double dist = Math.sqrt(ox * ox + oy * oy * 1.3 + oz * oz);
+                    if (dist <= 3.2 && !(ox == 0 && oy == 0 && oz == 0)) {
+                        int px = x + ox;
+                        int py = canopyCenterY + oy;
+                        int pz = z + oz;
+                        Material m = ((ox + oy + oz) % 3 == 0) ? accentMat : leafMat;
+                        setLeaves(world, px, py, pz, m);
+                    }
+                }
+            }
+        }
+
+        // Fallen Leaves on the ground around the tree
+        Material carpet = (accentMat == Material.ORANGE_WOOL || accentMat == Material.ORANGE_TERRACOTTA) ? Material.ORANGE_CARPET : Material.YELLOW_CARPET;
+        int[][] leafOffsets = {{1, 1}, {-1, 1}, {2, 0}, {-2, 0}, {0, 2}, {0, -2}, {1, -2}, {-1, -1}};
+        for (int[] off : leafOffsets) {
+            int lx = x + off[0];
+            int lz = z + off[1];
+            if (world.getBlockAt(lx, y, lz).getType().isSolid() && world.getBlockAt(lx, y + 1, lz).getType() == Material.AIR) {
+                world.getBlockAt(lx, y + 1, lz).setType(carpet, false);
+            }
+        }
+    }
+
+    /**
+     * Builds a magnificent Steampunk Autumn Airship suspended high above the courtyard (CubeCraft style).
+     */
+    public static void buildSteampunkAirship(World world, int cx, int cy, int cz) {
+        // 1. Ellipsoid Balloon Envelope (Orange and White striped)
+        for (int x = -7; x <= 7; x++) {
+            for (int y = -3; y <= 3; y++) {
+                for (int z = -3; z <= 3; z++) {
+                    double norm = (x * x) / 49.0 + (y * y) / 9.0 + (z * z) / 9.0;
+                    if (norm <= 1.0) {
+                        Material wool = (Math.abs(x) % 2 == 0) ? Material.ORANGE_WOOL : Material.WHITE_WOOL;
+                        world.getBlockAt(cx + x, cy + y, cz + z).setType(wool, false);
+                    }
+                }
+            }
+        }
+        // Gold / Copper nose cone
+        world.getBlockAt(cx + 8, cy, cz).setType(Material.COPPER_BLOCK, false);
+        world.getBlockAt(cx - 8, cy, cz).setType(Material.COPPER_BLOCK, false);
+
+        // 2. Rigging / Suspension cables
+        for (int x = -5; x <= 5; x += 5) {
+            world.getBlockAt(cx + x, cy - 4, cz - 2).setType(Material.IRON_CHAIN, false);
+            world.getBlockAt(cx + x, cy - 4, cz + 2).setType(Material.IRON_CHAIN, false);
+            world.getBlockAt(cx + x, cy - 5, cz - 2).setType(Material.IRON_CHAIN, false);
+            world.getBlockAt(cx + x, cy - 5, cz + 2).setType(Material.IRON_CHAIN, false);
+        }
+
+        // 3. Gondola Cabin (Spruce timber with observation windows)
+        int gy = cy - 6;
+        fillBox(world, cx - 4, gy, cz - 1, cx + 4, gy + 1, cz + 1, Material.SPRUCE_PLANKS);
+        fillBox(world, cx - 3, gy + 1, cz - 1, cx + 3, gy + 1, cz - 1, Material.GLASS_PANE);
+        fillBox(world, cx - 3, gy + 1, cz + 1, cx + 3, gy + 1, cz + 1, Material.GLASS_PANE);
+        world.getBlockAt(cx - 4, gy, cz).setType(Material.DARK_OAK_DOOR, false);
+
+        // Lanterns hanging below gondola
+        world.getBlockAt(cx - 3, gy - 1, cz).setType(Material.LANTERN, false);
+        world.getBlockAt(cx + 3, gy - 1, cz).setType(Material.LANTERN, false);
+
+        // Rear Brass Propeller
+        world.getBlockAt(cx - 5, gy + 1, cz).setType(Material.SPRUCE_FENCE, false);
+        world.getBlockAt(cx - 6, gy + 1, cz).setType(Material.LIGHTNING_ROD, false);
+        world.getBlockAt(cx - 6, gy + 2, cz).setType(Material.OAK_TRAPDOOR, false);
+        world.getBlockAt(cx - 6, gy, cz).setType(Material.OAK_TRAPDOOR, false);
+    }
+
+    /**
+     * Builds a cozy half-timbered medieval Autumn Town House (Hypixel style).
+     */
+    public static void buildAutumnTownHouse(World world, int x, int y, int z, int width, int length, Material wallMat, Material roofMat) {
+        // Foundation of Mud Bricks & Cobblestone
+        fillBox(world, x, y, z, x + width - 1, y, z + length - 1, Material.MUD_BRICKS);
+
+        int height = 5;
+        // Timber frame corners
+        buildPillar(world, x, y + 1, z, height, Material.STRIPPED_DARK_OAK_LOG);
+        buildPillar(world, x + width - 1, y + 1, z, height, Material.STRIPPED_DARK_OAK_LOG);
+        buildPillar(world, x, y + 1, z + length - 1, height, Material.STRIPPED_DARK_OAK_LOG);
+        buildPillar(world, x + width - 1, y + 1, z + length - 1, height, Material.STRIPPED_DARK_OAK_LOG);
+
+        // Walls with windows
+        for (int py = y + 1; py <= y + height; py++) {
+            for (int px = x + 1; px < x + width - 1; px++) {
+                world.getBlockAt(px, py, z).setType(wallMat, false);
+                world.getBlockAt(px, py, z + length - 1).setType(wallMat, false);
+            }
+            for (int pz = z + 1; pz < z + length - 1; pz++) {
+                world.getBlockAt(x, py, pz).setType(wallMat, false);
+                world.getBlockAt(x + width - 1, py, pz).setType(wallMat, false);
+            }
+        }
+
+        // Windows & Doors
+        int midX = x + width / 2;
+        int midZ = z + length / 2;
+        world.getBlockAt(midX, y + 1, z).setType(Material.AIR, false);
+        world.getBlockAt(midX, y + 2, z).setType(Material.AIR, false);
+        world.getBlockAt(midX, y + 3, z - 1).setType(Material.LANTERN, false);
+
+        world.getBlockAt(x, y + 2, midZ).setType(Material.GLASS_PANE, false);
+        world.getBlockAt(x + width - 1, y + 2, midZ).setType(Material.GLASS_PANE, false);
+
+        // Steep Gable Roof
+        int roofBaseY = y + height + 1;
+        int steps = (width + 1) / 2;
+        for (int step = 0; step < steps; step++) {
+            int currentY = roofBaseY + step;
+            int lx = x + step - 1;
+            int rx = x + width - step;
+            for (int pz = z - 1; pz <= z + length; pz++) {
+                world.getBlockAt(lx, currentY, pz).setType(roofMat, false);
+                world.getBlockAt(rx, currentY, pz).setType(roofMat, false);
+            }
+        }
+        int ridgeY = roofBaseY + steps;
+        for (int pz = z - 1; pz <= z + length; pz++) {
+            world.getBlockAt(midX, ridgeY, pz).setType(Material.SPRUCE_SLAB, false);
+        }
+
+        // Smoking Chimney
+        world.getBlockAt(x + 1, ridgeY + 1, z + length - 2).setType(Material.CAMPFIRE, false);
+        world.getBlockAt(x + 1, ridgeY + 2, z + length - 2).setType(Material.COBBLESTONE_WALL, false);
+    }
+
+    /**
+     * Builds a fortified BedWars team base forge & shelter (Houses Item Shop, Team Upgrades, and Spawner inside).
+     */
+    public static void buildBedWarsBaseForge(World world, int x, int y, int z, Material wallMat, Material roofMat, Material accentMat) {
+        int width = 7;
+        int length = 7;
+
+        // Foundation
+        fillBox(world, x, y, z, x + width - 1, y, z + length - 1, Material.STONE_BRICKS);
+
+        // 4 Corner Pillars
+        int height = 4;
+        buildPillar(world, x, y + 1, z, height, Material.DEEPSLATE_BRICKS);
+        buildPillar(world, x + width - 1, y + 1, z, height, Material.DEEPSLATE_BRICKS);
+        buildPillar(world, x, y + 1, z + length - 1, height, Material.DEEPSLATE_BRICKS);
+        buildPillar(world, x + width - 1, y + 1, z + length - 1, height, Material.DEEPSLATE_BRICKS);
+
+        // Side Walls
+        for (int py = y + 1; py <= y + height; py++) {
+            for (int px = x + 1; px < x + width - 1; px++) {
+                world.getBlockAt(px, py, z + length - 1).setType(wallMat, false);
+            }
+            for (int pz = z + 1; pz < z + length - 1; pz++) {
+                world.getBlockAt(x, py, pz).setType(wallMat, false);
+                world.getBlockAt(x + width - 1, py, pz).setType(wallMat, false);
+            }
+        }
+
+        // Open Entrance Archway facing forward (z side)
+        for (int px = x + 1; px < x + width - 1; px++) {
+            world.getBlockAt(px, y + height, z).setType(wallMat, false);
+        }
+        world.getBlockAt(x + 1, y + height - 1, z).setType(Material.STONE_BRICK_STAIRS, false);
+        world.getBlockAt(x + width - 2, y + height - 1, z).setType(Material.STONE_BRICK_STAIRS, false);
+
+        // Fortified Roof with battlements & lanterns
+        fillBox(world, x, y + height + 1, z, x + width - 1, y + height + 1, z + length - 1, roofMat);
+        for (int ox = 0; ox < width; ox++) {
+            for (int oz = 0; oz < length; oz++) {
+                if (ox == 0 || ox == width - 1 || oz == 0 || oz == length - 1) {
+                    if ((ox + oz) % 2 == 0) {
+                        world.getBlockAt(x + ox, y + height + 2, z + oz).setType(Material.STONE_BRICK_WALL, false);
+                    }
+                }
+            }
+        }
+        world.getBlockAt(x + 1, y + height + 3, z + 1).setType(Material.LANTERN, false);
+        world.getBlockAt(x + width - 2, y + height + 3, z + 1).setType(Material.LANTERN, false);
+
+        // Interior Forge Equipment (Furnace, Anvil, Chest, Barrels)
+        world.getBlockAt(x + 1, y + 1, z + length - 2).setType(Material.BLAST_FURNACE, false);
+        world.getBlockAt(x + 2, y + 1, z + length - 2).setType(Material.ANVIL, false);
+        world.getBlockAt(x + width - 2, y + 1, z + length - 2).setType(Material.CHEST, false);
+        world.getBlockAt(x + width - 3, y + 1, z + length - 2).setType(Material.BARREL, false);
+        world.getBlockAt(x + 3, y + height, z + 3).setType(Material.LANTERN, false);
+    }
 }

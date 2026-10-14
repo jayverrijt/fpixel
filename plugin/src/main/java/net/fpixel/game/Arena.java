@@ -271,6 +271,13 @@ public abstract class Arena {
                 .lore("§7Right click to return to the Hub.")
                 .build();
         player.getInventory().setItem(0, mapSelector);
+        if (this.gameType.equalsIgnoreCase("SKYWARS")) {
+            ItemStack kitSelector = new ItemBuilder(Material.BOW)
+                    .name("§b§lSelect Kit §7(Right Click)")
+                    .lore("§7Click to choose your SkyWars combat kit!")
+                    .build();
+            player.getInventory().setItem(4, kitSelector);
+        }
         player.getInventory().setItem(8, lobbyBed);
 
         if (lobbySpawn != null) {

@@ -40,10 +40,10 @@ public class GameSelectorMenu {
                         "§7Defend your bed and destroy enemy beds!",
                         "§7Upgrade equipment with iron, gold & emeralds.",
                         "",
-                        "§fMaps: §a10 Fortified Arenas",
+                        "§fMaps: §a10 Unique Fortified Arenas",
                         "",
-                        "§e▶ Left Click: §fQuick Play",
-                        "§e▶ Right Click: §fSelect Map"
+                        "§e▶ Click to browse & choose a map!",
+                        "§7(Includes Quick Join option)"
                 )
                 .build();
         inv.setItem(11, bedwars);
@@ -52,13 +52,14 @@ public class GameSelectorMenu {
         ItemStack skywars = new ItemBuilder(Material.ENDER_EYE)
                 .name("§b§lSkyWars")
                 .lore(
-                        "§7Spawn on your island, loot chests, and",
-                        "§7battle your opponents above the void!",
+                        "§7Spawn on your island, select your kit,",
+                        "§7loot chests, and battle above the void!",
                         "",
-                        "§fMaps: §a10 Floating Islands",
+                        "§fMaps: §a10 Unique Floating Islands",
+                        "§fKits: §b10 Combat Kits Available",
                         "",
-                        "§e▶ Left Click: §fQuick Play",
-                        "§e▶ Right Click: §fSelect Map"
+                        "§e▶ Click to browse & choose a map!",
+                        "§7(Includes Quick Join option)"
                 )
                 .build();
         inv.setItem(13, skywars);
@@ -72,8 +73,8 @@ public class GameSelectorMenu {
                         "",
                         "§fMaps: §a10 Roman Colosseums",
                         "",
-                        "§e▶ Left Click: §fQuick Play",
-                        "§e▶ Right Click: §fSelect Map"
+                        "§e▶ Click to browse & choose a map!",
+                        "§7(Includes Quick Join option)"
                 )
                 .build();
         inv.setItem(15, tntrun);
@@ -98,13 +99,13 @@ public class GameSelectorMenu {
         ItemStack bridge = new ItemBuilder(Material.RED_TERRACOTTA)
                 .name("§6§lThe Bridge 1v1")
                 .lore(
-                        "§7Cross the narrow bridge over the void",
-                        "§7and score 5 goals in the enemy castle portal!",
+                        "§7Cross the narrow bridge over the void,",
+                        "§7fight in team courtyards & score in the pit!",
                         "",
                         "§fMaps: §a10 Bridge Arenas",
                         "",
-                        "§e▶ Left Click: §fQuick Play",
-                        "§e▶ Right Click: §fSelect Map"
+                        "§e▶ Click to browse & choose a map!",
+                        "§7(Includes Quick Join option)"
                 )
                 .build();
         inv.setItem(29, bridge);
@@ -118,8 +119,8 @@ public class GameSelectorMenu {
                         "",
                         "§fMaps: §a10 Dojo Temples",
                         "",
-                        "§e▶ Left Click: §fQuick Play",
-                        "§e▶ Right Click: §fSelect Map"
+                        "§e▶ Click to browse & choose a map!",
+                        "§7(Includes Quick Join option)"
                 )
                 .build();
         inv.setItem(31, sumo);
@@ -133,8 +134,8 @@ public class GameSelectorMenu {
                         "",
                         "§fMaps: §a10 Obstacle Courses",
                         "",
-                        "§e▶ Left Click: §fQuick Play",
-                        "§e▶ Right Click: §fSelect Map"
+                        "§e▶ Click to browse & choose a map!",
+                        "§7(Includes Quick Join option)"
                 )
                 .build();
         inv.setItem(33, parkour);
@@ -212,11 +213,6 @@ public class GameSelectorMenu {
     }
 
     private static void handleOption(FPixelPlugin plugin, Player player, String gameType, ClickType clickType) {
-        if (clickType.isRightClick()) {
-            MapSelectMenu.open(plugin, player, gameType);
-        } else {
-            player.closeInventory();
-            plugin.getGameManager().joinQueue(player, gameType);
-        }
+        MapSelectMenu.open(plugin, player, gameType);
     }
 }

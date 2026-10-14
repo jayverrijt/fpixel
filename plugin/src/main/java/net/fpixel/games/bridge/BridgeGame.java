@@ -118,11 +118,18 @@ public class BridgeGame extends Arena {
         var world = loc.getWorld();
         if (world == null) return;
 
-        // Build a complete 3x3x4 solid glass cage (floor, walls, roof, all corners)
+        // Ensure permanent solid platform floor directly under cage
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
-                for (int dy = -1; dy <= 3; dy++) {
-                    if (dy == -1 || dy == 3 || Math.abs(dx) == 1 || Math.abs(dz) == 1) {
+                world.getBlockAt(cx + dx, cy - 1, cz + dz).setType(Material.SMOOTH_STONE, false);
+            }
+        }
+
+        // Build temporary glass enclosure (walls dy = 0..2, ceiling dy = 3)
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                for (int dy = 0; dy <= 2; dy++) {
+                    if (Math.abs(dx) == 1 || Math.abs(dz) == 1) {
                         Block b = world.getBlockAt(cx + dx, cy + dy, cz + dz);
                         b.setType(glassMat, false);
                         activeCages.add(b.getLocation());
@@ -131,6 +138,9 @@ public class BridgeGame extends Arena {
                         b.setType(Material.AIR, false);
                     }
                 }
+                Block top = world.getBlockAt(cx + dx, cy + 3, cz + dz);
+                top.setType(glassMat, false);
+                activeCages.add(top.getLocation());
             }
         }
     }
