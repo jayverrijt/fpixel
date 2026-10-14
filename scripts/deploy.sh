@@ -30,13 +30,16 @@ echo ">>> [3/5] Verifying runtime dependencies..."
 mkdir -p "${SERVER_DIR}/plugins"
 
 # Check paper.jar
-if [ ! -f "${SERVER_DIR}/paper.jar" ]; then
-  if [ -f "${BASE_DIR}/survival/paper.jar" ]; then
-    echo "Copying existing paper.jar from survival/..."
-    cp "${BASE_DIR}/survival/paper.jar" "${SERVER_DIR}/paper.jar"
-  elif [ -f "${SERVER_DIR}/versions/26.3/paper-26.3.jar" ]; then
-    echo "Copying paper-26.3.jar to paper.jar..."
-    cp "${SERVER_DIR}/versions/26.3/paper-26.3.jar" "${SERVER_DIR}/paper.jar"
+if [ ! -f "${SERVER_DIR}/paper.jar" ] || [ $(stat -c%s "${SERVER_DIR}/paper.jar" 2>/dev/null || echo 0) -lt 40000000 ]; then
+  if [ -f "/home/jayv/fpixel-af2727b702412a9bbd1b5ac3af6817f9107ac91b/survival/paper.jar" ]; then
+    echo "Copying bootstrap paper.jar from fpixel-af2727b702412a9bbd1b5ac3af6817f9107ac91b/survival..."
+    cp "/home/jayv/fpixel-af2727b702412a9bbd1b5ac3af6817f9107ac91b/survival/paper.jar" "${SERVER_DIR}/paper.jar"
+  elif [ -f "/shared/fpixel/survival/paper.jar" ]; then
+    echo "Copying bootstrap paper.jar from /shared/fpixel/survival..."
+    cp "/shared/fpixel/survival/paper.jar" "${SERVER_DIR}/paper.jar"
+  else
+    echo "Downloading Paper 26.3..."
+    curl -sSL "https://fill-data.papermc.io/v1/objects/e0c65225bf8d8c978eeca06e41feb81ebadbdaeb1d3c2b6fd6b97b51e5947e93/paper-26.3-9.jar" -o "${SERVER_DIR}/paper.jar" || true
   fi
 fi
 
