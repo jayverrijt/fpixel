@@ -16,10 +16,12 @@ import net.fpixel.lobby.listeners.DoubleJumpListener;
 import net.fpixel.lobby.listeners.LaunchpadListener;
 import net.fpixel.lobby.listeners.LobbyListener;
 import net.fpixel.party.PartyManager;
+import net.fpixel.survival.SurvivalListener;
 import net.fpixel.survival.SurvivalManager;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
+
 
 public class FPixelPlugin extends JavaPlugin {
     private static FPixelPlugin instance;
@@ -68,6 +70,8 @@ public class FPixelPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new DoubleJumpListener(this), this);
         Bukkit.getPluginManager().registerEvents(new LaunchpadListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ChatListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new SurvivalListener(this), this);
+
 
         // 4. Register Commands
         FPixelCommand fpixelCmd = new FPixelCommand(this);

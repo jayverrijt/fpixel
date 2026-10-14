@@ -15,12 +15,26 @@ import java.util.zip.ZipInputStream;
 public class SurvivalManager {
     private final FPixelPlugin plugin;
     private final SurvivalProfileManager profileManager;
+    private final java.util.Set<java.util.UUID> activeSurvivalPlayers = new java.util.HashSet<>();
     private World survivalWorld;
 
     public SurvivalManager(FPixelPlugin plugin) {
         this.plugin = plugin;
         this.profileManager = new SurvivalProfileManager(plugin);
     }
+
+    public boolean isPlayerInSurvival(Player player) {
+        return activeSurvivalPlayers.contains(player.getUniqueId());
+    }
+
+    public void addSurvivalPlayer(Player player) {
+        activeSurvivalPlayers.add(player.getUniqueId());
+    }
+
+    public void removeSurvivalPlayer(Player player) {
+        activeSurvivalPlayers.remove(player.getUniqueId());
+    }
+
 
 
     public void init() {
@@ -183,7 +197,9 @@ public class SurvivalManager {
 
         // Load profile: restores exact coordinates, all inventory items, armor, offhand, XP, health
         profileManager.loadProfile(player, survivalWorld);
+        addSurvivalPlayer(player);
         player.setGameMode(GameMode.SURVIVAL);
+
         player.setAllowFlight(false);
         player.setFlying(false);
 

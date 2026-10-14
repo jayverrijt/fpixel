@@ -19,6 +19,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class SurvivalProfileManager {
     private final FPixelPlugin plugin;
@@ -70,16 +71,48 @@ public class SurvivalProfileManager {
     }
 
     private File findImportedFile(Player player) {
-        // 1. By UUID
-        File byUuid = new File(importedDir, player.getUniqueId().toString() + ".json");
+        String name = player.getName().toLowerCase();
+        UUID uuid = player.getUniqueId();
+
+        // 1. By exact session UUID
+        File byUuid = new File(importedDir, uuid.toString() + ".json");
         if (byUuid.exists()) return byUuid;
 
-        // 2. By Username (lowercase)
-        File byName = new File(importedDir, player.getName().toLowerCase() + ".json");
+        // 2. By offline UUID
+        UUID offlineUuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + player.getName()).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        File byOfflineUuid = new File(importedDir, offlineUuid.toString() + ".json");
+        if (byOfflineUuid.exists()) return byOfflineUuid;
+
+        // 3. By exact lowercase username
+        File byName = new File(importedDir, name + ".json");
         if (byName.exists()) return byName;
+
+        // 4. Strip Bedrock / Floodgate prefix if present (e.g. .username or *username or _username)
+        if (name.startsWith(".") || name.startsWith("*") || name.startsWith("_")) {
+            File stripped = new File(importedDir, name.substring(1) + ".json");
+            if (stripped.exists()) return stripped;
+        } else {
+            // Check with dot prefix for Bedrock players
+            File dotted = new File(importedDir, "." + name + ".json");
+            if (dotted.exists()) return dotted;
+        }
+
+        // 5. Case-insensitive scan of imported directory
+        File[] files = importedDir.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f.getName().endsWith(".json")) {
+                    String base = f.getName().substring(0, f.getName().length() - 5).toLowerCase();
+                    if (base.equals(name) || base.equals(player.getName().toLowerCase())) {
+                        return f;
+                    }
+                }
+            }
+        }
 
         return null;
     }
+
 
     private void loadFromYaml(Player player, File file, World survivalWorld) {
         try {
