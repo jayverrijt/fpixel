@@ -208,7 +208,7 @@ public abstract class Arena {
 
         if (players.size() >= minPlayers && state == GameState.WAITING) {
             state = GameState.STARTING;
-            countdown = 10;
+            countdown = (minPlayers == 2 && maxPlayers == 2) ? 3 : 10;
         }
 
         onPlayerJoin(player);

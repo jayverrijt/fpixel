@@ -97,10 +97,11 @@ public class DuelManager {
             return;
         }
 
-        // Find available duel arena
+        // Find available 1v1 duel arena
         Arena duelArena = null;
         for (Arena arena : plugin.getGameManager().getArenas()) {
-            if (arena.getGameType().equalsIgnoreCase(invite.getGameType())
+            if (arena.getMaxPlayers() == 2
+                    && arena.getGameType().equalsIgnoreCase(invite.getGameType())
                     && arena.getState() == GameState.WAITING
                     && arena.getPlayerCount() == 0) {
                 duelArena = arena;

@@ -31,7 +31,7 @@ public class DuelsCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 0) {
-            // Find other players
+            // Find other online players
             List<Player> others = new ArrayList<>();
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (!p.equals(player)) others.add(p);
@@ -48,7 +48,7 @@ public class DuelsCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            ChatUtil.sendMessage(player, "§6Usage: §e/duel <player> [bridge|sumo|parkour|bedwars|skywars]");
+            ChatUtil.sendMessage(player, "§6Usage: §e/duel <player> [skywars|bedwars|pvp|parkour|tnt|sumo|bridge]");
             return true;
         }
 
@@ -73,36 +73,50 @@ public class DuelsCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        String type = args[1].toUpperCase();
-        if (!Arrays.asList("BRIDGE", "SUMO", "PARKOUR", "BEDWARS", "SKYWARS").contains(type)) {
-            type = "BRIDGE";
-        }
+        String rawType = args[1].toUpperCase();
+        String type = normalizeType(rawType);
 
         plugin.getDuelManager().sendChallenge(player, target, type);
         return true;
     }
 
+    private String normalizeType(String raw) {
+        return switch (raw.toUpperCase()) {
+            case "SKYWARS", "SW" -> "SKYWARS";
+            case "BEDWARS", "BEDWARD", "BW" -> "BEDWARS";
+            case "PVP", "NODEBUFF", "CLASSIC", "SWORD" -> "PVP";
+            case "PARKOUR", "PK" -> "PARKOUR";
+            case "TNT", "TNTRUN", "TR" -> "TNT";
+            case "BRIDGE", "THEBRIDGE" -> "BRIDGE";
+            default -> "SUMO";
+        };
+    }
+
     private void sendDuelChoices(Player player, Player target) {
-        ChatUtil.sendMessage(player, "§6§lDUELS §8» §eSelect a duel mode to challenge §a" + target.getName() + "§e:");
+        ChatUtil.sendMessage(player, "§6§lDUELS §8» §eSelect a 1v1 mode to challenge §a" + target.getName() + "§e:");
 
         Component choices = Component.text(" ")
-                .append(createChoiceButton(target.getName(), "BRIDGE", "§6§l[THE BRIDGE]"))
+                .append(createChoiceButton(target.getName(), "skywars", "§b§l[SKYWARS]"))
                 .append(Component.text(" "))
-                .append(createChoiceButton(target.getName(), "SUMO", "§e§l[SUMO]"))
+                .append(createChoiceButton(target.getName(), "bedwars", "§c§l[BEDWARS]"))
                 .append(Component.text(" "))
-                .append(createChoiceButton(target.getName(), "PARKOUR", "§a§l[PARKOUR]"))
+                .append(createChoiceButton(target.getName(), "pvp", "§4§l[PVP]"))
                 .append(Component.text(" "))
-                .append(createChoiceButton(target.getName(), "SKYWARS", "§b§l[SKYWARS]"))
+                .append(createChoiceButton(target.getName(), "parkour", "§a§l[PARKOUR]"))
                 .append(Component.text(" "))
-                .append(createChoiceButton(target.getName(), "BEDWARS", "§c§l[BEDWARS]"));
+                .append(createChoiceButton(target.getName(), "tnt", "§c§l[TNT RUN]"))
+                .append(Component.text(" "))
+                .append(createChoiceButton(target.getName(), "sumo", "§e§l[SUMO]"))
+                .append(Component.text(" "))
+                .append(createChoiceButton(target.getName(), "bridge", "§6§l[BRIDGE]"));
 
         player.sendMessage(choices);
     }
 
     private Component createChoiceButton(String target, String mode, String text) {
         return Component.text(text)
-                .clickEvent(ClickEvent.runCommand("/duel " + target + " " + mode.toLowerCase()))
-                .hoverEvent(HoverEvent.showText(Component.text("§eClick to challenge in §a" + mode + "!")));
+                .clickEvent(ClickEvent.runCommand("/duel " + target + " " + mode))
+                .hoverEvent(HoverEvent.showText(Component.text("§eClick to challenge in 1v1 §a" + mode.toUpperCase() + "!")));
     }
 
     @Override
@@ -118,7 +132,7 @@ public class DuelsCommand implements CommandExecutor, TabCompleter {
             }
             return list;
         } else if (args.length == 2) {
-            return Arrays.asList("bridge", "sumo", "parkour", "bedwars", "skywars");
+            return Arrays.asList("skywars", "bedwars", "pvp", "parkour", "tnt", "sumo", "bridge");
         }
         return new ArrayList<>();
     }

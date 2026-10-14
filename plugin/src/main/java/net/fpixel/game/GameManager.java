@@ -72,6 +72,8 @@ public class GameManager implements Listener {
         Arena best = null;
         for (Arena arena : arenas.values()) {
             if (!arena.getGameType().equalsIgnoreCase(gameType)) continue;
+            // Only route global queue to large lobbies (maxPlayers > 2) for global games
+            if (arena.getMaxPlayers() <= 2 && (gameType.equalsIgnoreCase("SKYWARS") || gameType.equalsIgnoreCase("BEDWARS") || gameType.equalsIgnoreCase("PARKOUR") || gameType.equalsIgnoreCase("TNTRUN") || gameType.equalsIgnoreCase("TNT"))) continue;
             if (arena.getState() != GameState.WAITING && arena.getState() != GameState.STARTING) continue;
             if (arena.getPlayerCount() >= arena.getMaxPlayers()) continue;
 
