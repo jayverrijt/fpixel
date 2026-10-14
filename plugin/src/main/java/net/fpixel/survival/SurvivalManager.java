@@ -14,11 +14,14 @@ import java.util.zip.ZipInputStream;
 
 public class SurvivalManager {
     private final FPixelPlugin plugin;
+    private final SurvivalProfileManager profileManager;
     private World survivalWorld;
 
     public SurvivalManager(FPixelPlugin plugin) {
         this.plugin = plugin;
+        this.profileManager = new SurvivalProfileManager(plugin);
     }
+
 
     public void init() {
         checkAndExtractZip();
@@ -167,15 +170,19 @@ public class SurvivalManager {
             return;
         }
 
+        if (player.getWorld().equals(survivalWorld)) {
+            ChatUtil.sendMessage(player, "§aYou are already in the Survival SMP world!");
+            return;
+        }
+
         // Leave any current arena
         Arena arena = plugin.getGameManager().getPlayerArena(player);
         if (arena != null) {
             arena.leave(player);
         }
 
-        // Teleport to survival spawn
-        Location spawn = survivalWorld.getSpawnLocation();
-        player.teleport(spawn);
+        // Load profile: restores exact coordinates, all inventory items, armor, offhand, XP, health
+        profileManager.loadProfile(player, survivalWorld);
         player.setGameMode(GameMode.SURVIVAL);
         player.setAllowFlight(false);
         player.setFlying(false);
@@ -184,12 +191,17 @@ public class SurvivalManager {
         ChatUtil.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.2f);
         ChatUtil.sendMessage(player, "§6§m--------------------------------------------------");
         ChatUtil.sendMessage(player, "§a§lSURVIVAL SMP §8» §fWelcome to the Survival World!");
-        ChatUtil.sendMessage(player, "§7• Normal vanilla gameplay: building, crafting, mining & mobs.");
+        ChatUtil.sendMessage(player, "§7• Your survival inventory, items and coordinates have been restored.");
         ChatUtil.sendMessage(player, "§7• Use §e/lobby §7or §e/hub §7to return to the main lobby anytime.");
         ChatUtil.sendMessage(player, "§6§m--------------------------------------------------");
+    }
+
+    public SurvivalProfileManager getProfileManager() {
+        return profileManager;
     }
 
     public World getSurvivalWorld() {
         return survivalWorld;
     }
 }
+

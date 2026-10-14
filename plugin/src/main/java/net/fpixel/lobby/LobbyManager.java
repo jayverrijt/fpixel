@@ -91,6 +91,12 @@ public class LobbyManager {
     }
 
     public void teleportToLobby(Player player) {
+        if (player.getWorld() != null && player.getWorld().getName().equalsIgnoreCase("survival")) {
+            if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().getProfileManager() != null) {
+                plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+            }
+        }
+
         player.teleport(getSpawnLocation());
         player.setGameMode(GameMode.ADVENTURE);
         player.setHealth(20.0);
@@ -108,4 +114,5 @@ public class LobbyManager {
         ChatUtil.sendActionBar(player, "§aTeleported to Hub!");
         ChatUtil.playSound(player, Sound.ENTITY_ENDERMAN_TELEPORT, 0.7f, 1.2f);
     }
+
 }

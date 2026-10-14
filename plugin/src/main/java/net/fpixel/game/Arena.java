@@ -181,6 +181,11 @@ public abstract class Arena {
     public boolean join(Player player) {
         if (state == GameState.IN_GAME || state == GameState.ENDING || state == GameState.RESETTING) {
             // Join as spectator
+            if (player.getWorld() != null && player.getWorld().getName().equalsIgnoreCase("survival")) {
+                if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().getProfileManager() != null) {
+                    plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+                }
+            }
             spectators.add(player.getUniqueId());
             plugin.getSpectatorManager().makeSpectator(player, this);
             if (spectatorSpawn != null) {
@@ -194,6 +199,12 @@ public abstract class Arena {
             return false;
         }
 
+        if (player.getWorld() != null && player.getWorld().getName().equalsIgnoreCase("survival")) {
+            if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().getProfileManager() != null) {
+                plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+            }
+        }
+
         players.add(player.getUniqueId());
         player.getInventory().clear();
         player.setGameMode(GameMode.ADVENTURE);
@@ -203,6 +214,7 @@ public abstract class Arena {
         if (lobbySpawn != null) {
             player.teleport(lobbySpawn);
         }
+
 
         broadcast("§7" + player.getName() + " §ejoined the game (§b" + players.size() + "§e/§b" + maxPlayers + "§e)!");
 
