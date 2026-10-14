@@ -1,1 +1,2 @@
-java -Xms256M -Xmx2048M -XX:+UseG1GC -jar paper.jar nogui
+#! /usr/bin/env bash
+java -Xmx5012M -Xmx5012M -jar paper.jar nogui
