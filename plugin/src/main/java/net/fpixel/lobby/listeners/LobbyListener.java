@@ -64,11 +64,6 @@ public class LobbyListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         event.quitMessage(null);
         Player player = event.getPlayer();
-        if (player.getWorld() != null && player.getWorld().getName().equalsIgnoreCase("survival")) {
-            if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().getProfileManager() != null) {
-                plugin.getSurvivalManager().getProfileManager().saveProfile(player);
-            }
-        }
         plugin.getScoreboardManager().remove(player);
         plugin.getUserManager().unloadUser(player.getUniqueId());
     }

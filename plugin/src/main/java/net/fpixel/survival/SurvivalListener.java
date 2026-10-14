@@ -32,6 +32,9 @@ public class SurvivalListener implements Listener {
             if (plugin.getSurvivalManager().isPlayerInSurvival(player)) {
                 plugin.getSurvivalManager().getProfileManager().saveProfile(player);
                 plugin.getSurvivalManager().removeSurvivalPlayer(player);
+                player.getInventory().clear();
+                player.getInventory().setArmorContents(null);
+                player.getInventory().setItemInOffHand(null);
             }
         }
     }
@@ -48,6 +51,9 @@ public class SurvivalListener implements Listener {
                 plugin.getLobbyManager().giveLobbyItems(player);
                 player.setGameMode(GameMode.ADVENTURE);
             }
+        } else if (!fromWorldName.equalsIgnoreCase("survival") && currentWorldName.equalsIgnoreCase("survival")) {
+            // Entering survival: remove lobby scoreboard
+            plugin.getScoreboardManager().remove(player);
         }
     }
 
@@ -67,6 +73,7 @@ public class SurvivalListener implements Listener {
         if (event.getRespawnLocation().getWorld() != null &&
                 event.getRespawnLocation().getWorld().getName().equalsIgnoreCase("survival")) {
             plugin.getSurvivalManager().addSurvivalPlayer(player);
+            plugin.getScoreboardManager().remove(player);
         }
     }
 }

@@ -37,6 +37,12 @@ public class ScoreboardManager {
             String title = animatedTitles[titleStep];
 
             for (Player player : Bukkit.getOnlinePlayers()) {
+                if (player.getWorld().getName().equalsIgnoreCase("survival") ||
+                        (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().isPlayerInSurvival(player))) {
+                    remove(player);
+                    continue;
+                }
+
                 FastScoreboard board = scoreboards.computeIfAbsent(player.getUniqueId(), id -> new FastScoreboard(player));
                 board.updateTitle(title);
                 updateLines(player, board);
@@ -75,6 +81,12 @@ public class ScoreboardManager {
         FastScoreboard board = scoreboards.remove(player.getUniqueId());
         if (board != null) {
             board.cleanup();
+        }
+        if (player.isOnline()) {
+            org.bukkit.scoreboard.ScoreboardManager sm = Bukkit.getScoreboardManager();
+            if (sm != null && player.getScoreboard() != sm.getMainScoreboard()) {
+                player.setScoreboard(sm.getMainScoreboard());
+            }
         }
     }
 

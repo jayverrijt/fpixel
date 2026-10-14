@@ -91,10 +91,9 @@ public class LobbyManager {
     }
 
     public void teleportToLobby(Player player) {
-        if (player.getWorld() != null && player.getWorld().getName().equalsIgnoreCase("survival")) {
-            if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().getProfileManager() != null) {
-                plugin.getSurvivalManager().getProfileManager().saveProfile(player);
-            }
+        if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().isPlayerInSurvival(player)) {
+            plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+            plugin.getSurvivalManager().removeSurvivalPlayer(player);
         }
 
         player.teleport(getSpawnLocation());

@@ -184,7 +184,7 @@ public class SurvivalManager {
             return;
         }
 
-        if (player.getWorld().equals(survivalWorld)) {
+        if (player.getWorld().equals(survivalWorld) && isPlayerInSurvival(player)) {
             ChatUtil.sendMessage(player, "§aYou are already in the Survival SMP world!");
             return;
         }
@@ -195,9 +195,19 @@ public class SurvivalManager {
             arena.leave(player);
         }
 
-        // Load profile: restores exact coordinates, all inventory items, armor, offhand, XP, health
-        profileManager.loadProfile(player, survivalWorld);
+        // 1. Remove scoreboard immediately so it does not show in survival
+        plugin.getScoreboardManager().remove(player);
+
+        // 2. Clear hotbar/inventory so lobby items are removed
+        player.getInventory().clear();
+        player.getInventory().setArmorContents(null);
+        player.getInventory().setItemInOffHand(null);
+
+        // 3. Mark player active in survival
         addSurvivalPlayer(player);
+
+        // 4. Load profile: restores exact coordinates, all inventory items, armor, offhand, XP, health
+        profileManager.loadProfile(player, survivalWorld);
         player.setGameMode(GameMode.SURVIVAL);
 
         player.setAllowFlight(false);
