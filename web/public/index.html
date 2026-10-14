@@ -86,8 +86,8 @@
         <div class="world-stats-grid">
           <div class="world-card urban-theme">
             <div class="world-card-header">
-              <span class="world-badge">🏙️ HOOFDWERELD</span>
-              <h3>Urban SMP</h3>
+              <span class="world-badge">🌍 HOOFDWERELD</span>
+              <h3>Survival SMP</h3>
             </div>
             <div class="world-card-body">
               <div class="stat-line">
@@ -107,21 +107,21 @@
 
           <div class="world-card galaxy-theme">
             <div class="world-card-header">
-              <span class="world-badge">🌌 EXPEDITIE WERELD</span>
-              <h3>Galaxy Survival</h3>
+              <span class="world-badge">🌌 DIMENSIES</span>
+              <h3>Nether & The End</h3>
             </div>
             <div class="world-card-body">
               <div class="stat-line">
-                <span class="stat-k">Wereld Status:</span>
+                <span class="stat-k">Nether Portalen:</span>
                 <span class="stat-v text-green">Actief & Verbonden</span>
               </div>
               <div class="stat-line">
-                <span class="stat-k">Spawn Coördinaten:</span>
-                <span class="stat-v">X: 0, Y: 70, Z: 0</span>
+                <span class="stat-k">The End Portaal:</span>
+                <span class="stat-v">Toegankelijk</span>
               </div>
               <div class="stat-line">
-                <span class="stat-k">Wereld Type:</span>
-                <span class="stat-v">Wilderness SMP</span>
+                <span class="stat-k">Dimensie Type:</span>
+                <span class="stat-v">Gedeelde Vrienden SMP</span>
               </div>
             </div>
           </div>
@@ -133,7 +133,7 @@
         <div class="welcome-inner">
           <span class="tag-pill">🔒 Besloten Vrienden SMP</span>
           <h1>Welkom bij de <span class="glow-text">FPixel Vrienden Server</span></h1>
-          <p>Overleef samen in <strong>Urban SMP</strong> & <strong>Galaxy</strong>, ontdek elkaars bases op de live wereldkaart en doe mee met minigames.</p>
+          <p>Overleef samen in de <strong>Survival Wereld</strong> (Overworld, Nether & The End), verken het terrein op de live kaart en doe mee met minigames.</p>
           <div class="welcome-cta">
             <button class="btn btn-primary" onclick="openLoginModal()">🔑 Log in met je Minecraft Account</button>
             <button class="btn btn-secondary" onclick="switchTab('whitelist-req')">📝 Geen toegang? Vraag Whitelist Aan</button>
@@ -177,7 +177,7 @@
                 <th>Rang</th>
                 <th>Coins</th>
                 <th>Survival Level</th>
-                <th>Urban Basis</th>
+                <th>Survival Basis</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -195,12 +195,13 @@
         <div class="map-controls-bar">
           <div class="map-title-box">
             <h2>🗺️ Survival Wereld Kaart</h2>
-            <p>Verken de wereld, dorpen en bases van de vriendengroep</p>
+            <p>Verken de Overworld, The Nether en The End van de vriendengroep</p>
           </div>
           <div class="map-actions">
             <div class="segmented-control">
-              <button id="btn-world-urban" class="segment-btn active" onclick="changeMapWorld('urban')">🏙️ Urban SMP</button>
-              <button id="btn-world-galaxy" class="segment-btn" onclick="changeMapWorld('galaxy')">🌌 Galaxy SMP</button>
+              <button id="btn-world-survival" class="segment-btn active" onclick="changeMapWorld('survival')">🌍 Overworld</button>
+              <button id="btn-world-nether" class="segment-btn" onclick="changeMapWorld('nether')">🔥 The Nether</button>
+              <button id="btn-world-end" class="segment-btn" onclick="changeMapWorld('end')">🌌 The End</button>
             </div>
             <button class="btn btn-sm btn-secondary" onclick="resetMapView()">🎯 Reset Weergave</button>
           </div>
@@ -211,7 +212,7 @@
 
         <div class="map-footer-bar">
           <span id="map-coords" class="coords-pill">X: 0, Z: 0</span>
-          <span class="map-hint">💡 Klik op een speler icoon om de basislocatie en details te bekijken</span>
+          <span id="map-dim-label" class="dim-pill">🌍 Dimensie: Overworld (Survival)</span>
         </div>
       </div>
     </section>

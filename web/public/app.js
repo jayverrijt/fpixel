@@ -2,9 +2,38 @@
 
 let currentUser = null;
 let leafletMap = null;
-let currentMapWorld = 'urban';
-let mapMarkersData = [];
-let markerLayerGroup = null;
+let currentMapWorld = 'survival';
+let mapTileLayer = null;
+
+const mapWorldsConfig = {
+  survival: {
+    tilePath: 'minecraft_survival',
+    name: 'Overworld (Survival)',
+    spawn: { x: 240, z: -256 },
+    maxZoom: 3,
+    extraZoom: 2,
+    background: '#0d1527',
+    label: '🌍 Dimensie: Overworld (Survival)'
+  },
+  nether: {
+    tilePath: 'minecraft_the_nether',
+    name: 'The Nether',
+    spawn: { x: 0, z: 0 },
+    maxZoom: 3,
+    extraZoom: 2,
+    background: '#180808',
+    label: '🔥 Dimensie: The Nether'
+  },
+  end: {
+    tilePath: 'minecraft_the_end',
+    name: 'The End',
+    spawn: { x: 0, z: 0 },
+    maxZoom: 3,
+    extraZoom: 2,
+    background: '#08040d',
+    label: '🌌 Dimensie: The End'
+  }
+};
 
 // ==========================================
 // TOAST & UTILITIES
@@ -329,160 +358,106 @@ async function logout() {
 }
 
 // ==========================================
-// INTERACTIVE SURVIVAL MAP (LEAFLET)
+// INTERACTIVE SURVIVAL MAP (LEAFLET + SQUAREMAP TILES)
 // ==========================================
+
+const MAP_MAX_ZOOM = 3;
+const MAP_SCALE = 1 / Math.pow(2, MAP_MAX_ZOOM);
+
+function mcToLatLng(x, z) {
+  return L.latLng(-z * MAP_SCALE, x * MAP_SCALE);
+}
+
+function latLngToMc(latlng) {
+  return {
+    x: Math.round(latlng.lng / MAP_SCALE),
+    z: Math.round(-latlng.lat / MAP_SCALE)
+  };
+}
 
 function initSurvivalMap() {
   const container = document.getElementById('survival-map-container');
   if (!container || leafletMap) return;
 
-  // Simple Flat Coordinate System for Minecraft [Y=-Z, X=X]
   leafletMap = L.map('survival-map-container', {
     crs: L.CRS.Simple,
-    minZoom: -3,
-    maxZoom: 3,
-    zoomSnap: 0.25,
-    attributionControl: false
+    minZoom: 0,
+    maxZoom: 5,
+    zoomSnap: 1,
+    attributionControl: false,
+    noWrap: true
   });
 
-  // Tactical Minecraft Canvas Grid Layer
-  const GridCanvasLayer = L.GridLayer.extend({
-    createTile: function(coords) {
-      const tile = document.createElement('canvas');
-      const tileSize = this.getTileSize();
-      tile.width = tileSize.x;
-      tile.height = tileSize.y;
-      const ctx = tile.getContext('2d');
-
-      // Dark Tactical Background
-      ctx.fillStyle = '#0b1120';
-      ctx.fillRect(0, 0, tileSize.x, tileSize.y);
-
-      // Subtle Grid Lines
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-      ctx.lineWidth = 1;
-
-      const step = 64;
-      for (let x = 0; x <= tileSize.x; x += step) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, tileSize.y);
-        ctx.stroke();
-      }
-      for (let y = 0; y <= tileSize.y; y += step) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(tileSize.x, y);
-        ctx.stroke();
-      }
-
-      // Border of tile
-      ctx.strokeStyle = 'rgba(59, 130, 246, 0.12)';
-      ctx.strokeRect(0, 0, tileSize.x, tileSize.y);
-
-      return tile;
-    }
-  });
-
-  new GridCanvasLayer({ tileSize: 256 }).addTo(leafletMap);
-
-  // Group for markers
-  markerLayerGroup = L.layerGroup().addTo(leafletMap);
-
-  // Initial center on Spawn (0, 0)
-  leafletMap.setView([0, 0], 0);
-
-  // Live coordinates tracker on hover
+  // Track live Minecraft block coordinates on mouse move
   leafletMap.on('mousemove', (e) => {
-    const mcX = Math.round(e.latlng.lng);
-    const mcZ = Math.round(-e.latlng.lat);
+    const mc = latLngToMc(e.latlng);
     const coordsEl = document.getElementById('map-coords');
     if (coordsEl) {
-      coordsEl.innerText = `X: ${mcX}, Z: ${mcZ}`;
+      coordsEl.innerText = `X: ${mc.x}, Z: ${mc.z}`;
     }
   });
 
-  // Fetch markers from backend
-  loadMapData();
+  loadMapWorld(currentMapWorld);
 }
 
-async function loadMapData() {
-  try {
-    const res = await fetch('/api/map/data');
-    if (!res.ok) return;
-    const data = await res.json();
-    mapMarkersData = data.markers || [];
-    renderMapMarkers();
-  } catch (err) {
-    console.error('Failed to load map data:', err);
+function loadMapWorld(worldKey) {
+  if (!leafletMap) return;
+  const cfg = mapWorldsConfig[worldKey] || mapWorldsConfig.survival;
+  currentMapWorld = worldKey;
+
+  // Set container background color to match dimension
+  const container = document.getElementById('survival-map-container');
+  if (container) {
+    container.style.backgroundColor = cfg.background;
+  }
+
+  // Remove previous tile layer
+  if (mapTileLayer) {
+    leafletMap.removeLayer(mapTileLayer);
+    mapTileLayer = null;
+  }
+
+  // Create high-res Squaremap tile layer (Strictly no markers)
+  mapTileLayer = L.tileLayer(`/tiles/${cfg.tilePath}/{z}/{x}_{y}.png`, {
+    tileSize: 512,
+    minZoom: 0,
+    maxZoom: cfg.maxZoom + cfg.extraZoom,
+    maxNativeZoom: cfg.maxZoom,
+    noWrap: true,
+    errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+  }).addTo(leafletMap);
+
+  // Center on dimension spawn point
+  const spawnLatLng = mcToLatLng(cfg.spawn.x, cfg.spawn.z);
+  leafletMap.setView(spawnLatLng, 2);
+
+  // Update dimension label in footer
+  const dimLabel = document.getElementById('map-dim-label');
+  if (dimLabel) {
+    dimLabel.innerText = cfg.label;
   }
 }
 
-function renderMapMarkers() {
-  if (!markerLayerGroup || !leafletMap) return;
-  markerLayerGroup.clearLayers();
+function changeMapWorld(worldKey) {
+  currentMapWorld = worldKey;
 
-  const filtered = mapMarkersData.filter(m => m.world === currentMapWorld);
-
-  filtered.forEach(m => {
-    // Determine player head or icon
-    let headUrl = 'https://mc-heads.net/avatar/MHF_Chest/64';
-    if (m.id === 'jayv') headUrl = 'https://mc-heads.net/avatar/Jay_V0/64';
-    else if (m.id === 'smiley') headUrl = 'https://mc-heads.net/avatar/SmileyGaming27/64';
-    else if (m.id === 'minnie') headUrl = 'https://mc-heads.net/avatar/minnieheks/64';
-    else if (m.id === 'amiga') headUrl = 'https://mc-heads.net/avatar/Amigapower2018/64';
-    else if (m.id === 'spawn') headUrl = 'https://mc-heads.net/avatar/MHF_Exclamation/64';
-
-    const customIcon = L.divIcon({
-      className: 'custom-mc-marker',
-      html: `
-        <div class="map-player-marker">
-          <img src="${headUrl}" alt="${m.name}">
-          <span>${m.name}</span>
-        </div>
-      `,
-      iconSize: [60, 60],
-      iconAnchor: [30, 30]
-    });
-
-    // In Minecraft: Y=-Z, X=X
-    const marker = L.marker([-m.z, m.x], { icon: customIcon });
-
-    marker.bindPopup(`
-      <div style="font-family: 'Plus Jakarta Sans', sans-serif; min-width: 200px; padding: 4px;">
-        <h4 style="margin: 0 0 6px 0; color: #f59e0b; font-size: 1rem; font-weight: 800;">${m.icon} ${m.name}</h4>
-        <p style="margin: 0 0 10px 0; font-size: 0.85rem; color: #cbd5e1; line-height: 1.4;">${m.desc}</p>
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; background: #0f172a; padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); color: #10b981;">
-          📍 X: <strong>${m.x}</strong>, Z: <strong>${m.z}</strong>
-        </div>
-      </div>
-    `);
-
-    markerLayerGroup.addLayer(marker);
-  });
-}
-
-function changeMapWorld(world) {
-  currentMapWorld = world;
-  const urbanBtn = document.getElementById('btn-world-urban');
-  const galaxyBtn = document.getElementById('btn-world-galaxy');
-  if (urbanBtn && galaxyBtn) {
-    if (world === 'urban') {
-      urbanBtn.classList.add('active');
-      galaxyBtn.classList.remove('active');
-    } else {
-      galaxyBtn.classList.add('active');
-      urbanBtn.classList.remove('active');
+  // Update button active state
+  ['survival', 'nether', 'end'].forEach(k => {
+    const btn = document.getElementById(`btn-world-${k}`);
+    if (btn) {
+      if (k === worldKey) btn.classList.add('active');
+      else btn.classList.remove('active');
     }
-  }
+  });
 
-  renderMapMarkers();
-  resetMapView();
+  loadMapWorld(worldKey);
 }
 
 function resetMapView() {
   if (leafletMap) {
-    leafletMap.setView([0, 0], 0);
+    const cfg = mapWorldsConfig[currentMapWorld] || mapWorldsConfig.survival;
+    const spawnLatLng = mcToLatLng(cfg.spawn.x, cfg.spawn.z);
+    leafletMap.setView(spawnLatLng, 2);
   }
 }
 

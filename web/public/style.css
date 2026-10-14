@@ -631,9 +631,21 @@ body {
 .coords-pill {
   font-family: 'JetBrains Mono', monospace;
   background: var(--bg-card);
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
   color: var(--gold);
+  border: 1px solid var(--border);
+}
+
+.dim-pill {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg-card);
+  padding: 4px 12px;
+  border-radius: 6px;
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: 1px solid var(--border);
 }
 
 /* Leaflet Custom Marker Icons */

@@ -204,8 +204,29 @@ function resolveFilePath(relPath) {
   for (const c of candidates) {
     if (fs.existsSync(c)) return c;
   }
-  return candidates[0];
 }
+
+// Serve Squaremap map tiles statically
+app.use('/tiles', (req, res, next) => {
+  const tilesDir = resolveFilePath('plugins/squaremap/web/tiles');
+  if (tilesDir && fs.existsSync(tilesDir)) {
+    return express.static(tilesDir, {
+      maxAge: '5m',
+      etag: true,
+      fallthrough: true
+    })(req, res, () => {
+      // If tile image not found (void or ungenerated region), return transparent 1x1 GIF
+      if (req.path.endsWith('.png')) {
+        const transparentGif = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+        res.set('Content-Type', 'image/gif');
+        res.set('Cache-Control', 'public, max-age=60');
+        return res.send(transparentGif);
+      }
+      res.status(404).end();
+    });
+  }
+  next();
+});
 
 // Read ranks
 function getRanks() {
@@ -629,19 +650,43 @@ app.get('/api/stats', async (req, res) => {
   });
 });
 
-// API: /api/map/data (Interactive survival map data)
+// API: /api/map/data (Interactive survival map dimensions & metadata - strictly no markers)
 app.get('/api/map/data', (req, res) => {
   res.json({
     worlds: [
-      { id: 'urban', name: 'Urban SMP', desc: 'De hoofdwereld van de vriendengroep met custom builds' },
-      { id: 'galaxy', name: 'Galaxy SMP', desc: 'Onontdekt survival terrein met avonturen' }
-    ],
-    markers: [
-      { id: 'spawn', name: 'Hoofd Spawn & Hub Portaal', world: 'urban', x: 0, z: 0, icon: '🌟', desc: 'Centrale aankomstplek en markt' },
-      { id: 'jayv', name: 'Jay_V0 Kasteel & Basis', world: 'urban', x: -653, z: -116, icon: '👑', desc: 'Grote basis van Jay_V0 (Level 68)' },
-      { id: 'smiley', name: 'SmileyGaming27 Huis', world: 'urban', x: -698, z: 348, icon: '🏡', desc: 'Basis en opslag van SmileyGaming27' },
-      { id: 'minnie', name: 'Minnieheks Boerderij', world: 'urban', x: 1297, z: 103, icon: '🥕', desc: 'Grote gewassen farm & nederzetting' },
-      { id: 'amiga', name: 'Amigapower Outpost', world: 'urban', x: -1571, z: 307, icon: '🛡️', desc: 'Verdedigingspost & mijn' }
+      {
+        id: 'survival',
+        tilePath: 'minecraft_survival',
+        name: 'Overworld (Survival)',
+        dimension: 'overworld',
+        icon: '🌍',
+        desc: 'De officiële survival wereld van de vriendengroep',
+        spawn: { x: 240, z: -256 },
+        zoom: { def: 2, min: 0, max: 3, extra: 2 },
+        background: '#0d1527'
+      },
+      {
+        id: 'nether',
+        tilePath: 'minecraft_the_nether',
+        name: 'The Nether',
+        dimension: 'nether',
+        icon: '🔥',
+        desc: 'De Nether dimensie van de survival wereld',
+        spawn: { x: 0, z: 0 },
+        zoom: { def: 2, min: 0, max: 3, extra: 2 },
+        background: '#180808'
+      },
+      {
+        id: 'end',
+        tilePath: 'minecraft_the_end',
+        name: 'The End',
+        dimension: 'the_end',
+        icon: '🌌',
+        desc: 'The End dimensie van de survival wereld',
+        spawn: { x: 0, z: 0 },
+        zoom: { def: 2, min: 0, max: 3, extra: 2 },
+        background: '#08040d'
+      }
     ]
   });
 });

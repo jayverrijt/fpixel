@@ -39,7 +39,7 @@ if [ ! -f "${SERVER_DIR}/paper.jar" ] || [ $(stat -c%s "${SERVER_DIR}/paper.jar"
     cp "/shared/fpixel/survival/paper.jar" "${SERVER_DIR}/paper.jar"
   else
     echo "Downloading Paper 26.3..."
-    curl -sSL "https://fill-data.papermc.io/v1/objects/e0c65225bf8d8c978eeca06e41feb81ebadbdaeb1d3c2b6fd6b97b51e5947e93/paper-26.3-9.jar" -o "${SERVER_DIR}/paper.jar" || true
+    curl -sSL "https://fill-data.papermc.io/v1/objects/09d38bfa3a7100e4d80554b9a964dfbf124f1d62c9ceabe482769e8a1098b4c3/paper-26.3-183.jar" -o "${SERVER_DIR}/paper.jar" || true
   fi
 fi
 
