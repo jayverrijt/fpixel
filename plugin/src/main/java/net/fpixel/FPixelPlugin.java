@@ -40,6 +40,7 @@ public class FPixelPlugin extends JavaPlugin {
     private SurvivalManager survivalManager;
     private net.fpixel.lobby.HubNPCManager hubNPCManager;
     private net.fpixel.core.testing.TestingManager testingManager;
+    private net.fpixel.core.security.HostnameListener hostnameListener;
 
 
     @Override
@@ -69,7 +70,9 @@ public class FPixelPlugin extends JavaPlugin {
         this.scoreboardManager = new ScoreboardManager(this);
         this.tablistManager = new TablistManager(this);
 
-        // 3. Register Lobby, Chat & Gameplay Listeners
+        // 3. Register Lobby, Chat, Gameplay & Security Listeners
+        this.hostnameListener = new net.fpixel.core.security.HostnameListener(this);
+        Bukkit.getPluginManager().registerEvents(this.hostnameListener, this);
         Bukkit.getPluginManager().registerEvents(new LobbyListener(this), this);
         Bukkit.getPluginManager().registerEvents(new DoubleJumpListener(this), this);
         Bukkit.getPluginManager().registerEvents(new LaunchpadListener(this), this);
@@ -163,5 +166,6 @@ public class FPixelPlugin extends JavaPlugin {
     public SurvivalManager getSurvivalManager() { return survivalManager; }
     public net.fpixel.lobby.HubNPCManager getHubNPCManager() { return hubNPCManager; }
     public net.fpixel.core.testing.TestingManager getTestingManager() { return testingManager; }
+    public net.fpixel.core.security.HostnameListener getHostnameListener() { return hostnameListener; }
 }
 

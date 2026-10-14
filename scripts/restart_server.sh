@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BASE_DIR="${BASE_DIR:-/home/jayv/fpixel}"
+cd "${BASE_DIR}"
 
-echo "Restarting FPixel server..."
-bash "${DIR}/stop_server.sh"
-sleep 3
-bash "${DIR}/start_server.sh"
+echo "Restarting FPixel services via Docker Compose..."
+docker compose restart
+docker compose ps

@@ -69,15 +69,22 @@ fi
 echo ">>> [4/5] Setting permissions..."
 chmod +x "${BASE_DIR}"/scripts/*.sh "${SERVER_DIR}"/start.sh "${BASE_DIR}"/plugin/gradlew 2>/dev/null || true
 
-# 5. Notify or reload running server if screen session exists
-echo ">>> [5/5] Checking running server status..."
-if screen -list | grep -q "fpixel"; then
-  echo "Active 'fpixel' screen session detected. Reloading FPixelCore..."
-  screen -S fpixel -X stuff "fpixel reload\n" 2>/dev/null || true
-  screen -S fpixel -X stuff "say §a[FPixel CI/CD] Server successfully updated to latest build!§r\n" 2>/dev/null || true
-else
-  echo "No active 'fpixel' screen session. Server is offline or running under another service."
+# 5. Build and launch Docker containers (Minecraft + Web Stats)
+echo ">>> [5/6] Deploying Docker services (Minecraft + Web Stats)..."
+# Stop legacy screen session if active to avoid port conflict
+if screen -list | grep -q "\.fpixel[[:space:]]"; then
+  echo "Gracefully stopping legacy screen session 'fpixel'..."
+  screen -S fpixel -X stuff "stop\n" 2>/dev/null || true
+  sleep 4
+  screen -S fpixel -X quit 2>/dev/null || true
 fi
+
+# Clean up stale session.locks
+rm -f "${SERVER_DIR}"/world/session.lock "${SERVER_DIR}"/Urban/session.lock "${SERVER_DIR}"/Galaxy/session.lock 2>/dev/null || true
+
+cd "${BASE_DIR}"
+docker compose build
+docker compose up -d
 
 # 6. Run post-deploy backup confirmation
 if [ -f "${SCRIPTS_DIR}/backup.sh" ]; then

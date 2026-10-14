@@ -1,0 +1,49 @@
+services:
+  minecraft:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.minecraft
+    container_name: fpixel-minecraft
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    ports:
+      - "25565:25565/tcp"
+      - "19132:19132/udp"
+    volumes:
+      - ./server:/data
+      - /shared/fpixel:/shared/fpixel:ro
+      - /home/jayv/fpixel-af2727b702412a9bbd1b5ac3af6817f9107ac91b:/home/jayv/fpixel-af2727b702412a9bbd1b5ac3af6817f9107ac91b:ro
+    environment:
+      - JAVA_MEMORY=4G
+      - JAVA_INIT_MEMORY=2G
+    networks:
+      - fpixel-net
+      - docker_web-network
+
+  fpixel-web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: fpixel-web
+    restart: unless-stopped
+    ports:
+      - "3080:3000"
+    environment:
+      - PORT=3000
+      - MINECRAFT_HOST=minecraft
+      - MINECRAFT_PORT=25565
+      - DATA_DIR=/data/plugins/FPixelCore
+    volumes:
+      - ./server:/data:ro
+    depends_on:
+      - minecraft
+    networks:
+      - fpixel-net
+      - docker_web-network
+
+networks:
+  fpixel-net:
+    driver: bridge
+  docker_web-network:
+    external: true

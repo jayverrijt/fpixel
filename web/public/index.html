@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FPixel Network | Live Server Stats</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <span class="brand-icon">⚡</span>
+        <span class="brand-name">FPIXEL<span class="highlight">NETWORK</span></span>
+      </div>
+      <div class="nav-status">
+        <div id="status-badge" class="status-badge online">
+          <span class="status-dot"></span>
+          <span id="status-text">ONLINE</span>
+        </div>
+        <div class="player-counter">
+          <span id="nav-player-count">0 / 100</span> spelers
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="badge-pill">🚀 Minecraft 26.3 & Crossplay Actief</div>
+      <h1 class="hero-title">Welkom op <span class="glow-text">FPixel Network</span></h1>
+      <p class="hero-subtitle">
+        Minigames, BedWars, Duels & Survival SMP in een pure Custom Void omgeving met 100% Java & Bedrock ondersteuning.
+      </p>
+
+      <!-- Connection Box -->
+      <div class="connection-card">
+        <div class="connection-header">
+          <span class="server-label">OFFICIEEL SERVER ADRES</span>
+          <span class="enforced-tag">🔒 Enforced Domain</span>
+        </div>
+        <div class="connection-body">
+          <div class="ip-display">
+            <span class="ip-domain" id="server-domain">mc.fpixel.nl</span>
+            <span class="ip-note">Alleen verbinding via dit domein toegestaan</span>
+          </div>
+          <div class="action-buttons">
+            <button class="btn btn-primary" onclick="copyToClipboard('mc.fpixel.nl', 'Java adres gekopieerd!')">
+              <span class="btn-icon">📋</span> Kopieer Java IP
+            </button>
+            <button class="btn btn-secondary" onclick="copyToClipboard('19132', 'Bedrock poort 19132 gekopieerd!')">
+              <span class="btn-icon">🎮</span> Bedrock Poort: 19132
+            </button>
+          </div>
+        </div>
+        <div id="copy-toast" class="toast">Gekopieerd naar klembord!</div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon">👥</div>
+          <div class="metric-info">
+            <div class="metric-value" id="metric-players">0 / 100</div>
+            <div class="metric-label">Online Spelers</div>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="player-progress" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon">📶</div>
+          <div class="metric-info">
+            <div class="metric-value" id="metric-ping">-- ms</div>
+            <div class="metric-label">Server Ping / Latency</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon">⚙️</div>
+          <div class="metric-info">
+            <div class="metric-value" id="metric-version">Paper 26.3</div>
+            <div class="metric-label">Server Software</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon">📱</div>
+          <div class="metric-info">
+            <div class="metric-value">Geyser + Floodgate</div>
+            <div class="metric-label">Bedrock Crossplay</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gamemodes Section -->
+  <section class="section">
+    <div class="section-container">
+      <div class="section-header">
+        <h2 class="section-title">🎮 Gamemodes & Arenas</h2>
+        <p class="section-desc">Kies je favoriete speltype of ontdek onze survival werelden</p>
+      </div>
+
+      <div id="gamemodes-grid" class="gamemodes-grid">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Leaderboards & Player Stats -->
+  <section class="section alt-bg">
+    <div class="section-container">
+      <div class="section-header">
+        <h2 class="section-title">🏆 Spelers & Survival Stats</h2>
+        <p class="section-desc">Bekijk actieve spelers, ranks en voortgang in Survival SMP</p>
+      </div>
+
+      <div class="stats-table-wrapper">
+        <table class="stats-table">
+          <thead>
+            <tr>
+              <th>Speler</th>
+              <th>Rang</th>
+              <th>Survival Level</th>
+              <th>Levens</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body">
+            <!-- Rendered via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Crossplay Guide Section -->
+  <section class="section">
+    <div class="section-container">
+      <div class="section-header">
+        <h2 class="section-title">📖 Hoe Join Je FPixel?</h2>
+        <p class="section-desc">Instructies voor Java Edition en Bedrock Edition (Console, Mobile & Windows)</p>
+      </div>
+
+      <div class="guide-grid">
+        <div class="guide-card">
+          <div class="guide-header">
+            <span class="guide-badge java">☕ Java Edition</span>
+            <h3>PC / Mac / Linux</h3>
+          </div>
+          <ol class="guide-steps">
+            <li>Start Minecraft (versie 1.21.x / 26.3).</li>
+            <li>Klik op <strong>Multiplayer</strong> &rarr; <strong>Server Toevoegen</strong>.</li>
+            <li>Server Adres: <code class="code-pill">mc.fpixel.nl</code></li>
+            <li>Klik op <strong>Gereed</strong> en verbind direct!</li>
+          </ol>
+        </div>
+
+        <div class="guide-card">
+          <div class="guide-header">
+            <span class="guide-badge bedrock">🎮 Bedrock Edition</span>
+            <h3>Mobile / Windows / Consoles</h3>
+          </div>
+          <ol class="guide-steps">
+            <li>Start Minecraft op je telefoon, console of Windows.</li>
+            <li>Ga naar <strong>Spelen</strong> &rarr; <strong>Servers</strong> &rarr; <strong>Server Toevoegen</strong>.</li>
+            <li>Server Naam: <code class="code-pill">FPixel Network</code></li>
+            <li>Server Adres: <code class="code-pill">mc.fpixel.nl</code></li>
+            <li>Poort: <code class="code-pill">19132</code> (Standaard Bedrock poort).</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <span class="brand-name">FPIXEL<span class="highlight">NETWORK</span></span>
+        <p>© 2026 FPixel Network. 100% Server-Sided Minigames & Crossplay.</p>
+      </div>
+      <div class="footer-meta">
+        <span class="enforced-domain-pill">🔒 Alleen verbinding via <strong>mc.fpixel.nl</strong></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

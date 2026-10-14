@@ -13,3 +13,8 @@ settings:
   launchpads-enabled: true
   void-fall-protection: true
   chat-ranks: true
+
+security:
+  enforce-hostname: true
+  allowed-hosts:
+    - "mc.fpixel.nl"
