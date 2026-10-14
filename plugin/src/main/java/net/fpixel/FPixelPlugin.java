@@ -39,6 +39,7 @@ public class FPixelPlugin extends JavaPlugin {
     private PartyManager partyManager;
     private SurvivalManager survivalManager;
     private net.fpixel.lobby.HubNPCManager hubNPCManager;
+    private net.fpixel.lobby.HubLoreManager hubLoreManager;
     private net.fpixel.core.testing.TestingManager testingManager;
     private net.fpixel.core.security.HostnameListener hostnameListener;
 
@@ -60,6 +61,7 @@ public class FPixelPlugin extends JavaPlugin {
         this.gameManager = new GameManager(this);
         this.lobbyManager = new LobbyManager(this);
         this.hubNPCManager = new net.fpixel.lobby.HubNPCManager(this);
+        this.hubLoreManager = new net.fpixel.lobby.HubLoreManager(this);
         this.testingManager = new net.fpixel.core.testing.TestingManager(this);
         this.duelManager = new DuelManager(this);
         this.partyManager = new PartyManager(this);
@@ -127,6 +129,8 @@ public class FPixelPlugin extends JavaPlugin {
         WebPassCommand webPassCmd = new WebPassCommand(this);
         getCommand("webpass").setExecutor(webPassCmd);
 
+        getCommand("secrets").setExecutor(this.hubLoreManager);
+
 
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);
@@ -171,6 +175,7 @@ public class FPixelPlugin extends JavaPlugin {
     public PartyManager getPartyManager() { return partyManager; }
     public SurvivalManager getSurvivalManager() { return survivalManager; }
     public net.fpixel.lobby.HubNPCManager getHubNPCManager() { return hubNPCManager; }
+    public net.fpixel.lobby.HubLoreManager getHubLoreManager() { return hubLoreManager; }
     public net.fpixel.core.testing.TestingManager getTestingManager() { return testingManager; }
     public net.fpixel.core.security.HostnameListener getHostnameListener() { return hostnameListener; }
 }

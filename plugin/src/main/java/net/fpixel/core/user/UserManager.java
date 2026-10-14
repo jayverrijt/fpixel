@@ -59,6 +59,10 @@ public class UserManager {
             // Sumo
             for (int i = 0; i < cfg.getInt("stats.sumo.wins", 0); i++) user.addSumoWin();
             for (int i = 0; i < cfg.getInt("stats.sumo.losses", 0); i++) user.addSumoLoss();
+
+            for (String s : cfg.getStringList("secrets")) {
+                user.addDiscoveredSecret(s);
+            }
         }
         return user;
     }
@@ -84,6 +88,8 @@ public class UserManager {
         cfg.set("stats.sumo.wins", user.getSumoWins());
         cfg.set("stats.sumo.losses", user.getSumoLosses());
         cfg.set("stats.sumo.streak", user.getSumoStreak());
+
+        cfg.set("secrets", new java.util.ArrayList<>(user.getDiscoveredSecrets()));
 
         try {
             cfg.save(file);

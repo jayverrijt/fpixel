@@ -155,6 +155,7 @@ public class WorldManager {
         // Grand Central Tiered Fountain & Beacon Spire
         MapBuilder.buildGrandFountain(world, 0, cy, 0, 5);
         world.getBlockAt(0, cy + 1, 0).setType(Material.BEACON, false);
+        MapBuilder.buildCelestialRuneCrown(world, 0, cy, 0);
 
         // Low stone balustrade around plaza perimeter with lanterns
         for (int angle = 0; angle < 360; angle += 15) {
@@ -196,7 +197,8 @@ public class WorldManager {
             world.getBlockAt(lx, cy - 1, lz).setType(Material.SEA_LANTERN, false);
         }
 
-        // 9. Connecting Scenic Pathways
+        // 9. Connecting Scenic Pathways & 360-Degree Outer Promenade Loop
+        // Spoke paths radiating outward from Plaza
         MapBuilder.buildScenicPath(world, 0, -14, 0, -28, cy, 3);      // North
         MapBuilder.buildScenicPath(world, 10, -10, 22, -22, cy, 3);    // North-East
         MapBuilder.buildScenicPath(world, 14, 0, 28, 0, cy, 3);        // East
@@ -205,9 +207,21 @@ public class WorldManager {
         MapBuilder.buildScenicPath(world, -10, 10, -22, 22, cy, 3);    // South-West
         MapBuilder.buildScenicPath(world, -14, 0, -28, 0, cy, 3);      // West
         MapBuilder.buildScenicPath(world, -10, -10, -22, -22, cy, 3);  // North-West
-        // Secondary trails
-        MapBuilder.buildScenicPath(world, -22, -22, -36, -36, cy, 2);  // Trail to Manor
-        MapBuilder.buildScenicPath(world, 22, -22, 34, -34, cy, 2);    // Trail to Windmill
+
+        // Complete 360-degree Outer Promenade Loop connecting all 8 pavilions without dead ends
+        MapBuilder.buildScenicPath(world, 0, -34, -22, -22, cy, 3);    // Survival Gateway -> Parkour Spire
+        MapBuilder.buildScenicPath(world, -22, -22, -30, 0, cy, 3);    // Parkour Spire -> Sumo Dojo
+        MapBuilder.buildScenicPath(world, -30, 0, -22, 22, cy, 3);     // Sumo Dojo -> The Bridge
+        MapBuilder.buildScenicPath(world, -22, 22, 0, 30, cy, 3);      // The Bridge -> Duels & PvP
+        MapBuilder.buildScenicPath(world, 0, 30, 22, 22, cy, 3);       // Duels & PvP -> TNT Run
+        MapBuilder.buildScenicPath(world, 22, 22, 30, 0, cy, 3);       // TNT Run -> SkyWars
+        MapBuilder.buildScenicPath(world, 30, 0, 22, -22, cy, 3);      // SkyWars -> BedWars
+        MapBuilder.buildScenicPath(world, 22, -22, 0, -34, cy, 3);     // BedWars -> Survival Gateway
+
+        // Landmark branch trails
+        MapBuilder.buildScenicPath(world, -22, -22, -41, -48, cy, 3);  // Trail to Founders Manor entrance
+        MapBuilder.buildScenicPath(world, 22, -22, 42, -38, cy, 3);    // Trail to Golden Windmill entrance
+        MapBuilder.buildScenicPath(world, -30, 0, -56, -12, cy, 3);    // Trail to Waterfall & Crystal Grotto
 
         // 10. Natural Curving River & Freshwater Canal
         for (int rz = -38; rz <= -24; rz++) {
@@ -255,6 +269,17 @@ public class WorldManager {
         MapBuilder.buildColoredBeacon(world, 26, cy, -26, Material.RED_STAINED_GLASS);
         MapBuilder.buildGiantBed(world, 22, cy + 12, -22);
 
+        // BedWars Secret Forge Cellar & Ember Shrine (Relic 3)
+        MapBuilder.fillBox(world, 24, cy + 1, -26, 27, cy + 4, -24, Material.AIR);
+        world.getBlockAt(25, cy, -25).setType(Material.CRYING_OBSIDIAN, false);
+        world.getBlockAt(25, cy + 1, -25).setType(Material.SOUL_CAMPFIRE, false);
+        world.getBlockAt(26, cy + 1, -25).setType(Material.BLAST_FURNACE, false);
+        world.getBlockAt(24, cy + 1, -25).setType(Material.ANVIL, false);
+        world.getBlockAt(25, cy + 1, -26).setType(Material.MAGMA_BLOCK, false);
+        world.getBlockAt(25, cy + 2, -26).setType(Material.CAMPFIRE, false);
+        world.getBlockAt(25, cy + 3, -25).setType(Material.IRON_CHAIN, false);
+        world.getBlockAt(25, cy + 2, -25).setType(Material.SOUL_LANTERN, false);
+
         // 3. SkyWars Mystical Shrine (East: 30, cy, 0)
         MapBuilder.buildGamePavilion(world, 30, cy, 0, 5, Material.SMOOTH_QUARTZ, Material.QUARTZ_PILLAR, Material.PURPUR_BLOCK, Material.AMETHYST_BLOCK);
         world.getBlockAt(30, cy + 1, 3).setType(Material.ENCHANTING_TABLE, false);
@@ -271,6 +296,15 @@ public class WorldManager {
         world.getBlockAt(22, cy + 1, 25).setType(Material.CAMPFIRE, false);
         MapBuilder.buildColoredBeacon(world, 26, cy, 26, Material.ORANGE_STAINED_GLASS);
         MapBuilder.buildGiantTNT(world, 22, cy + 12, 22);
+
+        // TNT Run Volcanic Fissure (Relic 6)
+        world.getBlockAt(27, cy, 27).setType(Material.MAGMA_BLOCK, false);
+        world.getBlockAt(27, cy + 1, 27).setType(Material.SOUL_CAMPFIRE, false);
+        world.getBlockAt(28, cy + 1, 27).setType(Material.BASALT, false);
+        world.getBlockAt(28, cy + 2, 27).setType(Material.BASALT, false);
+        world.getBlockAt(27, cy + 1, 28).setType(Material.CRYING_OBSIDIAN, false);
+        world.getBlockAt(26, cy + 1, 27).setType(Material.NETHERRACK, false);
+        world.getBlockAt(26, cy + 2, 27).setType(Material.FIRE, false);
 
         // 5. Duels & PvP Knight's Armory (South: 0, cy, 30)
         MapBuilder.buildGamePavilion(world, 0, cy, 30, 5, Material.POLISHED_ANDESITE, Material.STONE_BRICK_WALL, Material.DARK_OAK_PLANKS, Material.IRON_BLOCK);
@@ -305,12 +339,14 @@ public class WorldManager {
         world.getBlockAt(-25, cy + 3, -22).setType(Material.EMERALD_BLOCK, false);
         MapBuilder.buildColoredBeacon(world, -26, cy, -26, Material.GREEN_STAINED_GLASS);
         MapBuilder.buildGiantBoot(world, -22, cy + 12, -22);
+        // External Parkour Climb Route allowing rooftop ascension (Relic 7)
+        MapBuilder.buildParkourClimbRoute(world, -22, cy, -22);
 
         // 12. Survival-World-Inspired Surroundings & Masterpiece Buildings
-        // Grand Survival Estate Manor (-46, cy, -48)
+        // Grand Survival Estate Manor (-46, cy, -48) with Library (Relic 1)
         MapBuilder.buildSurvivalEstateManor(world, -46, cy, -48, 11, 13);
 
-        // Rustic Wooden Windmill & Golden Farmland (North-East: 38, cy, -38)
+        // Rustic Wooden Windmill & Golden Farmland with High Loft (Relic 4)
         MapBuilder.buildWindmill(world, 42, cy, -42);
         MapBuilder.fillBox(world, 32, cy, -46, 48, cy, -34, Material.FARMLAND);
         world.getBlockAt(36, cy, -40).setType(Material.WATER, false);
@@ -326,7 +362,16 @@ public class WorldManager {
         world.getBlockAt(34, cy + 1, -34).setType(Material.HAY_BLOCK, false);
         world.getBlockAt(35, cy + 1, -34).setType(Material.HAY_BLOCK, false);
 
-        // Lampposts & Cozy Park Benches
+        // Mountain Waterfall & Secret Crystal Grotto
+        MapBuilder.buildCrystalGrottoAndWaterfall(world, -60, -12, cy);
+
+        // 4 Vibrant Market Bazaar Stalls flanking main promenade paths
+        MapBuilder.buildMarketStall(world, 18, cy, -12, Material.RED_WOOL, Material.WHITE_WOOL);        // Royal Bakery
+        MapBuilder.buildMarketStall(world, 18, cy, 8, Material.LIGHT_BLUE_WOOL, Material.WHITE_WOOL);   // Alchemist & Potions
+        MapBuilder.buildMarketStall(world, -21, cy, -12, Material.LIME_WOOL, Material.YELLOW_WOOL);     // Farmer's Produce
+        MapBuilder.buildMarketStall(world, -21, cy, 8, Material.PURPLE_WOOL, Material.MAGENTA_WOOL);    // Mystic Enchanter
+
+        // Lampposts & Cozy Park Benches along the Promenades
         MapBuilder.buildLamppost(world, -12, cy, -12);
         MapBuilder.buildLamppost(world, 12, cy, -12);
         MapBuilder.buildLamppost(world, -12, cy, 12);
@@ -336,14 +381,34 @@ public class WorldManager {
         MapBuilder.buildLamppost(world, -20, cy, 0);
         MapBuilder.buildLamppost(world, 20, cy, 0);
 
+        MapBuilder.buildLamppost(world, -12, cy, -28);
+        MapBuilder.buildLamppost(world, 12, cy, -28);
+        MapBuilder.buildLamppost(world, -28, cy, -11);
+        MapBuilder.buildLamppost(world, -28, cy, 11);
+        MapBuilder.buildLamppost(world, -11, cy, 28);
+        MapBuilder.buildLamppost(world, 11, cy, 28);
+        MapBuilder.buildLamppost(world, 28, cy, -11);
+        MapBuilder.buildLamppost(world, 28, cy, 11);
+
         MapBuilder.buildParkBench(world, -6, cy, -15);
         MapBuilder.buildParkBench(world, 6, cy, -15);
         MapBuilder.buildParkBench(world, -6, cy, 15);
         MapBuilder.buildParkBench(world, 6, cy, 15);
+        MapBuilder.buildParkBench(world, -15, cy, -25);
+        MapBuilder.buildParkBench(world, 15, cy, -25);
+        MapBuilder.buildParkBench(world, -25, cy, 15);
+        MapBuilder.buildParkBench(world, 25, cy, 15);
 
         // Lush Trees & Cherry Blossoms (Persistent leaves, zero decay/drops)
         MapBuilder.buildOrganicTree(world, -18, cy + 1, -14, Material.CHERRY_LOG, Material.CHERRY_LEAVES, 7);
         MapBuilder.buildOrganicTree(world, -36, cy + 1, 6, Material.CHERRY_LOG, Material.CHERRY_LEAVES, 7);
+        // Sumo Sacred Cherry Blossom Trunk Hollow (Relic 5)
+        world.getBlockAt(-36, cy + 1, 6).setType(Material.AIR, false);
+        world.getBlockAt(-36, cy, 6).setType(Material.CHERRY_PLANKS, false);
+        world.getBlockAt(-35, cy + 1, 6).setType(Material.PINK_PETALS, false);
+        world.getBlockAt(-37, cy + 1, 6).setType(Material.BAMBOO, false);
+        world.getBlockAt(-36, cy + 1, 7).setType(Material.LANTERN, false);
+
         MapBuilder.buildOrganicTree(world, 18, cy + 1, -14, Material.OAK_LOG, Material.AZALEA_LEAVES, 7);
         MapBuilder.buildOrganicTree(world, 18, cy + 1, 14, Material.CHERRY_LOG, Material.CHERRY_LEAVES, 7);
         MapBuilder.buildOrganicTree(world, -18, cy + 1, 14, Material.OAK_LOG, Material.OAK_LEAVES, 7);
@@ -364,10 +429,13 @@ public class WorldManager {
         world.setSpawnLocation(0, cy + 2, 6);
         plugin.getLobbyManager().setSpawn(hubSpawn);
 
-        // 14. Spawn All Interactive Gamemode NPCs with Floating Holograms!
+        // 14. Spawn All Interactive Gamemode & Lore NPCs with Floating Holograms!
         plugin.getHubNPCManager().spawnAllNPCs(world);
 
-        plugin.getLogger().info("Grand Hub rebuild complete! Mountain amphitheater, clear game beacons, and NPCs are live.");
+        // 15. Spawn All 7 Ancient Lore Relics & Secrets Displays!
+        plugin.getHubLoreManager().spawnAllRelics(world);
+
+        plugin.getLogger().info("Grand Hub rebuild complete! Mountain amphitheater, promenade loop, grotto, stalls, and lore relics are live.");
     }
 
 

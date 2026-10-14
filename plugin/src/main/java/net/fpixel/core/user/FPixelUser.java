@@ -28,6 +28,7 @@ public class FPixelUser {
 
     // Settings
     private String visibility = "ALL"; // ALL, VIPS, NONE
+    private final java.util.Set<String> discoveredSecrets = new java.util.HashSet<>();
 
     public FPixelUser(UUID uuid, String name) {
         this.uuid = uuid;
@@ -81,4 +82,9 @@ public class FPixelUser {
 
     public String getVisibility() { return visibility; }
     public void setVisibility(String visibility) { this.visibility = visibility; }
+
+    public java.util.Set<String> getDiscoveredSecrets() { return discoveredSecrets; }
+    public boolean hasDiscoveredSecret(String id) { return discoveredSecrets.contains(id); }
+    public void addDiscoveredSecret(String id) { discoveredSecrets.add(id); }
+    public int getDiscoveredSecretsCount() { return discoveredSecrets.size(); }
 }

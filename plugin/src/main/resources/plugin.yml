@@ -46,5 +46,8 @@ commands:
   webpass:
     description: Stel je wachtwoord in voor het FPixel webportaal
     aliases: [setwebpass, webpassword]
+  secrets:
+    description: View your discovered ancient relics and lore
+    aliases: [secret, lore, relics]
 
 

@@ -556,22 +556,83 @@ public class MapBuilder {
         world.getBlockAt(chimneyX, ridgeY + 3, chimneyZ).setType(Material.CAMPFIRE, false);
         world.getBlockAt(chimneyX, ridgeY + 4, chimneyZ).setType(Material.COBBLESTONE_WALL, false);
 
-        // Interior cozy decorations
-        world.getBlockAt(x + 1, y + 1, z + 1).setType(Material.CRAFTING_TABLE, false);
-        world.getBlockAt(x + 1, y + 1, z + 2).setType(Material.FURNACE, false);
-        world.getBlockAt(x + width - 2, y + 1, z + 1).setType(Material.BOOKSHELF, false);
-        world.getBlockAt(x + width - 2, y + 2, z + 1).setType(Material.LANTERN, false);
-        world.getBlockAt(x + width - 2, y + 1, z + length - 2).setType(Material.BARREL, false);
+        // Interior cozy decorations & Grand Chronicler's Library
+        // Clear first floor interior
+        fillBox(world, x + 1, y + 1, z + 1, x + width - 2, y + 3, z + length - 2, Material.AIR);
+        fillBox(world, x + 1, y, z + 1, x + width - 2, y, z + length - 2, Material.DARK_OAK_PLANKS);
+
+        // Red carpet runner from front door into the grand hall
+        for (int pz = z + 1; pz < z + length - 2; pz++) {
+            world.getBlockAt(midX, y + 1, pz).setType(Material.RED_CARPET, false);
+        }
+
+        // West Wing: Grand Library (Bookshelves, Lectern holding relic 1 at x = -44, y + 1, z = -44)
+        for (int pz = z + 2; pz <= z + 6; pz++) {
+            world.getBlockAt(x + 1, y + 1, pz).setType(Material.BOOKSHELF, false);
+            world.getBlockAt(x + 1, y + 2, pz).setType(Material.BOOKSHELF, false);
+            world.getBlockAt(x + 1, y + 3, pz).setType(Material.BOOKSHELF, false);
+        }
+        for (int px = x + 1; px <= x + 3; px++) {
+            world.getBlockAt(px, y + 1, z + 6).setType(Material.BOOKSHELF, false);
+            world.getBlockAt(px, y + 2, z + 6).setType(Material.BOOKSHELF, false);
+        }
+        // Lectern at (-44, y + 1, -44) which is x + 2, y + 1, z + 4
+        world.getBlockAt(x + 2, y + 1, z + 4).setType(Material.LECTERN, false);
+        world.getBlockAt(x + 2, y + 1, z + 2).setType(Material.DARK_OAK_STAIRS, false);
+        world.getBlockAt(x + 3, y + 1, z + 2).setType(Material.DARK_OAK_SLAB, false);
+        world.getBlockAt(x + 3, y + 2, z + 2).setType(Material.LANTERN, false);
+
+        // East Wing: Cozy Fireplace & Living Quarters
+        world.getBlockAt(x + width - 2, y + 1, z + 2).setType(Material.CRAFTING_TABLE, false);
+        world.getBlockAt(x + width - 2, y + 1, z + 3).setType(Material.FURNACE, false);
+        world.getBlockAt(x + width - 2, y + 1, z + 4).setType(Material.BARREL, false);
+        world.getBlockAt(x + width - 2, y + 2, z + 4).setType(Material.LANTERN, false);
+        world.getBlockAt(x + width - 3, y + 1, z + 3).setType(Material.RED_BED, false);
+
+        // Chandelier hanging in the center
+        world.getBlockAt(midX, y + 4, midZ).setType(Material.IRON_CHAIN, false);
+        world.getBlockAt(midX, y + 3, midZ).setType(Material.LANTERN, false);
+
+        // Spruce stairs to 2nd floor
+        for (int st = 0; st < 3; st++) {
+            world.getBlockAt(midX + 2, y + 1 + st, z + length - 3 - st).setType(Material.SPRUCE_STAIRS, false);
+        }
+        world.getBlockAt(midX + 2, y + 4, z + length - 5).setType(Material.AIR, false);
+        world.getBlockAt(midX + 2, y + 4, z + length - 4).setType(Material.AIR, false);
     }
 
     /**
-     * Builds a rustic wooden windmill with turning sail blades.
+     * Builds a rustic wooden windmill with climbable hollow interior and turning sail blades.
      */
     public static void buildWindmill(World world, int cx, int y, int cz) {
         fillCylinder(world, cx, y, cz, 4, 3, Material.COBBLESTONE);
         fillCylinder(world, cx, y + 3, cz, 3, 6, Material.SPRUCE_PLANKS);
         fillCylinder(world, cx, y + 9, cz, 2, 4, Material.DARK_OAK_PLANKS);
         fillCylinder(world, cx, y + 13, cz, 1, 2, Material.DARK_OAK_STAIRS);
+
+        // Hollow interior so players can walk in and climb
+        fillCylinder(world, cx, y + 1, cz, 2, 8, Material.AIR);
+        fillCylinder(world, cx, y + 9, cz, 1, 4, Material.AIR);
+
+        // Ground entrance doorway on South
+        world.getBlockAt(cx, y + 1, cz + 4).setType(Material.AIR, false);
+        world.getBlockAt(cx, y + 2, cz + 4).setType(Material.AIR, false);
+        world.getBlockAt(cx, y + 1, cz + 3).setType(Material.AIR, false);
+        world.getBlockAt(cx, y + 2, cz + 3).setType(Material.AIR, false);
+        world.getBlockAt(cx, y + 3, cz + 4).setType(Material.LANTERN, false);
+
+        // Interior ladders leading up to the high loft
+        for (int ly = y + 1; ly <= y + 13; ly++) {
+            world.getBlockAt(cx, ly, cz + 1).setType(Material.LADDER, false);
+        }
+
+        // Loft floor at y + 13 & observation table for relic 4
+        world.getBlockAt(cx, y + 13, cz).setType(Material.SPRUCE_TRAPDOOR, false);
+        world.getBlockAt(cx - 1, y + 13, cz).setType(Material.DARK_OAK_PLANKS, false);
+        world.getBlockAt(cx + 1, y + 13, cz).setType(Material.DARK_OAK_PLANKS, false);
+        world.getBlockAt(cx, y + 13, cz - 1).setType(Material.DARK_OAK_PLANKS, false);
+        world.getBlockAt(cx, y + 14, cz).setType(Material.AIR, false); // Relic 4 sits here!
+        world.getBlockAt(cx, y + 14, cz - 1).setType(Material.LANTERN, false);
 
         // Balcony
         fillRing(world, cx, y + 9, cz, 3, 4, Material.OAK_SLAB);
@@ -601,6 +662,144 @@ public class MapBuilder {
             world.getBlockAt(cx - i, axleY, cz - 3).setType(Material.OAK_FENCE, false);
             world.getBlockAt(cx - i, axleY + 1, cz - 3).setType(Material.WHITE_WOOL, false);
         }
+    }
+
+    /**
+     * Builds the magnificent floating Celestial Rune Crown suspended above the central plaza beacon.
+     */
+    public static void buildCelestialRuneCrown(World world, int cx, int cy, int cz) {
+        // Outer Rune Ring at cy + 9
+        fillRing(world, cx, cy + 9, cz, 5, 7, Material.POLISHED_DEEPSLATE);
+        for (int angle = 0; angle < 360; angle += 30) {
+            double rad = Math.toRadians(angle);
+            int rx = (int) Math.round(cx + 6 * Math.cos(rad));
+            int rz = (int) Math.round(cz + 6 * Math.sin(rad));
+            world.getBlockAt(rx, cy + 9, rz).setType(Material.SEA_LANTERN, false);
+            if (angle % 60 == 0) {
+                world.getBlockAt(rx, cy + 10, rz).setType(Material.GILDED_BLACKSTONE, false);
+                world.getBlockAt(rx, cy + 8, rz).setType(Material.IRON_CHAIN, false);
+                world.getBlockAt(rx, cy + 7, rz).setType(Material.SOUL_LANTERN, false);
+            }
+        }
+
+        // Inner Rune Ring at cy + 11
+        fillRing(world, cx, cy + 11, cz, 3, 4, Material.AMETHYST_BLOCK);
+        for (int angle = 15; angle < 360; angle += 45) {
+            double rad = Math.toRadians(angle);
+            int rx = (int) Math.round(cx + 3.5 * Math.cos(rad));
+            int rz = (int) Math.round(cz + 3.5 * Math.sin(rad));
+            world.getBlockAt(rx, cy + 11, rz).setType(Material.CRYING_OBSIDIAN, false);
+        }
+
+        // Floating Center Celestial Core at cy + 12
+        world.getBlockAt(cx, cy + 12, cz).setType(Material.BEACON, false);
+        world.getBlockAt(cx, cy + 13, cz).setType(Material.CYAN_STAINED_GLASS, false);
+        world.getBlockAt(cx, cy + 11, cz).setType(Material.SEA_LANTERN, false);
+
+        // 4 Spires pointing upward
+        int[][] spires = {{0, 6}, {0, -6}, {6, 0}, {-6, 0}};
+        for (int[] sp : spires) {
+            int sx = cx + sp[0], sz = cz + sp[1];
+            world.getBlockAt(sx, cy + 10, sz).setType(Material.POLISHED_DEEPSLATE_WALL, false);
+            world.getBlockAt(sx, cy + 11, sz).setType(Material.POLISHED_DEEPSLATE_WALL, false);
+            world.getBlockAt(sx, cy + 12, sz).setType(Material.END_ROD, false);
+        }
+    }
+
+    /**
+     * Builds a cascading Mountain Waterfall and secret Hidden Crystal Grotto cavern.
+     */
+    public static void buildCrystalGrottoAndWaterfall(World world, int gx, int gz, int cy) {
+        // 1. Crystal Grotto Cavern carved into the mountain (-66 to -58 in X, -16 to -8 in Z)
+        fillBox(world, gx - 5, cy + 1, gz - 4, gx + 2, cy + 6, gz + 4, Material.AIR);
+
+        // Cavern Floor
+        fillBox(world, gx - 5, cy, gz - 4, gx + 2, cy, gz + 4, Material.POLISHED_BLACKSTONE);
+        for (int x = gx - 5; x <= gx + 2; x++) {
+            for (int z = gz - 4; z <= gz + 4; z++) {
+                if ((x + z) % 3 == 0) {
+                    world.getBlockAt(x, cy, z).setType(Material.MOSSY_STONE_BRICKS, false);
+                }
+            }
+        }
+
+        // Cavern Ceiling & Walls of Amethyst, Calcite & Weeping Vines
+        for (int x = gx - 6; x <= gx + 3; x++) {
+            for (int z = gz - 5; z <= gz + 5; z++) {
+                world.getBlockAt(x, cy + 7, z).setType(Material.CALCITE, false);
+                if ((x * 7 + z * 13) % 4 == 0) {
+                    world.getBlockAt(x, cy + 6, z).setType(Material.WEEPING_VINES, false);
+                }
+            }
+        }
+        for (int y = cy + 1; y <= cy + 6; y++) {
+            for (int z = gz - 4; z <= gz + 4; z++) {
+                world.getBlockAt(gx - 6, y, z).setType(Material.AMETHYST_BLOCK, false);
+            }
+            for (int x = gx - 5; x <= gx + 2; x++) {
+                world.getBlockAt(x, y, gz - 5).setType(Material.BUDDING_AMETHYST, false);
+                world.getBlockAt(x, y, gz + 5).setType(Material.AMETHYST_BLOCK, false);
+            }
+        }
+
+        // Ancient Altar in the center of Grotto
+        world.getBlockAt(gx - 2, cy + 1, gz).setType(Material.ENCHANTING_TABLE, false);
+        world.getBlockAt(gx - 2, cy + 1, gz - 1).setType(Material.BOOKSHELF, false);
+        world.getBlockAt(gx - 2, cy + 1, gz + 1).setType(Material.BOOKSHELF, false);
+        world.getBlockAt(gx - 2, cy + 2, gz - 1).setType(Material.SOUL_LANTERN, false);
+        world.getBlockAt(gx - 2, cy + 2, gz + 1).setType(Material.SOUL_LANTERN, false);
+        world.getBlockAt(gx - 4, cy + 1, gz).setType(Material.CHEST, false);
+
+        // 2. Cascading Waterfall Curtains spilling across the cavern front (at gx + 3, z: gz - 2 to gz + 2)
+        for (int y = cy + 16; y >= cy; y--) {
+            for (int z = gz - 2; z <= gz + 2; z++) {
+                world.getBlockAt(gx + 3, y, z).setType(Material.WATER, false);
+            }
+        }
+        fillBox(world, gx + 2, cy + 17, gz - 3, gx + 4, cy + 18, gz + 3, Material.STONE);
+
+        // 3. Rocky plunge pool at the foot of the waterfall
+        for (int x = gx + 4; x <= gx + 8; x++) {
+            for (int z = gz - 4; z <= gz + 4; z++) {
+                world.getBlockAt(x, cy - 1, z).setType(Material.WATER, false);
+                world.getBlockAt(x, cy - 2, z).setType(Material.SAND, false);
+                if (x == gx + 8 || z == gz - 4 || z == gz + 4) {
+                    world.getBlockAt(x, cy, z).setType(Material.MOSSY_COBBLESTONE, false);
+                } else {
+                    world.getBlockAt(x, cy, z).setType(Material.WATER, false);
+                    if ((x + z) % 3 == 0) {
+                        world.getBlockAt(x, cy + 1, z).setType(Material.LILY_PAD, false);
+                    }
+                }
+            }
+        }
+        // Stepping stones through the waterfall curtain
+        world.getBlockAt(gx + 4, cy, gz).setType(Material.SMOOTH_STONE_SLAB, false);
+        world.getBlockAt(gx + 3, cy, gz).setType(Material.AIR, false);
+        world.getBlockAt(gx + 3, cy + 1, gz).setType(Material.AIR, false);
+        world.getBlockAt(gx + 3, cy + 2, gz).setType(Material.AIR, false);
+    }
+
+    /**
+     * Builds a challenging parkour route on the Parkour Academy spire allowing rooftop ascent.
+     */
+    public static void buildParkourClimbRoute(World world, int cx, int y, int cz) {
+        int colX = cx - 4; // -26
+        int colZ = cz;     // -22
+
+        world.getBlockAt(colX - 1, y + 1, colZ).setType(Material.SLIME_BLOCK, false);
+        world.getBlockAt(colX - 1, y + 2, colZ - 1).setType(Material.OAK_FENCE, false);
+        world.getBlockAt(colX, y + 3, colZ - 2).setType(Material.OAK_PLANKS, false);
+        world.getBlockAt(colX + 1, y + 4, colZ - 2).setType(Material.SPRUCE_TRAPDOOR, false);
+        world.getBlockAt(colX + 2, y + 5, colZ - 1).setType(Material.OAK_PLANKS, false);
+        world.getBlockAt(colX + 1, y + 6, colZ).setType(Material.EMERALD_BLOCK, false); // Roof landing
+
+        // Steps up the roof to the Spire peak
+        for (int ry = y + 7; ry <= y + 12; ry++) {
+            world.getBlockAt(cx - (y + 13 - ry), ry, cz).setType(Material.SPRUCE_STAIRS, false);
+        }
+        world.getBlockAt(cx, y + 13, cz).setType(Material.GOLD_BLOCK, false);
+        world.getBlockAt(cx, y + 14, cz).setType(Material.AIR, false); // Relic 7 stands here!
     }
 
     /**
