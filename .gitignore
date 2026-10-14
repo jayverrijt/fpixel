@@ -29,3 +29,5 @@ server/plugins/spark/tmp/
 server/plugins/spark/tmp-client/
 *.tmp
 backups/
+server/plugins/FPixelCore/web_auth.json
+server/whitelist_requests.json
