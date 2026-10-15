@@ -366,7 +366,7 @@ public class MapBuilder {
         // Center tiered pedestal
         buildPillar(world, cx, cy + 1, cz, 4, Material.QUARTZ_PILLAR);
         fillCircle(world, cx, cy + 4, cz, 2, Material.SMOOTH_QUARTZ);
-        fillRing(world, cx, cy + 5, cz, 1, 2, Material.QUARTZ_STAIRS);
+        fillRing(world, cx, cy + 5, cz, 1, 2, Material.SMOOTH_QUARTZ_SLAB);
 
         // Top spire emitting water
         world.getBlockAt(cx, cy + 5, cz).setType(Material.SEA_LANTERN, false);
@@ -608,8 +608,8 @@ public class MapBuilder {
             int rightX = x + width - step;
 
             for (int pz = z - 1; pz <= z + length; pz++) {
-                world.getBlockAt(leftX, currentY, pz).setType(Material.SPRUCE_STAIRS, false);
-                world.getBlockAt(rightX, currentY, pz).setType(Material.SPRUCE_STAIRS, false);
+                world.getBlockAt(leftX, currentY, pz).setType(Material.SPRUCE_SLAB, false);
+                world.getBlockAt(rightX, currentY, pz).setType(Material.SPRUCE_SLAB, false);
             }
             for (int px = x + step; px <= x + width - 1 - step; px++) {
                 world.getBlockAt(px, currentY, z).setType(Material.STRIPPED_OAK_LOG, false);
@@ -662,7 +662,7 @@ public class MapBuilder {
         }
         // Lectern at (-44, y + 1, -44) which is x + 2, y + 1, z + 4
         world.getBlockAt(x + 2, y + 1, z + 4).setType(Material.LECTERN, false);
-        world.getBlockAt(x + 2, y + 1, z + 2).setType(Material.DARK_OAK_STAIRS, false);
+        world.getBlockAt(x + 2, y + 1, z + 2).setType(Material.DARK_OAK_SLAB, false);
         world.getBlockAt(x + 3, y + 1, z + 2).setType(Material.DARK_OAK_SLAB, false);
         world.getBlockAt(x + 3, y + 2, z + 2).setType(Material.LANTERN, false);
 
@@ -677,9 +677,9 @@ public class MapBuilder {
         world.getBlockAt(midX, y + 4, midZ).setType(Material.IRON_CHAIN, false);
         world.getBlockAt(midX, y + 3, midZ).setType(Material.LANTERN, false);
 
-        // Spruce stairs to 2nd floor
+        // Spruce steps to 2nd floor
         for (int st = 0; st < 3; st++) {
-            world.getBlockAt(midX + 2, y + 1 + st, z + length - 3 - st).setType(Material.SPRUCE_STAIRS, false);
+            world.getBlockAt(midX + 2, y + 1 + st, z + length - 3 - st).setType(Material.SPRUCE_SLAB, false);
         }
         world.getBlockAt(midX + 2, y + 4, z + length - 5).setType(Material.AIR, false);
         world.getBlockAt(midX + 2, y + 4, z + length - 4).setType(Material.AIR, false);
@@ -692,7 +692,7 @@ public class MapBuilder {
         fillCylinder(world, cx, y, cz, 4, 3, Material.COBBLESTONE);
         fillCylinder(world, cx, y + 3, cz, 3, 6, Material.SPRUCE_PLANKS);
         fillCylinder(world, cx, y + 9, cz, 2, 4, Material.DARK_OAK_PLANKS);
-        fillCylinder(world, cx, y + 13, cz, 1, 2, Material.DARK_OAK_STAIRS);
+        fillCylinder(world, cx, y + 13, cz, 1, 2, Material.DARK_OAK_SLAB);
 
         // Hollow interior so players can walk in and climb
         fillCylinder(world, cx, y + 1, cz, 2, 8, Material.AIR);
@@ -880,7 +880,7 @@ public class MapBuilder {
 
         // Steps up the roof to the Spire peak
         for (int ry = y + 7; ry <= y + 12; ry++) {
-            world.getBlockAt(cx - (y + 13 - ry), ry, cz).setType(Material.SPRUCE_STAIRS, false);
+            world.getBlockAt(cx - (y + 13 - ry), ry, cz).setType(Material.SPRUCE_SLAB, false);
         }
         world.getBlockAt(cx, y + 13, cz).setType(Material.GOLD_BLOCK, false);
         world.getBlockAt(cx, y + 14, cz).setType(Material.AIR, false); // Relic 7 stands here!
@@ -926,8 +926,8 @@ public class MapBuilder {
     }
 
     public static void buildParkBench(World world, int x, int y, int z) {
-        world.getBlockAt(x, y + 1, z).setType(Material.SPRUCE_STAIRS, false);
-        world.getBlockAt(x + 1, y + 1, z).setType(Material.SPRUCE_STAIRS, false);
+        world.getBlockAt(x, y + 1, z).setType(Material.SPRUCE_SLAB, false);
+        world.getBlockAt(x + 1, y + 1, z).setType(Material.SPRUCE_SLAB, false);
         world.getBlockAt(x - 1, y + 1, z).setType(Material.SPRUCE_TRAPDOOR, false);
         world.getBlockAt(x + 2, y + 1, z).setType(Material.SPRUCE_TRAPDOOR, false);
     }
@@ -942,8 +942,8 @@ public class MapBuilder {
         for (int px = x - 5; px <= x + 5; px++) {
             world.getBlockAt(px, y + 7, z).setType(Material.RED_TERRACOTTA, false);
         }
-        world.getBlockAt(x - 5, y + 8, z).setType(Material.DARK_OAK_STAIRS, false);
-        world.getBlockAt(x + 5, y + 8, z).setType(Material.DARK_OAK_STAIRS, false);
+        world.getBlockAt(x - 5, y + 8, z).setType(Material.DARK_OAK_SLAB, false);
+        world.getBlockAt(x + 5, y + 8, z).setType(Material.DARK_OAK_SLAB, false);
 
         world.getBlockAt(x - 3, y + 4, z).setType(Material.LANTERN, false);
         world.getBlockAt(x + 3, y + 4, z).setType(Material.LANTERN, false);
@@ -1442,8 +1442,8 @@ public class MapBuilder {
         for (int px = x + 1; px < x + width - 1; px++) {
             world.getBlockAt(px, y + height, z).setType(wallMat, false);
         }
-        world.getBlockAt(x + 1, y + height - 1, z).setType(Material.STONE_BRICK_STAIRS, false);
-        world.getBlockAt(x + width - 2, y + height - 1, z).setType(Material.STONE_BRICK_STAIRS, false);
+        world.getBlockAt(x + 1, y + height - 1, z).setType(Material.STONE_BRICK_SLAB, false);
+        world.getBlockAt(x + width - 2, y + height - 1, z).setType(Material.STONE_BRICK_SLAB, false);
 
         // Fortified Roof with battlements & lanterns
         fillBox(world, x, y + height + 1, z, x + width - 1, y + height + 1, z + length - 1, roofMat);
@@ -1563,7 +1563,7 @@ public class MapBuilder {
             }
             // Tier 1 Archway & Cornice
             world.getBlockAt(bx, cy + 5, bz).setType(Material.SMOOTH_SANDSTONE, false);
-            world.getBlockAt(bx, cy + 5, bz).setType(Material.SANDSTONE_STAIRS, false);
+            world.getBlockAt(bx, cy + 5, bz).setType(Material.CUT_SANDSTONE_SLAB, false);
 
             // Tier 2 Pillars (Height 4)
             for (int y = cy + 6; y <= cy + 9; y++) {

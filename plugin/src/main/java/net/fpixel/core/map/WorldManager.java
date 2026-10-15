@@ -129,7 +129,7 @@ public class WorldManager {
 
     private void buildGrandHub(World world) {
         int cy = 100;
-        plugin.getLogger().info("Rebuilding Grand Hub Archipelago: 5 Floating Islands, Marble Tiered Fountain, Blooming Cherry Blossoms, Royal Citadel, Roman Colosseum, Steampunk Airship Harbor, and Japanese Torii...");
+        plugin.getLogger().info("Rebuilding Grand Hub Archipelago: 9 Expanded Floating Islands, Spaced Out Biomes, Zero Stairs, and Clear Launchpad Trajectories...");
 
         // 1. Purge all ground items and stray non-player entities in default world
         for (Entity e : world.getEntities()) {
@@ -141,67 +141,68 @@ public class WorldManager {
         world.setGameRule(GameRule.DO_ENTITY_DROPS, false);
 
         // 2. Clear all previous hub structures and vanilla generated terrain to open sky
-        MapBuilder.clearVanillaTerrain(world, 0, 0, 140);
-        for (int y = cy - 25; y <= cy + 50; y++) {
-            MapBuilder.fillCircle(world, 0, y, 0, 85, Material.AIR);
+        MapBuilder.clearVanillaTerrain(world, 0, 0, 180);
+        for (int y = cy - 30; y <= cy + 60; y++) {
+            MapBuilder.fillCircle(world, 0, y, 0, 130, Material.AIR);
         }
 
         // =========================================================================
-        // 3. ISLAND 1: CENTRAL GRAND HARVEST PLAZA (Center: 0, cy, 0, Radius 16)
+        // 3. ISLAND 1: CENTRAL GRAND HARVEST PLAZA (Center: 0, cy, 0, Radius 18)
         // =========================================================================
-        MapBuilder.buildFloatingIslandNatural(world, 0, cy, 0, 16, Material.POLISHED_DEEPSLATE, Material.STONE_BRICKS, Material.DEEPSLATE);
+        MapBuilder.buildFloatingIslandNatural(world, 0, cy, 0, 18, Material.POLISHED_DEEPSLATE, Material.STONE_BRICKS, Material.DEEPSLATE);
 
         // Concentric Plaza Rings
-        MapBuilder.fillCircle(world, 0, cy, 0, 15, Material.POLISHED_DEEPSLATE);
-        MapBuilder.fillRing(world, 0, cy, 0, 13, 14, Material.MUD_BRICKS);
-        MapBuilder.fillRing(world, 0, cy, 0, 10, 12, Material.SPRUCE_PLANKS);
-        MapBuilder.fillRing(world, 0, cy, 0, 7, 9, Material.SMOOTH_QUARTZ);
-        MapBuilder.fillRing(world, 0, cy, 0, 5, 6, Material.POLISHED_ANDESITE);
+        MapBuilder.fillCircle(world, 0, cy, 0, 17, Material.POLISHED_DEEPSLATE);
+        MapBuilder.fillRing(world, 0, cy, 0, 15, 16, Material.MUD_BRICKS);
+        MapBuilder.fillRing(world, 0, cy, 0, 12, 14, Material.SPRUCE_PLANKS);
+        MapBuilder.fillRing(world, 0, cy, 0, 8, 11, Material.SMOOTH_QUARTZ);
+        MapBuilder.fillRing(world, 0, cy, 0, 6, 7, Material.POLISHED_ANDESITE);
 
-        // Monumental Tiered Marble/Quartz Fountain with Skyward Beacon Spire
+        // Monumental Tiered Marble/Quartz Fountain with Skyward Beacon Spire (Using Slabs, Zero Stairs)
         MapBuilder.buildGrandFountain(world, 0, cy, 0, 5);
         world.getBlockAt(0, cy + 1, 0).setType(Material.BEACON, false);
         MapBuilder.buildCelestialRuneCrown(world, 0, cy, 0);
 
-        // 4 Blooming Japanese Cherry Blossom Trees surrounding the fountain
-        MapBuilder.buildCherryTree(world, -8, cy + 1, -8, 6);
-        MapBuilder.buildCherryTree(world, 8, cy + 1, -8, 6);
-        MapBuilder.buildCherryTree(world, -8, cy + 1, 8, 6);
-        MapBuilder.buildCherryTree(world, 8, cy + 1, 8, 6);
+        // 4 Blooming Japanese Cherry Blossom Trees close to the fountain (Never obstructing outer launchpads!)
+        MapBuilder.buildCherryTree(world, -7, cy + 1, -7, 5);
+        MapBuilder.buildCherryTree(world, 7, cy + 1, -7, 5);
+        MapBuilder.buildCherryTree(world, -7, cy + 1, 7, 5);
+        MapBuilder.buildCherryTree(world, 7, cy + 1, 7, 5);
 
-        // Azalea bushes, flowering azaleas and lanterns around plaza edge
+        // Azalea bushes, flowering azaleas and lanterns around plaza edge (leaving launchpads and bridge mouths open)
         for (int angle = 0; angle < 360; angle += 15) {
+            if (angle % 45 == 0) continue; // Keep cardinal & diagonal exits 100% clear!
             double rad = Math.toRadians(angle);
-            int bx = (int) Math.round(15 * Math.cos(rad));
-            int bz = (int) Math.round(15 * Math.sin(rad));
+            int bx = (int) Math.round(17 * Math.cos(rad));
+            int bz = (int) Math.round(17 * Math.sin(rad));
             if (angle % 30 == 0) {
                 world.getBlockAt(bx, cy + 1, bz).setType(Material.FLOWERING_AZALEA, false);
             } else {
                 world.getBlockAt(bx, cy + 1, bz).setType(Material.STONE_BRICK_WALL, false);
-                if (angle % 15 == 0 && (angle % 90 != 0)) {
-                    world.getBlockAt(bx, cy + 2, bz).setType(Material.LANTERN, false);
-                }
+                world.getBlockAt(bx, cy + 2, bz).setType(Material.LANTERN, false);
             }
         }
 
         // Directional Road Signposts around Plaza
         MapBuilder.placeDirectionalSign(world, 0, cy + 1, -13, "§a§l▲ NORTH ▲", "§2§lROYAL CITADEL", "§7Survival SMP Gateway");
         MapBuilder.placeDirectionalSign(world, -13, cy + 1, 0, "§c§l◀ WEST ◀", "§c§lMEDIEVAL VILLAGE", "§7BedWars & Bazaar");
-        MapBuilder.placeDirectionalSign(world, 11, cy + 1, -8, "§6§l↗ NORTH-EAST", "§6§lROMAN COLOSSEUM", "§7TNT Run & Arena");
-        MapBuilder.placeDirectionalSign(world, 11, cy + 1, 8, "§e§l↘ SOUTH-EAST", "§e§lAIRSHIP HARBOR", "§7Observatory & Zeppelins");
-        MapBuilder.placeDirectionalSign(world, -11, cy + 1, 8, "§d§l↙ SOUTH-WEST", "§d§lTORII SHRINE", "§7Sumo 1v1 Dojo");
-        MapBuilder.placeDirectionalSign(world, 0, cy + 1, 13, "§b§l▼ SOUTH ▼", "§b§lTOURNAMENT HALL", "§7Duels & SkyWars");
+        MapBuilder.placeDirectionalSign(world, 10, cy + 1, -10, "§6§l↗ NORTH-EAST", "§6§lROMAN COLOSSEUM", "§7TNT Run & Arena");
+        MapBuilder.placeDirectionalSign(world, 10, cy + 1, 10, "§e§l↘ SOUTH-EAST", "§e§lAIRSHIP HARBOR", "§7Observatory & Zeppelins");
+        MapBuilder.placeDirectionalSign(world, -10, cy + 1, 10, "§d§l↙ SOUTH-WEST", "§d§lTORII SHRINE", "§7Sumo 1v1 Dojo");
+        MapBuilder.placeDirectionalSign(world, 0, cy + 1, 13, "§b§l▼ SOUTH ▼", "§b§lTOURNAMENT HALL", "§7Duels & PvP");
+        MapBuilder.placeDirectionalSign(world, 13, cy + 1, 0, "§b§l▶ EAST ▶", "§b§lSKYWARS SANCTUARY", "§7Celestial Void Arena");
+        MapBuilder.placeDirectionalSign(world, -10, cy + 1, -10, "§a§l↖ NORTH-WEST", "§a§lPARKOUR RUINS", "§7Agility Courses & Spire");
 
-        // The 8 Super Launchpads Radiating from Central Plaza
+        // The 8 Super Launchpads Radiating Outwards from Central Plaza (Radius 15 - Completely Unobstructed Sky!)
         int[][] launchpadCoords = {
-                {0, -11},   // North -> Royal Citadel
-                {8, -8},    // North-East -> Roman Colosseum
-                {11, 0},    // East -> SkyWars
-                {8, 8},     // South-East -> Airship Harbor
-                {0, 11},    // South -> Duels & PvP
-                {-8, 8},    // South-West -> Sumo Torii
-                {-11, 0},   // West -> Medieval Village
-                {-8, -8}    // North-West -> Parkour
+                {0, -15},   // North -> Royal Citadel (0, -68)
+                {11, -11},  // North-East -> Roman Colosseum (60, -48)
+                {15, 0},    // East -> SkyWars Sanctuary (72, 10)
+                {11, 11},   // South-East -> Airship Harbor (55, 65)
+                {0, 15},    // South -> Duels Citadel (0, 76)
+                {-11, 11},  // South-West -> Sumo Torii ( -55, 65)
+                {-15, 0},   // West -> Medieval Village (-70, 0)
+                {-11, -11}  // North-West -> Parkour Ruins (-58, -54)
         };
         for (int[] lp : launchpadCoords) {
             int lx = lp[0], lz = lp[1];
@@ -212,39 +213,45 @@ public class WorldManager {
         }
 
         // =========================================================================
-        // 4. ISLAND 2: THE ROYAL CITADEL (North: 0, cy, -42, Radius 18)
+        // 4. ISLAND 2: THE ROYAL CITADEL (North: 0, cy, -68, Radius 22, Gap to Plaza: 28 blocks)
         // =========================================================================
-        // Grand Arched Stone Bridge connecting Central Plaza to Royal Citadel
-        MapBuilder.buildArchedStoneBridge(world, 0, -15, 0, -25, cy, 5);
+        // Grand Arched Stone Bridge connecting Central Plaza to Royal Citadel (Zero Stairs, Slabs & Walls)
+        MapBuilder.buildArchedStoneBridge(world, 0, -18, 0, -46, cy, 5);
 
         // Floating Citadel Island Base
-        MapBuilder.buildFloatingIslandNatural(world, 0, cy, -42, 18, Material.STONE_BRICKS, Material.COBBLESTONE, Material.DEEPSLATE);
+        MapBuilder.buildFloatingIslandNatural(world, 0, cy, -68, 22, Material.STONE_BRICKS, Material.COBBLESTONE, Material.DEEPSLATE);
+
+        // Arrival Landing Platform & Return Launchpad to Plaza
+        MapBuilder.fillRing(world, 0, cy, -46, 1, 2, Material.GOLD_BLOCK);
+        world.getBlockAt(0, cy, -46).setType(Material.EMERALD_BLOCK, false);
+        world.getBlockAt(0, cy + 1, -46).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+        world.getBlockAt(0, cy - 1, -46).setType(Material.SEA_LANTERN, false);
 
         // Twin Soaring Citadel Bastion Towers
-        MapBuilder.buildCastleTowerRound(world, -10, cy, -42, 4, 24, Material.STONE_BRICKS, Material.DARK_OAK_PLANKS);
-        MapBuilder.buildCastleTowerRound(world, 10, cy, -42, 4, 24, Material.STONE_BRICKS, Material.DARK_OAK_PLANKS);
+        MapBuilder.buildCastleTowerRound(world, -12, cy, -68, 4, 26, Material.STONE_BRICKS, Material.DARK_OAK_PLANKS);
+        MapBuilder.buildCastleTowerRound(world, 12, cy, -68, 4, 26, Material.STONE_BRICKS, Material.DARK_OAK_PLANKS);
 
         // Monumental Vaulted Gatehouse Arch connecting the twin towers
-        MapBuilder.fillBox(world, -6, cy + 1, -43, 6, cy + 12, -41, Material.STONE_BRICKS);
-        MapBuilder.fillBox(world, -3, cy + 1, -43, 3, cy + 7, -41, Material.AIR); // arch tunnel
-        MapBuilder.fillBox(world, -3, cy + 6, -42, 3, cy + 6, -42, Material.IRON_BARS); // portcullis top
-        MapBuilder.fillBox(world, -6, cy + 13, -44, 6, cy + 13, -40, Material.POLISHED_ANDESITE); // battlements
-        for (int gx = -6; gx <= 6; gx += 2) {
-            world.getBlockAt(gx, cy + 14, -44).setType(Material.STONE_BRICK_WALL, false);
-            world.getBlockAt(gx, cy + 14, -40).setType(Material.STONE_BRICK_WALL, false);
+        MapBuilder.fillBox(world, -7, cy + 1, -69, 7, cy + 14, -67, Material.STONE_BRICKS);
+        MapBuilder.fillBox(world, -4, cy + 1, -69, 4, cy + 8, -67, Material.AIR); // arch tunnel
+        MapBuilder.fillBox(world, -4, cy + 7, -68, 4, cy + 7, -68, Material.IRON_BARS); // portcullis top
+        MapBuilder.fillBox(world, -7, cy + 15, -70, 7, cy + 15, -66, Material.POLISHED_ANDESITE); // battlements
+        for (int gx = -7; gx <= 7; gx += 2) {
+            world.getBlockAt(gx, cy + 16, -70).setType(Material.STONE_BRICK_WALL, false);
+            world.getBlockAt(gx, cy + 16, -66).setType(Material.STONE_BRICK_WALL, false);
         }
-        world.getBlockAt(-6, cy + 15, -44).setType(Material.LANTERN, false);
-        world.getBlockAt(6, cy + 15, -44).setType(Material.LANTERN, false);
+        world.getBlockAt(-7, cy + 17, -70).setType(Material.LANTERN, false);
+        world.getBlockAt(7, cy + 17, -70).setType(Material.LANTERN, false);
 
         // Radiant Skyward Cyan Beacon shooting from the citadel gateway
-        MapBuilder.buildColoredBeacon(world, 0, cy, -42, Material.CYAN_STAINED_GLASS);
+        MapBuilder.buildColoredBeacon(world, 0, cy, -68, Material.CYAN_STAINED_GLASS);
 
-        // Survival SMP Portal Courtyard (Behind Gatehouse at 0, -48)
-        int sgZ = -48;
+        // Survival SMP Portal Courtyard (Behind Gatehouse at 0, -78)
+        int sgZ = -78;
         MapBuilder.buildPillar(world, -4, cy + 1, sgZ, 7, Material.STRIPPED_OAK_LOG);
         MapBuilder.buildPillar(world, 4, cy + 1, sgZ, 7, Material.STRIPPED_OAK_LOG);
         for (int px = -5; px <= 5; px++) {
-            world.getBlockAt(px, cy + 8, sgZ).setType(Material.SPRUCE_STAIRS, false);
+            world.getBlockAt(px, cy + 8, sgZ).setType(Material.SPRUCE_SLAB, false);
             world.getBlockAt(px, cy + 7, sgZ).setType(Material.DARK_OAK_PLANKS, false);
             world.getBlockAt(px, cy + 6, sgZ).setType(Material.STRIPPED_OAK_LOG, false);
         }
@@ -254,151 +261,201 @@ public class WorldManager {
         world.getBlockAt(0, cy + 2, sgZ).setType(Material.COBBLESTONE_WALL, false);
         world.getBlockAt(-5, cy + 1, sgZ).setType(Material.BARREL, false);
         world.getBlockAt(5, cy + 1, sgZ).setType(Material.CHEST, false);
-        MapBuilder.buildColoredBeacon(world, 0, cy, -54, Material.LIME_STAINED_GLASS);
-        MapBuilder.buildGiantPickaxe(world, 0, cy + 15, -48);
+        MapBuilder.buildColoredBeacon(world, 0, cy, -84, Material.LIME_STAINED_GLASS);
+        MapBuilder.buildGiantPickaxe(world, 0, cy + 15, -78);
 
         // =========================================================================
-        // 5. ISLAND 3: MEDIEVAL VILLAGE & BAZAAR (West: -42, cy, 0, Radius 18)
+        // 5. ISLAND 3: MEDIEVAL VILLAGE & BAZAAR (West: -70, cy, 0, Radius 22, Gap to Plaza: 30 blocks)
         // =========================================================================
-        // Arched Stone Bridge connecting Central Plaza to Medieval Village
-        MapBuilder.buildArchedStoneBridge(world, -15, 0, -25, 0, cy, 5);
+        // Arched Stone Bridge connecting Central Plaza to Medieval Village (Zero Stairs)
+        MapBuilder.buildArchedStoneBridge(world, -18, 0, -48, 0, cy, 5);
 
         // Floating Village Island Base
-        MapBuilder.buildFloatingIslandNatural(world, -42, cy, 0, 18, Material.GRASS_BLOCK, Material.DIRT, Material.DEEPSLATE);
+        MapBuilder.buildFloatingIslandNatural(world, -70, cy, 0, 22, Material.GRASS_BLOCK, Material.DIRT, Material.DEEPSLATE);
 
-        // Half-Timbered Houses
-        MapBuilder.buildAutumnTownHouse(world, -46, cy, -9, 6, 6, Material.MUD_BRICKS, Material.SPRUCE_STAIRS);
-        MapBuilder.buildAutumnTownHouse(world, -46, cy, 7, 6, 6, Material.WHITE_TERRACOTTA, Material.DARK_OAK_STAIRS);
-        MapBuilder.buildBedWarsBaseForge(world, -36, cy, -10, Material.STONE_BRICKS, Material.DEEPSLATE_BRICKS, Material.RED_TERRACOTTA);
+        // Arrival Landing Platform & Return Launchpad to Plaza
+        MapBuilder.fillRing(world, -48, cy, 0, 1, 2, Material.GOLD_BLOCK);
+        world.getBlockAt(-48, cy, 0).setType(Material.EMERALD_BLOCK, false);
+        world.getBlockAt(-48, cy + 1, 0).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+        world.getBlockAt(-48, cy - 1, 0).setType(Material.SEA_LANTERN, false);
+
+        // Half-Timbered Houses (Using Slabs, Zero Stairs)
+        MapBuilder.buildAutumnTownHouse(world, -76, cy, -10, 6, 6, Material.MUD_BRICKS, Material.SPRUCE_SLAB);
+        MapBuilder.buildAutumnTownHouse(world, -76, cy, 10, 6, 6, Material.WHITE_TERRACOTTA, Material.DARK_OAK_SLAB);
+        MapBuilder.buildBedWarsBaseForge(world, -64, cy, -12, Material.STONE_BRICKS, Material.DEEPSLATE_BRICKS, Material.RED_TERRACOTTA);
 
         // Medieval Bazaar Market Stalls
-        MapBuilder.buildMarketStall(world, -38, cy, -2, Material.RED_WOOL, Material.WHITE_WOOL);
-        MapBuilder.buildMarketStall(world, -38, cy, 4, Material.YELLOW_WOOL, Material.ORANGE_WOOL);
+        MapBuilder.buildMarketStall(world, -66, cy, -3, Material.RED_WOOL, Material.WHITE_WOOL);
+        MapBuilder.buildMarketStall(world, -66, cy, 4, Material.YELLOW_WOOL, Material.ORANGE_WOOL);
 
         // BedWars Pavilion & Keep
-        MapBuilder.buildGamePavilion(world, -40, cy, 0, 5, Material.STONE_BRICKS, Material.DEEPSLATE_BRICK_WALL, Material.RED_TERRACOTTA, Material.RED_GLAZED_TERRACOTTA);
-        world.getBlockAt(-40, cy + 1, -3).setType(Material.RED_BED, false);
-        world.getBlockAt(-40, cy + 1, 3).setType(Material.BLUE_BED, false);
-        MapBuilder.buildColoredBeacon(world, -48, cy, 0, Material.RED_STAINED_GLASS);
-        MapBuilder.buildGiantBed(world, -40, cy + 13, 0);
+        MapBuilder.buildGamePavilion(world, -70, cy, 0, 5, Material.STONE_BRICKS, Material.DEEPSLATE_BRICK_WALL, Material.RED_TERRACOTTA, Material.RED_GLAZED_TERRACOTTA);
+        world.getBlockAt(-70, cy + 1, -3).setType(Material.RED_BED, false);
+        world.getBlockAt(-70, cy + 1, 3).setType(Material.BLUE_BED, false);
+        MapBuilder.buildColoredBeacon(world, -80, cy, 0, Material.RED_STAINED_GLASS);
+        MapBuilder.buildGiantBed(world, -70, cy + 13, 0);
 
         // =========================================================================
-        // 6. ISLAND 4: ROMAN COLOSSEUM & RUINS (North-East: 36, cy, -22, Radius 18)
+        // 6. ISLAND 4: ROMAN COLOSSEUM & RUINS (North-East: 60, cy, -48, Radius 20, Gap: 38 blocks)
         // =========================================================================
         // Arched Stone Bridge connecting Central Plaza to Roman Colosseum
-        MapBuilder.buildArchedStoneBridge(world, 12, -10, 22, -15, cy, 4);
+        MapBuilder.buildArchedStoneBridge(world, 13, -13, 45, -36, cy, 4);
 
         // Floating Colosseum Island Base
-        MapBuilder.buildFloatingIslandNatural(world, 36, cy, -22, 18, Material.SANDSTONE, Material.CUT_SANDSTONE, Material.DEEPSLATE);
+        MapBuilder.buildFloatingIslandNatural(world, 60, cy, -48, 20, Material.SANDSTONE, Material.CUT_SANDSTONE, Material.DEEPSLATE);
 
-        // 2-Tier Curved Roman Colosseum Arcade
-        MapBuilder.buildRomanColosseumCurved(world, 36, cy + 1, -22, 13, -70, 110);
+        // Arrival Landing Platform & Return Launchpad to Plaza
+        MapBuilder.fillRing(world, 45, cy, -36, 1, 2, Material.GOLD_BLOCK);
+        world.getBlockAt(45, cy, -36).setType(Material.EMERALD_BLOCK, false);
+        world.getBlockAt(45, cy + 1, -36).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+        world.getBlockAt(45, cy - 1, -36).setType(Material.SEA_LANTERN, false);
+
+        // 2-Tier Curved Roman Colosseum Arcade (Slabs, Zero Stairs)
+        MapBuilder.buildRomanColosseumCurved(world, 60, cy + 1, -48, 14, -70, 110);
 
         // Colosseum Arena Interior
-        MapBuilder.buildGamePavilion(world, 36, cy, -22, 5, Material.NETHER_BRICKS, Material.NETHER_BRICK_WALL, Material.RED_NETHER_BRICKS, Material.MAGMA_BLOCK);
-        world.getBlockAt(39, cy + 1, -22).setType(Material.TNT, false);
-        world.getBlockAt(36, cy + 1, -19).setType(Material.SOUL_CAMPFIRE, false);
-        MapBuilder.buildColoredBeacon(world, 46, cy, -22, Material.ORANGE_STAINED_GLASS);
-        MapBuilder.buildGiantTNT(world, 36, cy + 13, -22);
+        MapBuilder.buildGamePavilion(world, 60, cy, -48, 5, Material.NETHER_BRICKS, Material.NETHER_BRICK_WALL, Material.RED_NETHER_BRICKS, Material.MAGMA_BLOCK);
+        world.getBlockAt(63, cy + 1, -48).setType(Material.TNT, false);
+        world.getBlockAt(60, cy + 1, -45).setType(Material.SOUL_CAMPFIRE, false);
+        MapBuilder.buildColoredBeacon(world, 72, cy, -48, Material.ORANGE_STAINED_GLASS);
+        MapBuilder.buildGiantTNT(world, 60, cy + 13, -48);
 
         // =========================================================================
-        // 7. ISLAND 5: AIRSHIP HARBOR & OBSERVATORY (South-East: 32, cy, 28, Radius 18)
+        // 7. ISLAND 5: AIRSHIP HARBOR & OBSERVATORY (South-East: 55, cy, 65, Radius 20, Gap: 47 blocks)
         // =========================================================================
         // Arched Wooden Bridge connecting Central Plaza to Airship Harbor
-        MapBuilder.buildArchedWoodenBridge(world, 12, 11, 21, 18, cy, 4);
+        MapBuilder.buildArchedWoodenBridge(world, 13, 13, 40, 48, cy, 4);
 
         // Floating Harbor Island Base
-        MapBuilder.buildFloatingIslandNatural(world, 32, cy, 28, 18, Material.GRASS_BLOCK, Material.DIRT, Material.DEEPSLATE);
+        MapBuilder.buildFloatingIslandNatural(world, 55, cy, 65, 20, Material.GRASS_BLOCK, Material.DIRT, Material.DEEPSLATE);
+
+        // Arrival Landing Platform & Return Launchpad to Plaza
+        MapBuilder.fillRing(world, 40, cy, 48, 1, 2, Material.GOLD_BLOCK);
+        world.getBlockAt(40, cy, 48).setType(Material.EMERALD_BLOCK, false);
+        world.getBlockAt(40, cy + 1, 48).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+        world.getBlockAt(40, cy - 1, 48).setType(Material.SEA_LANTERN, false);
 
         // Celestial Glass-Domed Observatory
-        MapBuilder.buildObservatory(world, 24, cy + 1, 20, 5);
+        MapBuilder.buildObservatory(world, 48, cy + 1, 56, 5);
 
         // Wooden Airship Docking Boardwalk Pier extending over the void
-        for (int px = 28; px <= 44; px++) {
-            for (int pz = 27; pz <= 30; pz++) {
+        for (int px = 50; px <= 68; px++) {
+            for (int pz = 64; pz <= 67; pz++) {
                 world.getBlockAt(px, cy, pz).setType(Material.SPRUCE_PLANKS, false);
                 world.getBlockAt(px, cy - 1, pz).setType(Material.DARK_OAK_LOG, false);
             }
-            world.getBlockAt(px, cy + 1, 27).setType(Material.SPRUCE_FENCE, false);
+            world.getBlockAt(px, cy + 1, 64).setType(Material.SPRUCE_FENCE, false);
             if (px % 4 == 0) {
-                world.getBlockAt(px, cy + 2, 27).setType(Material.LANTERN, false);
+                world.getBlockAt(px, cy + 2, 64).setType(Material.LANTERN, false);
             }
         }
 
         // Moored Steampunk Zeppelin Airship moored alongside the pier
-        MapBuilder.buildSteampunkAirship(world, 38, cy + 7, 34);
+        MapBuilder.buildSteampunkAirship(world, 62, cy + 7, 72);
 
-        // Gangway connecting pier to airship
-        for (int z = 30; z <= 33; z++) {
-            world.getBlockAt(36, cy + 1, z).setType(Material.SPRUCE_SLAB, false);
-            world.getBlockAt(37, cy + 1, z).setType(Material.SPRUCE_SLAB, false);
+        // Gangway connecting pier to airship (Spruce slabs)
+        for (int z = 67; z <= 71; z++) {
+            world.getBlockAt(60, cy + 1, z).setType(Material.SPRUCE_SLAB, false);
+            world.getBlockAt(61, cy + 1, z).setType(Material.SPRUCE_SLAB, false);
         }
 
         // =========================================================================
-        // 8. ISLAND 6: SACRED JAPANESE TORII SHRINE (South-West: -32, cy, 32, Radius 14)
+        // 8. ISLAND 6: SACRED JAPANESE TORII SHRINE (South-West: -55, cy, 65, Radius 20, Gap: 47 blocks)
         // =========================================================================
         // Arched Crimson Bridge connecting Central Plaza to Torii Island
-        MapBuilder.buildArchedCrimsonBridge(world, -11, 11, -20, 20, cy, 4);
+        MapBuilder.buildArchedCrimsonBridge(world, -13, 13, -40, 48, cy, 4);
 
         // Floating Sacred Island Base
-        MapBuilder.buildFloatingIslandNatural(world, -32, cy, 32, 14, Material.MOSS_BLOCK, Material.DIRT, Material.DEEPSLATE);
+        MapBuilder.buildFloatingIslandNatural(world, -55, cy, 65, 20, Material.MOSS_BLOCK, Material.DIRT, Material.DEEPSLATE);
 
-        // Crimson Torii Gate
-        MapBuilder.buildToriiArch(world, -32, cy + 1, 26);
+        // Arrival Landing Platform & Return Launchpad to Plaza
+        MapBuilder.fillRing(world, -40, cy, 48, 1, 2, Material.GOLD_BLOCK);
+        world.getBlockAt(-40, cy, 48).setType(Material.EMERALD_BLOCK, false);
+        world.getBlockAt(-40, cy + 1, 48).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+        world.getBlockAt(-40, cy - 1, 48).setType(Material.SEA_LANTERN, false);
+
+        // Crimson Torii Gate (Dark Oak Slabs, Zero Stairs)
+        MapBuilder.buildToriiArch(world, -55, cy + 1, 58);
 
         // Blooming Cherry Blossom Trees with falling petals
-        MapBuilder.buildCherryTree(world, -36, cy + 1, 35, 6);
-        MapBuilder.buildCherryTree(world, -27, cy + 1, 36, 6);
+        MapBuilder.buildCherryTree(world, -60, cy + 1, 70, 6);
+        MapBuilder.buildCherryTree(world, -48, cy + 1, 72, 6);
 
         // Circular Golden Sumo Ring
-        MapBuilder.fillCircle(world, -32, cy, 32, 5, Material.POLISHED_ANDESITE);
-        MapBuilder.fillRing(world, -32, cy, 32, 4, 5, Material.GOLD_BLOCK);
-        MapBuilder.buildColoredBeacon(world, -38, cy, 38, Material.WHITE_STAINED_GLASS);
-        MapBuilder.buildGiantToriiEmblem(world, -32, cy + 13, 32);
+        MapBuilder.fillCircle(world, -55, cy, 65, 5, Material.POLISHED_ANDESITE);
+        MapBuilder.fillRing(world, -55, cy, 65, 4, 5, Material.GOLD_BLOCK);
+        MapBuilder.buildColoredBeacon(world, -64, cy, 72, Material.WHITE_STAINED_GLASS);
+        MapBuilder.buildGiantToriiEmblem(world, -55, cy + 13, 65);
 
         // =========================================================================
-        // 9. ISLAND 7: SKYWARS CELESTIAL SANCTUARY (East: 48, cy, 0, Radius 12)
+        // 9. ISLAND 7: SKYWARS CELESTIAL SANCTUARY (East: 72, cy, 10, Radius 20, Gap: 34 blocks)
         // =========================================================================
-        MapBuilder.buildFloatingIslandNatural(world, 48, cy, 0, 12, Material.SMOOTH_QUARTZ, Material.QUARTZ_BRICKS, Material.DEEPSLATE);
+        MapBuilder.buildFloatingIslandNatural(world, 72, cy, 10, 20, Material.SMOOTH_QUARTZ, Material.QUARTZ_BRICKS, Material.DEEPSLATE);
+
         // Arched crystal walkway connecting from Central Plaza
-        for (int x = 16; x <= 36; x++) {
-            world.getBlockAt(x, cy, 0).setType(Material.SMOOTH_QUARTZ, false);
-            world.getBlockAt(x, cy - 1, 0).setType(Material.SEA_LANTERN, false);
-            if (x % 4 == 0) {
-                world.getBlockAt(x, cy + 1, -1).setType(Material.STONE_BRICK_WALL, false);
-                world.getBlockAt(x, cy + 1, 1).setType(Material.STONE_BRICK_WALL, false);
-                world.getBlockAt(x, cy + 2, -1).setType(Material.LANTERN, false);
-                world.getBlockAt(x, cy + 2, 1).setType(Material.LANTERN, false);
+        for (int x = 18; x <= 52; x++) {
+            world.getBlockAt(x, cy, 10).setType(Material.SMOOTH_QUARTZ, false);
+            world.getBlockAt(x, cy - 1, 10).setType(Material.SEA_LANTERN, false);
+            if (x % 5 == 0) {
+                world.getBlockAt(x, cy + 1, 9).setType(Material.STONE_BRICK_WALL, false);
+                world.getBlockAt(x, cy + 1, 11).setType(Material.STONE_BRICK_WALL, false);
+                world.getBlockAt(x, cy + 2, 9).setType(Material.LANTERN, false);
+                world.getBlockAt(x, cy + 2, 11).setType(Material.LANTERN, false);
             }
         }
-        MapBuilder.buildGamePavilion(world, 48, cy, 0, 5, Material.SMOOTH_QUARTZ, Material.QUARTZ_PILLAR, Material.PURPUR_BLOCK, Material.AMETHYST_BLOCK);
-        world.getBlockAt(48, cy + 1, 3).setType(Material.ENCHANTING_TABLE, false);
-        world.getBlockAt(48, cy + 1, -3).setType(Material.ENDER_CHEST, false);
-        MapBuilder.buildColoredBeacon(world, 54, cy, 0, Material.LIGHT_BLUE_STAINED_GLASS);
-        MapBuilder.buildGiantEnderEye(world, 48, cy + 13, 0);
+
+        // Arrival Landing Platform & Return Launchpad to Plaza
+        MapBuilder.fillRing(world, 52, cy, 10, 1, 2, Material.GOLD_BLOCK);
+        world.getBlockAt(52, cy, 10).setType(Material.EMERALD_BLOCK, false);
+        world.getBlockAt(52, cy + 1, 10).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+        world.getBlockAt(52, cy - 1, 10).setType(Material.SEA_LANTERN, false);
+
+        MapBuilder.buildGamePavilion(world, 72, cy, 10, 5, Material.SMOOTH_QUARTZ, Material.QUARTZ_PILLAR, Material.PURPUR_BLOCK, Material.AMETHYST_BLOCK);
+        world.getBlockAt(72, cy + 1, 13).setType(Material.ENCHANTING_TABLE, false);
+        world.getBlockAt(72, cy + 1, 7).setType(Material.ENDER_CHEST, false);
+        MapBuilder.buildColoredBeacon(world, 80, cy, 10, Material.LIGHT_BLUE_STAINED_GLASS);
+        MapBuilder.buildGiantEnderEye(world, 72, cy + 13, 10);
 
         // =========================================================================
-        // 10. ISLAND 8: DUELS & PVP CITADEL (South: 0, cy, 38, Radius 14)
+        // 10. ISLAND 8: DUELS & PVP CITADEL (South: 0, cy, 76, Radius 20, Gap: 38 blocks)
         // =========================================================================
-        MapBuilder.buildArchedStoneBridge(world, 0, 15, 0, 25, cy, 5);
-        MapBuilder.buildFloatingIslandNatural(world, 0, cy, 38, 14, Material.POLISHED_ANDESITE, Material.STONE_BRICKS, Material.DEEPSLATE);
-        MapBuilder.buildGamePavilion(world, 0, cy, 38, 5, Material.POLISHED_ANDESITE, Material.STONE_BRICK_WALL, Material.DARK_OAK_PLANKS, Material.IRON_BLOCK);
-        world.getBlockAt(-3, cy + 1, 38).setType(Material.HAY_BLOCK, false);
-        world.getBlockAt(-3, cy + 2, 38).setType(Material.TARGET, false);
-        world.getBlockAt(3, cy + 1, 38).setType(Material.SMITHING_TABLE, false);
-        MapBuilder.buildColoredBeacon(world, 0, cy, 44, Material.MAGENTA_STAINED_GLASS);
-        MapBuilder.buildGiantCrossedSwords(world, 0, cy + 13, 38);
+        MapBuilder.buildArchedStoneBridge(world, 0, 18, 0, 56, cy, 5);
+        MapBuilder.buildFloatingIslandNatural(world, 0, cy, 76, 20, Material.POLISHED_ANDESITE, Material.STONE_BRICKS, Material.DEEPSLATE);
+
+        // Arrival Landing Platform & Return Launchpad to Plaza
+        MapBuilder.fillRing(world, 0, cy, 56, 1, 2, Material.GOLD_BLOCK);
+        world.getBlockAt(0, cy, 56).setType(Material.EMERALD_BLOCK, false);
+        world.getBlockAt(0, cy + 1, 56).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+        world.getBlockAt(0, cy - 1, 56).setType(Material.SEA_LANTERN, false);
+
+        MapBuilder.buildGamePavilion(world, 0, cy, 76, 5, Material.POLISHED_ANDESITE, Material.STONE_BRICK_WALL, Material.DARK_OAK_PLANKS, Material.IRON_BLOCK);
+        world.getBlockAt(-3, cy + 1, 76).setType(Material.HAY_BLOCK, false);
+        world.getBlockAt(-3, cy + 2, 76).setType(Material.TARGET, false);
+        world.getBlockAt(3, cy + 1, 76).setType(Material.SMITHING_TABLE, false);
+        MapBuilder.buildColoredBeacon(world, 0, cy, 84, Material.MAGENTA_STAINED_GLASS);
+        MapBuilder.buildGiantCrossedSwords(world, 0, cy + 13, 76);
 
         // =========================================================================
-        // 11. ISLAND 9: PARKOUR AGILITY SPIRE (North-West: -28, cy, -28, Radius 12)
+        // 11. ISLAND 9: PARKOUR AGILITY SPIRE & RUINS (North-West: -58, cy, -54, Radius 20, Gap: 41 blocks)
         // =========================================================================
-        MapBuilder.buildArchedStoneBridge(world, -11, -11, -19, -19, cy, 4);
-        MapBuilder.buildFloatingIslandNatural(world, -28, cy, -28, 12, Material.MOSS_BLOCK, Material.DIRT, Material.DEEPSLATE);
-        MapBuilder.buildGamePavilion(world, -28, cy, -28, 5, Material.OAK_PLANKS, Material.OAK_LOG, Material.SPRUCE_STAIRS, Material.EMERALD_BLOCK);
-        world.getBlockAt(-31, cy + 1, -28).setType(Material.SLIME_BLOCK, false);
-        world.getBlockAt(-31, cy + 2, -28).setType(Material.GOLD_BLOCK, false);
-        MapBuilder.buildColoredBeacon(world, -34, cy, -28, Material.GREEN_STAINED_GLASS);
-        MapBuilder.buildGiantBoot(world, -28, cy + 13, -28);
+        MapBuilder.buildArchedStoneBridge(world, -13, -13, -44, -40, cy, 4);
+        MapBuilder.buildFloatingIslandNatural(world, -58, cy, -54, 20, Material.MOSS_BLOCK, Material.DIRT, Material.DEEPSLATE);
+
+        // Arrival Landing Platform & Return Launchpad to Plaza
+        MapBuilder.fillRing(world, -44, cy, -40, 1, 2, Material.GOLD_BLOCK);
+        world.getBlockAt(-44, cy, -40).setType(Material.EMERALD_BLOCK, false);
+        world.getBlockAt(-44, cy + 1, -40).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+        world.getBlockAt(-44, cy - 1, -40).setType(Material.SEA_LANTERN, false);
+
+        // Parkour Pavilion (Spruce slabs, zero stairs)
+        MapBuilder.buildGamePavilion(world, -58, cy, -54, 5, Material.OAK_PLANKS, Material.OAK_LOG, Material.SPRUCE_SLAB, Material.EMERALD_BLOCK);
+        world.getBlockAt(-62, cy + 1, -54).setType(Material.SLIME_BLOCK, false);
+        world.getBlockAt(-62, cy + 2, -54).setType(Material.GOLD_BLOCK, false);
+        MapBuilder.buildColoredBeacon(world, -68, cy, -54, Material.GREEN_STAINED_GLASS);
+        MapBuilder.buildGiantBoot(world, -58, cy + 13, -54);
+
+        // Rustic Windmill on Parkour Island (Slabs, zero stairs)
+        MapBuilder.buildWindmill(world, -66, cy + 1, -62);
 
         // 12. Spawn Point at Grand Central Plaza facing North (towards Fountain, Cherry Trees & Royal Citadel)
         Location hubSpawn = new Location(world, 0.5, cy + 1.5, 6.5, 0f, 0f);
@@ -411,7 +468,7 @@ public class WorldManager {
         // 14. Spawn All 7 Ancient Lore Relics & Secrets Displays!
         plugin.getHubLoreManager().spawnAllRelics(world);
 
-        plugin.getLogger().info("Grand Hub Archipelago rebuild complete! 5+ Floating Islands, Marble Fountain, Cherry Blossoms, Royal Citadel, and Airship Harbor are live.");
+        plugin.getLogger().info("Grand Hub Archipelago rebuild complete! 9 Sprawling Floating Islands, Slabs Only, Unobstructed Launchpads, and Scenic Vistas are live.");
     }
 
 

@@ -49,5 +49,9 @@ commands:
   secrets:
     description: View your discovered ancient relics and lore
     aliases: [secret, lore, relics]
+  survivalbackup:
+    description: Trigger an immediate survival world backup pushed directly to GitHub
+    permission: fpixel.admin
+    aliases: [backupnow, smpbackup]
 
 

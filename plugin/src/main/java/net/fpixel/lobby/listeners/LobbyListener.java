@@ -109,8 +109,8 @@ public class LobbyListener implements Listener {
                 double dz = loc.getZ() - spawn.getZ();
                 double distSq = dx * dx + dz * dz;
 
-                // Expanded grand hub radius is 135 blocks, min Y is 50, max Y is 240
-                if (distSq > 140 * 140 || loc.getY() < 50 || loc.getY() > 240) {
+                // Expanded grand hub radius is 180 blocks, min Y is 50, max Y is 240
+                if (distSq > 180 * 180 || loc.getY() < 50 || loc.getY() > 240) {
                     plugin.getLobbyManager().teleportToLobby(player);
                     ChatUtil.sendActionBar(player, "§c§lStay inside the Hub area!");
                     ChatUtil.playSound(player, Sound.ENTITY_ENDERMAN_TELEPORT, 0.7f, 1.2f);

@@ -72,12 +72,12 @@ public class HubNPCManager implements Listener {
         List<NPCDefinition> list = new ArrayList<>();
         double y = 100.0;
 
-        // 1. Central Welcome Guide (0, 100, -7.5) facing South (yaw 180)
+        // 1. Central Welcome Guide (0, 100, -8.5) facing South (yaw 180)
         list.add(new NPCDefinition(
                 "guide",
                 "§6§lGAME NAVIGATOR",
                 "§eClick to Browse Games",
-                new Location(world, 0.5, y, -7.5, 180f, 0f),
+                new Location(world, 0.5, y, -8.5, 180f, 0f),
                 new ItemBuilder(Material.GOLDEN_HELMET).build(),
                 new ItemBuilder(Material.GOLDEN_CHESTPLATE).build(),
                 new ItemBuilder(Material.GOLDEN_LEGGINGS).build(),
@@ -86,12 +86,12 @@ public class HubNPCManager implements Listener {
                 new ItemBuilder(Material.NETHER_STAR).build()
         ));
 
-        // 2. Survival SMP (Royal Citadel Gate: 0, 100, -28.5) facing South (yaw 180)
+        // 2. Survival SMP (Royal Citadel Gate: 0.5, 100, -52.5) facing South (yaw 180)
         list.add(new NPCDefinition(
                 "survival",
                 "§a§lSURVIVAL SMP",
                 "§7Vanilla Survival World",
-                new Location(world, 0.5, y, -28.5, 180f, 0f),
+                new Location(world, 0.5, y, -52.5, 180f, 0f),
                 new ItemBuilder(Material.DIAMOND_HELMET).build(),
                 new ItemBuilder(Material.DIAMOND_CHESTPLATE).build(),
                 new ItemBuilder(Material.DIAMOND_LEGGINGS).build(),
@@ -100,12 +100,12 @@ public class HubNPCManager implements Listener {
                 new ItemBuilder(Material.TRIDENT).build()
         ));
 
-        // 3. BedWars (Medieval Village: -28.5, 100, 0.5) facing East (yaw 90)
+        // 3. BedWars (Medieval Village: -56.5, 100, 0.5) facing East (yaw 90)
         list.add(new NPCDefinition(
                 "bedwars",
                 "§c§lBEDWARS",
                 "§710 Fortified Maps",
-                new Location(world, -28.5, y, 0.5, 90f, 0f),
+                new Location(world, -56.5, y, 0.5, 90f, 0f),
                 new ItemBuilder(Material.RED_WOOL).build(),
                 new ItemBuilder(Material.IRON_CHESTPLATE).build(),
                 new ItemBuilder(Material.IRON_LEGGINGS).build(),
@@ -114,12 +114,12 @@ public class HubNPCManager implements Listener {
                 new ItemBuilder(Material.RED_BED).build()
         ));
 
-        // 4. SkyWars (East Celestial Shrine: 32.5, 100, 0.5) facing West (yaw 270)
+        // 4. SkyWars (East Celestial Shrine: 58.5, 100, 10.5) facing West (yaw 270)
         list.add(new NPCDefinition(
                 "skywars",
                 "§b§lSKYWARS",
                 "§710 Floating Void Maps",
-                new Location(world, 32.5, y, 0.5, 270f, 0f),
+                new Location(world, 58.5, y, 10.5, 270f, 0f),
                 new ItemBuilder(Material.DIAMOND_HELMET).build(),
                 new ItemBuilder(Material.CHAINMAIL_CHESTPLATE).build(),
                 new ItemBuilder(Material.CHAINMAIL_LEGGINGS).build(),
@@ -128,12 +128,12 @@ public class HubNPCManager implements Listener {
                 new ItemBuilder(Material.ENDER_PEARL).build()
         ));
 
-        // 5. TNT Run (Roman Colosseum: 24.5, 100, -16.5) facing South-West (yaw 225)
+        // 5. TNT Run (Roman Colosseum: 52.5, 100, -42.5) facing South-West (yaw 225)
         list.add(new NPCDefinition(
                 "tntrun",
                 "§4§lTNT RUN",
                 "§710 Colosseum Maps",
-                new Location(world, 24.5, y, -16.5, 225f, 0f),
+                new Location(world, 52.5, y, -42.5, 225f, 0f),
                 new ItemBuilder(Material.TNT).build(),
                 new ItemBuilder(Material.LEATHER_CHESTPLATE).build(),
                 new ItemBuilder(Material.LEATHER_LEGGINGS).build(),
@@ -142,12 +142,12 @@ public class HubNPCManager implements Listener {
                 null
         ));
 
-        // 6. Duels & PvP (South Tournament Citadel: 0, 100, 26.5) facing North (yaw 0)
+        // 6. Duels & PvP (South Tournament Citadel: 0.5, 100, 62.5) facing North (yaw 0)
         list.add(new NPCDefinition(
                 "duels",
                 "§d§lDUELS & PVP",
                 "§71v1 Competitive Arenas",
-                new Location(world, 0.5, y, 26.5, 0f, 0f),
+                new Location(world, 0.5, y, 62.5, 0f, 0f),
                 new ItemBuilder(Material.IRON_HELMET).build(),
                 new ItemBuilder(Material.IRON_CHESTPLATE).build(),
                 new ItemBuilder(Material.IRON_LEGGINGS).build(),
@@ -156,12 +156,12 @@ public class HubNPCManager implements Listener {
                 new ItemBuilder(Material.SHIELD).build()
         ));
 
-        // 7. The Bridge (Airship Harbor: 24.5, 100, 18.5) facing North-West (yaw 315)
+        // 7. The Bridge (Airship Harbor: 46.5, 100, 56.5) facing North-West (yaw 315)
         list.add(new NPCDefinition(
                 "bridge",
                 "§6§lTHE BRIDGE 1V1",
                 "§7Score in Enemy Goal",
-                new Location(world, 24.5, y, 18.5, 315f, 0f),
+                new Location(world, 46.5, y, 56.5, 315f, 0f),
                 new ItemBuilder(Material.GOLDEN_HELMET).build(),
                 new ItemBuilder(Material.LEATHER_CHESTPLATE).build(),
                 new ItemBuilder(Material.LEATHER_LEGGINGS).build(),
@@ -170,12 +170,12 @@ public class HubNPCManager implements Listener {
                 new ItemBuilder(Material.RED_TERRACOTTA).build()
         ));
 
-        // 8. Sumo (Japanese Torii Shrine: -22.5, 100, 22.5) facing North-East (yaw 45)
+        // 8. Sumo (Japanese Torii Shrine: -46.5, 100, 56.5) facing North-East (yaw 45)
         list.add(new NPCDefinition(
                 "sumo",
                 "§e§lSUMO 1V1",
                 "§7Knock Off The Ring",
-                new Location(world, -22.5, y, 22.5, 45f, 0f),
+                new Location(world, -46.5, y, 56.5, 45f, 0f),
                 null,
                 new ItemBuilder(Material.IRON_CHESTPLATE).build(),
                 new ItemBuilder(Material.LEATHER_LEGGINGS).build(),
@@ -184,12 +184,12 @@ public class HubNPCManager implements Listener {
                 null
         ));
 
-        // 9. Parkour Duels (Agility Spire: -20.5, 100, -20.5) facing South-East (yaw 135)
+        // 9. Parkour Duels (Agility Spire: -48.5, 100, -46.5) facing South-East (yaw 135)
         list.add(new NPCDefinition(
                 "parkour",
                 "§a§lPARKOUR DUELS",
                 "§710 Checkpoint Courses",
-                new Location(world, -20.5, y, -20.5, 135f, 0f),
+                new Location(world, -48.5, y, -46.5, 135f, 0f),
                 null,
                 new ItemBuilder(Material.LEATHER_CHESTPLATE).build(),
                 new ItemBuilder(Material.LEATHER_LEGGINGS).build(),
@@ -198,13 +198,13 @@ public class HubNPCManager implements Listener {
                 null
         ));
 
-        // 10. Archivist Eldrin - Grand Chronicler of FPixel (-5.5, 100, -5.5) facing South-East (yaw 135)
+        // 10. Archivist Eldrin - Grand Chronicler of FPixel (-6.5, 100, -5.5) facing South-East (yaw 135)
         list.add(new NPCDefinition(
                 "eldrin",
                 "§5§lARCHIVIST ELDRIN",
                 "§dKeeper of Ancient Secrets",
                 "§e§l▶ CLICK FOR LORE & SECRETS ◀",
-                new Location(world, -5.5, y, -5.5, 135f, 0f),
+                new Location(world, -6.5, y, -5.5, 135f, 0f),
                 new ItemBuilder(Material.PLAYER_HEAD).build(),
                 new ItemBuilder(Material.GOLDEN_CHESTPLATE).build(),
                 new ItemBuilder(Material.LEATHER_LEGGINGS).build(),
@@ -213,13 +213,13 @@ public class HubNPCManager implements Listener {
                 new ItemBuilder(Material.SPYGLASS).build()
         ));
 
-        // 11. Forge-Master Torvald - Ancient Bed & Weapon Smith (-38.5, 100, -8.5) facing East (yaw 90)
+        // 11. Forge-Master Torvald - Ancient Bed & Weapon Smith (-62.5, 100, -10.5) facing East (yaw 90)
         list.add(new NPCDefinition(
                 "blacksmith",
                 "§6§lFORGE-MASTER TORVALD",
                 "§7Ancient Bed & Blade Smith",
                 "§e§l▶ CLICK TO TALK ◀",
-                new Location(world, -38.5, y, -8.5, 90f, 0f),
+                new Location(world, -62.5, y, -10.5, 90f, 0f),
                 new ItemBuilder(Material.CHAINMAIL_HELMET).build(),
                 new ItemBuilder(Material.CHAINMAIL_CHESTPLATE).build(),
                 new ItemBuilder(Material.LEATHER_LEGGINGS).build(),
@@ -228,13 +228,13 @@ public class HubNPCManager implements Listener {
                 new ItemBuilder(Material.SHIELD).build()
         ));
 
-        // 12. Grandmaster Shen - Torii Monk & Sumo Elder (-30.5, 100, 24.5) facing North-East (yaw 45)
+        // 12. Grandmaster Shen - Torii Monk & Sumo Elder (-52.5, 100, 62.5) facing North-East (yaw 45)
         list.add(new NPCDefinition(
                 "shen",
                 "§b§lGRANDMASTER SHEN",
                 "§fSumo Elder & Torii Guardian",
                 "§e§l▶ CLICK TO TALK ◀",
-                new Location(world, -30.5, y, 24.5, 45f, 0f),
+                new Location(world, -52.5, y, 62.5, 45f, 0f),
                 null,
                 new ItemBuilder(Material.IRON_CHESTPLATE).build(),
                 new ItemBuilder(Material.LEATHER_LEGGINGS).build(),
@@ -243,12 +243,12 @@ public class HubNPCManager implements Listener {
                 new ItemBuilder(Material.CHERRY_SAPLING).build()
         ));
 
-        // 13. Murder Mystery (-10.5, 100, -2.5) facing East (yaw 90)
+        // 13. Murder Mystery (-11.5, 100, -3.5) facing East (yaw 90)
         list.add(new NPCDefinition(
                 "murdermystery",
                 "§c§lMURDER MYSTERY",
                 "§7Haunted Manor & Cyber",
-                new Location(world, -10.5, y, -2.5, 90f, 0f),
+                new Location(world, -11.5, y, -3.5, 90f, 0f),
                 new ItemBuilder(Material.WITHER_SKELETON_SKULL).build(),
                 new ItemBuilder(Material.LEATHER_CHESTPLATE).build(),
                 new ItemBuilder(Material.LEATHER_LEGGINGS).build(),
@@ -257,12 +257,12 @@ public class HubNPCManager implements Listener {
                 new ItemBuilder(Material.BOW).build()
         ));
 
-        // 14. Prop Hunt (10.5, 100, -2.5) facing West (yaw 270)
+        // 14. Prop Hunt (11.5, 100, -3.5) facing West (yaw 270)
         list.add(new NPCDefinition(
                 "prophunt",
                 "§6§lPROP HUNT",
                 "§7Warehouse & Grand Bazaar",
-                new Location(world, 10.5, y, -2.5, 270f, 0f),
+                new Location(world, 11.5, y, -3.5, 270f, 0f),
                 new ItemBuilder(Material.CRAFTING_TABLE).build(),
                 new ItemBuilder(Material.GOLDEN_CHESTPLATE).build(),
                 new ItemBuilder(Material.GOLDEN_LEGGINGS).build(),

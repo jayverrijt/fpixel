@@ -34,6 +34,10 @@ public class ChatUtil {
         player.sendMessage(component(PREFIX + message));
     }
 
+    public static void sendMessage(org.bukkit.command.CommandSender sender, String message) {
+        sender.sendMessage(component(PREFIX + message));
+    }
+
     public static void sendRawMessage(Player player, String message) {
         player.sendMessage(component(message));
     }

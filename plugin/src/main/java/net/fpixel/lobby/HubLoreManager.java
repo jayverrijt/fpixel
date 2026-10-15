@@ -63,22 +63,22 @@ public class HubLoreManager implements Listener, CommandExecutor {
         relics.add(new HubRelic(
                 "relic_archivist_journal",
                 "§6§lThe Chronicler's First Tome",
-                "Founders Manor - Grand Library",
-                "§7Hidden amongst the dusty, enchanted bookshelves of the Grand Manor.",
+                "Medieval Village - Autumn Townhouse",
+                "§7Hidden amongst the dusty, enchanted bookshelves of the village townhouse.",
                 "§eIn the Year of the Shattering, when the Void tore open the mortal world, the First Builders carved this floating sanctuary from the mountain peaks so that humanity's spirit would never fade.",
                 Material.WRITTEN_BOOK,
-                -44, cy + 1, -44
+                -74, cy + 1, -10
         ));
 
-        // 2. Crystal Canal: The Sunken Chalice of Aetheria
+        // 2. Crystal Fountain: The Sunken Chalice of Aetheria
         relics.add(new HubRelic(
                 "relic_sunken_chalice",
                 "§b§lThe Sunken Chalice of Aetheria",
-                "Freshwater River Bridge",
-                "§7Submerged deep in the clear river beneath the arched wooden bridge.",
-                "§eA ceremonial goblet of pure electrum, dropped during the Great Crossing. The river spirits have kept it gleaming for centuries beneath the lily pads.",
+                "Grand Central Fountain",
+                "§7Resting within the crystal waters of the Grand Marble Fountain.",
+                "§eA ceremonial goblet of pure electrum, dropped during the Great Crossing. The fountain waters have kept it gleaming for centuries.",
                 Material.PRISMARINE_CRYSTALS,
-                0, cy - 1, -31
+                0, cy + 2, 0
         ));
 
         // 3. BedWars Smithy: The Forge-Master's Ember
@@ -89,7 +89,7 @@ public class HubLoreManager implements Listener, CommandExecutor {
                 "§7Tucked in a hidden alcove behind the smoking anvils of the BedWars forge.",
                 "§eAn eternal flame pulled from the Nether core. The ancient blacksmiths used this very ember to forge the magical beds that tether a champion's soul to their team.",
                 Material.BLAZE_POWDER,
-                25, cy + 1, -25
+                -64, cy + 1, -12
         ));
 
         // 4. Golden Windmill: The Stargazer's Celestial Lens
@@ -97,10 +97,10 @@ public class HubLoreManager implements Listener, CommandExecutor {
                 "relic_stargazer_lens",
                 "§e§lThe Stargazer's Celestial Lens",
                 "The Golden Windmill - High Loft",
-                "§7High above the golden wheat fields, on the windy wooden rafters of the windmill.",
+                "§7High above the parkour ruins, on the windy wooden rafters of the windmill.",
                 "§eThrough this crystal lens, the ancient astrologers tracked the alignment of the Phoenix constellation, foretelling the rise of a new generation of champions.",
                 Material.SPYGLASS,
-                42, cy + 14, -42
+                -66, cy + 14, -62
         ));
 
         // 5. Sumo Zen Garden: The Sacred Torii Blossom
@@ -111,7 +111,7 @@ public class HubLoreManager implements Listener, CommandExecutor {
                 "§7Resting within the ancient hollow of the giant pink cherry tree by the Torii.",
                 "§ePlanted by Master Shen, founder of the Sumo Ring. Its blossoms remind all who duel that stillness and balance will overcome brute force every time.",
                 Material.CHERRY_SAPLING,
-                -36, cy + 1, 6
+                -60, cy + 1, 70
         ));
 
         // 6. TNT Colosseum: The Volcanic Core
@@ -122,18 +122,18 @@ public class HubLoreManager implements Listener, CommandExecutor {
                 "§7Concealed in a smoking sulfur crack behind the towering volcanic pillars.",
                 "§eA volatile sphere of crystallized magma. The pyromancers of Aetheria discovered that this stone could dissolve solid ground in the blink of an eye.",
                 Material.MAGMA_CREAM,
-                27, cy + 1, 27
+                63, cy + 1, -48
         ));
 
-        // 7. Parkour Spire: The Cloudrunner's Feather
+        // 7. Observatory Dome: The Cloudrunner's Feather
         relics.add(new HubRelic(
                 "relic_cloudrunner_feather",
                 "§a§lThe Cloudrunner's Feather",
-                "Parkour Spire - Rooftop Peak",
-                "§7Perched at the very peak of the Parkour Academy roof, reached by a rooftop climb.",
+                "Airship Harbor - Observatory Dome",
+                "§7Perched atop the glass celestial observatory dome overlooking the airship harbor.",
                 "§eLeft behind by Zephyr, the first acrobat who leaped across the void from island to island without ever touching the ground.",
                 Material.FEATHER,
-                -22, cy + 14, -22
+                48, cy + 8, 56
         ));
     }
 

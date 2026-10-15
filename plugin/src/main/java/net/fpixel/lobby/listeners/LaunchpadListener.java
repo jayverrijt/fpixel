@@ -11,6 +11,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.util.Vector;
 
 public class LaunchpadListener implements Listener {
     private final FPixelPlugin plugin;
@@ -37,12 +38,34 @@ public class LaunchpadListener implements Listener {
             event.setCancelled(true);
 
             Location loc = player.getLocation();
-            player.setVelocity(loc.getDirection().multiply(2.4).setY(1.15));
+            Vector dir = loc.getDirection();
+
+            // Hub intelligent vector targeting: smooth, unobstructed flight arcs
+            if (player.getWorld().equals(plugin.getServer().getWorlds().get(0))) {
+                int bx = plate.getX();
+                int bz = plate.getZ();
+                double distFromCenter = Math.hypot(bx, bz);
+
+                if (distFromCenter <= 25) {
+                    // Outward launchpad from Central Plaza: point outward along radial vector to target island!
+                    double angle = Math.atan2(bz, bx);
+                    dir = new Vector(Math.cos(angle), 0, Math.sin(angle)).normalize();
+                    player.setVelocity(dir.multiply(3.2).setY(1.35));
+                } else {
+                    // Return launchpad on outer island: point back inward towards Central Plaza (0, 100, 0)!
+                    double angle = Math.atan2(-bz, -bx);
+                    dir = new Vector(Math.cos(angle), 0, Math.sin(angle)).normalize();
+                    player.setVelocity(dir.multiply(3.2).setY(1.35));
+                }
+            } else {
+                player.setVelocity(dir.multiply(2.4).setY(1.15));
+            }
 
             player.getWorld().spawnParticle(Particle.EXPLOSION, loc, 1);
-            player.getWorld().spawnParticle(Particle.FIREWORK, loc, 20, 0.3, 0.3, 0.3, 0.08);
+            player.getWorld().spawnParticle(Particle.FIREWORK, loc, 35, 0.4, 0.4, 0.4, 0.1);
             player.playSound(loc, Sound.ENTITY_BAT_TAKEOFF, 1.0f, 1.4f);
             player.playSound(loc, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1.0f, 1.0f);
+            player.playSound(loc, Sound.ENTITY_ENDER_DRAGON_FLAP, 1.0f, 1.2f);
         }
     }
 }
