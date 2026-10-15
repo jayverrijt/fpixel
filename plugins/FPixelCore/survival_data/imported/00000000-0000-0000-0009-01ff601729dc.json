@@ -1,0 +1,54 @@
+{
+  "username": ".minnieheks",
+  "old_uuid": "00000000-0000-0000-0009-01ff601729dc",
+  "offline_uuid": "00000000-0000-0000-0009-01ff601729dc",
+  "x": 1297.497,
+  "y": 55.0,
+  "z": 103.07788,
+  "yaw": -9.51519775390625,
+  "pitch": 17.53302001953125,
+  "level": 41,
+  "exp": 0.9327731728553772,
+  "health": 20.0,
+  "food": 18,
+  "inventory": [
+    {
+      "slot": 0,
+      "material": "CARROT",
+      "count": 12
+    },
+    {
+      "slot": 1,
+      "material": "IRON_AXE",
+      "count": 1,
+      "damage": 73
+    }
+  ],
+  "equipment": {
+    "offhand": {
+      "slot": 0,
+      "material": "SHIELD",
+      "count": 1
+    },
+    "legs": {
+      "slot": 0,
+      "material": "IRON_LEGGINGS",
+      "count": 1
+    },
+    "head": {
+      "slot": 0,
+      "material": "IRON_HELMET",
+      "count": 1
+    },
+    "chest": {
+      "slot": 0,
+      "material": "IRON_CHESTPLATE",
+      "count": 1
+    },
+    "feet": {
+      "slot": 0,
+      "material": "IRON_BOOTS",
+      "count": 1
+    }
+  }
+}
