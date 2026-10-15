@@ -70,6 +70,8 @@ public class MapSelectMenu {
             case "BRIDGE" -> Material.RED_TERRACOTTA;
             case "PARKOUR" -> Material.DIAMOND_BOOTS;
             case "SUMO" -> Material.LEAD;
+            case "MURDER_MYSTERY" -> Material.IRON_SWORD;
+            case "PROP_HUNT" -> Material.CRAFTING_TABLE;
             default -> Material.IRON_SWORD;
         };
 

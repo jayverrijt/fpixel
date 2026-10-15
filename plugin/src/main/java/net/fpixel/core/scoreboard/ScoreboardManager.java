@@ -105,6 +105,9 @@ public class ScoreboardManager {
                 this.objective = scoreboard.registerNewObjective("fpixel_sb", Criteria.DUMMY, ChatUtil.component("§6§lFPIXEL"));
                 this.objective.setDisplaySlot(DisplaySlot.SIDEBAR);
                 player.setScoreboard(scoreboard);
+                if (FPixelPlugin.getInstance().getTablistManager() != null) {
+                    FPixelPlugin.getInstance().getTablistManager().updateAllPlayerTeams();
+                }
             } else {
                 this.objective = null;
             }

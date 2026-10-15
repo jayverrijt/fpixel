@@ -16,13 +16,13 @@ public class StatsMenu {
     public static final String TITLE = "§8My Profile & Stats";
 
     public static void open(FPixelPlugin plugin, Player player) {
-        Inventory inv = Bukkit.createInventory(null, 36, ChatUtil.component(TITLE));
+        Inventory inv = Bukkit.createInventory(null, 45, ChatUtil.component(TITLE));
         FPixelUser user = plugin.getUserManager().getUser(player);
         Rank rank = plugin.getRankManager().getRank(player);
 
         // Fillers
         ItemStack filler = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
-        for (int i = 0; i < 36; i++) {
+        for (int i = 0; i < 45; i++) {
             inv.setItem(i, filler);
         }
 
@@ -72,6 +72,26 @@ public class StatsMenu {
                 )
                 .build();
         inv.setItem(24, sumoStats);
+
+        // Murder Mystery Stats
+        ItemStack mmStats = new ItemBuilder(Material.IRON_SWORD)
+                .name("§c§lMurder Mystery Stats")
+                .lore(
+                        "§7Wins: §a" + user.getMurderMysteryWins(),
+                        "§7Survive as Innocent/Detective or Slay as Murderer!"
+                )
+                .build();
+        inv.setItem(29, mmStats);
+
+        // Prop Hunt Stats
+        ItemStack phStats = new ItemBuilder(Material.CRAFTING_TABLE)
+                .name("§6§lProp Hunt Stats")
+                .lore(
+                        "§7Wins: §a" + user.getPropHuntWins(),
+                        "§7Fool hunters as Props or Seek them as Hunters!"
+                )
+                .build();
+        inv.setItem(33, phStats);
 
         player.openInventory(inv);
         ChatUtil.playSound(player, Sound.UI_BUTTON_CLICK, 0.7f, 1.2f);

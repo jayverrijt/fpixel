@@ -5,7 +5,9 @@ import net.fpixel.games.bedwars.BedWarsGame;
 import net.fpixel.games.bedwars.BedWarsSpawner;
 import net.fpixel.games.bedwars.BedWarsTeam;
 import net.fpixel.games.bridge.BridgeGame;
+import net.fpixel.games.murdermystery.MurderMysteryGame;
 import net.fpixel.games.parkour.ParkourGame;
+import net.fpixel.games.prophunt.PropHuntGame;
 import net.fpixel.games.pvp.PvPGame;
 import net.fpixel.games.skywars.SkyWarsGame;
 import net.fpixel.games.sumo.SumoGame;
@@ -39,7 +41,7 @@ public class WorldManager {
         // 1. Grand Castle Hub in default world at (0, 100, 0)
         buildGrandHub(defaultWorld);
 
-        // Dedicated pure void world for all minigames (Sumo, TNT Run, SkyWars, BedWars, Parkour, Bridge)
+        // Dedicated pure void world for all minigames (Sumo, TNT Run, SkyWars, BedWars, Parkour, Bridge, Murder Mystery, Prop Hunt)
         World arenaWorld = getOrCreateArenaWorld(defaultWorld);
 
         // 2. Global Multiplayer BedWars (Min 3, Max 8-16) - Loads downloaded worlds if available
@@ -57,6 +59,12 @@ public class WorldManager {
         // 6. Dedicated 1v1 Duel Arenas (Min 2, Max 2) for:
         //    SkyWars, BedWars, PvP, Parkour, TNT, Sumo, Bridge
         setupAllDuelArenas(arenaWorld);
+
+        // 7. Murder Mystery (Min 3, Max 4)
+        setupMurderMysteryMaps(arenaWorld);
+
+        // 8. Prop Hunt (Min 2, Max 4)
+        setupPropHuntMaps(arenaWorld);
 
         plugin.getLogger().info("Map setup complete! All global lobbies and 1v1 duel arenas are live in void world.");
     }
@@ -1166,6 +1174,354 @@ public class WorldManager {
             game.setBlueSpawn(new Location(bWorld, bx + 14.0, cy + 1, cz + 0.5, 90f, 0f));
             game.setRedCage(new Location(bWorld, rx - 20.0, cy + 4, cz + 0.5, -90f, 0f));
             game.setBlueCage(new Location(bWorld, bx + 20.0, cy + 4, cz + 0.5, 90f, 0f));
+
+            plugin.getGameManager().registerArena(game);
+        }
+    }
+
+    // =========================================================================
+    // 7. Murder Mystery Maps (Min 3, Max 4)
+    // =========================================================================
+
+    private void setupMurderMysteryMaps(World arenaWorld) {
+        // Map 1: Haunted Manor
+        {
+            int cx = 2500;
+            int cy = 100;
+            int cz = 3500;
+            String id = "mm-1";
+
+            // Clear previous map area
+            MapBuilder.fillBox(arenaWorld, cx - 30, cy - 10, cz - 30, cx + 30, cy + 30, cz + 30, Material.AIR);
+
+            // 1. Manor Foundation & Floor (40x40)
+            MapBuilder.fillBox(arenaWorld, cx - 20, cy, cz - 20, cx + 20, cy, cz + 20, Material.DARK_OAK_PLANKS);
+            MapBuilder.fillBox(arenaWorld, cx - 20, cy - 1, cz - 20, cx + 20, cy - 5, cz + 20, Material.DEEPSLATE_BRICKS);
+
+            // 2. Exterior Walls (Height 10)
+            MapBuilder.fillBox(arenaWorld, cx - 20, cy + 1, cz - 20, cx + 20, cy + 10, cz - 20, Material.POLISHED_DEEPSLATE);
+            MapBuilder.fillBox(arenaWorld, cx - 20, cy + 1, cz + 20, cx + 20, cy + 10, cz + 20, Material.POLISHED_DEEPSLATE);
+            MapBuilder.fillBox(arenaWorld, cx - 20, cy + 1, cz - 20, cx - 20, cy + 10, cz + 20, Material.POLISHED_DEEPSLATE);
+            MapBuilder.fillBox(arenaWorld, cx + 20, cy + 1, cz - 20, cx + 20, cy + 10, cz + 20, Material.POLISHED_DEEPSLATE);
+
+            // Roof with Dark Oak Planks & Slanted eaves
+            MapBuilder.fillBox(arenaWorld, cx - 21, cy + 11, cz - 21, cx + 21, cy + 11, cz + 21, Material.DARK_OAK_PLANKS);
+
+            // 3. Interior Walls dividing into 4 Grand Rooms + Foyer
+            MapBuilder.fillBox(arenaWorld, cx - 20, cy + 1, cz, cx - 4, cy + 10, cz, Material.DEEPSLATE_BRICKS);
+            MapBuilder.fillBox(arenaWorld, cx + 4, cy + 1, cz, cx + 20, cy + 10, cz, Material.DEEPSLATE_BRICKS);
+            MapBuilder.fillBox(arenaWorld, cx, cy + 1, cz - 20, cx, cy + 10, cz - 4, Material.DEEPSLATE_BRICKS);
+            MapBuilder.fillBox(arenaWorld, cx, cy + 1, cz + 4, cx, cy + 10, cz + 20, Material.DEEPSLATE_BRICKS);
+
+            // 2nd Floor Mezzanine / Walkway at cy + 5
+            MapBuilder.fillBox(arenaWorld, cx - 6, cy + 5, cz - 6, cx + 6, cy + 5, cz + 6, Material.SPRUCE_PLANKS);
+            MapBuilder.fillBox(arenaWorld, cx - 2, cy + 5, cz - 2, cx + 2, cy + 5, cz + 2, Material.AIR); // open center
+
+            // Grand Chandelier hanging in center foyer
+            MapBuilder.buildPillar(arenaWorld, cx, cy + 7, cz, 4, Material.IRON_BARS);
+            worldAt(arenaWorld, cx, cy + 6, cz, Material.SEA_LANTERN);
+            worldAt(arenaWorld, cx - 1, cy + 6, cz, Material.SOUL_LANTERN);
+            worldAt(arenaWorld, cx + 1, cy + 6, cz, Material.SOUL_LANTERN);
+            worldAt(arenaWorld, cx, cy + 6, cz - 1, Material.SOUL_LANTERN);
+            worldAt(arenaWorld, cx, cy + 6, cz + 1, Material.SOUL_LANTERN);
+
+            // Grand Staircase
+            for (int s = 1; s <= 5; s++) {
+                worldAt(arenaWorld, cx - 3 + s, cy + s, cz - 4, Material.DARK_OAK_STAIRS);
+            }
+
+            // Room 1 (North-West): Dining Hall
+            MapBuilder.fillBox(arenaWorld, cx - 16, cy + 1, cz - 12, cx - 8, cy + 1, cz - 12, Material.SPRUCE_FENCE);
+            MapBuilder.fillBox(arenaWorld, cx - 16, cy + 2, cz - 12, cx - 8, cy + 2, cz - 12, Material.OAK_PRESSURE_PLATE);
+            worldAt(arenaWorld, cx - 12, cy + 3, cz - 12, Material.LANTERN);
+
+            // Room 2 (North-East): Haunted Library
+            MapBuilder.fillBox(arenaWorld, cx + 8, cy + 1, cz - 19, cx + 19, cy + 9, cz - 19, Material.BOOKSHELF);
+            MapBuilder.fillBox(arenaWorld, cx + 19, cy + 1, cz - 19, cx + 19, cy + 9, cz - 8, Material.BOOKSHELF);
+            worldAt(arenaWorld, cx + 14, cy + 1, cz - 14, Material.ENCHANTING_TABLE);
+            worldAt(arenaWorld, cx + 13, cy + 2, cz - 13, Material.COBWEB);
+            worldAt(arenaWorld, cx + 15, cy + 2, cz - 15, Material.COBWEB);
+
+            // Room 3 (South-West): Master Bedroom & Fireplace
+            worldAt(arenaWorld, cx - 14, cy + 1, cz + 14, Material.RED_BED);
+            MapBuilder.fillBox(arenaWorld, cx - 19, cy + 1, cz + 9, cx - 19, cy + 6, cz + 11, Material.BRICKS); // Fireplace
+            worldAt(arenaWorld, cx - 18, cy + 1, cz + 10, Material.SOUL_CAMPFIRE);
+
+            // Room 4 (South-East): Cellar & Dungeon
+            MapBuilder.fillBox(arenaWorld, cx + 8, cy - 4, cz + 8, cx + 19, cy - 1, cz + 19, Material.AIR);
+            MapBuilder.fillBox(arenaWorld, cx + 7, cy - 5, cz + 7, cx + 20, cy - 5, cz + 20, Material.MOSSY_COBBLESTONE);
+            MapBuilder.fillBox(arenaWorld, cx + 12, cy - 4, cz + 12, cx + 16, cy - 2, cz + 12, Material.IRON_BARS);
+            worldAt(arenaWorld, cx + 14, cy - 4, cz + 14, Material.CAULDRON);
+
+            // Waiting Cage
+            Location waitingLoc = new Location(arenaWorld, cx + 0.5, cy + 55, cz + 0.5);
+            MapBuilder.buildWaitingLobby(arenaWorld, waitingLoc, Material.POLISHED_DEEPSLATE, Material.DEEPSLATE_BRICK_WALL, Material.PURPLE_STAINED_GLASS);
+
+            MurderMysteryGame game = new MurderMysteryGame(plugin, id, "Murder Mystery: Haunted Manor");
+            game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
+            game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
+
+            // 4 Distinct Player Spawns
+            game.addSpawnPoint(new Location(arenaWorld, cx + 0.5, cy + 1, cz - 12 + 0.5, 0f, 0f));     // Foyer
+            game.addSpawnPoint(new Location(arenaWorld, cx - 12 + 0.5, cy + 1, cz + 12 + 0.5, -90f, 0f)); // Master Bedroom
+            game.addSpawnPoint(new Location(arenaWorld, cx + 14 + 0.5, cy + 1, cz - 12 + 0.5, 90f, 0f));  // Library
+            game.addSpawnPoint(new Location(arenaWorld, cx + 14 + 0.5, cy - 4, cz + 14 + 0.5, 45f, 0f));  // Cellar
+
+            // 10 Scattered Gold Spawns
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx + 0.5, cy + 1.2, cz - 8 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx + 0.5, cy + 1.2, cz + 8 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx - 12 + 0.5, cy + 1.2, cz - 10 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx - 16 + 0.5, cy + 1.2, cz - 16 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx + 12 + 0.5, cy + 1.2, cz - 16 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx + 16 + 0.5, cy + 1.2, cz - 10 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx - 12 + 0.5, cy + 1.2, cz + 16 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx - 16 + 0.5, cy + 1.2, cz + 10 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx + 14 + 0.5, cy - 3.8, cz + 10 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx + 0.5, cy + 6.2, cz + 0.5)); // 2nd floor balcony
+
+            plugin.getGameManager().registerArena(game);
+        }
+
+        // Map 2: Cyber Station
+        {
+            int cx = 2900;
+            int cy = 100;
+            int cz = 3500;
+            String id = "mm-2";
+
+            // Clear previous map area
+            MapBuilder.fillBox(arenaWorld, cx - 30, cy - 10, cz - 30, cx + 30, cy + 30, cz + 30, Material.AIR);
+
+            // 1. Station Foundation & Floor
+            MapBuilder.fillBox(arenaWorld, cx - 20, cy, cz - 20, cx + 20, cy, cz + 20, Material.SMOOTH_QUARTZ);
+            MapBuilder.fillBox(arenaWorld, cx - 20, cy - 1, cz - 20, cx + 20, cy - 3, cz + 20, Material.POLISHED_BLACKSTONE);
+
+            // 2. Futuristic Station Walls (Height 8)
+            MapBuilder.fillBox(arenaWorld, cx - 20, cy + 1, cz - 20, cx + 20, cy + 8, cz - 20, Material.CYAN_CONCRETE);
+            MapBuilder.fillBox(arenaWorld, cx - 20, cy + 1, cz + 20, cx + 20, cy + 8, cz + 20, Material.CYAN_CONCRETE);
+            MapBuilder.fillBox(arenaWorld, cx - 20, cy + 1, cz - 20, cx - 20, cy + 8, cz + 20, Material.CYAN_CONCRETE);
+            MapBuilder.fillBox(arenaWorld, cx + 20, cy + 1, cz - 20, cx + 20, cy + 8, cz + 20, Material.CYAN_CONCRETE);
+
+            // Station Roof with Glass skylights
+            MapBuilder.fillBox(arenaWorld, cx - 20, cy + 9, cz - 20, cx + 20, cy + 9, cz + 20, Material.GRAY_CONCRETE);
+            MapBuilder.fillBox(arenaWorld, cx - 6, cy + 9, cz - 6, cx + 6, cy + 9, cz + 6, Material.CYAN_STAINED_GLASS);
+
+            // Central Reactor Core
+            MapBuilder.fillCylinder(arenaWorld, cx, cy + 1, cz, 4, 1, Material.POLISHED_BLACKSTONE);
+            worldAt(arenaWorld, cx, cy + 1, cz, Material.BEACON);
+            worldAt(arenaWorld, cx, cy + 2, cz, Material.CYAN_STAINED_GLASS);
+            worldAt(arenaWorld, cx - 3, cy + 2, cz, Material.SEA_LANTERN);
+            worldAt(arenaWorld, cx + 3, cy + 2, cz, Material.SEA_LANTERN);
+            worldAt(arenaWorld, cx, cy + 2, cz - 3, Material.SEA_LANTERN);
+            worldAt(arenaWorld, cx, cy + 2, cz + 3, Material.SEA_LANTERN);
+
+            // Sector 1: Research Lab (North-West)
+            MapBuilder.fillBox(arenaWorld, cx - 18, cy + 1, cz - 18, cx - 10, cy + 1, cz - 18, Material.IRON_BLOCK);
+            worldAt(arenaWorld, cx - 14, cy + 2, cz - 18, Material.BREWING_STAND);
+            worldAt(arenaWorld, cx - 12, cy + 2, cz - 18, Material.CAULDRON);
+
+            // Sector 2: Hydroponics Bay (North-East)
+            MapBuilder.fillBox(arenaWorld, cx + 10, cy + 1, cz - 18, cx + 18, cy + 1, cz - 10, Material.MOSS_BLOCK);
+            worldAt(arenaWorld, cx + 14, cy + 2, cz - 14, Material.FLOWERING_AZALEA);
+
+            // Sector 3: Command Bridge (South)
+            MapBuilder.fillBox(arenaWorld, cx - 8, cy + 2, cz + 16, cx + 8, cy + 2, cz + 18, Material.POLISHED_BLACKSTONE_STAIRS);
+            MapBuilder.fillBox(arenaWorld, cx - 6, cy + 3, cz + 20, cx + 6, cy + 6, cz + 20, Material.TINTED_GLASS); // viewport
+
+            // Waiting Cage
+            Location waitingLoc = new Location(arenaWorld, cx + 0.5, cy + 55, cz + 0.5);
+            MapBuilder.buildWaitingLobby(arenaWorld, waitingLoc, Material.SMOOTH_QUARTZ, Material.POLISHED_BLACKSTONE, Material.CYAN_STAINED_GLASS);
+
+            MurderMysteryGame game = new MurderMysteryGame(plugin, id, "Murder Mystery: Cyber Station");
+            game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
+            game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
+
+            // 4 Player Spawns
+            game.addSpawnPoint(new Location(arenaWorld, cx - 14 + 0.5, cy + 1, cz - 14 + 0.5, -45f, 0f)); // Lab
+            game.addSpawnPoint(new Location(arenaWorld, cx + 14 + 0.5, cy + 1, cz - 14 + 0.5, 45f, 0f));  // Hydroponics
+            game.addSpawnPoint(new Location(arenaWorld, cx + 0.5, cy + 3, cz + 15 + 0.5, 180f, 0f));      // Command Bridge
+            game.addSpawnPoint(new Location(arenaWorld, cx + 0.5, cy + 1, cz - 14 + 0.5, 0f, 0f));        // Entry Corridor
+
+            // 10 Gold Spawns
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx + 0.5, cy + 2.2, cz + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx - 12 + 0.5, cy + 1.2, cz - 14 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx - 16 + 0.5, cy + 1.2, cz - 8 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx + 12 + 0.5, cy + 1.2, cz - 14 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx + 16 + 0.5, cy + 1.2, cz - 8 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx + 0.5, cy + 3.2, cz + 14 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx - 12 + 0.5, cy + 1.2, cz + 10 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx + 12 + 0.5, cy + 1.2, cz + 10 + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx - 6 + 0.5, cy + 1.2, cz + 0.5));
+            game.addGoldSpawnPoint(new Location(arenaWorld, cx + 6 + 0.5, cy + 1.2, cz + 0.5));
+
+            plugin.getGameManager().registerArena(game);
+        }
+    }
+
+    // =========================================================================
+    // 8. Prop Hunt Maps (Min 2, Max 4)
+    // =========================================================================
+
+    private void setupPropHuntMaps(World arenaWorld) {
+        // Map 1: Warehouse & Workshop
+        {
+            int cx = -2500;
+            int cy = 100;
+            int cz = 3500;
+            String id = "ph-1";
+
+            // Clear previous map area
+            MapBuilder.fillBox(arenaWorld, cx - 25, cy - 10, cz - 25, cx + 25, cy + 25, cz + 25, Material.AIR);
+
+            // 1. Warehouse Floor (32x32)
+            MapBuilder.fillBox(arenaWorld, cx - 16, cy, cz - 16, cx + 16, cy, cz + 16, Material.POLISHED_ANDESITE);
+            MapBuilder.fillBox(arenaWorld, cx - 16, cy - 1, cz - 16, cx + 16, cy - 3, cz + 16, Material.SMOOTH_STONE);
+
+            // 2. Brick Walls (Height 8)
+            MapBuilder.fillBox(arenaWorld, cx - 16, cy + 1, cz - 16, cx + 16, cy + 8, cz - 16, Material.BRICKS);
+            MapBuilder.fillBox(arenaWorld, cx - 16, cy + 1, cz + 16, cx + 16, cy + 8, cz + 16, Material.BRICKS);
+            MapBuilder.fillBox(arenaWorld, cx - 16, cy + 1, cz - 16, cx - 16, cy + 8, cz + 16, Material.BRICKS);
+            MapBuilder.fillBox(arenaWorld, cx + 16, cy + 1, cz - 16, cx + 16, cy + 8, cz + 16, Material.BRICKS);
+
+            // Warehouse Roof with Skylights
+            MapBuilder.fillBox(arenaWorld, cx - 16, cy + 9, cz - 16, cx + 16, cy + 9, cz + 16, Material.SPRUCE_PLANKS);
+            MapBuilder.fillBox(arenaWorld, cx - 8, cy + 9, cz - 8, cx + 8, cy + 9, cz + 8, Material.GLASS);
+
+            // 3. Mezzanine Catwalk along North wall at cy + 4
+            MapBuilder.fillBox(arenaWorld, cx - 15, cy + 4, cz - 15, cx + 15, cy + 4, cz - 10, Material.SPRUCE_PLANKS);
+            MapBuilder.fillBox(arenaWorld, cx - 15, cy + 5, cz - 10, cx + 15, cy + 5, cz - 10, Material.IRON_BARS);
+            for (int s = 1; s <= 4; s++) {
+                worldAt(arenaWorld, cx + 14, cy + s, cz - 10 + s, Material.SPRUCE_STAIRS);
+            }
+
+            // 4. Hunter Spawn Booth (Enclosed glass cage at cy + 1)
+            MapBuilder.fillBox(arenaWorld, cx - 3, cy + 1, cz + 11, cx + 3, cy + 4, cz + 15, Material.IRON_BARS);
+            MapBuilder.fillBox(arenaWorld, cx - 2, cy + 1, cz + 12, cx + 2, cy + 3, cz + 14, Material.AIR);
+            worldAt(arenaWorld, cx, cy + 1, cz + 11, Material.IRON_DOOR);
+
+            // 5. Rich Prop Placement throughout Warehouse!
+            // Barrels & Crates
+            worldAt(arenaWorld, cx - 10, cy + 1, cz - 5, Material.BARREL);
+            worldAt(arenaWorld, cx - 10, cy + 2, cz - 5, Material.BARREL);
+            worldAt(arenaWorld, cx - 9, cy + 1, cz - 5, Material.CHEST);
+            worldAt(arenaWorld, cx - 10, cy + 1, cz - 4, Material.CRAFTING_TABLE);
+
+            // Workshop bench area
+            worldAt(arenaWorld, cx + 5, cy + 1, cz, Material.FURNACE);
+            worldAt(arenaWorld, cx + 6, cy + 1, cz, Material.ANVIL);
+            worldAt(arenaWorld, cx + 7, cy + 1, cz, Material.CAULDRON);
+            worldAt(arenaWorld, cx + 8, cy + 1, cz, Material.CRAFTING_TABLE);
+
+            // Produce & Harvest stacks
+            worldAt(arenaWorld, cx - 8, cy + 1, cz + 5, Material.HAY_BLOCK);
+            worldAt(arenaWorld, cx - 8, cy + 2, cz + 5, Material.HAY_BLOCK);
+            worldAt(arenaWorld, cx - 7, cy + 1, cz + 5, Material.MELON);
+            worldAt(arenaWorld, cx - 8, cy + 1, cz + 6, Material.MELON);
+
+            // Catwalk office props
+            worldAt(arenaWorld, cx - 12, cy + 5, cz - 14, Material.BOOKSHELF);
+            worldAt(arenaWorld, cx - 11, cy + 5, cz - 14, Material.BOOKSHELF);
+            worldAt(arenaWorld, cx - 10, cy + 5, cz - 14, Material.CHEST);
+            worldAt(arenaWorld, cx - 9, cy + 5, cz - 14, Material.CRAFTING_TABLE);
+
+            // Explosive corner
+            worldAt(arenaWorld, cx + 12, cy + 1, cz + 12, Material.TNT);
+            worldAt(arenaWorld, cx + 13, cy + 1, cz + 12, Material.BARREL);
+
+            // Waiting Cage
+            Location waitingLoc = new Location(arenaWorld, cx + 0.5, cy + 55, cz + 0.5);
+            MapBuilder.buildWaitingLobby(arenaWorld, waitingLoc, Material.POLISHED_ANDESITE, Material.BRICK_WALL, Material.ORANGE_STAINED_GLASS);
+
+            PropHuntGame game = new PropHuntGame(plugin, id, "Prop Hunt: Warehouse");
+            game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
+            game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
+
+            // Hunter Spawn (Inside the booth)
+            game.setHunterSpawn(new Location(arenaWorld, cx + 0.5, cy + 1, cz + 13 + 0.5, 180f, 0f));
+
+            // 4 Prop Spawns (Scattered)
+            game.addPropSpawn(new Location(arenaWorld, cx - 10 + 0.5, cy + 1, cz - 2 + 0.5, 0f, 0f));
+            game.addPropSpawn(new Location(arenaWorld, cx + 8 + 0.5, cy + 1, cz + 2 + 0.5, 90f, 0f));
+            game.addPropSpawn(new Location(arenaWorld, cx - 11 + 0.5, cy + 5, cz - 12 + 0.5, -90f, 0f)); // Catwalk
+            game.addPropSpawn(new Location(arenaWorld, cx + 10 + 0.5, cy + 1, cz + 10 + 0.5, 135f, 0f));
+
+            plugin.getGameManager().registerArena(game);
+        }
+
+        // Map 2: Grand Bazaar & Bakery
+        {
+            int cx = -2900;
+            int cy = 100;
+            int cz = 3500;
+            String id = "ph-2";
+
+            // Clear previous map area
+            MapBuilder.fillBox(arenaWorld, cx - 25, cy - 10, cz - 25, cx + 25, cy + 25, cz + 25, Material.AIR);
+
+            // 1. Courtyard Floor (32x32)
+            MapBuilder.fillBox(arenaWorld, cx - 16, cy, cz - 16, cx + 16, cy, cz + 16, Material.CUT_SANDSTONE);
+            MapBuilder.fillBox(arenaWorld, cx - 16, cy - 1, cz - 16, cx + 16, cy - 3, cz + 16, Material.SMOOTH_SANDSTONE);
+
+            // 2. Sandstone Walls (Height 8)
+            MapBuilder.fillBox(arenaWorld, cx - 16, cy + 1, cz - 16, cx + 16, cy + 8, cz - 16, Material.SMOOTH_SANDSTONE);
+            MapBuilder.fillBox(arenaWorld, cx - 16, cy + 1, cz + 16, cx + 16, cy + 8, cz + 16, Material.SMOOTH_SANDSTONE);
+            MapBuilder.fillBox(arenaWorld, cx - 16, cy + 1, cz - 16, cx - 16, cy + 8, cz + 16, Material.SMOOTH_SANDSTONE);
+            MapBuilder.fillBox(arenaWorld, cx + 16, cy + 1, cz - 16, cx + 16, cy + 8, cz + 16, Material.SMOOTH_SANDSTONE);
+
+            // Courtyard Ceiling Border with open skylight
+            MapBuilder.fillBox(arenaWorld, cx - 16, cy + 9, cz - 16, cx + 16, cy + 9, cz + 16, Material.TERRACOTTA);
+            MapBuilder.fillBox(arenaWorld, cx - 10, cy + 9, cz - 10, cx + 10, cy + 9, cz + 10, Material.AIR); // open sunlit bazaar
+
+            // Central Bazaar Fountain
+            MapBuilder.fillCircle(arenaWorld, cx, cy + 1, cz, 3, Material.STONE_BRICKS);
+            MapBuilder.fillCircle(arenaWorld, cx, cy + 1, cz, 2, Material.WATER);
+            worldAt(arenaWorld, cx, cy + 2, cz, Material.CHISELED_SANDSTONE);
+
+            // Hunter Guardhouse (North entrance)
+            MapBuilder.fillBox(arenaWorld, cx - 3, cy + 1, cz - 15, cx + 3, cy + 4, cz - 11, Material.CUT_SANDSTONE);
+            MapBuilder.fillBox(arenaWorld, cx - 2, cy + 1, cz - 14, cx + 2, cy + 3, cz - 12, Material.AIR);
+            worldAt(arenaWorld, cx, cy + 1, cz - 11, Material.IRON_DOOR);
+
+            // Bazaar Stall 1 (West - Produce & Agriculture)
+            MapBuilder.fillBox(arenaWorld, cx - 13, cy + 4, cz - 6, cx - 9, cy + 4, cz + 2, Material.YELLOW_WOOL);
+            worldAt(arenaWorld, cx - 12, cy + 1, cz - 4, Material.MELON);
+            worldAt(arenaWorld, cx - 12, cy + 2, cz - 4, Material.MELON);
+            worldAt(arenaWorld, cx - 11, cy + 1, cz - 4, Material.HAY_BLOCK);
+            worldAt(arenaWorld, cx - 12, cy + 1, cz - 3, Material.BARREL);
+            worldAt(arenaWorld, cx - 11, cy + 1, cz - 3, Material.CRAFTING_TABLE);
+
+            // Bazaar Stall 2 (East - Bakery Corner)
+            MapBuilder.fillBox(arenaWorld, cx + 9, cy + 4, cz - 6, cx + 13, cy + 4, cz + 2, Material.ORANGE_WOOL);
+            worldAt(arenaWorld, cx + 12, cy + 1, cz - 4, Material.FURNACE);
+            worldAt(arenaWorld, cx + 12, cy + 2, cz - 4, Material.FURNACE);
+            worldAt(arenaWorld, cx + 11, cy + 1, cz - 4, Material.BARREL);
+            worldAt(arenaWorld, cx + 12, cy + 1, cz - 3, Material.CHEST);
+            worldAt(arenaWorld, cx + 11, cy + 1, cz - 3, Material.ANVIL);
+
+            // Bazaar Stall 3 (South - Books & Artifacts)
+            MapBuilder.fillBox(arenaWorld, cx - 4, cy + 4, cz + 10, cx + 4, cy + 4, cz + 14, Material.RED_WOOL);
+            worldAt(arenaWorld, cx - 2, cy + 1, cz + 12, Material.BOOKSHELF);
+            worldAt(arenaWorld, cx - 2, cy + 2, cz + 12, Material.BOOKSHELF);
+            worldAt(arenaWorld, cx - 1, cy + 1, cz + 12, Material.CAULDRON);
+            worldAt(arenaWorld, cx + 1, cy + 1, cz + 12, Material.CHEST);
+            worldAt(arenaWorld, cx + 2, cy + 1, cz + 12, Material.CRAFTING_TABLE);
+
+            // Waiting Cage
+            Location waitingLoc = new Location(arenaWorld, cx + 0.5, cy + 55, cz + 0.5);
+            MapBuilder.buildWaitingLobby(arenaWorld, waitingLoc, Material.CUT_SANDSTONE, Material.SANDSTONE_WALL, Material.YELLOW_STAINED_GLASS);
+
+            PropHuntGame game = new PropHuntGame(plugin, id, "Prop Hunt: Grand Bazaar");
+            game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
+            game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
+
+            // Hunter Spawn (Inside guardhouse)
+            game.setHunterSpawn(new Location(arenaWorld, cx + 0.5, cy + 1, cz - 13 + 0.5, 0f, 0f));
+
+            // 4 Prop Spawns (Scattered)
+            game.addPropSpawn(new Location(arenaWorld, cx - 10 + 0.5, cy + 1, cz - 2 + 0.5, -90f, 0f));
+            game.addPropSpawn(new Location(arenaWorld, cx + 10 + 0.5, cy + 1, cz - 2 + 0.5, 90f, 0f));
+            game.addPropSpawn(new Location(arenaWorld, cx + 0.5, cy + 1, cz + 11 + 0.5, 180f, 0f));
+            game.addPropSpawn(new Location(arenaWorld, cx + 0.5, cy + 1, cz - 4 + 0.5, 0f, 0f));
 
             plugin.getGameManager().registerArena(game);
         }

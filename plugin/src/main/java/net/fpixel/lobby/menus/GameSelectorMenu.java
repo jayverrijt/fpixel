@@ -95,7 +95,40 @@ public class GameSelectorMenu {
                 .build();
         inv.setItem(22, survival);
 
-        // 5. The Bridge 1v1 (Slot 29)
+        // 5. Murder Mystery (Slot 20)
+        ItemStack mm = new ItemBuilder(Material.IRON_SWORD)
+                .name("§c§lMurder Mystery")
+                .lore(
+                        "§7A murderer is among you! Survive or find them.",
+                        "§71 Murderer, 1 Detective, and Innocents.",
+                        "",
+                        "§fMaps: §aHaunted Manor & Cyber Station",
+                        "§fPlayers: §e3-4 Players",
+                        "",
+                        "§e▶ Click to browse & choose a map!",
+                        "§7(Includes Quick Join option)"
+                )
+                .build();
+        inv.setItem(20, mm);
+
+        // 6. Prop Hunt (Slot 24)
+        ItemStack ph = new ItemBuilder(Material.CRAFTING_TABLE)
+                .name("§6§lProp Hunt")
+                .lore(
+                        "§7Garry's Mod style hide-and-seek!",
+                        "§7Disguise as props, snap to grid & taunt hunters.",
+                        "§7Hunters take -1♥ penalty for wrong hits!",
+                        "",
+                        "§fMaps: §aWarehouse & Grand Bazaar",
+                        "§fPlayers: §e2-4 Players",
+                        "",
+                        "§e▶ Click to browse & choose a map!",
+                        "§7(Includes Quick Join option)"
+                )
+                .build();
+        inv.setItem(24, ph);
+
+        // 7. The Bridge 1v1 (Slot 29)
         ItemStack bridge = new ItemBuilder(Material.RED_TERRACOTTA)
                 .name("§6§lThe Bridge 1v1")
                 .lore(
@@ -110,7 +143,7 @@ public class GameSelectorMenu {
                 .build();
         inv.setItem(29, bridge);
 
-        // 6. Sumo 1v1 (Slot 31)
+        // 8. Sumo 1v1 (Slot 31)
         ItemStack sumo = new ItemBuilder(Material.STICK)
                 .name("§e§lSumo 1v1")
                 .lore(
@@ -125,7 +158,7 @@ public class GameSelectorMenu {
                 .build();
         inv.setItem(31, sumo);
 
-        // 7. Parkour Duels (Slot 33)
+        // 9. Parkour Duels (Slot 33)
         ItemStack parkour = new ItemBuilder(Material.DIAMOND_BOOTS)
                 .name("§a§lParkour Duels")
                 .lore(
@@ -159,6 +192,10 @@ public class GameSelectorMenu {
                     .button("§b§lSkyWars (Pick Map)\n§7Choose from 10 maps", FormImage.Type.PATH, "textures/items/ender_eye")
                     .button("§c§lTNT Run (Quick Join)\n§7Join open match", FormImage.Type.PATH, "textures/blocks/tnt_side")
                     .button("§c§lTNT Run (Pick Map)\n§7Choose from 10 maps", FormImage.Type.PATH, "textures/blocks/tnt_side")
+                    .button("§c§lMurder Mystery (Quick Join)\n§7Join 3-4p match", FormImage.Type.PATH, "textures/items/iron_sword")
+                    .button("§c§lMurder Mystery (Pick Map)\n§7Haunted Manor & Cyber", FormImage.Type.PATH, "textures/items/iron_sword")
+                    .button("§6§lProp Hunt (Quick Join)\n§7Join 2-4p match", FormImage.Type.PATH, "textures/blocks/crafting_table_top")
+                    .button("§6§lProp Hunt (Pick Map)\n§7Warehouse & Bazaar", FormImage.Type.PATH, "textures/blocks/crafting_table_top")
                     .button("§6§lThe Bridge (Quick Join)\n§7Join 1v1 duel", FormImage.Type.PATH, "textures/blocks/hardened_clay_stained_red")
                     .button("§6§lThe Bridge (Pick Map)\n§7Choose from 10 maps", FormImage.Type.PATH, "textures/blocks/hardened_clay_stained_red")
                     .button("§e§lSumo 1v1 (Quick Join)\n§7Join open match", FormImage.Type.PATH, "textures/items/stick")
@@ -176,12 +213,16 @@ public class GameSelectorMenu {
                                 case 4 -> MapSelectMenu.open(plugin, player, "SKYWARS");
                                 case 5 -> plugin.getGameManager().joinQueue(player, "TNTRUN");
                                 case 6 -> MapSelectMenu.open(plugin, player, "TNTRUN");
-                                case 7 -> plugin.getGameManager().joinQueue(player, "BRIDGE");
-                                case 8 -> MapSelectMenu.open(plugin, player, "BRIDGE");
-                                case 9 -> plugin.getGameManager().joinQueue(player, "SUMO");
-                                case 10 -> MapSelectMenu.open(plugin, player, "SUMO");
-                                case 11 -> plugin.getGameManager().joinQueue(player, "PARKOUR");
-                                case 12 -> MapSelectMenu.open(plugin, player, "PARKOUR");
+                                case 7 -> plugin.getGameManager().joinQueue(player, "MURDER_MYSTERY");
+                                case 8 -> MapSelectMenu.open(plugin, player, "MURDER_MYSTERY");
+                                case 9 -> plugin.getGameManager().joinQueue(player, "PROP_HUNT");
+                                case 10 -> MapSelectMenu.open(plugin, player, "PROP_HUNT");
+                                case 11 -> plugin.getGameManager().joinQueue(player, "BRIDGE");
+                                case 12 -> MapSelectMenu.open(plugin, player, "BRIDGE");
+                                case 13 -> plugin.getGameManager().joinQueue(player, "SUMO");
+                                case 14 -> MapSelectMenu.open(plugin, player, "SUMO");
+                                case 15 -> plugin.getGameManager().joinQueue(player, "PARKOUR");
+                                case 16 -> MapSelectMenu.open(plugin, player, "PARKOUR");
                             }
                         });
                     })
@@ -203,6 +244,10 @@ public class GameSelectorMenu {
             handleOption(plugin, player, "SKYWARS", clickType);
         } else if (slot == 15) {
             handleOption(plugin, player, "TNTRUN", clickType);
+        } else if (slot == 20) {
+            handleOption(plugin, player, "MURDER_MYSTERY", clickType);
+        } else if (slot == 24) {
+            handleOption(plugin, player, "PROP_HUNT", clickType);
         } else if (slot == 29) {
             handleOption(plugin, player, "BRIDGE", clickType);
         } else if (slot == 31) {

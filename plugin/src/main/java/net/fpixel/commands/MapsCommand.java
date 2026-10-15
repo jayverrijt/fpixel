@@ -39,9 +39,12 @@ public class MapsCommand implements CommandExecutor, TabCompleter {
         }
 
         String gameType = args[0].toUpperCase();
-        List<String> valid = Arrays.asList("BEDWARS", "SKYWARS", "TNTRUN", "BRIDGE", "SUMO", "PARKOUR");
+        if (gameType.equalsIgnoreCase("MM") || gameType.equalsIgnoreCase("MURDER") || gameType.equalsIgnoreCase("MURDERMYSTERY")) gameType = "MURDER_MYSTERY";
+        if (gameType.equalsIgnoreCase("PH") || gameType.equalsIgnoreCase("PROP") || gameType.equalsIgnoreCase("PROPHUNT")) gameType = "PROP_HUNT";
+
+        List<String> valid = Arrays.asList("BEDWARS", "SKYWARS", "TNTRUN", "BRIDGE", "SUMO", "PARKOUR", "MURDER_MYSTERY", "PROP_HUNT");
         if (!valid.contains(gameType)) {
-            ChatUtil.sendMessage(player, "§cInvalid minigame! Choose: bedwars, skywars, tntrun, bridge, sumo, parkour");
+            ChatUtil.sendMessage(player, "§cInvalid minigame! Choose: bedwars, skywars, tntrun, bridge, sumo, parkour, murdermystery, prophunt");
             return true;
         }
 
@@ -52,7 +55,7 @@ public class MapsCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> list = Arrays.asList("bedwars", "skywars", "tntrun", "bridge", "sumo", "parkour");
+            List<String> list = Arrays.asList("bedwars", "skywars", "tntrun", "bridge", "sumo", "parkour", "murdermystery", "prophunt");
             List<String> filtered = new ArrayList<>();
             for (String s : list) {
                 if (s.toLowerCase().startsWith(args[0].toLowerCase())) {

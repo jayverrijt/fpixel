@@ -26,6 +26,12 @@ public class FPixelUser {
     private int sumoLosses;
     private int sumoStreak;
 
+    // Murder Mystery
+    private int murderMysteryWins;
+
+    // Prop Hunt
+    private int propHuntWins;
+
     // Settings
     private String visibility = "ALL"; // ALL, VIPS, NONE
     private final java.util.Set<String> discoveredSecrets = new java.util.HashSet<>();
@@ -79,6 +85,12 @@ public class FPixelUser {
     public int getSumoLosses() { return sumoLosses; }
     public void addSumoLoss() { this.sumoLosses++; this.sumoStreak = 0; }
     public int getSumoStreak() { return sumoStreak; }
+
+    public int getMurderMysteryWins() { return murderMysteryWins; }
+    public void addMurderMysteryWin() { this.murderMysteryWins++; }
+
+    public int getPropHuntWins() { return propHuntWins; }
+    public void addPropHuntWin() { this.propHuntWins++; }
 
     public String getVisibility() { return visibility; }
     public void setVisibility(String visibility) { this.visibility = visibility; }

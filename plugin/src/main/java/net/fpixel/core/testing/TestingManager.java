@@ -116,6 +116,24 @@ public class TestingManager implements Listener {
                 }
                 idx++;
             }
+        } else if (arena instanceof net.fpixel.games.murdermystery.MurderMysteryGame mm) {
+            int sIdx = 1;
+            for (SimulatedPlayer bot : arena.getSimulatedPlayers().values()) {
+                if (bot.getEntity() == null) {
+                    Location sLoc = mm.getSpawnPoints().isEmpty() ? mm.getLobbySpawn() : mm.getSpawnPoints().get(sIdx % mm.getSpawnPoints().size());
+                    bot.spawnEntity(sLoc, "MURDER_MYSTERY");
+                    sIdx++;
+                }
+            }
+        } else if (arena instanceof net.fpixel.games.prophunt.PropHuntGame ph) {
+            int pIdx = 0;
+            for (SimulatedPlayer bot : arena.getSimulatedPlayers().values()) {
+                if (bot.getEntity() == null) {
+                    Location sLoc = ph.getPropSpawns().isEmpty() ? ph.getLobbySpawn() : ph.getPropSpawns().get(pIdx % ph.getPropSpawns().size());
+                    bot.spawnEntity(sLoc, "PROP_HUNT");
+                    pIdx++;
+                }
+            }
         } else {
             // Parkour, TNT Run, etc.
             for (SimulatedPlayer bot : arena.getSimulatedPlayers().values()) {

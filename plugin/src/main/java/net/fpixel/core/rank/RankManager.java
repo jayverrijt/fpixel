@@ -100,5 +100,8 @@ public class RankManager {
         String name = rank.getPrefix() + rank.getColor() + player.getName();
         player.displayName(ChatUtil.component(name));
         player.playerListName(ChatUtil.component(name));
+        if (plugin.getTablistManager() != null) {
+            plugin.getTablistManager().updateAllPlayerTeams();
+        }
     }
 }

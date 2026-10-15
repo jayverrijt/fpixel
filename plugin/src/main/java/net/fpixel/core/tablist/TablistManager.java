@@ -28,26 +28,73 @@ public class TablistManager {
                         ChatUtil.component(header),
                         ChatUtil.component(footer)
                 );
-
-                updatePlayerTeam(player);
             }
+            updateAllPlayerTeams();
         }, 40L, 40L); // Update every 2s
     }
 
     public void updatePlayerTeam(Player player) {
-        Rank rank = plugin.getRankManager().getRank(player);
-        Scoreboard board = player.getScoreboard();
-        if (board == null) return;
+        updateAllPlayerTeams();
+    }
 
-        // Prefix team name with order weight so tab sorts correctly (01_OWNER, 02_ADMIN, etc.)
-        String teamName = String.format("%02d_%s", 100 - rank.getWeight(), rank.name());
-        Team team = board.getTeam(teamName);
-        if (team == null) {
-            team = board.registerNewTeam(teamName);
+    public void updateAllPlayerTeams() {
+        java.util.Collection<? extends Player> online = Bukkit.getOnlinePlayers();
+        if (online.isEmpty()) return;
+
+        org.bukkit.scoreboard.ScoreboardManager sm = Bukkit.getScoreboardManager();
+        Scoreboard mainBoard = sm != null ? sm.getMainScoreboard() : null;
+
+        java.util.Set<Scoreboard> boards = new java.util.HashSet<>();
+        if (mainBoard != null) boards.add(mainBoard);
+        for (Player p : online) {
+            Scoreboard b = p.getScoreboard();
+            if (b != null) boards.add(b);
         }
-        team.prefix(ChatUtil.component(rank.getPrefix()));
-        if (!team.hasEntry(player.getName())) {
-            team.addEntry(player.getName());
+
+        for (Scoreboard board : boards) {
+            // Ensure rank teams exist on this scoreboard
+            for (Rank r : Rank.values()) {
+                String teamName = String.format("%02d_%s", 100 - r.getWeight(), r.name().toLowerCase());
+                Team team = board.getTeam(teamName);
+                if (team == null) {
+                    try {
+                        team = board.registerNewTeam(teamName);
+                    } catch (Exception ignored) {
+                        team = board.getTeam(teamName);
+                    }
+                }
+                if (team != null) {
+                    team.prefix(ChatUtil.component(r.getPrefix()));
+                    try {
+                        team.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.ALWAYS);
+                    } catch (Throwable ignored) {}
+                }
+            }
+
+            // Add every online player to their corresponding rank team on this board
+            for (Player target : online) {
+                Rank r = plugin.getRankManager().getRank(target);
+                String teamName = String.format("%02d_%s", 100 - r.getWeight(), r.name().toLowerCase());
+                Team targetTeam = board.getTeam(teamName);
+                if (targetTeam != null) {
+                    // Remove from any different rank team on this scoreboard
+                    for (Team other : board.getTeams()) {
+                        if (other.hasEntry(target.getName()) && !other.getName().equals(teamName)) {
+                            other.removeEntry(target.getName());
+                        }
+                    }
+                    if (!targetTeam.hasEntry(target.getName())) {
+                        targetTeam.addEntry(target.getName());
+                    }
+                }
+            }
+        }
+
+        // Also update player custom names for packet/display fallback
+        for (Player target : online) {
+            Rank r = plugin.getRankManager().getRank(target);
+            target.customName(ChatUtil.component(r.getPrefix() + r.getColor() + target.getName()));
+            target.setCustomNameVisible(true);
         }
     }
 }

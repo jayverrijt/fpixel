@@ -243,6 +243,34 @@ public class HubNPCManager implements Listener {
                 new ItemBuilder(Material.CHERRY_SAPLING).build()
         ));
 
+        // 13. Murder Mystery (-10.5, 100, -2.5) facing East (yaw 90)
+        list.add(new NPCDefinition(
+                "murdermystery",
+                "§c§lMURDER MYSTERY",
+                "§7Haunted Manor & Cyber",
+                new Location(world, -10.5, y, -2.5, 90f, 0f),
+                new ItemBuilder(Material.WITHER_SKELETON_SKULL).build(),
+                new ItemBuilder(Material.LEATHER_CHESTPLATE).build(),
+                new ItemBuilder(Material.LEATHER_LEGGINGS).build(),
+                new ItemBuilder(Material.NETHERITE_BOOTS).build(),
+                new ItemBuilder(Material.IRON_SWORD).build(),
+                new ItemBuilder(Material.BOW).build()
+        ));
+
+        // 14. Prop Hunt (10.5, 100, -2.5) facing West (yaw 270)
+        list.add(new NPCDefinition(
+                "prophunt",
+                "§6§lPROP HUNT",
+                "§7Warehouse & Grand Bazaar",
+                new Location(world, 10.5, y, -2.5, 270f, 0f),
+                new ItemBuilder(Material.CRAFTING_TABLE).build(),
+                new ItemBuilder(Material.GOLDEN_CHESTPLATE).build(),
+                new ItemBuilder(Material.GOLDEN_LEGGINGS).build(),
+                new ItemBuilder(Material.GOLDEN_BOOTS).build(),
+                new ItemBuilder(Material.BELL).build(),
+                new ItemBuilder(Material.CROSSBOW).build()
+        ));
+
         return list;
     }
 
@@ -321,6 +349,12 @@ public class HubNPCManager implements Listener {
             }
             case "duels" -> {
                 plugin.getGameManager().joinQueue(player, "PVP");
+            }
+            case "murdermystery" -> {
+                net.fpixel.lobby.menus.MapSelectMenu.open(plugin, player, "MURDER_MYSTERY");
+            }
+            case "prophunt" -> {
+                net.fpixel.lobby.menus.MapSelectMenu.open(plugin, player, "PROP_HUNT");
             }
             case "guide" -> {
                 GameSelectorMenu.open(plugin, player);

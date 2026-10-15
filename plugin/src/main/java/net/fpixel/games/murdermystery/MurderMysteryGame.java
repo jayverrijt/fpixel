@@ -1,0 +1,586 @@
+package net.fpixel.games.murdermystery;
+
+import net.fpixel.FPixelPlugin;
+import net.fpixel.core.user.FPixelUser;
+import net.fpixel.core.util.ChatUtil;
+import net.fpixel.core.util.ItemBuilder;
+import net.fpixel.game.Arena;
+import net.fpixel.game.GameState;
+import org.bukkit.*;
+import org.bukkit.entity.*;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
+
+import java.util.*;
+
+public class MurderMysteryGame extends Arena {
+
+    public enum Role {
+        MURDERER("§c§lMURDERER", ChatColor.RED),
+        DETECTIVE("§9§lDETECTIVE", ChatColor.BLUE),
+        INNOCENT("§a§lINNOCENT", ChatColor.GREEN);
+
+        private final String display;
+        private final ChatColor color;
+
+        Role(String display, ChatColor color) {
+            this.display = display;
+            this.color = color;
+        }
+
+        public String getDisplay() { return display; }
+        public ChatColor getColor() { return color; }
+    }
+
+    private final Map<UUID, Role> roles = new HashMap<>();
+    private final Map<UUID, Integer> goldCount = new HashMap<>();
+    private final Set<UUID> alivePlayers = new HashSet<>();
+    private final List<Location> spawnPoints = new ArrayList<>();
+    private final List<Location> goldSpawnPoints = new ArrayList<>();
+    private final List<Item> activeGold = new ArrayList<>();
+
+    private Location droppedBowLoc = null;
+    private Item droppedBowItem = null;
+
+    private int maxGameDuration = 180; // 3 minutes
+    private int arrowRechargeSeconds = 0;
+    private final Map<UUID, Long> knifeCooldowns = new HashMap<>();
+
+    public MurderMysteryGame(FPixelPlugin plugin, String id, String displayName) {
+        super(plugin, id, displayName, "MURDER_MYSTERY", 3, 4);
+    }
+
+    public void addSpawnPoint(Location loc) {
+        spawnPoints.add(loc);
+    }
+
+    public void addGoldSpawnPoint(Location loc) {
+        goldSpawnPoints.add(loc);
+    }
+
+    public List<Location> getSpawnPoints() { return spawnPoints; }
+    public List<Location> getGoldSpawnPoints() { return goldSpawnPoints; }
+
+    @Override
+    public void onGameStart() {
+        roles.clear();
+        goldCount.clear();
+        alivePlayers.clear();
+        activeGold.clear();
+        droppedBowLoc = null;
+        droppedBowItem = null;
+
+        List<UUID> allParticipants = new ArrayList<>(players);
+        for (UUID botUuid : simulatedPlayers.keySet()) {
+            allParticipants.add(botUuid);
+        }
+        alivePlayers.addAll(allParticipants);
+
+        if (allParticipants.size() < 2) return;
+
+        Collections.shuffle(allParticipants);
+
+        // Assign Murderer
+        UUID murdererUuid = allParticipants.get(0);
+        roles.put(murdererUuid, Role.MURDERER);
+
+        // Assign Detective
+        UUID detectiveUuid = allParticipants.get(1);
+        roles.put(detectiveUuid, Role.DETECTIVE);
+
+        // Remaining are Innocents
+        for (int i = 2; i < allParticipants.size(); i++) {
+            roles.put(allParticipants.get(i), Role.INNOCENT);
+        }
+
+        // Teleport participants to scattered map rooms
+        int sIdx = 0;
+        for (UUID u : allParticipants) {
+            Location spawn = spawnPoints.isEmpty() ? lobbySpawn : spawnPoints.get(sIdx % spawnPoints.size());
+            sIdx++;
+
+            Player p = Bukkit.getPlayer(u);
+            if (p != null) {
+                p.teleport(spawn);
+                p.setGameMode(GameMode.ADVENTURE);
+                p.getInventory().clear();
+                p.setHealth(20.0);
+                p.setFoodLevel(20);
+
+                Role role = roles.get(u);
+                announceRole(p, role);
+                giveRoleItems(p, role);
+            }
+
+            net.fpixel.core.testing.SimulatedPlayer bot = simulatedPlayers.get(u);
+            if (bot != null) {
+                bot.spawnEntity(spawn, "MURDER_MYSTERY");
+            }
+        }
+
+        broadcast("§e§m--------------------------------------------------");
+        broadcast("              §6§lMURDER MYSTERY");
+        broadcast("  §7A Murderer is among you! Survive or find them!");
+        broadcast("  §c1 Murderer §7| §91 Detective §7| §aInnocents");
+        broadcast("§e§m--------------------------------------------------");
+    }
+
+    private void announceRole(Player p, Role role) {
+        switch (role) {
+            case MURDERER -> {
+                ChatUtil.sendTitle(p, "§c§lMURDERER", "§7Eliminate everyone before time runs out!", 10, 60, 20);
+                ChatUtil.sendMessage(p, "§c§lROLE: §4Murderer");
+                ChatUtil.sendMessage(p, "§7• Kill all innocents and the detective with your knife!");
+                ChatUtil.sendMessage(p, "§7• Right-click your knife to throw it! (4s cooldown)");
+                ChatUtil.sendMessage(p, "§7• Use your compass to track nearby players!");
+                ChatUtil.playSound(p, Sound.ENTITY_WITHER_SPAWN, 0.7f, 1.0f);
+            }
+            case DETECTIVE -> {
+                ChatUtil.sendTitle(p, "§9§lDETECTIVE", "§7Find and shoot the murderer!", 10, 60, 20);
+                ChatUtil.sendMessage(p, "§9§lROLE: §1Detective");
+                ChatUtil.sendMessage(p, "§7• You have a Bow. Find and shoot the Murderer!");
+                ChatUtil.sendMessage(p, "§7• Be careful: shooting an Innocent will kill you of guilt!");
+                ChatUtil.playSound(p, Sound.ITEM_ARMOR_EQUIP_IRON, 1.0f, 1.0f);
+            }
+            case INNOCENT -> {
+                ChatUtil.sendTitle(p, "§a§lINNOCENT", "§7Survive and collect 10 gold for a bow!", 10, 60, 20);
+                ChatUtil.sendMessage(p, "§a§lROLE: §2Innocent");
+                ChatUtil.sendMessage(p, "§7• Stay alive and run from the murderer!");
+                ChatUtil.sendMessage(p, "§7• Collect §610 Gold §7to earn a defensive bow!");
+                ChatUtil.sendMessage(p, "§7• If the Detective dies, pick up their dropped bow!");
+                ChatUtil.playSound(p, Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.2f);
+            }
+        }
+    }
+
+    private void giveRoleItems(Player p, Role role) {
+        p.getInventory().clear();
+        goldCount.put(p.getUniqueId(), 0);
+
+        if (role == Role.MURDERER) {
+            ItemStack knife = new ItemBuilder(Material.IRON_SWORD)
+                    .name("§c§lMurderer's Knife")
+                    .lore("§7One-shot melee kill.", "§7Right-click to throw!")
+                    .build();
+            ItemStack tracker = new ItemBuilder(Material.COMPASS)
+                    .name("§e§lPlayer Tracker")
+                    .lore("§7Points to the nearest survivor.")
+                    .build();
+            p.getInventory().setItem(0, knife);
+            p.getInventory().setItem(1, tracker);
+        } else if (role == Role.DETECTIVE) {
+            ItemStack bow = new ItemBuilder(Material.BOW)
+                    .name("§9§lDetective's Bow")
+                    .lore("§7One-shot kills the murderer.", "§cWarning: Shooting innocent kills you!")
+                    .build();
+            p.getInventory().setItem(0, bow);
+            p.getInventory().setItem(9, new ItemStack(Material.ARROW, 1));
+        }
+    }
+
+    @Override
+    public void handleGameTick() {
+        if (state != GameState.IN_GAME) return;
+
+        // Periodic gold spawning every 5 seconds
+        if (gameTime % 5 == 0 && !goldSpawnPoints.isEmpty()) {
+            spawnRandomGold();
+        }
+
+        // Gold pickup & dropped bow pickup checks
+        for (Player p : getBukkitPlayers()) {
+            if (!alivePlayers.contains(p.getUniqueId())) continue;
+
+            Location loc = p.getLocation();
+
+            // 1. Gold pickup
+            Iterator<Item> gIt = activeGold.iterator();
+            while (gIt.hasNext()) {
+                Item item = gIt.next();
+                if (!item.isValid()) {
+                    gIt.remove();
+                    continue;
+                }
+                if (item.getWorld().equals(loc.getWorld()) && item.getLocation().distanceSquared(loc) <= 2.2) {
+                    item.remove();
+                    gIt.remove();
+                    int count = goldCount.getOrDefault(p.getUniqueId(), 0) + 1;
+                    goldCount.put(p.getUniqueId(), count);
+
+                    ChatUtil.playSound(p, Sound.ENTITY_ITEM_PICKUP, 0.7f, 1.5f);
+                    ChatUtil.sendActionBar(p, "§6§l+1 Gold §7(" + count + "/10)");
+
+                    // Reaching 10 gold gives innocent a bow!
+                    Role r = roles.get(p.getUniqueId());
+                    if (r == Role.INNOCENT && count == 10 && !p.getInventory().contains(Material.BOW)) {
+                        ItemStack bow = new ItemBuilder(Material.BOW)
+                                .name("§6§lHero's Bow")
+                                .lore("§7Acquired with 10 gold!", "§cDo not shoot innocents!")
+                                .build();
+                        p.getInventory().addItem(bow);
+                        p.getInventory().setItem(9, new ItemStack(Material.ARROW, 1));
+                        ChatUtil.sendTitle(p, "§6§lBOW ACQUIRED!", "§eYou collected 10 gold!", 5, 40, 10);
+                        ChatUtil.playSound(p, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                    }
+                }
+            }
+
+            // 2. Dropped Detective Bow pickup
+            if (droppedBowLoc != null && droppedBowItem != null && droppedBowItem.isValid()) {
+                if (p.getWorld().equals(droppedBowLoc.getWorld()) && p.getLocation().distanceSquared(droppedBowLoc) <= 2.5) {
+                    Role r = roles.get(p.getUniqueId());
+                    if (r == Role.INNOCENT) {
+                        droppedBowItem.remove();
+                        droppedBowItem = null;
+                        droppedBowLoc = null;
+
+                        roles.put(p.getUniqueId(), Role.DETECTIVE);
+                        ItemStack bow = new ItemBuilder(Material.BOW)
+                                .name("§9§lDetective's Bow")
+                                .lore("§7Picked up from fallen Detective.")
+                                .build();
+                        p.getInventory().addItem(bow);
+                        p.getInventory().setItem(9, new ItemStack(Material.ARROW, 1));
+
+                        broadcast("§b§lBOW RECOVERED! " + p.getName() + " §7has picked up the Detective's bow!");
+                        ChatUtil.sendTitle(p, "§9§lYOU ARE THE DETECTIVE!", "§7Find and eliminate the murderer!", 5, 40, 10);
+                        ChatUtil.playSound(p, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                    }
+                }
+            }
+
+            // 3. Murderer Tracker updating
+            if (roles.get(p.getUniqueId()) == Role.MURDERER) {
+                Player nearest = getNearestSurvivor(p);
+                if (nearest != null) {
+                    p.setCompassTarget(nearest.getLocation());
+                }
+            }
+        }
+
+        // Detective Arrow Recharge (every 4 seconds)
+        arrowRechargeSeconds++;
+        if (arrowRechargeSeconds >= 4) {
+            arrowRechargeSeconds = 0;
+            for (Player p : getBukkitPlayers()) {
+                if (alivePlayers.contains(p.getUniqueId()) && p.getInventory().contains(Material.BOW)) {
+                    if (!p.getInventory().contains(Material.ARROW)) {
+                        p.getInventory().setItem(9, new ItemStack(Material.ARROW, 1));
+                        ChatUtil.playSound(p, Sound.ITEM_FLINTANDSTEEL_USE, 0.5f, 1.8f);
+                    }
+                }
+            }
+        }
+
+        // Visual effects for dropped bow
+        if (droppedBowLoc != null && droppedBowLoc.getWorld() != null) {
+            droppedBowLoc.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, droppedBowLoc.clone().add(0, 0.6, 0), 5, 0.2, 0.2, 0.2, 0.02);
+        }
+    }
+
+    private void spawnRandomGold() {
+        if (activeGold.size() >= 15 || goldSpawnPoints.isEmpty()) return;
+        Location spawn = goldSpawnPoints.get(new Random().nextInt(goldSpawnPoints.size()));
+        if (spawn.getWorld() == null) return;
+
+        Item item = spawn.getWorld().dropItem(spawn.clone().add(0, 0.2, 0), new ItemStack(Material.GOLD_INGOT));
+        item.setGlowing(true);
+        activeGold.add(item);
+    }
+
+    private Player getNearestSurvivor(Player murderer) {
+        Player nearest = null;
+        double minDst = Double.MAX_VALUE;
+        for (Player p : getBukkitPlayers()) {
+            if (p.equals(murderer) || !alivePlayers.contains(p.getUniqueId())) continue;
+            double dst = p.getLocation().distanceSquared(murderer.getLocation());
+            if (dst < minDst) {
+                minDst = dst;
+                nearest = p;
+            }
+        }
+        return nearest;
+    }
+
+    @Override
+    public void onPlayerDamage(EntityDamageByEntityEvent event) {
+        if (state != GameState.IN_GAME) return;
+
+        Entity damager = event.getDamager();
+        Entity victim = event.getEntity();
+
+        if (!(victim instanceof Player victimPlayer) || !alivePlayers.contains(victimPlayer.getUniqueId())) {
+            event.setCancelled(true);
+            return;
+        }
+
+        Player attacker = null;
+        boolean isArrow = false;
+
+        if (damager instanceof Player p) {
+            attacker = p;
+        } else if (damager instanceof Arrow arrow && arrow.getShooter() instanceof Player p) {
+            attacker = p;
+            isArrow = true;
+        }
+
+        if (attacker == null || !alivePlayers.contains(attacker.getUniqueId())) {
+            event.setCancelled(true);
+            return;
+        }
+
+        Role attackerRole = roles.get(attacker.getUniqueId());
+        Role victimRole = roles.get(victimPlayer.getUniqueId());
+
+        // 1. Murderer melee knife kill
+        if (attackerRole == Role.MURDERER && !isArrow) {
+            ItemStack inHand = attacker.getInventory().getItemInMainHand();
+            if (inHand.getType() == Material.IRON_SWORD) {
+                event.setCancelled(true);
+                eliminatePlayer(victimPlayer, attacker, "stabbed");
+                return;
+            }
+        }
+
+        // 2. Detective / Hero Arrow Hit
+        if (isArrow) {
+            event.setCancelled(true);
+            if (victimRole == Role.MURDERER) {
+                // Shot the Murderer! Heroic win!
+                eliminatePlayer(victimPlayer, attacker, "shot");
+                broadcast("§6§lHEROIC SHOT! " + attacker.getName() + " §7shot the §cMurderer §f(" + victimPlayer.getName() + ")!");
+            } else {
+                // Shot an innocent! Guilty death!
+                eliminatePlayer(attacker, null, "guilt");
+                ChatUtil.sendMessage(attacker, "§c§lYou shot an Innocent! You died of guilt!");
+                ChatUtil.sendTitle(attacker, "§4§lYOU KILLED AN INNOCENT!", "§cYou died of guilt.", 5, 40, 10);
+            }
+            return;
+        }
+
+        event.setCancelled(true);
+    }
+
+    @Override
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if (state != GameState.IN_GAME) return;
+        Player player = event.getPlayer();
+        if (!alivePlayers.contains(player.getUniqueId())) return;
+
+        ItemStack item = event.getItem();
+        if (item == null) return;
+
+        // Murderer Knife Throw (Right-Click)
+        if (item.getType() == Material.IRON_SWORD && roles.get(player.getUniqueId()) == Role.MURDERER) {
+            if (event.getAction().name().contains("RIGHT")) {
+                event.setCancelled(true);
+                long now = System.currentTimeMillis();
+                long last = knifeCooldowns.getOrDefault(player.getUniqueId(), 0L);
+                if (now - last < 4000) {
+                    long remaining = 4 - ((now - last) / 1000);
+                    ChatUtil.sendActionBar(player, "§cKnife throw on cooldown: " + remaining + "s");
+                    return;
+                }
+                knifeCooldowns.put(player.getUniqueId(), now);
+                throwKnife(player);
+            }
+        }
+    }
+
+    private void throwKnife(Player player) {
+        Snowball knifeProj = player.launchProjectile(Snowball.class);
+        knifeProj.setItem(new ItemStack(Material.IRON_SWORD));
+        knifeProj.setVelocity(player.getLocation().getDirection().multiply(1.8));
+        knifeProj.setShooter(player);
+
+        ChatUtil.playSound(player, Sound.ENTITY_ARROW_SHOOT, 1.0f, 1.2f);
+        ChatUtil.sendActionBar(player, "§c§lKNIFE THROWN!");
+
+        // Knife collision runner
+        Bukkit.getScheduler().runTaskTimer(plugin, task -> {
+            if (!knifeProj.isValid() || knifeProj.isDead()) {
+                task.cancel();
+                return;
+            }
+            for (Player target : getBukkitPlayers()) {
+                if (target.equals(player) || !alivePlayers.contains(target.getUniqueId())) continue;
+                if (target.getLocation().distanceSquared(knifeProj.getLocation()) <= 1.8) {
+                    knifeProj.remove();
+                    task.cancel();
+                    eliminatePlayer(target, player, "thrown knife");
+                    return;
+                }
+            }
+        }, 1L, 1L);
+    }
+
+    private void eliminatePlayer(Player victim, Player killer, String cause) {
+        alivePlayers.remove(victim.getUniqueId());
+        Role vRole = roles.get(victim.getUniqueId());
+
+        victim.setGameMode(GameMode.ADVENTURE);
+        victim.getInventory().clear();
+        victim.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 1, false, false));
+        victim.setAllowFlight(true);
+        victim.setFlying(true);
+
+        victim.getWorld().spawnParticle(Particle.DUST, victim.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, new Particle.DustOptions(Color.RED, 1.5f));
+        ChatUtil.playSound(victim, Sound.ENTITY_PLAYER_DEATH, 1.0f, 1.0f);
+        ChatUtil.sendTitle(victim, "§c§lYOU DIED!", "§7You were " + cause + "!", 5, 40, 10);
+
+        // Detective Bow Drop
+        if (vRole == Role.DETECTIVE) {
+            droppedBowLoc = victim.getLocation().clone();
+            droppedBowItem = droppedBowLoc.getWorld().dropItem(droppedBowLoc.clone().add(0, 0.5, 0), new ItemStack(Material.BOW));
+            droppedBowItem.setGlowing(true);
+
+            droppedBowLoc.getWorld().strikeLightningEffect(droppedBowLoc);
+            broadcast("§b§lBOW DROPPED! §7The Detective was killed! An Innocent can pick up the bow!");
+            for (Player p : getAllBukkitPlayers()) {
+                ChatUtil.playSound(p, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
+            }
+        }
+
+        checkWinCondition();
+    }
+
+    @Override
+    public void checkWinCondition() {
+        if (state != GameState.IN_GAME) return;
+
+        UUID murdererUuid = null;
+        for (Map.Entry<UUID, Role> e : roles.entrySet()) {
+            if (e.getValue() == Role.MURDERER) {
+                murdererUuid = e.getKey();
+                break;
+            }
+        }
+
+        // 1. Murderer died
+        if (murdererUuid != null && !alivePlayers.contains(murdererUuid)) {
+            endGame(null); // Innocents win
+            broadcast("§a§lINNOCENTS WIN! §7The Murderer was defeated!");
+            return;
+        }
+
+        // 2. Count alive non-murderers
+        int aliveInnocents = 0;
+        for (UUID u : alivePlayers) {
+            if (roles.get(u) != Role.MURDERER) {
+                aliveInnocents++;
+            }
+        }
+
+        if (aliveInnocents == 0) {
+            Player murderer = murdererUuid != null ? Bukkit.getPlayer(murdererUuid) : null;
+            endGame(murderer);
+            broadcast("§c§lMURDERER WINS! §7All survivors have been eliminated!");
+            return;
+        }
+
+        // 3. Time out (Innocents win)
+        if (gameTime >= maxGameDuration) {
+            endGame(null);
+            broadcast("§a§lINNOCENTS WIN! §7Time ran out and survivors survived!");
+        }
+    }
+
+    @Override
+    public void onGameEnd(Player winner) {
+        if (winner != null) {
+            FPixelUser u = plugin.getUserManager().getUser(winner);
+            u.addMurderMysteryWin();
+        } else {
+            // Innocents won by surviving or detective killed murderer
+            for (UUID uId : alivePlayers) {
+                if (roles.get(uId) != Role.MURDERER) {
+                    Player p = Bukkit.getPlayer(uId);
+                    if (p != null) {
+                        FPixelUser u = plugin.getUserManager().getUser(p);
+                        u.addMurderMysteryWin();
+                    }
+                }
+            }
+        }
+
+        for (Item item : activeGold) {
+            if (item.isValid()) item.remove();
+        }
+        activeGold.clear();
+        if (droppedBowItem != null && droppedBowItem.isValid()) {
+            droppedBowItem.remove();
+            droppedBowItem = null;
+        }
+    }
+
+    @Override
+    public void onArenaReset() {
+        roles.clear();
+        goldCount.clear();
+        alivePlayers.clear();
+        knifeCooldowns.clear();
+        for (Item item : activeGold) {
+            if (item.isValid()) item.remove();
+        }
+        activeGold.clear();
+        if (droppedBowItem != null && droppedBowItem.isValid()) {
+            droppedBowItem.remove();
+            droppedBowItem = null;
+        }
+        droppedBowLoc = null;
+    }
+
+    @Override
+    public void onBlockBreak(BlockBreakEvent event) {
+        event.setCancelled(true);
+    }
+
+    @Override
+    public void onBlockPlace(BlockPlaceEvent event) {
+        event.setCancelled(true);
+    }
+
+    @Override
+    public List<String> getScoreboardLines(Player player) {
+        List<String> lines = new ArrayList<>();
+        lines.add("§7" + id);
+        lines.add(" ");
+
+        if (state == GameState.WAITING || state == GameState.STARTING) {
+            lines.add("§fPlayers: §a" + players.size() + "/" + maxPlayers);
+            lines.add("§fStarting in: §a" + countdown + "s");
+            lines.add("  ");
+            lines.add("§fMode: §eMurder Mystery");
+        } else if (state == GameState.IN_GAME) {
+            Role role = roles.getOrDefault(player.getUniqueId(), Role.INNOCENT);
+            lines.add("§fRole: " + role.getDisplay());
+            lines.add(" ");
+
+            int innocentCount = 0;
+            for (UUID u : alivePlayers) {
+                if (roles.get(u) != Role.MURDERER) innocentCount++;
+            }
+            lines.add("§fInnocents Left: §a" + innocentCount);
+            int gold = goldCount.getOrDefault(player.getUniqueId(), 0);
+            lines.add("§fGold: §6" + gold + "/10");
+
+            int timeLeft = Math.max(0, maxGameDuration - gameTime);
+            int mins = timeLeft / 60;
+            int secs = timeLeft % 60;
+            lines.add("§fTime Left: §e" + String.format("%02d:%02d", mins, secs));
+        } else {
+            lines.add("§fGame: §eEnding");
+        }
+
+        lines.add("   ");
+        lines.add("§emc.fpixel.net");
+        return lines;
+    }
+}

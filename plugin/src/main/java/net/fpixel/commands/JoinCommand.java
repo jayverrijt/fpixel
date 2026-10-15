@@ -27,11 +27,13 @@ public class JoinCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 1) {
-            ChatUtil.sendMessage(player, "§cUsage: /join <bedwars|skywars|tntrun|bridge|sumo|parkour>");
+            ChatUtil.sendMessage(player, "§cUsage: /join <bedwars|skywars|tntrun|bridge|sumo|parkour|murdermystery|prophunt>");
             return true;
         }
 
         String gameType = args[0].toUpperCase();
+        if (gameType.equalsIgnoreCase("MM") || gameType.equalsIgnoreCase("MURDER")) gameType = "MURDER_MYSTERY";
+        if (gameType.equalsIgnoreCase("PH") || gameType.equalsIgnoreCase("PROP")) gameType = "PROP_HUNT";
         plugin.getGameManager().joinQueue(player, gameType);
         return true;
     }
@@ -39,7 +41,7 @@ public class JoinCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> list = Arrays.asList("bedwars", "skywars", "tntrun", "bridge", "sumo", "parkour");
+            List<String> list = Arrays.asList("bedwars", "skywars", "tntrun", "bridge", "sumo", "parkour", "murdermystery", "prophunt");
             List<String> filtered = new ArrayList<>();
             for (String s : list) {
                 if (s.toLowerCase().startsWith(args[0].toLowerCase())) {

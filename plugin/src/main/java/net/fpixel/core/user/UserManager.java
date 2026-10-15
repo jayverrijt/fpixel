@@ -60,6 +60,12 @@ public class UserManager {
             for (int i = 0; i < cfg.getInt("stats.sumo.wins", 0); i++) user.addSumoWin();
             for (int i = 0; i < cfg.getInt("stats.sumo.losses", 0); i++) user.addSumoLoss();
 
+            // Murder Mystery
+            for (int i = 0; i < cfg.getInt("stats.murdermystery.wins", 0); i++) user.addMurderMysteryWin();
+
+            // Prop Hunt
+            for (int i = 0; i < cfg.getInt("stats.prophunt.wins", 0); i++) user.addPropHuntWin();
+
             for (String s : cfg.getStringList("secrets")) {
                 user.addDiscoveredSecret(s);
             }
@@ -88,6 +94,9 @@ public class UserManager {
         cfg.set("stats.sumo.wins", user.getSumoWins());
         cfg.set("stats.sumo.losses", user.getSumoLosses());
         cfg.set("stats.sumo.streak", user.getSumoStreak());
+
+        cfg.set("stats.murdermystery.wins", user.getMurderMysteryWins());
+        cfg.set("stats.prophunt.wins", user.getPropHuntWins());
 
         cfg.set("secrets", new java.util.ArrayList<>(user.getDiscoveredSecrets()));
 
