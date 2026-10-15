@@ -473,6 +473,9 @@ public abstract class Arena {
     public void onPlayerPickupItem(EntityPickupItemEvent event) {}
     public void onShootBow(EntityShootBowEvent event) {}
     public void onProjectileHit(ProjectileHitEvent event) {}
+    public void onPlayerDropItem(org.bukkit.event.player.PlayerDropItemEvent event) {}
+    public void onPlayerSwapHandItems(org.bukkit.event.player.PlayerSwapHandItemsEvent event) {}
+    public void onItemConsume(org.bukkit.event.player.PlayerItemConsumeEvent event) {}
 
     public boolean isSpectator(UUID uuid) {
         return spectators.contains(uuid);

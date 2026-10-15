@@ -307,4 +307,31 @@ public class GameManager implements Listener {
             arena.onPlayerInteractEntity(event);
         }
     }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onDropItem(org.bukkit.event.player.PlayerDropItemEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            arena.onPlayerDropItem(event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onSwapHandItems(org.bukkit.event.player.PlayerSwapHandItemsEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            arena.onPlayerSwapHandItems(event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onItemConsume(org.bukkit.event.player.PlayerItemConsumeEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            arena.onItemConsume(event);
+        }
+    }
 }

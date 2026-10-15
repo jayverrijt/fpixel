@@ -121,6 +121,11 @@ public class SimulatedPlayer {
                     eq.setItemInMainHand(new ItemBuilder(Material.IRON_SWORD).build());
                     zombie.setHealth(20.0);
                 }
+                case "MURDER_MYSTERY" -> {
+                    eq.clear();
+                    eq.setHelmet(new ItemBuilder(Material.PLAYER_HEAD).build());
+                    zombie.setHealth(20.0);
+                }
                 default -> {
                     eq.setChestplate(new ItemBuilder(Material.IRON_CHESTPLATE).build());
                     zombie.setHealth(20.0);

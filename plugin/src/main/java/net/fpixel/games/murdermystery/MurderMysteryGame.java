@@ -56,6 +56,47 @@ public class MurderMysteryGame extends Arena {
     private int arrowRechargeSeconds = 0;
     private final Map<UUID, Long> knifeCooldowns = new HashMap<>();
 
+    private UUID murdererUuid = null;
+    private UUID detectiveUuid = null;
+    private final Map<UUID, Role> preferredRoles = new HashMap<>();
+
+    public void setPreferredRole(UUID uuid, Role role) {
+        if (role == null) {
+            preferredRoles.remove(uuid);
+        } else {
+            preferredRoles.put(uuid, role);
+        }
+    }
+
+    public UUID getMurdererUuid() { return murdererUuid; }
+    public UUID getDetectiveUuid() { return detectiveUuid; }
+    public Role getPlayerRole(UUID uuid) { return roles.get(uuid); }
+
+    public boolean isMurderer(UUID uuid) {
+        if (uuid == null) return false;
+        if (murdererUuid != null && uuid.equals(murdererUuid)) return true;
+        Role r = roles.get(uuid);
+        if (r == Role.MURDERER) return true;
+        for (Map.Entry<UUID, Role> e : roles.entrySet()) {
+            if (e.getValue() == Role.MURDERER && e.getKey().toString().equalsIgnoreCase(uuid.toString())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isMurderer(Player player) {
+        if (player == null) return false;
+        if (isMurderer(player.getUniqueId())) return true;
+        if (murdererUuid != null && (player.getUniqueId().equals(murdererUuid) || player.getUniqueId().toString().equalsIgnoreCase(murdererUuid.toString()))) return true;
+        if (player.getInventory().contains(Material.IRON_SWORD)) return true;
+        ItemStack hand = player.getInventory().getItemInMainHand();
+        if (hand != null && hand.getType() == Material.IRON_SWORD) return true;
+        ItemStack off = player.getInventory().getItemInOffHand();
+        if (off != null && off.getType() == Material.IRON_SWORD) return true;
+        return false;
+    }
+
     public MurderMysteryGame(FPixelPlugin plugin, String id, String displayName) {
         super(plugin, id, displayName, "MURDER_MYSTERY", 3, 4);
     }
@@ -77,8 +118,11 @@ public class MurderMysteryGame extends Arena {
         goldCount.clear();
         alivePlayers.clear();
         activeGold.clear();
+        knifeCooldowns.clear();
         droppedBowLoc = null;
         droppedBowItem = null;
+        murdererUuid = null;
+        detectiveUuid = null;
 
         List<UUID> humanList = new ArrayList<>(players);
         Collections.shuffle(humanList);
@@ -91,17 +135,47 @@ public class MurderMysteryGame extends Arena {
 
         if (allParticipants.size() < 2) return;
 
-        // Assign Murderer (prioritizes human players over bots)
-        UUID murdererUuid = allParticipants.get(0);
-        roles.put(murdererUuid, Role.MURDERER);
+        // Role assignment: respect preferredRoles if set (e.g. from testing commands)
+        UUID mId = null;
+        UUID dId = null;
 
-        // Assign Detective (prioritizes remaining human players over bots)
-        UUID detectiveUuid = allParticipants.get(1);
-        roles.put(detectiveUuid, Role.DETECTIVE);
+        for (UUID u : allParticipants) {
+            Role pref = preferredRoles.get(u);
+            if (pref == Role.MURDERER && mId == null) {
+                mId = u;
+            } else if (pref == Role.DETECTIVE && dId == null) {
+                dId = u;
+            }
+        }
+
+        if (mId == null) {
+            for (UUID u : allParticipants) {
+                if (!u.equals(dId)) {
+                    mId = u;
+                    break;
+                }
+            }
+        }
+
+        if (dId == null) {
+            for (UUID u : allParticipants) {
+                if (!u.equals(mId)) {
+                    dId = u;
+                    break;
+                }
+            }
+        }
+
+        murdererUuid = mId;
+        detectiveUuid = dId;
+        if (murdererUuid != null) roles.put(murdererUuid, Role.MURDERER);
+        if (detectiveUuid != null) roles.put(detectiveUuid, Role.DETECTIVE);
 
         // Remaining are Innocents
-        for (int i = 2; i < allParticipants.size(); i++) {
-            roles.put(allParticipants.get(i), Role.INNOCENT);
+        for (UUID u : allParticipants) {
+            if (!u.equals(murdererUuid) && !u.equals(detectiveUuid)) {
+                roles.put(u, Role.INNOCENT);
+            }
         }
 
         // Teleport participants to scattered map rooms
@@ -125,7 +199,15 @@ public class MurderMysteryGame extends Arena {
 
             net.fpixel.core.testing.SimulatedPlayer bot = simulatedPlayers.get(u);
             if (bot != null) {
-                bot.spawnEntity(spawn, "MURDER_MYSTERY");
+                LivingEntity ent = bot.spawnEntity(spawn, "MURDER_MYSTERY");
+                if (ent != null && ent.getEquipment() != null) {
+                    Role r = roles.get(u);
+                    if (r == Role.MURDERER) {
+                        ent.getEquipment().setItemInMainHand(new ItemStack(Material.IRON_SWORD));
+                    } else if (r == Role.DETECTIVE) {
+                        ent.getEquipment().setItemInMainHand(new ItemStack(Material.BOW));
+                    }
+                }
             }
         }
 
@@ -171,8 +253,20 @@ public class MurderMysteryGame extends Arena {
         if (role == Role.MURDERER) {
             ItemStack knife = new ItemBuilder(Material.IRON_SWORD)
                     .name("§c§lMurderer's Knife")
-                    .lore("§7One-shot melee kill.", "§7Right-click to throw!")
+                    .lore("§7One-shot melee kill.", "§7Right-click or press Q to throw! (4s cooldown)")
                     .build();
+            try {
+                org.bukkit.inventory.meta.ItemMeta meta = knife.getItemMeta();
+                if (meta != null) {
+                    org.bukkit.inventory.meta.components.FoodComponent food = meta.getFood();
+                    food.setCanAlwaysEat(true);
+                    food.setNutrition(0);
+                    food.setSaturation(0.0f);
+                    meta.setFood(food);
+                    knife.setItemMeta(meta);
+                }
+            } catch (Throwable ignored) {}
+
             ItemStack tracker = new ItemBuilder(Material.COMPASS)
                     .name("§e§lPlayer Tracker")
                     .lore("§7Points to the nearest survivor.")
@@ -354,7 +448,7 @@ public class MurderMysteryGame extends Arena {
 
         // Murderers cannot pick up Bow or Gold!
         Role role = roles.get(p.getUniqueId());
-        if (role == Role.MURDERER) {
+        if (role == Role.MURDERER || isMurderer(p)) {
             if (mat == Material.BOW || mat == Material.GOLD_INGOT) {
                 event.setCancelled(true);
                 return;
@@ -364,7 +458,7 @@ public class MurderMysteryGame extends Arena {
         // Dropped Bow pickup
         if (mat == Material.BOW) {
             event.setCancelled(true);
-            if (role == Role.INNOCENT) {
+            if (role == Role.INNOCENT && !isMurderer(p)) {
                 pickupDroppedBow(p, itemEntity);
             }
             return;
@@ -373,7 +467,7 @@ public class MurderMysteryGame extends Arena {
         // Gold pickup
         if (mat == Material.GOLD_INGOT) {
             event.setCancelled(true);
-            if (role != Role.MURDERER) {
+            if (role != Role.MURDERER && !isMurderer(p)) {
                 pickupGold(p, itemEntity);
             }
             return;
@@ -391,6 +485,28 @@ public class MurderMysteryGame extends Arena {
     public void onProjectileHit(ProjectileHitEvent event) {
         if (event.getEntity() instanceof Arrow) {
             Bukkit.getScheduler().runTaskLater(plugin, () -> event.getEntity().remove(), 1L);
+        } else if (event.getEntity() instanceof Snowball sb && sb.getScoreboardTags().contains("thrown_knife")) {
+            Location hitLoc = event.getEntity().getLocation();
+            if (hitLoc.getWorld() != null) {
+                hitLoc.getWorld().playSound(hitLoc, Sound.ITEM_ARMOR_EQUIP_IRON, 1.0f, 0.8f);
+                hitLoc.getWorld().spawnParticle(Particle.BLOCK, hitLoc, 10, 0.2, 0.2, 0.2, Bukkit.createBlockData(Material.IRON_BLOCK));
+            }
+
+            if (sb.getShooter() instanceof Player killer) {
+                if (event.getHitEntity() instanceof Player hitPlayer) {
+                    if (alivePlayers.contains(hitPlayer.getUniqueId()) && !isSpectator(hitPlayer.getUniqueId()) && !hitPlayer.equals(killer)) {
+                        eliminatePlayer(hitPlayer, killer, "thrown knife");
+                    }
+                } else if (event.getHitEntity() != null && event.getHitEntity().getScoreboardTags().contains("fpixel_bot")) {
+                    if (plugin.getTestingManager() != null) {
+                        net.fpixel.core.testing.SimulatedPlayer bot = plugin.getTestingManager().findBotByEntity(this, event.getHitEntity());
+                        if (bot != null && alivePlayers.contains(bot.getUuid())) {
+                            eliminateSimulatedPlayer(bot);
+                        }
+                    }
+                }
+            }
+            Bukkit.getScheduler().runTaskLater(plugin, sb::remove, 1L);
         }
     }
 
@@ -432,12 +548,16 @@ public class MurderMysteryGame extends Arena {
 
         Player attacker = null;
         boolean isArrow = false;
+        boolean isKnifeThrow = false;
 
         if (damager instanceof Player p) {
             attacker = p;
         } else if (damager instanceof Arrow arrow && arrow.getShooter() instanceof Player p) {
             attacker = p;
             isArrow = true;
+        } else if (damager instanceof Snowball sb && sb.getShooter() instanceof Player p && sb.getScoreboardTags().contains("thrown_knife")) {
+            attacker = p;
+            isKnifeThrow = true;
         }
 
         if (attacker == null || !alivePlayers.contains(attacker.getUniqueId())) {
@@ -445,26 +565,35 @@ public class MurderMysteryGame extends Arena {
             return;
         }
 
-        Role attackerRole = roles.get(attacker.getUniqueId());
-        Role victimRole = roles.get(victimPlayer.getUniqueId());
+        // 1. Thrown knife hit
+        if (isKnifeThrow) {
+            event.setCancelled(true);
+            if (isMurderer(attacker) && !victimPlayer.equals(attacker)) {
+                eliminatePlayer(victimPlayer, attacker, "thrown knife");
+            }
+            return;
+        }
 
-        // 1. Murderer melee knife kill
-        if (attackerRole == Role.MURDERER && !isArrow) {
+        // 2. Murderer melee knife kill
+        if (isMurderer(attacker) && !isArrow) {
             ItemStack inHand = attacker.getInventory().getItemInMainHand();
-            if (inHand.getType() == Material.IRON_SWORD) {
+            ItemStack offHand = attacker.getInventory().getItemInOffHand();
+            if ((inHand != null && inHand.getType() == Material.IRON_SWORD) || (offHand != null && offHand.getType() == Material.IRON_SWORD)) {
                 event.setCancelled(true);
                 eliminatePlayer(victimPlayer, attacker, "stabbed");
                 return;
             }
         }
 
-        // 2. Detective / Hero Arrow Hit
+        // 3. Detective / Hero Arrow Hit
         if (isArrow) {
             event.setCancelled(true);
-            if (victimRole == Role.MURDERER) {
+            if (isMurderer(victimPlayer)) {
                 // Shot the Murderer! Heroic win!
                 eliminatePlayer(victimPlayer, attacker, "shot");
-                broadcast("§6§lHEROIC SHOT! " + attacker.getName() + " §7shot the §cMurderer §f(" + victimPlayer.getName() + ")!");
+                broadcast("§6§lHEROIC SHOT! §9" + attacker.getName() + " §7shot the §cMurderer §f(" + victimPlayer.getName() + ")!");
+                ChatUtil.sendTitle(attacker, "§6§lHEROIC SHOT!", "§aYou eliminated the Murderer!", 10, 60, 20);
+                ChatUtil.playSound(attacker, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
             } else {
                 // Shot an innocent! Guilty death!
                 eliminatePlayer(attacker, null, "guilt");
@@ -477,30 +606,27 @@ public class MurderMysteryGame extends Arena {
         event.setCancelled(true);
     }
 
-    @Override
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        if (state != GameState.IN_GAME) return;
-        Player player = event.getPlayer();
-        if (!alivePlayers.contains(player.getUniqueId())) return;
+    public void tryThrowKnife(Player player) {
+        if (state != GameState.IN_GAME || !alivePlayers.contains(player.getUniqueId()) || isSpectator(player.getUniqueId())) return;
+        if (!isMurderer(player)) return;
 
-        ItemStack item = event.getItem();
-        if (item == null) return;
-
-        // Murderer Knife Throw (Right-Click)
-        if (item.getType() == Material.IRON_SWORD && roles.get(player.getUniqueId()) == Role.MURDERER) {
-            if (event.getAction().name().contains("RIGHT")) {
-                event.setCancelled(true);
-                long now = System.currentTimeMillis();
-                long last = knifeCooldowns.getOrDefault(player.getUniqueId(), 0L);
-                if (now - last < 4000) {
-                    long remaining = 4 - ((now - last) / 1000);
-                    ChatUtil.sendActionBar(player, "§cKnife throw on cooldown: " + remaining + "s");
-                    return;
-                }
-                knifeCooldowns.put(player.getUniqueId(), now);
-                throwKnife(player);
-            }
+        long now = System.currentTimeMillis();
+        long last = knifeCooldowns.getOrDefault(player.getUniqueId(), 0L);
+        if (now - last < 4000) {
+            long remaining = (4000 - (now - last) + 999) / 1000;
+            ChatUtil.sendActionBar(player, "§c§lKnife throw on cooldown: " + remaining + "s");
+            ChatUtil.playSound(player, Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.5f);
+            return;
         }
+        knifeCooldowns.put(player.getUniqueId(), now);
+        throwKnife(player);
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (state == GameState.IN_GAME && alivePlayers.contains(player.getUniqueId()) && isMurderer(player)) {
+                ChatUtil.sendActionBar(player, "§a§lKNIFE READY TO THROW!");
+                ChatUtil.playSound(player, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.8f, 1.5f);
+            }
+        }, 80L);
     }
 
     private void throwKnife(Player player) {
@@ -508,6 +634,7 @@ public class MurderMysteryGame extends Arena {
         knifeProj.setItem(new ItemStack(Material.IRON_SWORD));
         knifeProj.setVelocity(player.getLocation().getDirection().multiply(1.8));
         knifeProj.setShooter(player);
+        knifeProj.addScoreboardTag("thrown_knife");
 
         ChatUtil.playSound(player, Sound.ENTITY_ARROW_SHOOT, 1.0f, 1.2f);
         ChatUtil.sendActionBar(player, "§c§lKNIFE THROWN!");
@@ -518,19 +645,100 @@ public class MurderMysteryGame extends Arena {
                 task.cancel();
                 return;
             }
+
+            Location pLoc = knifeProj.getLocation();
+            if (pLoc.getWorld() != null) {
+                pLoc.getWorld().spawnParticle(Particle.CRIT, pLoc, 3, 0.1, 0.1, 0.1, 0.05);
+            }
+
             for (Player target : getBukkitPlayers()) {
-                if (target.equals(player) || !alivePlayers.contains(target.getUniqueId())) continue;
-                if (target.getLocation().distanceSquared(knifeProj.getLocation()) <= 1.8) {
+                if (target.equals(player) || !alivePlayers.contains(target.getUniqueId()) || isSpectator(target.getUniqueId())) continue;
+                if (target.getLocation().add(0, 1.0, 0).distanceSquared(knifeProj.getLocation()) <= 2.25) {
                     knifeProj.remove();
                     task.cancel();
                     eliminatePlayer(target, player, "thrown knife");
                     return;
                 }
             }
+
+            for (net.fpixel.core.testing.SimulatedPlayer bot : simulatedPlayers.values()) {
+                if (bot.getEntity() != null && bot.getEntity().isValid() && alivePlayers.contains(bot.getUuid())) {
+                    if (bot.getEntity().getLocation().add(0, 1.0, 0).distanceSquared(knifeProj.getLocation()) <= 2.25) {
+                        knifeProj.remove();
+                        task.cancel();
+                        eliminateSimulatedPlayer(bot);
+                        return;
+                    }
+                }
+            }
         }, 1L, 1L);
     }
 
-    private void eliminatePlayer(Player victim, Player killer, String cause) {
+    @Override
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if (state != GameState.IN_GAME) return;
+        Player player = event.getPlayer();
+        if (!alivePlayers.contains(player.getUniqueId()) || isSpectator(player.getUniqueId())) return;
+
+        ItemStack item = event.getItem();
+        if (item == null) item = player.getInventory().getItemInMainHand();
+        if (item == null) return;
+
+        if (item.getType() == Material.IRON_SWORD && isMurderer(player)) {
+            if (event.getAction().name().contains("RIGHT")) {
+                event.setCancelled(true);
+                tryThrowKnife(player);
+            }
+        }
+    }
+
+    @Override
+    public void onPlayerInteractEntity(org.bukkit.event.player.PlayerInteractEntityEvent event) {
+        if (state != GameState.IN_GAME) return;
+        Player player = event.getPlayer();
+        if (!alivePlayers.contains(player.getUniqueId()) || isSpectator(player.getUniqueId())) return;
+
+        ItemStack item = player.getInventory().getItemInMainHand();
+        if (item != null && item.getType() == Material.IRON_SWORD && isMurderer(player)) {
+            event.setCancelled(true);
+            tryThrowKnife(player);
+        }
+    }
+
+    @Override
+    public void onPlayerDropItem(org.bukkit.event.player.PlayerDropItemEvent event) {
+        if (state != GameState.IN_GAME) return;
+        Player player = event.getPlayer();
+        if (!alivePlayers.contains(player.getUniqueId()) || isSpectator(player.getUniqueId())) return;
+
+        ItemStack item = event.getItemDrop().getItemStack();
+        if (item.getType() == Material.IRON_SWORD && isMurderer(player)) {
+            event.setCancelled(true);
+            tryThrowKnife(player);
+        }
+    }
+
+    @Override
+    public void onPlayerSwapHandItems(org.bukkit.event.player.PlayerSwapHandItemsEvent event) {
+        if (state != GameState.IN_GAME) return;
+        Player player = event.getPlayer();
+        if (!alivePlayers.contains(player.getUniqueId()) || isSpectator(player.getUniqueId())) return;
+
+        ItemStack item = player.getInventory().getItemInMainHand();
+        if (item != null && item.getType() == Material.IRON_SWORD && isMurderer(player)) {
+            event.setCancelled(true);
+            tryThrowKnife(player);
+        }
+    }
+
+    @Override
+    public void onItemConsume(org.bukkit.event.player.PlayerItemConsumeEvent event) {
+        if (event.getItem().getType() == Material.IRON_SWORD) {
+            event.setCancelled(true);
+        }
+    }
+
+    public void eliminatePlayer(Player victim, Player killer, String cause) {
         alivePlayers.remove(victim.getUniqueId());
         Role vRole = roles.get(victim.getUniqueId());
 
@@ -545,7 +753,7 @@ public class MurderMysteryGame extends Arena {
         ChatUtil.sendTitle(victim, "§c§lYOU DIED!", "§7You were " + cause + "!", 5, 40, 10);
 
         // Detective Bow Drop
-        if (vRole == Role.DETECTIVE) {
+        if (vRole == Role.DETECTIVE && !isMurderer(victim)) {
             droppedBowLoc = victim.getLocation().clone();
             droppedBowItem = droppedBowLoc.getWorld().dropItem(droppedBowLoc.clone().add(0, 0.5, 0), new ItemStack(Material.BOW));
             droppedBowItem.setGlowing(true);
@@ -561,19 +769,29 @@ public class MurderMysteryGame extends Arena {
     }
 
     @Override
+    public void eliminateSimulatedPlayer(net.fpixel.core.testing.SimulatedPlayer bot) {
+        if (bot != null) {
+            alivePlayers.remove(bot.getUuid());
+        }
+        super.eliminateSimulatedPlayer(bot);
+    }
+
+    @Override
     public void checkWinCondition() {
         if (state != GameState.IN_GAME) return;
 
-        UUID murdererUuid = null;
-        for (Map.Entry<UUID, Role> e : roles.entrySet()) {
-            if (e.getValue() == Role.MURDERER) {
-                murdererUuid = e.getKey();
-                break;
+        UUID mId = murdererUuid;
+        if (mId == null) {
+            for (Map.Entry<UUID, Role> e : roles.entrySet()) {
+                if (e.getValue() == Role.MURDERER) {
+                    mId = e.getKey();
+                    break;
+                }
             }
         }
 
         // 1. Murderer died
-        if (murdererUuid != null && !alivePlayers.contains(murdererUuid)) {
+        if (mId != null && !alivePlayers.contains(mId)) {
             endGame(null); // Innocents win
             broadcast("§a§lINNOCENTS WIN! §7The Murderer was defeated!");
             return;
@@ -582,13 +800,13 @@ public class MurderMysteryGame extends Arena {
         // 2. Count alive non-murderers
         int aliveInnocents = 0;
         for (UUID u : alivePlayers) {
-            if (roles.get(u) != Role.MURDERER) {
+            if (!isMurderer(u)) {
                 aliveInnocents++;
             }
         }
 
         if (aliveInnocents == 0) {
-            Player murderer = murdererUuid != null ? Bukkit.getPlayer(murdererUuid) : null;
+            Player murderer = mId != null ? Bukkit.getPlayer(mId) : null;
             endGame(murderer);
             broadcast("§c§lMURDERER WINS! §7All survivors have been eliminated!");
             return;
@@ -654,6 +872,8 @@ public class MurderMysteryGame extends Arena {
         goldCount.clear();
         alivePlayers.clear();
         knifeCooldowns.clear();
+        murdererUuid = null;
+        detectiveUuid = null;
         for (Item item : activeGold) {
             if (item.isValid()) item.remove();
         }

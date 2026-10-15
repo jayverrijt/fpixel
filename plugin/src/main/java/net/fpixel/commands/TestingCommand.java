@@ -130,6 +130,29 @@ public class TestingCommand implements CommandExecutor, TabCompleter {
                 arena.resetArena();
                 ChatUtil.sendMessage(p, "§aArena §e" + arena.getId() + " §ahas been reset and players returned to lobby.");
             }
+            case "role", "setrole" -> {
+                if (!(sender instanceof Player p)) {
+                    sender.sendMessage("Only players can select roles.");
+                    return true;
+                }
+                if (args.length < 2) {
+                    ChatUtil.sendMessage(p, "§cUsage: /testing role <murderer|detective|innocent>");
+                    return true;
+                }
+                Arena arena = plugin.getGameManager().getPlayerArena(p);
+                if (arena instanceof net.fpixel.games.murdermystery.MurderMysteryGame mm) {
+                    String roleStr = args[1].toUpperCase();
+                    try {
+                        net.fpixel.games.murdermystery.MurderMysteryGame.Role role = net.fpixel.games.murdermystery.MurderMysteryGame.Role.valueOf(roleStr);
+                        mm.setPreferredRole(p.getUniqueId(), role);
+                        ChatUtil.sendMessage(p, "§a§l[TESTING] §7Preferred Murder Mystery role set to: " + role.getDisplay());
+                    } catch (IllegalArgumentException e) {
+                        ChatUtil.sendMessage(p, "§cInvalid role! Choose: MURDERER, DETECTIVE, or INNOCENT");
+                    }
+                } else {
+                    ChatUtil.sendMessage(p, "§cYou must be in a Murder Mystery arena to select a role.");
+                }
+            }
             default -> sendHelp(sender);
         }
 
@@ -145,12 +168,13 @@ public class TestingCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatUtil.colorize(" §e/testing start §7- Fast-start countdown (3 seconds)"));
         sender.sendMessage(ChatUtil.colorize(" §e/testing win §7- Instantly trigger victory in current game"));
         sender.sendMessage(ChatUtil.colorize(" §e/testing end §7- Reset current arena back to lobby"));
+        sender.sendMessage(ChatUtil.colorize(" §e/testing role <role> §7- Select role in Murder Mystery"));
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> list = Arrays.asList("on", "off", "status", "bot", "start", "win", "end");
+            List<String> list = Arrays.asList("on", "off", "status", "bot", "start", "win", "end", "role");
             List<String> filtered = new ArrayList<>();
             for (String s : list) {
                 if (s.toLowerCase().startsWith(args[0].toLowerCase())) {
@@ -158,6 +182,8 @@ public class TestingCommand implements CommandExecutor, TabCompleter {
                 }
             }
             return filtered;
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("role")) {
+            return Arrays.asList("murderer", "detective", "innocent");
         }
         return new ArrayList<>();
     }

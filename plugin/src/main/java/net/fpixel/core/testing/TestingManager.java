@@ -9,12 +9,13 @@ import net.fpixel.games.bridge.BridgeGame;
 import net.fpixel.games.pvp.PvPGame;
 import net.fpixel.games.skywars.SkyWarsGame;
 import net.fpixel.games.sumo.SumoGame;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Sound;
+import org.bukkit.*;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Snowball;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -175,6 +176,56 @@ public class TestingManager implements Listener {
         Arena arena = findArenaByBot(entity);
         if (arena == null || arena.getState() != GameState.IN_GAME) {
             event.setCancelled(true);
+            return;
+        }
+
+        if (arena instanceof net.fpixel.games.murdermystery.MurderMysteryGame mm) {
+            event.setCancelled(true);
+            SimulatedPlayer bot = findBotByEntity(arena, entity);
+            if (bot == null) return;
+
+            Player attacker = null;
+            boolean isArrow = false;
+            boolean isKnifeThrow = false;
+
+            if (event.getDamager() instanceof Player p) {
+                attacker = p;
+            } else if (event.getDamager() instanceof Arrow arrow && arrow.getShooter() instanceof Player p) {
+                attacker = p;
+                isArrow = true;
+            } else if (event.getDamager() instanceof Snowball sb && sb.getShooter() instanceof Player p) {
+                attacker = p;
+                isKnifeThrow = true;
+            }
+
+            if (attacker == null) return;
+
+            // 1. Arrow shot
+            if (isArrow) {
+                boolean botIsMurderer = mm.isMurderer(bot.getUuid());
+                if (botIsMurderer) {
+                    arena.eliminateSimulatedPlayer(bot);
+                    mm.broadcast("§6§lHEROIC SHOT! §9" + attacker.getName() + " §7shot the §cMurderer §f(" + bot.getName() + ")!");
+                    ChatUtil.sendTitle(attacker, "§6§lHEROIC SHOT!", "§aYou eliminated the Murderer!", 10, 60, 20);
+                    ChatUtil.playSound(attacker, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                } else {
+                    mm.eliminatePlayer(attacker, null, "guilt");
+                    ChatUtil.sendMessage(attacker, "§c§lYou shot an Innocent! You died of guilt!");
+                    ChatUtil.sendTitle(attacker, "§4§lYOU KILLED AN INNOCENT!", "§cYou died of guilt.", 5, 40, 10);
+                }
+                return;
+            }
+
+            // 2. Murderer knife attack (melee or throw)
+            if (mm.isMurderer(attacker)) {
+                ItemStack mainHand = attacker.getInventory().getItemInMainHand();
+                if (isKnifeThrow || (mainHand != null && mainHand.getType() == Material.IRON_SWORD)) {
+                    arena.eliminateSimulatedPlayer(bot);
+                    entity.getWorld().spawnParticle(Particle.DUST, entity.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, new Particle.DustOptions(Color.RED, 1.5f));
+                    ChatUtil.playSound(attacker, Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.0f);
+                }
+                return;
+            }
             return;
         }
 
