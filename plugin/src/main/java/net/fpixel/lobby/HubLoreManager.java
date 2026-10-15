@@ -147,14 +147,30 @@ public class HubLoreManager implements Listener, CommandExecutor {
         }
 
         for (HubRelic relic : relics) {
-            Location loc = relic.toLocation(world);
+            Location loc = relic.toLocation(world).clone();
 
-            // Relic floating armor stand
-            ArmorStand stand = world.spawn(loc.clone().subtract(0, 0.4, 0), ArmorStand.class, as -> {
+            // Ground detection for relic stands if placed on or near the surface
+            int bx = loc.getBlockX();
+            int bz = loc.getBlockZ();
+            int groundY = -1;
+            for (int checkY = Math.min(115, loc.getBlockY() + 4); checkY >= Math.max(90, loc.getBlockY() - 4); checkY--) {
+                org.bukkit.block.Block b = world.getBlockAt(bx, checkY, bz);
+                if (b.getType().isSolid()) {
+                    groundY = checkY;
+                    break;
+                }
+            }
+            if (groundY != -1 && Math.abs(loc.getBlockY() - groundY) <= 3) {
+                loc.setY(groundY + 1.0);
+            }
+
+            // Relic floating armor stand (small, invisible, item floating smoothly above ground)
+            ArmorStand stand = world.spawn(loc.clone().add(0, 0.2, 0), ArmorStand.class, as -> {
                 as.setVisible(false);
                 as.setGravity(false);
                 as.setInvulnerable(true);
                 as.setMarker(false);
+                as.setSmall(true);
                 as.setCustomNameVisible(true);
                 as.customName(ChatUtil.component("§6★ §e§lANCIENT RELIC §6★"));
                 as.addScoreboardTag(RELIC_TAG);
@@ -163,11 +179,12 @@ public class HubLoreManager implements Listener, CommandExecutor {
             });
 
             // Subtitle stand
-            world.spawn(loc.clone().add(0, 0.25, 0), ArmorStand.class, sub -> {
+            world.spawn(loc.clone().subtract(0, 0.1, 0), ArmorStand.class, sub -> {
                 sub.setVisible(false);
                 sub.setGravity(false);
                 sub.setInvulnerable(true);
                 sub.setMarker(true);
+                sub.setSmall(true);
                 sub.setCustomNameVisible(true);
                 sub.customName(ChatUtil.component("§eRight Click to Discover"));
                 sub.addScoreboardTag(RELIC_TAG);

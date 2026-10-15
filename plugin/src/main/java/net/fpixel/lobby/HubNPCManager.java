@@ -5,6 +5,7 @@ import net.fpixel.core.util.ChatUtil;
 import net.fpixel.core.util.ItemBuilder;
 import net.fpixel.lobby.menus.GameSelectorMenu;
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -275,9 +276,33 @@ public class HubNPCManager implements Listener {
     }
 
     private void spawnNPC(NPCDefinition def) {
-        Location loc = def.location();
+        Location loc = def.location().clone();
         World world = loc.getWorld();
         if (world == null) return;
+
+        // Dynamic ground height detection to ensure NPCs are never buried in the ground
+        int bx = loc.getBlockX();
+        int bz = loc.getBlockZ();
+        int groundY = -1;
+        for (int checkY = 115; checkY >= 90; checkY--) {
+            Block b = world.getBlockAt(bx, checkY, bz);
+            if (b.getType().isSolid()) {
+                groundY = checkY;
+                break;
+            }
+        }
+        if (groundY != -1) {
+            Block b = world.getBlockAt(bx, groundY, bz);
+            double finalY = groundY + 1.0;
+            if (b.getBlockData() instanceof org.bukkit.block.data.type.Slab slab && slab.getType() == org.bukkit.block.data.type.Slab.Type.BOTTOM) {
+                finalY = groundY + 0.5;
+            }
+            Block above = world.getBlockAt(bx, groundY + 1, bz);
+            if (above.getType().name().endsWith("_CARPET")) {
+                finalY += 0.0625;
+            }
+            loc.setY(finalY);
+        }
 
         // 1. ArmorStand Body
         ArmorStand stand = (ArmorStand) world.spawnEntity(loc, EntityType.ARMOR_STAND);

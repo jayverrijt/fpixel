@@ -933,18 +933,41 @@ public class MapBuilder {
     }
 
     public static void buildToriiArch(World world, int x, int y, int z) {
-        buildPillar(world, x - 3, y + 1, z, 6, Material.STRIPPED_DARK_OAK_LOG);
-        buildPillar(world, x + 3, y + 1, z, 6, Material.STRIPPED_DARK_OAK_LOG);
+        // 1. Stone foundation plinths at base
+        world.getBlockAt(x - 3, y - 1, z).setType(Material.POLISHED_BLACKSTONE, false);
+        world.getBlockAt(x + 3, y - 1, z).setType(Material.POLISHED_BLACKSTONE, false);
+        world.getBlockAt(x - 3, y, z).setType(Material.POLISHED_BLACKSTONE, false);
+        world.getBlockAt(x + 3, y, z).setType(Material.POLISHED_BLACKSTONE, false);
+        world.getBlockAt(x - 3, y + 1, z).setType(Material.POLISHED_BLACKSTONE_WALL, false);
+        world.getBlockAt(x + 3, y + 1, z).setType(Material.POLISHED_BLACKSTONE_WALL, false);
 
+        // 2. Main Crimson Pillars (Height 6)
+        buildPillar(world, x - 3, y + 2, z, 5, Material.CRIMSON_HYPHAE);
+        buildPillar(world, x + 3, y + 2, z, 5, Material.CRIMSON_HYPHAE);
+
+        // 3. Lower Crossbeam (Nuki) at y + 5
         for (int px = x - 4; px <= x + 4; px++) {
-            world.getBlockAt(px, y + 5, z).setType(Material.DARK_OAK_PLANKS, false);
+            world.getBlockAt(px, y + 5, z).setType(Material.CRIMSON_PLANKS, false);
         }
+
+        // 4. Center Strut (Gakuzuka) connecting lower and upper beams at y + 6
+        world.getBlockAt(x, y + 6, z).setType(Material.CRIMSON_HYPHAE, false);
+        world.getBlockAt(x - 3, y + 6, z).setType(Material.CRIMSON_HYPHAE, false);
+        world.getBlockAt(x + 3, y + 6, z).setType(Material.CRIMSON_HYPHAE, false);
+
+        // 5. Upper Lintel (Kasagi) at y + 7
         for (int px = x - 5; px <= x + 5; px++) {
             world.getBlockAt(px, y + 7, z).setType(Material.RED_TERRACOTTA, false);
         }
-        world.getBlockAt(x - 5, y + 8, z).setType(Material.DARK_OAK_SLAB, false);
-        world.getBlockAt(x + 5, y + 8, z).setType(Material.DARK_OAK_SLAB, false);
 
+        // 6. Black Roof Tiles (Shimaki) with flared winged tips at y + 8
+        for (int px = x - 5; px <= x + 5; px++) {
+            world.getBlockAt(px, y + 8, z).setType(Material.DARK_OAK_SLAB, false);
+        }
+        world.getBlockAt(x - 6, y + 8, z).setType(Material.DARK_OAK_SLAB, false);
+        world.getBlockAt(x + 6, y + 8, z).setType(Material.DARK_OAK_SLAB, false);
+
+        // 7. Hanging Lanterns
         world.getBlockAt(x - 3, y + 4, z).setType(Material.LANTERN, false);
         world.getBlockAt(x + 3, y + 4, z).setType(Material.LANTERN, false);
     }
@@ -1356,18 +1379,39 @@ public class MapBuilder {
      * Builds a cozy half-timbered medieval Autumn Town House (Hypixel style).
      */
     public static void buildAutumnTownHouse(World world, int x, int y, int z, int width, int length, Material wallMat, Material roofMat) {
-        // Foundation of Mud Bricks & Cobblestone
-        fillBox(world, x, y, z, x + width - 1, y, z + length - 1, Material.MUD_BRICKS);
+        Material plankMat = Material.DARK_OAK_PLANKS;
+        Material slabMat = Material.DARK_OAK_SLAB;
+        if (roofMat.name().contains("SPRUCE")) {
+            plankMat = Material.SPRUCE_PLANKS;
+            slabMat = Material.SPRUCE_SLAB;
+        } else if (roofMat.name().contains("OAK") && !roofMat.name().contains("DARK")) {
+            plankMat = Material.OAK_PLANKS;
+            slabMat = Material.OAK_SLAB;
+        }
+
+        // 1. Foundation of Cobblestone & Mud Bricks (extends down to y-1 to avoid floating)
+        fillBox(world, x, y - 1, z, x + width - 1, y, z + length - 1, Material.COBBLESTONE);
+        fillBox(world, x + 1, y, z + 1, x + width - 2, y, z + length - 2, Material.SPRUCE_PLANKS); // Interior floor
 
         int height = 5;
-        // Timber frame corners
+        // 2. Timber frame corners
         buildPillar(world, x, y + 1, z, height, Material.STRIPPED_DARK_OAK_LOG);
         buildPillar(world, x + width - 1, y + 1, z, height, Material.STRIPPED_DARK_OAK_LOG);
         buildPillar(world, x, y + 1, z + length - 1, height, Material.STRIPPED_DARK_OAK_LOG);
         buildPillar(world, x + width - 1, y + 1, z + length - 1, height, Material.STRIPPED_DARK_OAK_LOG);
 
-        // Walls with windows
-        for (int py = y + 1; py <= y + height; py++) {
+        // 3. Horizontal timber wall lintels at top
+        for (int px = x; px < x + width; px++) {
+            world.getBlockAt(px, y + height, z).setType(Material.STRIPPED_DARK_OAK_LOG, false);
+            world.getBlockAt(px, y + height, z + length - 1).setType(Material.STRIPPED_DARK_OAK_LOG, false);
+        }
+        for (int pz = z; pz < z + length; pz++) {
+            world.getBlockAt(x, y + height, pz).setType(Material.STRIPPED_DARK_OAK_LOG, false);
+            world.getBlockAt(x + width - 1, y + height, pz).setType(Material.STRIPPED_DARK_OAK_LOG, false);
+        }
+
+        // 4. Side & Front/Back Walls
+        for (int py = y + 1; py < y + height; py++) {
             for (int px = x + 1; px < x + width - 1; px++) {
                 world.getBlockAt(px, py, z).setType(wallMat, false);
                 world.getBlockAt(px, py, z + length - 1).setType(wallMat, false);
@@ -1378,7 +1422,7 @@ public class MapBuilder {
             }
         }
 
-        // Windows & Doors
+        // 5. Windows, Doors & Window Boxes
         int midX = x + width / 2;
         int midZ = z + length / 2;
         world.getBlockAt(midX, y + 1, z).setType(Material.AIR, false);
@@ -1387,27 +1431,52 @@ public class MapBuilder {
 
         world.getBlockAt(x, y + 2, midZ).setType(Material.GLASS_PANE, false);
         world.getBlockAt(x + width - 1, y + 2, midZ).setType(Material.GLASS_PANE, false);
+        world.getBlockAt(x, y + 1, midZ).setType(Material.SPRUCE_TRAPDOOR, false);
+        world.getBlockAt(x + width - 1, y + 1, midZ).setType(Material.SPRUCE_TRAPDOOR, false);
 
-        // Steep Gable Roof
-        int roofBaseY = y + height + 1;
-        int steps = (width + 1) / 2;
-        for (int step = 0; step < steps; step++) {
+        // 6. Solid Gable Roof with filled gables and zero air gaps
+        int roofBaseY = y + height;
+        int halfW = (width + 1) / 2;
+        for (int step = 0; step < halfW; step++) {
             int currentY = roofBaseY + step;
             int lx = x + step - 1;
             int rx = x + width - step;
+
+            // Fill front & back gable walls with wallMat so there are NO holes!
+            for (int px = lx + 1; px <= rx - 1; px++) {
+                world.getBlockAt(px, currentY, z).setType(wallMat, false);
+                world.getBlockAt(px, currentY, z + length - 1).setType(wallMat, false);
+            }
+
+            // Solid roof slopes extending from front overhang (z - 1) to back overhang (z + length)
             for (int pz = z - 1; pz <= z + length; pz++) {
-                world.getBlockAt(lx, currentY, pz).setType(roofMat, false);
-                world.getBlockAt(rx, currentY, pz).setType(roofMat, false);
+                world.getBlockAt(lx, currentY, pz).setType(plankMat, false);
+                world.getBlockAt(rx, currentY, pz).setType(plankMat, false);
+                world.getBlockAt(lx, currentY + 1, pz).setType(slabMat, false);
+                world.getBlockAt(rx, currentY + 1, pz).setType(slabMat, false);
             }
         }
-        int ridgeY = roofBaseY + steps;
+
+        // Ridge cap
+        int ridgeY = roofBaseY + halfW;
         for (int pz = z - 1; pz <= z + length; pz++) {
-            world.getBlockAt(midX, ridgeY, pz).setType(Material.SPRUCE_SLAB, false);
+            world.getBlockAt(midX, ridgeY, pz).setType(plankMat, false);
+            world.getBlockAt(midX, ridgeY + 1, pz).setType(slabMat, false);
+            if (width % 2 == 0) {
+                world.getBlockAt(midX - 1, ridgeY, pz).setType(plankMat, false);
+                world.getBlockAt(midX - 1, ridgeY + 1, pz).setType(slabMat, false);
+            }
         }
 
-        // Smoking Chimney
-        world.getBlockAt(x + 1, ridgeY + 1, z + length - 2).setType(Material.CAMPFIRE, false);
-        world.getBlockAt(x + 1, ridgeY + 2, z + length - 2).setType(Material.COBBLESTONE_WALL, false);
+        // 7. Solid Stone Brick Chimney connected all the way from floor to roof!
+        int chimX = x + 1;
+        int chimZ = z + length - 2;
+        int chimTopY = ridgeY + 1;
+        for (int cyY = y + 1; cyY <= chimTopY; cyY++) {
+            world.getBlockAt(chimX, cyY, chimZ).setType(Material.BRICKS, false);
+        }
+        world.getBlockAt(chimX, chimTopY + 1, chimZ).setType(Material.CAMPFIRE, false);
+        world.getBlockAt(chimX, chimTopY + 2, chimZ).setType(Material.BRICK_WALL, false);
     }
 
     /**

@@ -262,7 +262,6 @@ public class WorldManager {
         world.getBlockAt(-5, cy + 1, sgZ).setType(Material.BARREL, false);
         world.getBlockAt(5, cy + 1, sgZ).setType(Material.CHEST, false);
         MapBuilder.buildColoredBeacon(world, 0, cy, -84, Material.LIME_STAINED_GLASS);
-        MapBuilder.buildGiantPickaxe(world, 0, cy + 15, -78);
 
         // =========================================================================
         // 5. ISLAND 3: MEDIEVAL VILLAGE & BAZAAR (West: -70, cy, 0, Radius 22, Gap to Plaza: 30 blocks)
@@ -293,7 +292,6 @@ public class WorldManager {
         world.getBlockAt(-70, cy + 1, -3).setType(Material.RED_BED, false);
         world.getBlockAt(-70, cy + 1, 3).setType(Material.BLUE_BED, false);
         MapBuilder.buildColoredBeacon(world, -80, cy, 0, Material.RED_STAINED_GLASS);
-        MapBuilder.buildGiantBed(world, -70, cy + 13, 0);
 
         // =========================================================================
         // 6. ISLAND 4: ROMAN COLOSSEUM & RUINS (North-East: 60, cy, -48, Radius 20, Gap: 38 blocks)
@@ -318,7 +316,6 @@ public class WorldManager {
         world.getBlockAt(63, cy + 1, -48).setType(Material.TNT, false);
         world.getBlockAt(60, cy + 1, -45).setType(Material.SOUL_CAMPFIRE, false);
         MapBuilder.buildColoredBeacon(world, 72, cy, -48, Material.ORANGE_STAINED_GLASS);
-        MapBuilder.buildGiantTNT(world, 60, cy + 13, -48);
 
         // =========================================================================
         // 7. ISLAND 5: AIRSHIP HARBOR & OBSERVATORY (South-East: 55, cy, 65, Radius 20, Gap: 47 blocks)
@@ -385,7 +382,6 @@ public class WorldManager {
         MapBuilder.fillCircle(world, -55, cy, 65, 5, Material.POLISHED_ANDESITE);
         MapBuilder.fillRing(world, -55, cy, 65, 4, 5, Material.GOLD_BLOCK);
         MapBuilder.buildColoredBeacon(world, -64, cy, 72, Material.WHITE_STAINED_GLASS);
-        MapBuilder.buildGiantToriiEmblem(world, -55, cy + 13, 65);
 
         // =========================================================================
         // 9. ISLAND 7: SKYWARS CELESTIAL SANCTUARY (East: 72, cy, 10, Radius 20, Gap: 34 blocks)
@@ -414,7 +410,6 @@ public class WorldManager {
         world.getBlockAt(72, cy + 1, 13).setType(Material.ENCHANTING_TABLE, false);
         world.getBlockAt(72, cy + 1, 7).setType(Material.ENDER_CHEST, false);
         MapBuilder.buildColoredBeacon(world, 80, cy, 10, Material.LIGHT_BLUE_STAINED_GLASS);
-        MapBuilder.buildGiantEnderEye(world, 72, cy + 13, 10);
 
         // =========================================================================
         // 10. ISLAND 8: DUELS & PVP CITADEL (South: 0, cy, 76, Radius 20, Gap: 38 blocks)
@@ -433,7 +428,6 @@ public class WorldManager {
         world.getBlockAt(-3, cy + 2, 76).setType(Material.TARGET, false);
         world.getBlockAt(3, cy + 1, 76).setType(Material.SMITHING_TABLE, false);
         MapBuilder.buildColoredBeacon(world, 0, cy, 84, Material.MAGENTA_STAINED_GLASS);
-        MapBuilder.buildGiantCrossedSwords(world, 0, cy + 13, 76);
 
         // =========================================================================
         // 11. ISLAND 9: PARKOUR AGILITY SPIRE & RUINS (North-West: -58, cy, -54, Radius 20, Gap: 41 blocks)
@@ -452,12 +446,22 @@ public class WorldManager {
         world.getBlockAt(-62, cy + 1, -54).setType(Material.SLIME_BLOCK, false);
         world.getBlockAt(-62, cy + 2, -54).setType(Material.GOLD_BLOCK, false);
         MapBuilder.buildColoredBeacon(world, -68, cy, -54, Material.GREEN_STAINED_GLASS);
-        MapBuilder.buildGiantBoot(world, -58, cy + 13, -54);
 
         // Rustic Windmill on Parkour Island (Slabs, zero stairs)
         MapBuilder.buildWindmill(world, -66, cy + 1, -62);
 
-        // 12. Spawn Point at Grand Central Plaza facing North (towards Fountain, Cherry Trees & Royal Citadel)
+        // 12. Furnish & Decorate All 9 Islands with Paths, Gardens, and Vistas
+        decorateGrandPlaza(world, cy);
+        decorateRoyalCitadel(world, cy);
+        decorateMedievalVillage(world, cy);
+        decorateRomanColosseum(world, cy);
+        decorateAirshipHarbor(world, cy);
+        decorateToriiShrine(world, cy);
+        decorateSkyWarsSanctuary(world, cy);
+        decorateDuelsCitadel(world, cy);
+        decorateParkourRuins(world, cy);
+
+        // 13. Spawn Point at Grand Central Plaza facing North (towards Fountain, Cherry Trees & Royal Citadel)
         Location hubSpawn = new Location(world, 0.5, cy + 1.5, 6.5, 0f, 0f);
         world.setSpawnLocation(0, cy + 2, 6);
         plugin.getLobbyManager().setSpawn(hubSpawn);
@@ -469,6 +473,584 @@ public class WorldManager {
         plugin.getHubLoreManager().spawnAllRelics(world);
 
         plugin.getLogger().info("Grand Hub Archipelago rebuild complete! 9 Sprawling Floating Islands, Slabs Only, Unobstructed Launchpads, and Scenic Vistas are live.");
+    }
+
+    // =========================================================================
+    // Grand Hub Island Decoration & Furnishing Methods (Paths, Gardens, Vistas)
+    // =========================================================================
+
+    private void setPathBlock(World world, int x, int z, Material mat) {
+        for (int y = 105; y >= 95; y--) {
+            Material existing = world.getBlockAt(x, y, z).getType();
+            if (existing.isSolid() && !existing.name().endsWith("_WALL") && !existing.name().endsWith("_FENCE")
+                    && !existing.name().endsWith("_SLAB") && !existing.name().endsWith("_STAIRS")
+                    && !existing.name().endsWith("_PRESSURE_PLATE")) {
+                world.getBlockAt(x, y, z).setType(mat, false);
+                return;
+            }
+        }
+    }
+
+    private void setSurfaceBlock(World world, int x, int z, Material mat) {
+        for (int y = 105; y >= 95; y--) {
+            Material existing = world.getBlockAt(x, y, z).getType();
+            if (existing.isSolid() && !existing.name().endsWith("_WALL") && !existing.name().endsWith("_FENCE")
+                    && !existing.name().endsWith("_PRESSURE_PLATE")) {
+                world.getBlockAt(x, y + 1, z).setType(mat, false);
+                return;
+            }
+        }
+    }
+
+    private int getGroundY(World world, int x, int z) {
+        for (int y = 105; y >= 95; y--) {
+            if (world.getBlockAt(x, y, z).getType().isSolid()) {
+                return y;
+            }
+        }
+        return 100;
+    }
+
+    private void decorateGrandPlaza(World world, int cy) {
+        // Radial paved paths connecting fountain plaza rings to launchpads & bridges
+        for (int z = -15; z <= -6; z++) {
+            for (int x = -1; x <= 1; x++) setPathBlock(world, x, z, Material.POLISHED_ANDESITE);
+        }
+        for (int z = 6; z <= 15; z++) {
+            for (int x = -1; x <= 1; x++) setPathBlock(world, x, z, Material.POLISHED_ANDESITE);
+        }
+        for (int x = -15; x <= -6; x++) {
+            for (int z = -1; z <= 1; z++) setPathBlock(world, x, z, Material.POLISHED_ANDESITE);
+        }
+        for (int x = 6; x <= 15; x++) {
+            for (int z = -1; z <= 1; z++) setPathBlock(world, x, z, Material.POLISHED_ANDESITE);
+        }
+
+        // 4 Cozy Plaza Garden Benches around Fountain (Slabs + Spruce Trapdoor backs)
+        int[][] benchLocs = {{-4, -4}, {4, -4}, {-4, 4}, {4, 4}};
+        for (int[] b : benchLocs) {
+            int bx = b[0], bz = b[1];
+            int gy = getGroundY(world, bx, bz);
+            world.getBlockAt(bx, gy + 1, bz).setType(Material.SMOOTH_QUARTZ_SLAB, false);
+            // Flower planter beside bench
+            world.getBlockAt(bx + (bx > 0 ? 1 : -1), gy + 1, bz).setType(Material.COMPOSTER, false);
+            world.getBlockAt(bx + (bx > 0 ? 1 : -1), gy + 2, bz).setType(Material.FLOWERING_AZALEA, false);
+        }
+
+        // Pink petals ground scatter around the 4 cherry trees
+        int[][] cherryCenters = {{-7, -7}, {7, -7}, {-7, 7}, {7, 7}};
+        for (int[] c : cherryCenters) {
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    if ((dx + dz) % 2 == 0 && (dx != 0 || dz != 0)) {
+                        setSurfaceBlock(world, c[0] + dx, c[1] + dz, Material.PINK_PETALS);
+                    }
+                }
+            }
+        }
+
+        // 4 Grand Lampposts at path corners
+        int[][] lampLocs = {{-8, -8}, {8, -8}, {-8, 8}, {8, 8}};
+        for (int[] lp : lampLocs) {
+            int lx = lp[0], lz = lp[1];
+            int gy = getGroundY(world, lx, lz);
+            world.getBlockAt(lx, gy + 1, lz).setType(Material.POLISHED_BLACKSTONE_WALL, false);
+            world.getBlockAt(lx, gy + 2, lz).setType(Material.POLISHED_BLACKSTONE_WALL, false);
+            world.getBlockAt(lx, gy + 3, lz).setType(Material.LANTERN, false);
+        }
+    }
+
+    private void decorateRoyalCitadel(World world, int cy) {
+        // Courtyard Cobblestone & Stone Brick Avenue from bridge landing (-46) to Gatehouse (-68) & SMP (-78)
+        for (int z = -46; z >= -78; z--) {
+            for (int x = -2; x <= 2; x++) {
+                Material m = ((x + z) % 3 == 0) ? Material.COBBLESTONE : (((x + z) % 5 == 0) ? Material.CRACKED_STONE_BRICKS : Material.STONE_BRICKS);
+                setPathBlock(world, x, z, m);
+            }
+        }
+        // Lateral paths to Bastion Towers
+        for (int x = -12; x <= 12; x++) {
+            setPathBlock(world, x, -68, Material.COBBLESTONE);
+        }
+
+        // Royal Guard Outpost / Armory on west side of courtyard (-6, -74)
+        int gy1 = getGroundY(world, -6, -74);
+        world.getBlockAt(-6, gy1 + 1, -74).setType(Material.ANVIL, false);
+        world.getBlockAt(-6, gy1 + 1, -75).setType(Material.SMITHING_TABLE, false);
+        world.getBlockAt(-6, gy1 + 1, -73).setType(Material.GRINDSTONE, false);
+        world.getBlockAt(-7, gy1 + 1, -74).setType(Material.BARREL, false);
+        world.getBlockAt(-7, gy1 + 2, -74).setType(Material.BARREL, false);
+
+        // Royal Weapon Storage on east side of courtyard (6, -74)
+        int gy2 = getGroundY(world, 6, -74);
+        world.getBlockAt(6, gy2 + 1, -74).setType(Material.SPRUCE_FENCE, false);
+        world.getBlockAt(6, gy2 + 2, -74).setType(Material.IRON_BARS, false);
+        world.getBlockAt(7, gy2 + 1, -74).setType(Material.CHEST, false);
+        world.getBlockAt(6, gy2 + 1, -75).setType(Material.BARREL, false);
+
+        // Soul Campfire Fire Bowls framing the inner fortress approach
+        int[][] bowls = {{-5, -55}, {5, -55}};
+        for (int[] b : bowls) {
+            int bx = b[0], bz = b[1];
+            int gy = getGroundY(world, bx, bz);
+            world.getBlockAt(bx, gy + 1, bz).setType(Material.CHISELED_DEEPSLATE, false);
+            world.getBlockAt(bx, gy + 2, bz).setType(Material.DEEPSLATE_TILE_WALL, false);
+            world.getBlockAt(bx, gy + 3, bz).setType(Material.SOUL_LANTERN, false);
+        }
+
+        // 2 Natural Mountain Spruce Trees framing the courtyard
+        int[][] spruces = {{-14, -58}, {14, -58}};
+        for (int[] s : spruces) {
+            int sx = s[0], sz = s[1];
+            int gy = getGroundY(world, sx, sz);
+            for (int y = 1; y <= 5; y++) world.getBlockAt(sx, gy + y, sz).setType(Material.SPRUCE_LOG, false);
+            // Leaves cone
+            for (int dy = 3; dy <= 6; dy++) {
+                int r = (dy >= 5) ? 1 : 2;
+                for (int lx = -r; lx <= r; lx++) {
+                    for (int lz = -r; lz <= r; lz++) {
+                        if (lx == 0 && lz == 0 && dy <= 5) continue;
+                        if (Math.abs(lx) + Math.abs(lz) <= r + 1) {
+                            world.getBlockAt(sx + lx, gy + dy, sz + lz).setType(Material.SPRUCE_LEAVES, false);
+                        }
+                    }
+                }
+            }
+            world.getBlockAt(sx, gy + 7, sz).setType(Material.SPRUCE_LEAVES, false);
+        }
+    }
+
+    private void decorateMedievalVillage(World world, int cy) {
+        // Winding Organic Cobblestone & Packed Mud pathways connecting village structures
+        for (int x = -48; x >= -72; x--) {
+            for (int z = -2; z <= 2; z++) {
+                Material m = ((x + z) % 2 == 0) ? Material.PACKED_MUD : (((x + z) % 3 == 0) ? Material.COBBLESTONE : Material.MUD_BRICKS);
+                setPathBlock(world, x, z, m);
+            }
+        }
+        // Lateral path to houses and forge
+        for (int z = -12; z <= 12; z++) {
+            setPathBlock(world, -72, z, Material.COBBLESTONE);
+            setPathBlock(world, -71, z, Material.PACKED_MUD);
+            setPathBlock(world, -70, z, Material.GRAVEL);
+        }
+
+        // 1. Village Water Well at (-58, 0) - 3x3 Stone Brick with Water & Roof
+        int wellX = -58, wellZ = 0;
+        int wellY = getGroundY(world, wellX, wellZ);
+        // Stone brick rim
+        for (int wx = -1; wx <= 1; wx++) {
+            for (int wz = -1; wz <= 1; wz++) {
+                if (wx == 0 && wz == 0) {
+                    world.getBlockAt(wellX, wellY, wellZ).setType(Material.WATER, false);
+                    world.getBlockAt(wellX, wellY - 1, wellZ).setType(Material.WATER, false);
+                } else {
+                    world.getBlockAt(wellX + wx, wellY + 1, wellZ + wz).setType(Material.STONE_BRICKS, false);
+                }
+            }
+        }
+        // 4 Corner Spruce Fences
+        world.getBlockAt(wellX - 1, wellY + 2, wellZ - 1).setType(Material.SPRUCE_FENCE, false);
+        world.getBlockAt(wellX + 1, wellY + 2, wellZ - 1).setType(Material.SPRUCE_FENCE, false);
+        world.getBlockAt(wellX - 1, wellY + 2, wellZ + 1).setType(Material.SPRUCE_FENCE, false);
+        world.getBlockAt(wellX + 1, wellY + 2, wellZ + 1).setType(Material.SPRUCE_FENCE, false);
+        world.getBlockAt(wellX - 1, wellY + 3, wellZ - 1).setType(Material.SPRUCE_FENCE, false);
+        world.getBlockAt(wellX + 1, wellY + 3, wellZ - 1).setType(Material.SPRUCE_FENCE, false);
+        world.getBlockAt(wellX - 1, wellY + 3, wellZ + 1).setType(Material.SPRUCE_FENCE, false);
+        world.getBlockAt(wellX + 1, wellY + 3, wellZ + 1).setType(Material.SPRUCE_FENCE, false);
+        // Roof of spruce slabs
+        for (int wx = -1; wx <= 1; wx++) {
+            for (int wz = -1; wz <= 1; wz++) {
+                world.getBlockAt(wellX + wx, wellY + 4, wellZ + wz).setType(Material.SPRUCE_SLAB, false);
+            }
+        }
+        world.getBlockAt(wellX, wellY + 3, wellZ).setType(Material.IRON_CHAIN, false);
+
+        // 2. Harvest Farm Cart #1 at (-56, -8) loaded with Hay & Pumpkins
+        int cart1X = -56, cart1Z = -8;
+        int c1Y = getGroundY(world, cart1X, cart1Z);
+        world.getBlockAt(cart1X - 1, c1Y + 1, cart1Z).setType(Material.DARK_OAK_TRAPDOOR, false);
+        world.getBlockAt(cart1X + 1, c1Y + 1, cart1Z).setType(Material.DARK_OAK_TRAPDOOR, false);
+        world.getBlockAt(cart1X, c1Y + 1, cart1Z).setType(Material.SPRUCE_PLANKS, false);
+        world.getBlockAt(cart1X, c1Y + 1, cart1Z - 1).setType(Material.SPRUCE_PLANKS, false);
+        world.getBlockAt(cart1X, c1Y + 2, cart1Z).setType(Material.HAY_BLOCK, false);
+        world.getBlockAt(cart1X, c1Y + 2, cart1Z - 1).setType(Material.CARVED_PUMPKIN, false);
+        world.getBlockAt(cart1X, c1Y + 1, cart1Z - 2).setType(Material.SPRUCE_FENCE, false); // shaft
+
+        // 3. Trade Wagon #2 at (-56, 8) loaded with Barrels & Melons
+        int cart2X = -56, cart2Z = 8;
+        int c2Y = getGroundY(world, cart2X, cart2Z);
+        world.getBlockAt(cart2X - 1, c2Y + 1, cart2Z).setType(Material.DARK_OAK_TRAPDOOR, false);
+        world.getBlockAt(cart2X + 1, c2Y + 1, cart2Z).setType(Material.DARK_OAK_TRAPDOOR, false);
+        world.getBlockAt(cart2X, c2Y + 1, cart2Z).setType(Material.SPRUCE_PLANKS, false);
+        world.getBlockAt(cart2X, c2Y + 1, cart2Z + 1).setType(Material.SPRUCE_PLANKS, false);
+        world.getBlockAt(cart2X, c2Y + 2, cart2Z).setType(Material.BARREL, false);
+        world.getBlockAt(cart2X, c2Y + 2, cart2Z + 1).setType(Material.MELON, false);
+        world.getBlockAt(cart2X, c2Y + 1, cart2Z + 2).setType(Material.SPRUCE_FENCE, false); // shaft
+
+        // 4. Outdoor Blacksmith Forge Annex at (-64, -16)
+        int fX = -64, fZ = -16;
+        int fY = getGroundY(world, fX, fZ);
+        world.getBlockAt(fX, fY + 1, fZ).setType(Material.BLAST_FURNACE, false);
+        world.getBlockAt(fX + 1, fY + 1, fZ).setType(Material.ANVIL, false);
+        world.getBlockAt(fX - 1, fY + 1, fZ).setType(Material.CAULDRON, false);
+        world.getBlockAt(fX, fY + 1, fZ + 1).setType(Material.GRINDSTONE, false);
+        world.getBlockAt(fX + 1, fY + 1, fZ + 1).setType(Material.SMITHING_TABLE, false);
+
+        // 5. Archery Range at (-82, -8)
+        int aX = -82, aZ = -8;
+        int aY = getGroundY(world, aX, aZ);
+        world.getBlockAt(aX, aY + 1, aZ).setType(Material.HAY_BLOCK, false);
+        world.getBlockAt(aX, aY + 2, aZ).setType(Material.TARGET, false);
+        world.getBlockAt(aX, aY + 1, aZ + 1).setType(Material.HAY_BLOCK, false);
+        world.getBlockAt(aX, aY + 2, aZ + 1).setType(Material.TARGET, false);
+        world.getBlockAt(aX + 3, aY + 1, aZ).setType(Material.FLETCHING_TABLE, false);
+        world.getBlockAt(aX + 3, aY + 1, aZ + 1).setType(Material.SPRUCE_FENCE, false);
+
+        // 6. Streetlamps throughout Village
+        int[][] vLamps = {{-52, -4}, {-52, 4}, {-64, 8}, {-64, -8}};
+        for (int[] vl : vLamps) {
+            int lx = vl[0], lz = vl[1];
+            int gy = getGroundY(world, lx, lz);
+            world.getBlockAt(lx, gy + 1, lz).setType(Material.SPRUCE_FENCE, false);
+            world.getBlockAt(lx, gy + 2, lz).setType(Material.SPRUCE_FENCE, false);
+            world.getBlockAt(lx, gy + 3, lz).setType(Material.LANTERN, false);
+        }
+
+        // 7. Wildflower Patches across Village lawns
+        int[][] flowers = {{-62, -5, 0}, {-62, 5, 1}, {-52, -10, 2}, {-52, 10, 3}, {-78, -4, 0}, {-78, 4, 1}};
+        Material[] flowerMats = {Material.POPPY, Material.CORNFLOWER, Material.DANDELION, Material.ALLIUM};
+        for (int[] fl : flowers) {
+            setSurfaceBlock(world, fl[0], fl[1], flowerMats[fl[2]]);
+        }
+    }
+
+    private void decorateRomanColosseum(World world, int cy) {
+        // Sandstone paved plaza from bridge (45, -36) to Colosseum (60, -48)
+        for (int x = 46; x <= 58; x++) {
+            for (int z = -44; z <= -38; z++) {
+                Material m = ((x + z) % 2 == 0) ? Material.SMOOTH_SANDSTONE : Material.CUT_SANDSTONE;
+                setPathBlock(world, x, z, m);
+            }
+        }
+
+        // Fallen Roman Column #1 at (52, -40) - collapsed marble monolith on grass
+        int c1Y = getGroundY(world, 52, -40);
+        world.getBlockAt(52, c1Y + 1, -40).setType(Material.CHISELED_SANDSTONE, false);
+        world.getBlockAt(53, c1Y + 1, -40).setType(Material.QUARTZ_PILLAR, false);
+        world.getBlockAt(54, c1Y + 1, -40).setType(Material.QUARTZ_PILLAR, false);
+        world.getBlockAt(55, c1Y + 1, -40).setType(Material.SANDSTONE_SLAB, false);
+
+        // Fallen Roman Column #2 at (68, -40)
+        int c2Y = getGroundY(world, 68, -40);
+        world.getBlockAt(68, c2Y + 1, -40).setType(Material.CHISELED_SANDSTONE, false);
+        world.getBlockAt(67, c2Y + 1, -40).setType(Material.QUARTZ_PILLAR, false);
+        world.getBlockAt(66, c2Y + 1, -40).setType(Material.SANDSTONE_SLAB, false);
+
+        // 4 Roman Soul Fire Braziers framing the arena walkway
+        int[][] braziers = {{-4, -2}, {4, -2}, {-4, 2}, {4, 2}};
+        for (int[] bz : braziers) {
+            int bx = 60 + bz[0], bzCoord = -48 + bz[1];
+            int gy = getGroundY(world, bx, bzCoord);
+            world.getBlockAt(bx, gy + 1, bzCoord).setType(Material.CUT_SANDSTONE, false);
+            world.getBlockAt(bx, gy + 2, bzCoord).setType(Material.SANDSTONE_WALL, false);
+            world.getBlockAt(bx, gy + 3, bzCoord).setType(Material.SOUL_CAMPFIRE, false);
+        }
+
+        // 2 Mediterranean Pencil Cypress Trees
+        int[][] cypresses = {{50, -56}, {70, -56}};
+        for (int[] cp : cypresses) {
+            int cx = cp[0], cz = cp[1];
+            int gy = getGroundY(world, cx, cz);
+            for (int y = 1; y <= 6; y++) world.getBlockAt(cx, gy + y, cz).setType(Material.OAK_LOG, false);
+            for (int y = 2; y <= 6; y++) {
+                world.getBlockAt(cx + 1, gy + y, cz).setType(Material.SPRUCE_LEAVES, false);
+                world.getBlockAt(cx - 1, gy + y, cz).setType(Material.SPRUCE_LEAVES, false);
+                world.getBlockAt(cx, gy + y, cz + 1).setType(Material.SPRUCE_LEAVES, false);
+                world.getBlockAt(cx, gy + y, cz - 1).setType(Material.SPRUCE_LEAVES, false);
+            }
+            world.getBlockAt(cx, gy + 7, cz).setType(Material.SPRUCE_LEAVES, false);
+        }
+    }
+
+    private void decorateAirshipHarbor(World world, int cy) {
+        // Boardwalk wooden path from bridge (40, 48) to Pier & Observatory
+        for (int x = 41; x <= 50; x++) {
+            setPathBlock(world, x, 50, Material.SPRUCE_PLANKS);
+            setPathBlock(world, x, 51, Material.SPRUCE_PLANKS);
+        }
+        for (int z = 52; z <= 64; z++) {
+            setPathBlock(world, 50, z, Material.SPRUCE_PLANKS);
+            setPathBlock(world, 51, z, Material.SPRUCE_PLANKS);
+        }
+
+        // 1. Heavy Timber Dockside Cargo Crane at (66, 62)
+        int craneX = 66, craneZ = 62;
+        int craneY = getGroundY(world, craneX, craneZ);
+        for (int y = 1; y <= 6; y++) world.getBlockAt(craneX, craneY + y, craneZ).setType(Material.DARK_OAK_LOG, false);
+        // Horizontal boom arm extending over the pier edge (towards x = 62)
+        for (int bx = 62; bx <= 66; bx++) {
+            world.getBlockAt(bx, craneY + 6, craneZ).setType(Material.DARK_OAK_LOG, false);
+        }
+        world.getBlockAt(62, craneY + 5, craneZ).setType(Material.IRON_CHAIN, false);
+        world.getBlockAt(62, craneY + 4, craneZ).setType(Material.IRON_CHAIN, false);
+        // Hanging cargo crate
+        world.getBlockAt(62, craneY + 3, craneZ).setType(Material.CHEST, false);
+        world.getBlockAt(62, craneY + 3, craneZ - 1).setType(Material.SPRUCE_TRAPDOOR, false);
+        world.getBlockAt(62, craneY + 3, craneZ + 1).setType(Material.SPRUCE_TRAPDOOR, false);
+
+        // 2. Cargo Storage Depot on the pier
+        world.getBlockAt(54, cy + 1, 65).setType(Material.BARREL, false);
+        world.getBlockAt(54, cy + 2, 65).setType(Material.BARREL, false);
+        world.getBlockAt(55, cy + 1, 65).setType(Material.CHEST, false);
+        world.getBlockAt(56, cy + 1, 65).setType(Material.BARREL, false);
+        world.getBlockAt(56, cy + 1, 66).setType(Material.ANVIL, false); // anchor
+
+        // 3. Stargazer Terrace outside Observatory (43, 56)
+        int tX = 43, tZ = 56;
+        int tY = getGroundY(world, tX, tZ);
+        world.getBlockAt(tX, tY + 1, tZ).setType(Material.LECTERN, false);
+        world.getBlockAt(tX, tY + 1, tZ - 1).setType(Material.CARTOGRAPHY_TABLE, false);
+        world.getBlockAt(tX, tY + 1, tZ + 1).setType(Material.BOOKSHELF, false);
+        world.getBlockAt(tX - 1, tY + 1, tZ).setType(Material.SPRUCE_FENCE, false);
+        world.getBlockAt(tX - 1, tY + 2, tZ).setType(Material.LANTERN, false);
+    }
+
+    private void decorateToriiShrine(World world, int cy) {
+        // Stepping stone path from bridge (-40, 48) to Torii (-55, 58) and Sumo (-55, 65)
+        for (int step = 0; step <= 15; step++) {
+            int px = -40 - step;
+            int pz = 48 + step;
+            if (px >= -55 && pz <= 65) {
+                Material m = (step % 2 == 0) ? Material.POLISHED_ANDESITE : Material.SMOOTH_STONE;
+                setPathBlock(world, px, pz, m);
+            }
+        }
+        for (int pz = 58; pz <= 65; pz++) {
+            setPathBlock(world, -55, pz, Material.POLISHED_ANDESITE);
+        }
+
+        // 1. Serene Sacred Koi Pond at (-46, 60)
+        int pondX = -46, pondZ = 60;
+        int pY = getGroundY(world, pondX, pondZ);
+        // Sunken pond basin
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (Math.abs(dx) + Math.abs(dz) <= 3) {
+                    world.getBlockAt(pondX + dx, pY, pondZ + dz).setType(Material.WATER, false);
+                    world.getBlockAt(pondX + dx, pY - 1, pondZ + dz).setType(Material.WATER, false);
+                }
+            }
+        }
+        // Glowing sea lantern at pond bottom
+        world.getBlockAt(pondX, pY - 1, pondZ).setType(Material.SEA_LANTERN, false);
+        // Lily pads and water plants
+        world.getBlockAt(pondX - 1, pY + 1, pondZ).setType(Material.LILY_PAD, false);
+        world.getBlockAt(pondX + 1, pY + 1, pondZ + 1).setType(Material.LILY_PAD, false);
+        world.getBlockAt(pondX, pY, pondZ - 1).setType(Material.SEAGRASS, false);
+        // Surrounding mossy stones
+        world.getBlockAt(pondX - 2, pY + 1, pondZ - 1).setType(Material.MOSSY_COBBLESTONE_SLAB, false);
+        world.getBlockAt(pondX + 2, pY + 1, pondZ + 1).setType(Material.MOSSY_COBBLESTONE_SLAB, false);
+
+        // 2. Traditional Zen Rock Garden at (-63, 60)
+        int zenX = -63, zenZ = 60;
+        int zY = getGroundY(world, zenX, zenZ);
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                world.getBlockAt(zenX + dx, zY, zenZ + dz).setType(Material.SAND, false);
+            }
+        }
+        // Natural polished andesite boulders
+        world.getBlockAt(zenX, zY + 1, zenZ).setType(Material.POLISHED_ANDESITE, false);
+        world.getBlockAt(zenX - 1, zY + 1, zenZ + 1).setType(Material.SMOOTH_STONE, false);
+        // Bamboo stalks
+        world.getBlockAt(zenX + 1, zY + 1, zenZ - 1).setType(Material.BAMBOO, false);
+        world.getBlockAt(zenX + 1, zY + 2, zenZ - 1).setType(Material.BAMBOO, false);
+        world.getBlockAt(zenX - 1, zY + 1, zenZ - 1).setType(Material.MOSS_CARPET, false);
+
+        // 3. Open-air Tea Pagoda / Gazebo at (-64, 68)
+        int teaX = -64, teaZ = 68;
+        int tY = getGroundY(world, teaX, teaZ);
+        // 4 Bamboo fence pillars
+        world.getBlockAt(teaX - 1, tY + 1, teaZ - 1).setType(Material.BAMBOO_FENCE, false);
+        world.getBlockAt(teaX + 1, tY + 1, teaZ - 1).setType(Material.BAMBOO_FENCE, false);
+        world.getBlockAt(teaX - 1, tY + 1, teaZ + 1).setType(Material.BAMBOO_FENCE, false);
+        world.getBlockAt(teaX + 1, tY + 1, teaZ + 1).setType(Material.BAMBOO_FENCE, false);
+        world.getBlockAt(teaX - 1, tY + 2, teaZ - 1).setType(Material.BAMBOO_FENCE, false);
+        world.getBlockAt(teaX + 1, tY + 2, teaZ - 1).setType(Material.BAMBOO_FENCE, false);
+        world.getBlockAt(teaX - 1, tY + 2, teaZ + 1).setType(Material.BAMBOO_FENCE, false);
+        world.getBlockAt(teaX + 1, tY + 2, teaZ + 1).setType(Material.BAMBOO_FENCE, false);
+        // Crimson slab roof
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                world.getBlockAt(teaX + dx, tY + 3, teaZ + dz).setType(Material.CRIMSON_SLAB, false);
+            }
+        }
+        world.getBlockAt(teaX, tY + 4, teaZ).setType(Material.CRIMSON_SLAB, false);
+        world.getBlockAt(teaX, tY + 1, teaZ).setType(Material.SPRUCE_SLAB, false); // tea table
+        world.getBlockAt(teaX, tY + 2, teaZ).setType(Material.FLOWER_POT, false);
+
+        // 4. Four Stone Toro Lanterns framing the Sumo Ring
+        int[][] toroLocs = {{-51, 61}, {-59, 61}, {-51, 69}, {-59, 69}};
+        for (int[] tl : toroLocs) {
+            int tx = tl[0], tz = tl[1];
+            int gy = getGroundY(world, tx, tz);
+            world.getBlockAt(tx, gy + 1, tz).setType(Material.CHISELED_DEEPSLATE, false);
+            world.getBlockAt(tx, gy + 2, tz).setType(Material.SOUL_LANTERN, false);
+            world.getBlockAt(tx, gy + 3, tz).setType(Material.POLISHED_DEEPSLATE_SLAB, false);
+        }
+
+        // Pink petals under cherry trees
+        int[][] cherryLocs = {{-60, 70}, {-48, 72}};
+        for (int[] c : cherryLocs) {
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    if ((dx + dz) % 2 == 0) setSurfaceBlock(world, c[0] + dx, c[1] + dz, Material.PINK_PETALS);
+                }
+            }
+        }
+    }
+
+    private void decorateSkyWarsSanctuary(World world, int cy) {
+        // Quartz and Purpur pathways from landing pad (52, 10) to Pavilion (72, 10)
+        for (int x = 53; x <= 71; x++) {
+            setPathBlock(world, x, 9, Material.QUARTZ_BRICKS);
+            setPathBlock(world, x, 10, Material.SMOOTH_QUARTZ);
+            setPathBlock(world, x, 11, Material.QUARTZ_BRICKS);
+        }
+
+        // Floating Amethyst Crystal Formations at (64, 18) and (64, 2)
+        int[][] crystalLocs = {{64, 18}, {64, 2}};
+        for (int[] cr : crystalLocs) {
+            int cx = cr[0], cz = cr[1];
+            int gy = getGroundY(world, cx, cz);
+            // Floating 1 block above ground
+            world.getBlockAt(cx, gy + 2, cz).setType(Material.AMETHYST_BLOCK, false);
+            world.getBlockAt(cx, gy + 3, cz).setType(Material.BUDDING_AMETHYST, false);
+            world.getBlockAt(cx + 1, gy + 2, cz).setType(Material.TINTED_GLASS, false);
+            world.getBlockAt(cx - 1, gy + 2, cz).setType(Material.TINTED_GLASS, false);
+            world.getBlockAt(cx, gy + 2, cz + 1).setType(Material.TINTED_GLASS, false);
+            world.getBlockAt(cx, gy + 2, cz - 1).setType(Material.TINTED_GLASS, false);
+            world.getBlockAt(cx, gy + 1, cz).setType(Material.SEA_LANTERN, false);
+            world.getBlockAt(cx, gy + 4, cz).setType(Material.AMETHYST_CLUSTER, false);
+        }
+
+        // Celestial Arcane Library Nook at (78, 16)
+        int libX = 78, libZ = 16;
+        int lY = getGroundY(world, libX, libZ);
+        world.getBlockAt(libX, lY + 1, libZ).setType(Material.CHISELED_QUARTZ_BLOCK, false);
+        world.getBlockAt(libX, lY + 2, libZ).setType(Material.LECTERN, false);
+        world.getBlockAt(libX + 1, lY + 1, libZ).setType(Material.BOOKSHELF, false);
+        world.getBlockAt(libX + 1, lY + 2, libZ).setType(Material.BOOKSHELF, false);
+        world.getBlockAt(libX - 1, lY + 1, libZ).setType(Material.BOOKSHELF, false);
+        world.getBlockAt(libX, lY + 1, libZ + 1).setType(Material.QUARTZ_PILLAR, false);
+        world.getBlockAt(libX, lY + 2, libZ + 1).setType(Material.END_ROD, false);
+
+        // Stargazing Balcony over the void at (84, 10)
+        int balX = 84, balZ = 10;
+        int bY = getGroundY(world, balX, balZ);
+        for (int dz = -2; dz <= 2; dz++) {
+            world.getBlockAt(balX, bY + 1, balZ + dz).setType(Material.PURPUR_SLAB, false);
+            world.getBlockAt(balX + 1, bY + 1, balZ + dz).setType(Material.PURPUR_PILLAR, false);
+            world.getBlockAt(balX + 1, bY + 2, balZ + dz).setType(Material.END_ROD, false);
+        }
+    }
+
+    private void decorateDuelsCitadel(World world, int cy) {
+        // Paved tournament approach from bridge landing (0, 56) to Pavilion (0, 76)
+        for (int z = 57; z <= 75; z++) {
+            for (int x = -1; x <= 1; x++) {
+                setPathBlock(world, x, z, Material.POLISHED_ANDESITE);
+            }
+        }
+
+        // 1. Tournament Jousting Arena at (-8, 76) - 5x5 enclosed combat ring
+        int ringX = -8, ringZ = 76;
+        int rY = getGroundY(world, ringX, ringZ);
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                world.getBlockAt(ringX + dx, rY, ringZ + dz).setType(Material.RED_SAND, false);
+                if (Math.abs(dx) == 2 || Math.abs(dz) == 2) {
+                    if (dx == 0 && dz == -2) continue; // entrance gate
+                    world.getBlockAt(ringX + dx, rY + 1, ringZ + dz).setType(Material.DARK_OAK_FENCE, false);
+                }
+            }
+        }
+
+        // 2. Champions' 3-Tier Victory Podium at (8, 76)
+        int podX = 8, podZ = 76;
+        int pY = getGroundY(world, podX, podZ);
+        // 1st Place (Gold, height 3)
+        world.getBlockAt(podX, pY + 1, podZ).setType(Material.GOLD_BLOCK, false);
+        world.getBlockAt(podX, pY + 2, podZ).setType(Material.GOLD_BLOCK, false);
+        world.getBlockAt(podX, pY + 3, podZ).setType(Material.GOLD_BLOCK, false);
+        // 2nd Place (Iron, height 2)
+        world.getBlockAt(podX, pY + 1, podZ - 2).setType(Material.IRON_BLOCK, false);
+        world.getBlockAt(podX, pY + 2, podZ - 2).setType(Material.IRON_BLOCK, false);
+        // 3rd Place (Copper, height 1)
+        world.getBlockAt(podX, pY + 1, podZ + 2).setType(Material.COPPER_BLOCK, false);
+
+        // 3. Knight's Armory & Weapon Racks at (5, 80)
+        int armX = 5, armZ = 80;
+        int aY = getGroundY(world, armX, armZ);
+        world.getBlockAt(armX, aY + 1, armZ).setType(Material.ANVIL, false);
+        world.getBlockAt(armX + 1, aY + 1, armZ).setType(Material.GRINDSTONE, false);
+        world.getBlockAt(armX, aY + 1, armZ + 1).setType(Material.SMITHING_TABLE, false);
+        world.getBlockAt(armX - 1, aY + 1, armZ).setType(Material.BARREL, false);
+    }
+
+    private void decorateParkourRuins(World world, int cy) {
+        // 1. Overgrown Ancient Stone Arch at (-50, -48)
+        int archX = -50, archZ = -48;
+        int aY = getGroundY(world, archX, archZ);
+        world.getBlockAt(archX - 2, aY + 1, archZ).setType(Material.MOSSY_STONE_BRICKS, false);
+        world.getBlockAt(archX - 2, aY + 2, archZ).setType(Material.MOSSY_STONE_BRICKS, false);
+        world.getBlockAt(archX - 2, aY + 3, archZ).setType(Material.MOSSY_STONE_BRICK_WALL, false);
+        world.getBlockAt(archX + 2, aY + 1, archZ).setType(Material.MOSSY_STONE_BRICKS, false);
+        world.getBlockAt(archX + 2, aY + 2, archZ).setType(Material.MOSSY_STONE_BRICKS, false);
+        world.getBlockAt(archX + 2, aY + 3, archZ).setType(Material.MOSSY_STONE_BRICK_WALL, false);
+        for (int px = -2; px <= 2; px++) {
+            world.getBlockAt(archX + px, aY + 4, archZ).setType(Material.MOSSY_STONE_BRICKS, false);
+        }
+        world.getBlockAt(archX, aY + 3, archZ).setType(Material.LANTERN, false);
+
+        // 2. Parkour Stepping Pillars across the island meadow
+        int[][] parkourPillars = {{-52, -58, 1}, {-54, -62, 2}, {-58, -64, 3}, {-62, -60, 2}, {-60, -56, 1}};
+        for (int[] pp : parkourPillars) {
+            int px = pp[0], pz = pp[1], ph = pp[2];
+            int gy = getGroundY(world, px, pz);
+            for (int y = 1; y <= ph; y++) {
+                world.getBlockAt(px, gy + y, pz).setType(Material.CRACKED_STONE_BRICKS, false);
+            }
+            if (ph == 3) {
+                world.getBlockAt(px, gy + ph + 1, pz).setType(Material.SLIME_BLOCK, false);
+            } else if (ph == 2) {
+                world.getBlockAt(px, gy + ph + 1, pz).setType(Material.HONEY_BLOCK, false);
+            }
+        }
+
+        // 3. Rustic Windmill Wheat Field & Meadow around (-66, -62)
+        int wX = -66, wZ = -62;
+        int[][] wheatOffsets = {{-3, 3}, {-2, 4}, {-4, 4}, {-3, 5}, {-2, 5}};
+        for (int[] wo : wheatOffsets) {
+            int bx = wX + wo[0], bz = wZ + wo[1];
+            int gy = getGroundY(world, bx, bz);
+            world.getBlockAt(bx, gy, bz).setType(Material.FARMLAND, false);
+            world.getBlockAt(bx, gy + 1, bz).setType(Material.WHEAT, false);
+        }
+        // Hay bales stack near windmill
+        int gyW = getGroundY(world, wX - 3, wZ - 1);
+        world.getBlockAt(wX - 3, gyW + 1, wZ - 1).setType(Material.HAY_BLOCK, false);
+        world.getBlockAt(wX - 3, gyW + 1, wZ - 2).setType(Material.HAY_BLOCK, false);
+        world.getBlockAt(wX - 3, gyW + 2, wZ - 1).setType(Material.HAY_BLOCK, false);
+        world.getBlockAt(wX - 2, gyW + 1, wZ - 1).setType(Material.BARREL, false);
+
+        // 4. Wildflower Meadow surrounding windmill
+        int[][] meadowFlowers = {{-60, -66, 0}, {-64, -66, 1}, {-68, -58, 2}, {-70, -60, 3}};
+        Material[] mFlowers = {Material.SUNFLOWER, Material.OXEYE_DAISY, Material.CORNFLOWER, Material.POPPY};
+        for (int[] mf : meadowFlowers) {
+            setSurfaceBlock(world, mf[0], mf[1], mFlowers[mf[2]]);
+        }
     }
 
 
