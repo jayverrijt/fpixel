@@ -11,7 +11,10 @@ import org.bukkit.entity.*;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -77,21 +80,22 @@ public class MurderMysteryGame extends Arena {
         droppedBowLoc = null;
         droppedBowItem = null;
 
-        List<UUID> allParticipants = new ArrayList<>(players);
-        for (UUID botUuid : simulatedPlayers.keySet()) {
-            allParticipants.add(botUuid);
-        }
+        List<UUID> humanList = new ArrayList<>(players);
+        Collections.shuffle(humanList);
+        List<UUID> botList = new ArrayList<>(simulatedPlayers.keySet());
+        Collections.shuffle(botList);
+
+        List<UUID> allParticipants = new ArrayList<>(humanList);
+        allParticipants.addAll(botList);
         alivePlayers.addAll(allParticipants);
 
         if (allParticipants.size() < 2) return;
 
-        Collections.shuffle(allParticipants);
-
-        // Assign Murderer
+        // Assign Murderer (prioritizes human players over bots)
         UUID murdererUuid = allParticipants.get(0);
         roles.put(murdererUuid, Role.MURDERER);
 
-        // Assign Detective
+        // Assign Detective (prioritizes remaining human players over bots)
         UUID detectiveUuid = allParticipants.get(1);
         roles.put(detectiveUuid, Role.DETECTIVE);
 
@@ -189,75 +193,54 @@ public class MurderMysteryGame extends Arena {
     public void handleGameTick() {
         if (state != GameState.IN_GAME) return;
 
+        // Void fall protection: if player falls below Y 40, return to spawn
+        for (Player p : getAllBukkitPlayers()) {
+            if (p.getLocation().getY() < 40.0) {
+                Location safe = lobbySpawn != null ? lobbySpawn : (!spawnPoints.isEmpty() ? spawnPoints.get(0) : null);
+                if (safe != null) {
+                    p.setFallDistance(0);
+                    p.setVelocity(new Vector(0, 0, 0));
+                    p.teleport(safe);
+                }
+            }
+        }
+
         // Periodic gold spawning every 5 seconds
         if (gameTime % 5 == 0 && !goldSpawnPoints.isEmpty()) {
             spawnRandomGold();
         }
 
-        // Gold pickup & dropped bow pickup checks
+        // Proximity checks for alive players
         for (Player p : getBukkitPlayers()) {
-            if (!alivePlayers.contains(p.getUniqueId())) continue;
+            if (!alivePlayers.contains(p.getUniqueId()) || isSpectator(p.getUniqueId())) continue;
 
             Location loc = p.getLocation();
+            Role role = roles.get(p.getUniqueId());
 
-            // 1. Gold pickup
-            Iterator<Item> gIt = activeGold.iterator();
-            while (gIt.hasNext()) {
-                Item item = gIt.next();
-                if (!item.isValid()) {
-                    gIt.remove();
-                    continue;
-                }
-                if (item.getWorld().equals(loc.getWorld()) && item.getLocation().distanceSquared(loc) <= 2.2) {
-                    item.remove();
-                    gIt.remove();
-                    int count = goldCount.getOrDefault(p.getUniqueId(), 0) + 1;
-                    goldCount.put(p.getUniqueId(), count);
-
-                    ChatUtil.playSound(p, Sound.ENTITY_ITEM_PICKUP, 0.7f, 1.5f);
-                    ChatUtil.sendActionBar(p, "§6§l+1 Gold §7(" + count + "/10)");
-
-                    // Reaching 10 gold gives innocent a bow!
-                    Role r = roles.get(p.getUniqueId());
-                    if (r == Role.INNOCENT && count == 10 && !p.getInventory().contains(Material.BOW)) {
-                        ItemStack bow = new ItemBuilder(Material.BOW)
-                                .name("§6§lHero's Bow")
-                                .lore("§7Acquired with 10 gold!", "§cDo not shoot innocents!")
-                                .build();
-                        p.getInventory().addItem(bow);
-                        p.getInventory().setItem(9, new ItemStack(Material.ARROW, 1));
-                        ChatUtil.sendTitle(p, "§6§lBOW ACQUIRED!", "§eYou collected 10 gold!", 5, 40, 10);
-                        ChatUtil.playSound(p, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+            // 1. Gold pickup (Murderers CANNOT pick up gold)
+            if (role != Role.MURDERER) {
+                Iterator<Item> gIt = activeGold.iterator();
+                while (gIt.hasNext()) {
+                    Item item = gIt.next();
+                    if (!item.isValid()) {
+                        gIt.remove();
+                        continue;
+                    }
+                    if (item.getWorld().equals(loc.getWorld()) && item.getLocation().distanceSquared(loc) <= 2.2) {
+                        pickupGold(p, item);
                     }
                 }
             }
 
-            // 2. Dropped Detective Bow pickup
-            if (droppedBowLoc != null && droppedBowItem != null && droppedBowItem.isValid()) {
+            // 2. Dropped Detective Bow pickup (ONLY Innocents can pick up)
+            if (role == Role.INNOCENT && droppedBowLoc != null && droppedBowItem != null && droppedBowItem.isValid()) {
                 if (p.getWorld().equals(droppedBowLoc.getWorld()) && p.getLocation().distanceSquared(droppedBowLoc) <= 2.5) {
-                    Role r = roles.get(p.getUniqueId());
-                    if (r == Role.INNOCENT) {
-                        droppedBowItem.remove();
-                        droppedBowItem = null;
-                        droppedBowLoc = null;
-
-                        roles.put(p.getUniqueId(), Role.DETECTIVE);
-                        ItemStack bow = new ItemBuilder(Material.BOW)
-                                .name("§9§lDetective's Bow")
-                                .lore("§7Picked up from fallen Detective.")
-                                .build();
-                        p.getInventory().addItem(bow);
-                        p.getInventory().setItem(9, new ItemStack(Material.ARROW, 1));
-
-                        broadcast("§b§lBOW RECOVERED! " + p.getName() + " §7has picked up the Detective's bow!");
-                        ChatUtil.sendTitle(p, "§9§lYOU ARE THE DETECTIVE!", "§7Find and eliminate the murderer!", 5, 40, 10);
-                        ChatUtil.playSound(p, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-                    }
+                    pickupDroppedBow(p, droppedBowItem);
                 }
             }
 
             // 3. Murderer Tracker updating
-            if (roles.get(p.getUniqueId()) == Role.MURDERER) {
+            if (role == Role.MURDERER) {
                 Player nearest = getNearestSurvivor(p);
                 if (nearest != null) {
                     p.setCompassTarget(nearest.getLocation());
@@ -265,7 +248,7 @@ public class MurderMysteryGame extends Arena {
             }
         }
 
-        // Detective Arrow Recharge (every 4 seconds)
+        // Detective / Hero Arrow Recharge (every 4 seconds)
         arrowRechargeSeconds++;
         if (arrowRechargeSeconds >= 4) {
             arrowRechargeSeconds = 0;
@@ -282,6 +265,132 @@ public class MurderMysteryGame extends Arena {
         // Visual effects for dropped bow
         if (droppedBowLoc != null && droppedBowLoc.getWorld() != null) {
             droppedBowLoc.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, droppedBowLoc.clone().add(0, 0.6, 0), 5, 0.2, 0.2, 0.2, 0.02);
+        }
+    }
+
+    private void pickupGold(Player p, Item item) {
+        if (!alivePlayers.contains(p.getUniqueId()) || isSpectator(p.getUniqueId())) return;
+        Role r = roles.get(p.getUniqueId());
+        if (r == Role.MURDERER) return;
+
+        if (item.isValid()) {
+            item.remove();
+        }
+        activeGold.remove(item);
+
+        int count = goldCount.getOrDefault(p.getUniqueId(), 0) + 1;
+        goldCount.put(p.getUniqueId(), count);
+
+        ChatUtil.playSound(p, Sound.ENTITY_ITEM_PICKUP, 0.7f, 1.5f);
+        ChatUtil.sendActionBar(p, "§6§l+1 Gold §7(" + count + "/10)");
+
+        // Reaching 10 gold gives innocent a bow!
+        if (r == Role.INNOCENT && count >= 10 && !p.getInventory().contains(Material.BOW)) {
+            ItemStack bow = new ItemBuilder(Material.BOW)
+                    .name("§6§lHero's Bow")
+                    .lore("§7Acquired with 10 gold!", "§cDo not shoot innocents!")
+                    .build();
+            p.getInventory().addItem(bow);
+            p.getInventory().setItem(9, new ItemStack(Material.ARROW, 1));
+            ChatUtil.sendTitle(p, "§6§lBOW ACQUIRED!", "§eYou collected 10 gold!", 5, 40, 10);
+            ChatUtil.playSound(p, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+        }
+    }
+
+    private void pickupDroppedBow(Player p, Item item) {
+        if (!alivePlayers.contains(p.getUniqueId()) || isSpectator(p.getUniqueId())) return;
+        Role r = roles.get(p.getUniqueId());
+        if (r != Role.INNOCENT) return; // Murderer and detectives cannot pick up
+
+        if (droppedBowItem != null && droppedBowItem.isValid()) {
+            droppedBowItem.remove();
+        }
+        if (item != null && item.isValid()) {
+            item.remove();
+        }
+        droppedBowItem = null;
+        droppedBowLoc = null;
+
+        roles.put(p.getUniqueId(), Role.DETECTIVE);
+        ItemStack bow = new ItemBuilder(Material.BOW)
+                .name("§9§lDetective's Bow")
+                .lore("§7Picked up from fallen Detective.")
+                .build();
+        p.getInventory().addItem(bow);
+        p.getInventory().setItem(9, new ItemStack(Material.ARROW, 1));
+
+        broadcast("§b§lBOW RECOVERED! " + p.getName() + " §7has picked up the Detective's bow!");
+        ChatUtil.sendTitle(p, "§9§lYOU ARE THE DETECTIVE!", "§7Find and eliminate the murderer!", 5, 40, 10);
+        ChatUtil.playSound(p, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+    }
+
+    @Override
+    public void onPlayerPickupItem(EntityPickupItemEvent event) {
+        if (state != GameState.IN_GAME) {
+            event.setCancelled(true);
+            return;
+        }
+
+        if (!(event.getEntity() instanceof Player p)) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // Dead players and spectators cannot pick up ANY item!
+        if (!alivePlayers.contains(p.getUniqueId()) || isSpectator(p.getUniqueId())) {
+            event.setCancelled(true);
+            return;
+        }
+
+        Item itemEntity = event.getItem();
+        Material mat = itemEntity.getItemStack().getType();
+
+        // Arrows can NEVER be picked up by anyone!
+        if (mat == Material.ARROW) {
+            event.setCancelled(true);
+            itemEntity.remove();
+            return;
+        }
+
+        // Murderers cannot pick up Bow or Gold!
+        Role role = roles.get(p.getUniqueId());
+        if (role == Role.MURDERER) {
+            if (mat == Material.BOW || mat == Material.GOLD_INGOT) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+
+        // Dropped Bow pickup
+        if (mat == Material.BOW) {
+            event.setCancelled(true);
+            if (role == Role.INNOCENT) {
+                pickupDroppedBow(p, itemEntity);
+            }
+            return;
+        }
+
+        // Gold pickup
+        if (mat == Material.GOLD_INGOT) {
+            event.setCancelled(true);
+            if (role != Role.MURDERER) {
+                pickupGold(p, itemEntity);
+            }
+            return;
+        }
+    }
+
+    @Override
+    public void onShootBow(EntityShootBowEvent event) {
+        if (event.getProjectile() instanceof AbstractArrow arrow) {
+            arrow.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
+        }
+    }
+
+    @Override
+    public void onProjectileHit(ProjectileHitEvent event) {
+        if (event.getEntity() instanceof Arrow) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> event.getEntity().remove(), 1L);
         }
     }
 
@@ -578,8 +687,12 @@ public class MurderMysteryGame extends Arena {
             lines.add("  ");
             lines.add("§fMode: §eMurder Mystery");
         } else if (state == GameState.IN_GAME) {
-            Role role = roles.getOrDefault(player.getUniqueId(), Role.INNOCENT);
-            lines.add("§fRole: " + role.getDisplay());
+            if (!alivePlayers.contains(player.getUniqueId()) || isSpectator(player.getUniqueId())) {
+                lines.add("§fRole: §7SPECTATOR");
+            } else {
+                Role role = roles.get(player.getUniqueId());
+                lines.add("§fRole: " + (role != null ? role.getDisplay() : "§7Unknown"));
+            }
             lines.add(" ");
 
             int innocentCount = 0;

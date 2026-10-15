@@ -17,7 +17,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import net.fpixel.core.testing.SimulatedPlayer;
@@ -467,6 +470,13 @@ public abstract class Arena {
     public void onPlayerMove(PlayerMoveEvent event) {}
     public void onPlayerInteract(PlayerInteractEvent event) {}
     public void onPlayerInteractEntity(org.bukkit.event.player.PlayerInteractEntityEvent event) {}
+    public void onPlayerPickupItem(EntityPickupItemEvent event) {}
+    public void onShootBow(EntityShootBowEvent event) {}
+    public void onProjectileHit(ProjectileHitEvent event) {}
+
+    public boolean isSpectator(UUID uuid) {
+        return spectators.contains(uuid);
+    }
 
     // Getters and setters
     public String getId() { return id; }

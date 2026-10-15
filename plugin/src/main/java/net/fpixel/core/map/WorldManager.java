@@ -1649,7 +1649,7 @@ public class WorldManager {
             // 5. Sector Beta (East): Hydroponics Biosphere (x: cx + 16 to cx + 34, z: cz - 16 to cz + 16)
             MapBuilder.fillBox(arenaWorld, cx + 18, cy, cz - 14, cx + 32, cy, cz + 14, Material.MOSS_BLOCK);
             MapBuilder.fillCircle(arenaWorld, cx + 25, cy + 1, cz, 4, Material.FLOWERING_AZALEA);
-            worldAt(arenaWorld, cx + 25, cy + 1, cz, Material.WATER);
+            worldAt(arenaWorld, cx + 25, cy + 1, cz, Material.MOSS_CARPET);
             worldAt(arenaWorld, cx + 25, cy + 2, cz, Material.SEA_LANTERN);
             worldAt(arenaWorld, cx + 20, cy + 1, cz - 8, Material.SPORE_BLOSSOM);
             worldAt(arenaWorld, cx + 30, cy + 1, cz + 8, Material.SPORE_BLOSSOM);
@@ -1677,16 +1677,29 @@ public class WorldManager {
             worldAt(arenaWorld, cx - 15, cy + 1, cz + 30, Material.BARREL);
             worldAt(arenaWorld, cx + 15, cy + 1, cz + 30, Material.BARREL);
 
-            // Sub-deck Maintenance Crawlways & Ladders at cy - 4
+            // Sub-deck Maintenance Crawlways & Ladders at cy - 4 (Thick reinforced hull floor at cy - 5 to cy - 7)
+            MapBuilder.fillBox(arenaWorld, cx - 6, cy - 7, cz - 28, cx + 6, cy - 5, cz + 28, Material.POLISHED_BLACKSTONE);
+            // Side walls enclosing the crawlway
+            MapBuilder.fillBox(arenaWorld, cx - 3, cy - 4, cz - 26, cx - 3, cy - 1, cz + 26, Material.POLISHED_BLACKSTONE);
+            MapBuilder.fillBox(arenaWorld, cx + 3, cy - 4, cz - 26, cx + 3, cy - 1, cz + 26, Material.POLISHED_BLACKSTONE);
+            MapBuilder.fillBox(arenaWorld, cx - 3, cy - 4, cz - 26, cx + 3, cy - 1, cz - 26, Material.POLISHED_BLACKSTONE);
+            MapBuilder.fillBox(arenaWorld, cx - 3, cy - 4, cz + 26, cx + 3, cy - 1, cz + 26, Material.POLISHED_BLACKSTONE);
+            // Crawlway walking space
             MapBuilder.fillBox(arenaWorld, cx - 2, cy - 4, cz - 25, cx + 2, cy - 2, cz + 25, Material.AIR);
-            for (int z = cz - 20; z <= cz + 20; z += 8) {
-                worldAt(arenaWorld, cx, cy - 4, z, Material.SEA_LANTERN);
+            // Solid floor at cy - 5 with embedded strip lighting
+            for (int z = cz - 20; z <= cz + 20; z += 4) {
+                worldAt(arenaWorld, cx, cy - 5, z, Material.SEA_LANTERN);
             }
-            // Emergency access ladders connecting sub-deck to main floor
+            // Emergency access ladders connecting sub-deck to main floor with solid blackstone backing
             for (int ly = 0; ly <= 4; ly++) {
+                worldAt(arenaWorld, cx - 2, cy - ly, cz - 15, Material.POLISHED_BLACKSTONE);
+                worldAt(arenaWorld, cx - 2, cy - ly, cz + 15, Material.POLISHED_BLACKSTONE);
                 worldAt(arenaWorld, cx - 1, cy - ly, cz - 15, Material.LADDER);
                 worldAt(arenaWorld, cx - 1, cy - ly, cz + 15, Material.LADDER);
             }
+            // Solid floor at bottom of ladders
+            worldAt(arenaWorld, cx - 1, cy - 5, cz - 15, Material.POLISHED_BLACKSTONE);
+            worldAt(arenaWorld, cx - 1, cy - 5, cz + 15, Material.POLISHED_BLACKSTONE);
 
             // Waiting Lobby high above (cy + 55)
             Location waitingLoc = new Location(arenaWorld, cx + 0.5, cy + 55, cz + 0.5);
@@ -1698,12 +1711,12 @@ public class WorldManager {
 
             // 8 Scattered Player Spawns
             game.addSpawnPoint(new Location(arenaWorld, cx + 0.5, cy + 1, cz - 26 + 0.5, 0f, 0f));      // Command Deck
-            game.addSpawnPoint(new Location(arenaWorld, cx + 25 + 0.5, cy + 1, cz + 0.5, 90f, 0f));     // Hydroponics
+            game.addSpawnPoint(new Location(arenaWorld, cx + 22 + 0.5, cy + 1.2, cz + 0.5, 90f, 0f));     // Hydroponics Biosphere
             game.addSpawnPoint(new Location(arenaWorld, cx - 25 + 0.5, cy + 1, cz + 0.5, -90f, 0f));    // Cryo Lab
             game.addSpawnPoint(new Location(arenaWorld, cx + 0.5, cy + 1, cz + 26 + 0.5, 180f, 0f));    // Mess Hall
             game.addSpawnPoint(new Location(arenaWorld, cx + 0.5, cy + 6.2, cz + 10 + 0.5, 180f, 0f));  // 2nd Floor Catwalk
             game.addSpawnPoint(new Location(arenaWorld, cx + 0.5, cy + 6.2, cz - 10 + 0.5, 0f, 0f));    // 2nd Floor Catwalk
-            game.addSpawnPoint(new Location(arenaWorld, cx + 0.5, cy - 3.8, cz + 0.5, 0f, 0f));        // Sub-deck Conduits
+            game.addSpawnPoint(new Location(arenaWorld, cx + 0.5, cy - 4.0, cz + 0.5, 0f, 0f));        // Sub-deck Conduits
             game.addSpawnPoint(new Location(arenaWorld, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f));           // Reactor Center
 
             // 24 Scattered Gold Spawns

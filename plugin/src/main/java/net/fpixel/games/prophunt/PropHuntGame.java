@@ -13,6 +13,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
@@ -159,13 +160,15 @@ public class PropHuntGame extends Arena {
                 p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 1, false, false));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, hidingPhaseTime * 20, 0, false, false));
 
+                // Equip disguise on head for Bedrock/Geyser 3rd person visibility
+                p.getInventory().setHelmet(new ItemStack(disguise));
                 givePropItems(p);
                 spawnPropDisplay(p, disguise);
 
                 ChatUtil.sendTitle(p, "§a§lYOU ARE A PROP!", "§7Disguised as: §e" + disguise.name(), 10, 60, 20);
                 ChatUtil.sendMessage(p, "§a§lROLE: §2Prop (" + disguise.name() + ")");
                 ChatUtil.sendMessage(p, "§7• Crouch/Sneak to lock into the block grid!");
-                ChatUtil.sendMessage(p, "§7• Right-click your whistle to Taunt for coins!");
+                ChatUtil.sendMessage(p, "§7• Right-click anywhere with empty hands to Taunt for coins!");
                 ChatUtil.playSound(p, Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.2f);
             }
 
@@ -199,11 +202,8 @@ public class PropHuntGame extends Arena {
 
     private void givePropItems(Player prop) {
         prop.getInventory().clear();
-        ItemStack taunt = new ItemBuilder(Material.BELL)
-                .name("§e§lTaunt Whistle §7(Right Click)")
-                .lore("§7Make a funny sound to mock hunters!", "§a+15 Coins per taunt (10s cooldown)")
-                .build();
-        prop.getInventory().setItem(0, taunt);
+        prop.getInventory().setHeldItemSlot(0);
+        // Leave hands completely empty so NO floating bell is visible to hunters!
     }
 
     private void spawnPropDisplay(Player player, Material material) {
@@ -287,7 +287,7 @@ public class PropHuntGame extends Arena {
                 } else {
                     display.teleport(p.getLocation());
                     Material disguise = propDisguises.getOrDefault(propUuid, Material.CRAFTING_TABLE);
-                    ChatUtil.sendActionBar(p, "§e[Disguise: " + disguise.name() + "] §7Sneak to lock into grid!");
+                    ChatUtil.sendActionBar(p, "§e[Disguise: " + disguise.name() + "] §7Sneak: Lock | Right-Click: Taunt");
                 }
             }
 
@@ -333,9 +333,9 @@ public class PropHuntGame extends Arena {
         if (state != GameState.IN_GAME) return;
         Player player = event.getPlayer();
 
-        // 1. Prop Manual Taunt Whistle
-        if (roles.get(player.getUniqueId()) == Role.PROP && event.getItem() != null && event.getItem().getType() == Material.BELL) {
-            if (event.getAction().name().contains("RIGHT")) {
+        // 1. Prop Manual Taunt Whistle (Right Click with empty hand)
+        if (roles.get(player.getUniqueId()) == Role.PROP) {
+            if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
                 event.setCancelled(true);
                 long now = System.currentTimeMillis();
                 long last = lastTauntTime.getOrDefault(player.getUniqueId(), 0L);
@@ -345,23 +345,56 @@ public class PropHuntGame extends Arena {
                     return;
                 }
                 triggerTaunt(player, false);
+                return;
             }
-            return;
         }
 
-        // 2. Hunter Miss Penalty on clicking normal blocks (GMod rule)
+        // 2. Hunter Swing Detection & Miss Penalty (GMod rule)
         if (!isHidingPhase && roles.get(player.getUniqueId()) == Role.HUNTER) {
-            if (event.getAction() == Action.LEFT_CLICK_BLOCK && event.getClickedBlock() != null) {
-                // Check if this was a disguised prop
-                boolean hitProp = false;
+            if (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.LEFT_CLICK_AIR) {
+                Player hitProp = null;
+                Location eye = player.getEyeLocation();
+                org.bukkit.util.Vector dir = eye.getDirection().normalize();
+
                 for (UUID propUuid : aliveProps) {
                     Player prop = Bukkit.getPlayer(propUuid);
-                    if (prop != null && prop.getLocation().distanceSquared(event.getClickedBlock().getLocation().add(0.5, 0.5, 0.5)) <= 2.2) {
-                        hitProp = true;
-                        break;
+                    if (prop == null || !prop.getWorld().equals(player.getWorld())) continue;
+
+                    Location propLoc = prop.getLocation();
+                    Location gridLoc = new Location(
+                            prop.getWorld(),
+                            Math.floor(propLoc.getX()) + 0.5,
+                            Math.floor(propLoc.getY()) + 0.5,
+                            Math.floor(propLoc.getZ()) + 0.5
+                    );
+
+                    // A. Check clicked block proximity (within 2.2 blocks of prop or grid loc)
+                    if (event.getClickedBlock() != null) {
+                        Location clicked = event.getClickedBlock().getLocation().add(0.5, 0.5, 0.5);
+                        if (clicked.distanceSquared(propLoc) <= 5.0 || clicked.distanceSquared(gridLoc) <= 5.0) {
+                            hitProp = prop;
+                            break;
+                        }
+                    }
+
+                    // B. Hunter reach and directional alignment check (within 4 blocks)
+                    double distSq = player.getLocation().distanceSquared(propLoc);
+                    double gridDistSq = player.getLocation().distanceSquared(gridLoc);
+                    if (distSq <= 16.0 || gridDistSq <= 16.0) {
+                        org.bukkit.util.Vector toProp = propLoc.clone().add(0, 0.5, 0).toVector().subtract(eye.toVector());
+                        org.bukkit.util.Vector toGrid = gridLoc.toVector().subtract(eye.toVector());
+                        if (dir.dot(toProp.normalize()) > 0.60 || dir.dot(toGrid.normalize()) > 0.60) {
+                            hitProp = prop;
+                            break;
+                        }
                     }
                 }
-                if (!hitProp) {
+
+                if (hitProp != null) {
+                    event.setCancelled(true);
+                    eliminateProp(hitProp, player);
+                    return;
+                } else if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
                     applyHunterMissPenalty(player);
                 }
             }
@@ -422,18 +455,9 @@ public class PropHuntGame extends Arena {
         }
 
         if (victim instanceof Player propPlayer && roles.get(propPlayer.getUniqueId()) == Role.PROP) {
-            // Hit a REAL prop!
-            event.setCancelled(false);
-            event.setDamage(10.0); // 2-shot kill
-
-            ChatUtil.playSound(hunter, Sound.ENTITY_ARROW_HIT_PLAYER, 1.0f, 1.2f);
-            propPlayer.getWorld().playSound(propPlayer.getLocation(), Sound.ENTITY_SLIME_HURT, 1.0f, 1.0f);
-            propPlayer.getWorld().spawnParticle(Particle.DUST, propPlayer.getLocation().add(0, 1, 0), 15, 0.3, 0.5, 0.3, new Particle.DustOptions(Color.RED, 1.5f));
-
-            if (propPlayer.getHealth() - 10.0 <= 0.0) {
-                event.setCancelled(true);
-                eliminateProp(propPlayer, hunter);
-            }
+            // Hit a REAL prop! Instant 1-hit kill!
+            event.setCancelled(true);
+            eliminateProp(propPlayer, hunter);
         } else {
             event.setCancelled(true);
         }
@@ -450,9 +474,10 @@ public class PropHuntGame extends Arena {
             display.remove();
         }
 
+        prop.getInventory().setHelmet(null);
+        prop.getInventory().clear();
         prop.removePotionEffect(PotionEffectType.INVISIBILITY);
         prop.setGameMode(GameMode.ADVENTURE);
-        prop.getInventory().clear();
         prop.setAllowFlight(true);
         prop.setFlying(true);
         prop.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 1, false, false));
@@ -460,8 +485,34 @@ public class PropHuntGame extends Arena {
         broadcast("§a§lPROP FOUND! " + hunter.getName() + " §7found §e" + prop.getName() + " §7disguised as §b" + disguise.name() + "!");
         ChatUtil.sendTitle(prop, "§c§lFOUND!", "§7You were caught by " + hunter.getName() + "!", 5, 40, 10);
         ChatUtil.playSound(hunter, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.2f);
+        ChatUtil.playSound(prop, Sound.ENTITY_PLAYER_DEATH, 1.0f, 1.0f);
 
         checkWinCondition();
+    }
+
+    @Override
+    public void onProjectileHit(ProjectileHitEvent event) {
+        if (state != GameState.IN_GAME) return;
+        if (event.getEntity() instanceof Arrow arrow && arrow.getShooter() instanceof Player hunter) {
+            if (roles.get(hunter.getUniqueId()) == Role.HUNTER) {
+                Location hitLoc = event.getHitBlock() != null ? event.getHitBlock().getLocation().add(0.5, 0.5, 0.5) : (event.getHitEntity() != null ? event.getHitEntity().getLocation() : null);
+                boolean hit = false;
+                if (hitLoc != null) {
+                    for (UUID propUuid : aliveProps) {
+                        Player prop = Bukkit.getPlayer(propUuid);
+                        if (prop != null && prop.getWorld().equals(hitLoc.getWorld()) && prop.getLocation().distanceSquared(hitLoc) <= 4.0) {
+                            eliminateProp(prop, hunter);
+                            hit = true;
+                            break;
+                        }
+                    }
+                }
+                if (!hit) {
+                    applyHunterMissPenalty(hunter);
+                }
+            }
+            arrow.remove();
+        }
     }
 
     @Override
@@ -522,6 +573,7 @@ public class PropHuntGame extends Arena {
             display.remove();
         }
 
+        player.getInventory().setHelmet(null);
         player.removePotionEffect(PotionEffectType.INVISIBILITY);
         player.setAllowFlight(false);
         player.setFlying(false);
@@ -535,6 +587,7 @@ public class PropHuntGame extends Arena {
     public void onGameEnd(Player winner) {
         clearAllDisplays();
         for (Player p : getAllBukkitPlayers()) {
+            p.getInventory().setHelmet(null);
             p.removePotionEffect(PotionEffectType.INVISIBILITY);
             p.setAllowFlight(false);
             p.setFlying(false);

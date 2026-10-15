@@ -4,14 +4,19 @@ import net.fpixel.FPixelPlugin;
 import net.fpixel.core.util.ChatUtil;
 import net.fpixel.party.Party;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Snowball;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -169,7 +174,16 @@ public class GameManager implements Listener {
             return;
         }
 
-        if (event.getDamager() instanceof Player damager && event.getEntity() instanceof Player target) {
+        Player damager = null;
+        if (event.getDamager() instanceof Player p) {
+            damager = p;
+        } else if (event.getDamager() instanceof Arrow arrow && arrow.getShooter() instanceof Player p) {
+            damager = p;
+        } else if (event.getDamager() instanceof Snowball sb && sb.getShooter() instanceof Player p) {
+            damager = p;
+        }
+
+        if (damager != null && event.getEntity() instanceof Player target) {
             Arena damagerArena = getPlayerArena(damager);
             Arena targetArena = getPlayerArena(target);
             if (damagerArena == null || targetArena == null || damagerArena != targetArena) {
@@ -219,11 +233,41 @@ public class GameManager implements Listener {
     public void onRegainHealth(org.bukkit.event.entity.EntityRegainHealthEvent event) {
         if (event.getEntity() instanceof Player player) {
             Arena arena = getPlayerArena(player);
-            // BedWars: Disable instant/satiated health regeneration
-            if (arena != null && arena.getGameType().equalsIgnoreCase("BEDWARS")) {
+            // BedWars & PropHunt: Disable instant/satiated health regeneration
+            if (arena != null && (arena.getGameType().equalsIgnoreCase("BEDWARS") || arena.getGameType().equalsIgnoreCase("PROP_HUNT"))) {
                 if (event.getRegainReason() == org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.SATIATED) {
                     event.setCancelled(true);
                 }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPickupItem(EntityPickupItemEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            Arena arena = getPlayerArena(player);
+            if (arena != null) {
+                arena.onPlayerPickupItem(event);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onShootBow(EntityShootBowEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            Arena arena = getPlayerArena(player);
+            if (arena != null) {
+                arena.onShootBow(event);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onProjectileHit(ProjectileHitEvent event) {
+        if (event.getEntity().getShooter() instanceof Player player) {
+            Arena arena = getPlayerArena(player);
+            if (arena != null) {
+                arena.onProjectileHit(event);
             }
         }
     }
