@@ -1,6 +1,7 @@
 package net.fpixel.commands;
 
 import net.fpixel.FPixelPlugin;
+import net.fpixel.core.util.ChatUtil;
 import net.fpixel.game.Arena;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -24,6 +25,20 @@ public class LobbyCommand implements CommandExecutor {
         Arena arena = plugin.getGameManager().getPlayerArena(player);
         if (arena != null) {
             arena.leave(player);
+        }
+
+        if (plugin.getPartyManager() != null) {
+            var party = plugin.getPartyManager().getParty(player);
+            if (party != null && party.isLeader(player) && arena != null && (arena.getState() == net.fpixel.game.GameState.WAITING || arena.getState() == net.fpixel.game.GameState.STARTING)) {
+                for (Player member : party.getOnlineMembers()) {
+                    if (!member.equals(player)) {
+                        Arena mArena = plugin.getGameManager().getPlayerArena(member);
+                        if (mArena != null) mArena.leave(member);
+                        plugin.getLobbyManager().teleportToLobby(member);
+                        ChatUtil.sendMessage(member, "§cYour party leader returned to the lobby.");
+                    }
+                }
+            }
         }
 
         plugin.getLobbyManager().teleportToLobby(player);

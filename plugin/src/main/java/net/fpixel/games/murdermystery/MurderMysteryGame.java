@@ -510,6 +510,12 @@ public class MurderMysteryGame extends Arena {
             }
         }
 
+        for (Player p : getAllBukkitPlayers()) {
+            p.removePotionEffect(PotionEffectType.INVISIBILITY);
+            p.setAllowFlight(false);
+            p.setFlying(false);
+        }
+
         for (Item item : activeGold) {
             if (item.isValid()) item.remove();
         }
@@ -517,6 +523,19 @@ public class MurderMysteryGame extends Arena {
         if (droppedBowItem != null && droppedBowItem.isValid()) {
             droppedBowItem.remove();
             droppedBowItem = null;
+        }
+    }
+
+    @Override
+    public void onPlayerLeave(Player player) {
+        alivePlayers.remove(player.getUniqueId());
+        roles.remove(player.getUniqueId());
+        player.removePotionEffect(PotionEffectType.INVISIBILITY);
+        player.setAllowFlight(false);
+        player.setFlying(false);
+
+        if (state == GameState.IN_GAME) {
+            checkWinCondition();
         }
     }
 

@@ -68,9 +68,11 @@ public class Party {
 
     public void warpToGame(Arena arena) {
         for (Player member : getOnlineMembers()) {
-            if (!member.getUniqueId().equals(leader)) {
+            if (!arena.contains(member)) {
                 arena.join(member);
-                ChatUtil.sendMessage(member, "§aYou were warped into §e" + arena.getDisplayName() + " §aby your party leader!");
+                if (!member.getUniqueId().equals(leader)) {
+                    ChatUtil.sendMessage(member, "§aYou were warped into §e" + arena.getDisplayName() + " §aby your party leader!");
+                }
             }
         }
     }

@@ -262,9 +262,13 @@ public class PropHuntGame extends Arena {
         }
 
         // 2. Update Prop Displays & Grid Lock
+        List<UUID> toRemove = new ArrayList<>();
         for (UUID propUuid : aliveProps) {
             Player p = Bukkit.getPlayer(propUuid);
-            if (p == null) continue;
+            if (p == null || !contains(p)) {
+                toRemove.add(propUuid);
+                continue;
+            }
 
             BlockDisplay display = propDisplays.get(propUuid);
             if (display != null && display.isValid()) {
@@ -292,6 +296,20 @@ public class PropHuntGame extends Arena {
             long last = lastTauntTime.getOrDefault(propUuid, 0L);
             if (now - last > 25000 && !isHidingPhase) {
                 triggerTaunt(p, true);
+            }
+        }
+
+        for (UUID uid : toRemove) {
+            aliveProps.remove(uid);
+            BlockDisplay display = propDisplays.remove(uid);
+            if (display != null) {
+                display.remove();
+            }
+            Player p = Bukkit.getPlayer(uid);
+            if (p != null) {
+                p.removePotionEffect(PotionEffectType.INVISIBILITY);
+                p.setAllowFlight(false);
+                p.setFlying(false);
             }
         }
     }
@@ -473,16 +491,54 @@ public class PropHuntGame extends Arena {
 
     private void clearAllDisplays() {
         for (BlockDisplay d : propDisplays.values()) {
-            if (d != null && d.isValid()) {
+            if (d != null) {
                 d.remove();
             }
         }
         propDisplays.clear();
+
+        // Also purge any orphaned BlockDisplay entities inside the map area
+        if (!propSpawns.isEmpty() && propSpawns.get(0).getWorld() != null) {
+            org.bukkit.World w = propSpawns.get(0).getWorld();
+            for (org.bukkit.entity.Entity e : w.getEntitiesByClass(BlockDisplay.class)) {
+                if (e.getLocation().distance(propSpawns.get(0)) < 150) {
+                    e.remove();
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onPlayerLeave(Player player) {
+        UUID uid = player.getUniqueId();
+        aliveProps.remove(uid);
+        aliveHunters.remove(uid);
+        roles.remove(uid);
+        propDisguises.remove(uid);
+        lastTauntTime.remove(uid);
+
+        BlockDisplay display = propDisplays.remove(uid);
+        if (display != null) {
+            display.remove();
+        }
+
+        player.removePotionEffect(PotionEffectType.INVISIBILITY);
+        player.setAllowFlight(false);
+        player.setFlying(false);
+
+        if (state == GameState.IN_GAME) {
+            checkWinCondition();
+        }
     }
 
     @Override
     public void onGameEnd(Player winner) {
         clearAllDisplays();
+        for (Player p : getAllBukkitPlayers()) {
+            p.removePotionEffect(PotionEffectType.INVISIBILITY);
+            p.setAllowFlight(false);
+            p.setFlying(false);
+        }
         if (winner != null) {
             FPixelUser u = plugin.getUserManager().getUser(winner);
             u.addPropHuntWin();

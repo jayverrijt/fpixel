@@ -202,7 +202,7 @@ public class MapSelectMenu {
             chosen.resetArena();
         }
 
-        // If player is in a party, check leadership
+        // Check if player is in a party
         if (plugin.getPartyManager() != null) {
             var party = plugin.getPartyManager().getParty(player);
             if (party != null && !party.isLeader(player)) {
@@ -210,11 +210,23 @@ public class MapSelectMenu {
                 return;
             }
             if (party != null && party.isLeader(player)) {
-                Arena current = plugin.getGameManager().getPlayerArena(player);
-                if (current != null) {
-                    current.leave(player);
+                List<Player> members = party.getOnlineMembers();
+                int partySize = members.size();
+
+                if (partySize > chosen.getMaxPlayers()) {
+                    ChatUtil.sendMessage(player, "§cYour party has " + partySize + " players, but this map only holds up to " + chosen.getMaxPlayers() + " players!");
+                    return;
                 }
+
+                int availableSlots = chosen.getMaxPlayers() - chosen.getPlayerCount();
+                if (partySize > availableSlots) {
+                    ChatUtil.sendMessage(player, "§cNot enough space in this map for your party! (" + availableSlots + " slots available, " + partySize + " in party)");
+                    return;
+                }
+
+                // Warp the entire party into chosen arena (including leader)
                 party.warpToGame(chosen);
+                ChatUtil.sendMessage(player, "§aJoined §e" + chosen.getDisplayName() + " §awith your party (" + partySize + " players)!");
                 return;
             }
         }

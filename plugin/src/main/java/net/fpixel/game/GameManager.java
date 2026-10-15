@@ -2,6 +2,7 @@ package net.fpixel.game;
 
 import net.fpixel.FPixelPlugin;
 import net.fpixel.core.util.ChatUtil;
+import net.fpixel.party.Party;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -63,11 +64,21 @@ public class GameManager implements Listener {
 
     public boolean joinQueue(Player player, String gameType) {
         // Prevent party guests from joining minigames alone
+        Party party = null;
         if (plugin.getPartyManager() != null) {
-            var party = plugin.getPartyManager().getParty(player);
+            party = plugin.getPartyManager().getParty(player);
             if (party != null && !party.isLeader(player)) {
                 ChatUtil.sendMessage(player, "§cOnly the party leader can queue for minigames!");
                 return false;
+            }
+        }
+
+        int partySize = (party != null) ? party.getOnlineMembers().size() : 1;
+
+        // Auto-reset any empty IN_GAME arenas for this gameType so queue is never starved
+        for (Arena arena : arenas.values()) {
+            if (arena.getGameType().equalsIgnoreCase(gameType) && arena.getState() == GameState.IN_GAME && arena.getPlayerCount() == 0) {
+                arena.resetArena();
             }
         }
 
@@ -81,10 +92,12 @@ public class GameManager implements Listener {
         Arena best = null;
         for (Arena arena : arenas.values()) {
             if (!arena.getGameType().equalsIgnoreCase(gameType)) continue;
-            // Only route global queue to large lobbies (maxPlayers > 2) for global games
-            if (arena.getMaxPlayers() <= 2 && (gameType.equalsIgnoreCase("SKYWARS") || gameType.equalsIgnoreCase("BEDWARS") || gameType.equalsIgnoreCase("PARKOUR") || gameType.equalsIgnoreCase("TNTRUN") || gameType.equalsIgnoreCase("TNT"))) continue;
+            // If party has more than 2 players, cannot fit in 2-player duel maps
+            if (partySize > 2 && arena.getMaxPlayers() <= 2) continue;
+            // Only route solo global queue to large lobbies (maxPlayers > 2) for global games
+            if (partySize == 1 && arena.getMaxPlayers() <= 2 && (gameType.equalsIgnoreCase("SKYWARS") || gameType.equalsIgnoreCase("BEDWARS") || gameType.equalsIgnoreCase("PARKOUR") || gameType.equalsIgnoreCase("TNTRUN") || gameType.equalsIgnoreCase("TNT"))) continue;
             if (arena.getState() != GameState.WAITING && arena.getState() != GameState.STARTING) continue;
-            if (arena.getPlayerCount() >= arena.getMaxPlayers()) continue;
+            if (arena.getMaxPlayers() - arena.getPlayerCount() < partySize) continue;
 
             if (best == null) {
                 best = arena;
@@ -96,16 +109,19 @@ public class GameManager implements Listener {
         }
 
         if (best != null) {
-            boolean joined = best.join(player);
-            if (joined && plugin.getPartyManager() != null) {
-                var party = plugin.getPartyManager().getParty(player);
-                if (party != null && party.isLeader(player)) {
-                    party.warpToGame(best);
-                }
+            if (party != null && party.isLeader(player)) {
+                party.warpToGame(best);
+                ChatUtil.sendMessage(player, "§aQueued and joined §e" + best.getDisplayName() + " §awith your party (" + partySize + " players)!");
+                return true;
+            } else {
+                return best.join(player);
             }
-            return joined;
         } else {
-            ChatUtil.sendMessage(player, "§cNo open arena found for " + gameType + "! Please try again soon.");
+            if (partySize > 1) {
+                ChatUtil.sendMessage(player, "§cNo open arena found for " + gameType + " with room for your party (" + partySize + " players)! Try selecting a specific map in the compass menu.");
+            } else {
+                ChatUtil.sendMessage(player, "§cNo open arena found for " + gameType + "! Please try again soon.");
+            }
             return false;
         }
     }

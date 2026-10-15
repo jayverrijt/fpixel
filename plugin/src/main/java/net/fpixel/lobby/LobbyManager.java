@@ -36,6 +36,14 @@ public class LobbyManager {
         } else {
             this.spawnLocation = Bukkit.getWorlds().get(0).getSpawnLocation();
         }
+
+        if (this.spawnLocation != null && this.spawnLocation.getWorld() != null) {
+            for (org.bukkit.entity.BlockDisplay bd : this.spawnLocation.getWorld().getEntitiesByClass(org.bukkit.entity.BlockDisplay.class)) {
+                if (bd.getLocation().distance(this.spawnLocation) < 250) {
+                    bd.remove();
+                }
+            }
+        }
     }
 
     public void setSpawn(Location location) {
@@ -106,6 +114,18 @@ public class LobbyManager {
         player.setFallDistance(0);
         player.setAllowFlight(true);
         player.setFlying(false);
+
+        // Clear all active potion effects (especially Invisibility from minigames)
+        for (org.bukkit.potion.PotionEffect effect : player.getActivePotionEffects()) {
+            player.removePotionEffect(effect.getType());
+        }
+
+        // Clean up any rogue block display entities that followed or are near the player
+        for (org.bukkit.entity.Entity nearby : player.getNearbyEntities(8, 8, 8)) {
+            if (nearby instanceof org.bukkit.entity.BlockDisplay bd) {
+                bd.remove();
+            }
+        }
 
         giveLobbyItems(player);
 

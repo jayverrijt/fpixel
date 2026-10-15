@@ -226,14 +226,23 @@ public abstract class Arena {
     }
 
     public boolean join(Player player) {
+        // Cleanly leave previous arena if any
+        Arena current = plugin.getGameManager().getPlayerArena(player);
+        if (current != null && current != this) {
+            current.leave(player);
+        }
+
         if (state == GameState.IN_GAME || state == GameState.ENDING || state == GameState.RESETTING) {
             if (players.isEmpty() && simulatedPlayers.isEmpty()) {
                 resetArena();
             } else {
                 // Join as spectator
                 if (player.getWorld() != null && player.getWorld().getName().equalsIgnoreCase("survival")) {
-                    if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().getProfileManager() != null) {
-                        plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+                    if (plugin.getSurvivalManager() != null) {
+                        if (plugin.getSurvivalManager().getProfileManager() != null) {
+                            plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+                        }
+                        plugin.getSurvivalManager().removeSurvivalPlayer(player);
                     }
                 }
                 spectators.add(player.getUniqueId());
@@ -251,9 +260,17 @@ public abstract class Arena {
         }
 
         if (player.getWorld() != null && player.getWorld().getName().equalsIgnoreCase("survival")) {
-            if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().getProfileManager() != null) {
-                plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+            if (plugin.getSurvivalManager() != null) {
+                if (plugin.getSurvivalManager().getProfileManager() != null) {
+                    plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+                }
+                plugin.getSurvivalManager().removeSurvivalPlayer(player);
             }
+        }
+
+        // Clear active potion effects on joining arena
+        for (org.bukkit.potion.PotionEffect effect : player.getActivePotionEffects()) {
+            player.removePotionEffect(effect.getType());
         }
 
         players.add(player.getUniqueId());
@@ -309,6 +326,12 @@ public abstract class Arena {
 
         broadcast("§7" + player.getName() + " §eleft the game.");
         onPlayerLeave(player);
+
+        player.setAllowFlight(false);
+        player.setFlying(false);
+        for (org.bukkit.potion.PotionEffect effect : player.getActivePotionEffects()) {
+            player.removePotionEffect(effect.getType());
+        }
 
         if (state == GameState.IN_GAME) {
             if (players.isEmpty() && simulatedPlayers.isEmpty()) {
