@@ -70,6 +70,7 @@ public class PropHuntGame extends Arena {
     private final Map<UUID, Long> lastTauntTime = new HashMap<>();
 
     private Location hunterSpawn;
+    private Location hunterReleaseLocation;
     private final List<Location> propSpawns = new ArrayList<>();
 
     private boolean isHidingPhase = true;
@@ -81,8 +82,10 @@ public class PropHuntGame extends Arena {
     }
 
     public void setHunterSpawn(Location loc) { this.hunterSpawn = loc; }
+    public void setHunterReleaseLocation(Location loc) { this.hunterReleaseLocation = loc; }
     public void addPropSpawn(Location loc) { propSpawns.add(loc); }
     public Location getHunterSpawn() { return hunterSpawn; }
+    public Location getHunterReleaseLocation() { return hunterReleaseLocation != null ? hunterReleaseLocation : hunterSpawn; }
     public List<Location> getPropSpawns() { return propSpawns; }
 
     @Override
@@ -237,13 +240,21 @@ public class PropHuntGame extends Arena {
                 }
             } else {
                 isHidingPhase = false;
+                Location releaseLoc = getHunterReleaseLocation();
                 for (UUID hUuid : aliveHunters) {
                     Player h = Bukkit.getPlayer(hUuid);
                     if (h != null) {
                         h.removePotionEffect(PotionEffectType.BLINDNESS);
                         h.removePotionEffect(PotionEffectType.SLOWNESS);
+                        if (releaseLoc != null) {
+                            h.teleport(releaseLoc);
+                        }
                         ChatUtil.sendTitle(h, "§c§lSEEK AND DESTROY!", "§eFind all hidden props!", 5, 40, 10);
                         ChatUtil.playSound(h, Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 1.0f);
+                    }
+                    net.fpixel.core.testing.SimulatedPlayer bot = simulatedPlayers.get(hUuid);
+                    if (bot != null && releaseLoc != null && bot.getEntity() != null) {
+                        bot.getEntity().teleport(releaseLoc);
                     }
                 }
                 broadcast("§c§lHUNTERS RELEASED! §7Props, stay still and blend in!");
