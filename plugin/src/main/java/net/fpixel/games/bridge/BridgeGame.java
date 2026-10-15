@@ -432,7 +432,7 @@ public class BridgeGame extends Arena {
             lines.add("§fGame: §eEnding");
         }
         lines.add(" ");
-        lines.add("§emc.fpixel.net");
+        lines.add("§emc.fpixel.nl");
         return lines;
     }
 

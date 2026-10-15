@@ -319,7 +319,7 @@ public class SumoGame extends Arena {
         FPixelUser user = plugin.getUserManager().getUser(player);
         lines.add("§fStreak: §b" + user.getSumoStreak());
         lines.add("  ");
-        lines.add("§emc.fpixel.net");
+        lines.add("§emc.fpixel.nl");
         return lines;
     }
 

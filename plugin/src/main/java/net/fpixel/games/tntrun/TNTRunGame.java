@@ -248,7 +248,7 @@ public class TNTRunGame extends Arena {
         lines.add("§fPlayers Left: §a" + players.size());
         lines.add("§fDouble Jumps: §b" + doubleJumps.getOrDefault(player.getUniqueId(), 0));
         lines.add(" ");
-        lines.add("§emc.fpixel.net");
+        lines.add("§emc.fpixel.nl");
         return lines;
     }
 

@@ -554,7 +554,7 @@ public class PropHuntGame extends Arena {
         }
 
         lines.add("   ");
-        lines.add("§emc.fpixel.net");
+        lines.add("§emc.fpixel.nl");
         return lines;
     }
 }

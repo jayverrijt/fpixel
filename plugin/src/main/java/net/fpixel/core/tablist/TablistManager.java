@@ -21,8 +21,8 @@ public class TablistManager {
             int online = Bukkit.getOnlinePlayers().size();
             for (Player player : Bukkit.getOnlinePlayers()) {
                 int ping = player.getPing();
-                String header = "\n §6§lFPIXEL NETWORK §7[1.21] \n §7play.fpixel.net \n";
-                String footer = "\n §eOnline: §a" + online + " §7| §ePing: §a" + ping + "ms \n §bStore: §fstore.fpixel.net \n";
+                String header = "\n §6§lFPIXEL NETWORK §7[1.21] \n §bmc.fpixel.nl \n";
+                String footer = "\n §eOnline: §a" + online + " §7| §ePing: §a" + ping + "ms \n §bmc.fpixel.nl \n";
 
                 player.sendPlayerListHeaderAndFooter(
                         ChatUtil.component(header),

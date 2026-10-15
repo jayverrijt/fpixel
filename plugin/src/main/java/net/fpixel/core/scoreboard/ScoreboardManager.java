@@ -67,7 +67,7 @@ public class ScoreboardManager {
             lines.add("§fServer: §aLobby-1");
             lines.add("§fOnline: §a" + Bukkit.getOnlinePlayers().size());
             lines.add("  ");
-            lines.add("§emc.fpixel.net");
+            lines.add("§emc.fpixel.nl");
 
             board.updateLines(lines);
         } else {

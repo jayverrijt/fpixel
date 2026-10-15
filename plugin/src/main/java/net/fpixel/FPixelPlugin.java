@@ -134,6 +134,12 @@ public class FPixelPlugin extends JavaPlugin {
         SurvivalBackupCommand backupCmd = new SurvivalBackupCommand(this);
         getCommand("survivalbackup").setExecutor(backupCmd);
 
+        CoinsCommand coinsCmd = new CoinsCommand(this);
+        getCommand("coins").setExecutor(coinsCmd);
+        getCommand("coins").setTabCompleter(coinsCmd);
+        getCommand("addcoins").setExecutor(coinsCmd);
+        getCommand("addcoins").setTabCompleter(coinsCmd);
+
 
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);

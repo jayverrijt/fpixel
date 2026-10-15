@@ -53,5 +53,11 @@ commands:
     description: Trigger an immediate survival world backup pushed directly to GitHub
     permission: fpixel.admin
     aliases: [backupnow, smpbackup]
+  coins:
+    description: Manage and view your FPixel coins
+    aliases: [coin, eco, money, balance]
+  addcoins:
+    description: Add coins to a player
+    permission: fpixel.admin
 
 

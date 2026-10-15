@@ -650,7 +650,7 @@ public class BedWarsGame extends Arena {
         lines.add("§fFinal Kills: §a" + finalKills.getOrDefault(player.getUniqueId(), 0));
         lines.add("§fBeds Broken: §a" + bedsBroken.getOrDefault(player.getUniqueId(), 0));
         lines.add("  ");
-        lines.add("§emc.fpixel.net");
+        lines.add("§emc.fpixel.nl");
 
         return lines;
     }

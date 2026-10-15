@@ -49,6 +49,7 @@ public class FPixelUser {
     public void setName(String name) { this.name = name; }
 
     public int getCoins() { return coins; }
+    public void setCoins(int amount) { this.coins = Math.max(0, amount); }
     public void addCoins(int amount) { this.coins += amount; }
     public void removeCoins(int amount) { this.coins = Math.max(0, this.coins - amount); }
 
