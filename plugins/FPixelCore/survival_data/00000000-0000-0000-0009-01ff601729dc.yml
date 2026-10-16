@@ -1,37 +1,31 @@
 location:
   world: survival
-  x: 1297.497
+  x: 1314.9879
   y: 55.0
-  z: 103.07788
-  yaw: -9.515198
-  pitch: 17.53302
-level: 41
-exp: 0.9327732
+  z: 107.22657
+  yaw: 26.680542
+  pitch: 15.630035
+level: 0
+exp: 0.42857146
 health: 20.0
-food: 18
+food: 20
 inventory:
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:carrot
-  count: 12
+  id: minecraft:leaf_litter
+  count: 2
   schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:iron_axe
-  count: 1
-  components:
-    minecraft:damage: '73'
-  schema_version: 1
-- null
-- null
-- null
-- null
-- null
-- null
-- null
-- null
-- null
-- null
 - null
 - null
 - null
@@ -58,7 +52,7 @@ inventory:
 - null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:iron_boots
+  id: minecraft:golden_boots
   count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
@@ -86,7 +80,7 @@ inventory:
 armor:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:iron_boots
+  id: minecraft:golden_boots
   count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
