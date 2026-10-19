@@ -1,24 +1,16 @@
 location:
   world: survival
-  x: -951.7162284532222
-  y: 53.0
-  z: -129.68134194201008
-  yaw: 158.06813
-  pitch: -26.033873
+  x: 1296.61881279424
+  y: 55.0
+  z: 104.32519887599618
+  yaw: 179.75856
+  pitch: -24.209446
 level: 68
 exp: 0.86390084
 health: 20.0
 food: 20
 inventory:
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:diamond_pickaxe
-  count: 1
-  components:
-    minecraft:repair_cost: '31'
-    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:mending":1,"minecraft:silk_touch":1,"minecraft:unbreaking":3}'
-    minecraft:damage: '949'
-  schema_version: 1
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:diamond_axe
