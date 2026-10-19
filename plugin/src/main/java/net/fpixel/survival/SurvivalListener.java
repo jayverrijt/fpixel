@@ -146,7 +146,8 @@ public class SurvivalListener implements Listener {
                     || lower.startsWith("/cleansponge") || lower.startsWith("/spongeclean")
                     || lower.startsWith("/cleanglass") || lower.startsWith("/glassclean")
                     || lower.startsWith("/glasswall") || lower.startsWith("/glazenmuur")
-                    || lower.startsWith("/fillchunk") || lower.startsWith("/fillchunck")) {
+                    || lower.startsWith("/fillchunk") || lower.startsWith("/fillchunck")
+                    || lower.startsWith("/floodfill") || lower.startsWith("/fillflood")) {
                 event.setMessage(singleSlash);
             }
         }

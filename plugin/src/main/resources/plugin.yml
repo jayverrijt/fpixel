@@ -62,7 +62,7 @@ commands:
   fillchunk:
     description: Fill current chunk with air between Y levels with ocean glass protection
     permission: fpixel.admin
-    aliases: [chunkfill, clearchunk, chunkclear, fillchunck, chunckfill, clearchunck]
+    aliases: [chunkfill, clearchunk, chunkclear, fillchunck, chunckfill, clearchunck, floodfill, fillflood, chunkflood]
   glasswall:
     description: Build glass walls between ocean and build chunks, dry loose water, and restore ocean
     permission: fpixel.admin
