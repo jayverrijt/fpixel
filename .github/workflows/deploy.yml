@@ -98,8 +98,10 @@ jobs:
             # Step 2: Fetch and update to latest main
             echo ">>> [3/5] Updating repository to latest commit..."
             cd "${BASE_DIR}"
+            docker exec fpixel-minecraft chown -R 1000:1000 /data/plugins /data/world 2>/dev/null || true
             git fetch origin main
             git reset --hard origin/main
+            git clean -fd || true
 
             # Step 3: Run automated deploy verification
             echo ">>> [4/5] Executing deployment script..."

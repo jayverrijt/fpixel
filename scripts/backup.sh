@@ -38,11 +38,12 @@ tar --exclude='logs/*' \
     --exclude='plugins/.paper-remapped/*' \
     --exclude='plugins/spark/tmp/*' \
     --exclude='plugins/spark/tmp-client/*' \
+    --exclude='world_safety_snapshots/*' \
     --exclude='*.tmp' \
     --exclude='.git' \
     -czf "${BACKUP_FILE}" \
     -C "$(dirname "${SERVER_DIR}")" \
-    "$(basename "${SERVER_DIR}")" || [ $? -eq 1 ] || true
+    "$(basename "${SERVER_DIR}")" || true
 
 BACKUP_SIZE="$(du -h "${BACKUP_FILE}" | cut -f1)"
 echo " Backup created successfully: ${BACKUP_FILE} (${BACKUP_SIZE})"

@@ -141,17 +141,10 @@ public class SurvivalListener implements Listener {
         if (msg.startsWith("//")) {
             String singleSlash = "/" + msg.substring(2);
             String lower = singleSlash.toLowerCase();
-            if (lower.startsWith("/cleanwaterandglass") || lower.startsWith("/cleanwaterglass")
-                    || lower.startsWith("/cleanwater") || lower.startsWith("/cleanglasswater")
-                    || lower.startsWith("/cleansponge") || lower.startsWith("/spongeclean")
-                    || lower.startsWith("/cleanglass") || lower.startsWith("/glassclean")
-                    || lower.startsWith("/glasswall") || lower.startsWith("/glazenmuur")
+            if (lower.startsWith("/fpixel") || lower.startsWith("/fp")
+                    || lower.startsWith("/fill") || lower.startsWith("/empty")
                     || lower.startsWith("/fillchunk") || lower.startsWith("/fillchunck")
-                    || lower.startsWith("/floodfill") || lower.startsWith("/fillflood")
-                    || lower.startsWith("/pos1") || lower.startsWith("/pos2")
-                    || lower.startsWith("/hpos1") || lower.startsWith("/hpos2")
-                    || lower.startsWith("/wand") || lower.startsWith("/set")
-                    || lower.startsWith("/replace") || lower.startsWith("/undo")) {
+                    || lower.startsWith("/undo")) {
                 event.setMessage(singleSlash);
             }
         }

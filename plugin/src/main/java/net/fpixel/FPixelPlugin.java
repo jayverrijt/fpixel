@@ -18,8 +18,7 @@ import net.fpixel.lobby.listeners.LobbyListener;
 import net.fpixel.party.PartyManager;
 import net.fpixel.survival.SurvivalListener;
 import net.fpixel.survival.SurvivalManager;
-import net.fpixel.core.selection.SelectionManager;
-import net.fpixel.core.selection.WandListener;
+import net.fpixel.core.chunk.FPixelChunkHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -85,9 +84,14 @@ public class FPixelPlugin extends JavaPlugin {
 
 
         // 4. Register Commands
-        FPixelCommand fpixelCmd = new FPixelCommand(this);
+        FPixelChunkHandler chunkHandler = new FPixelChunkHandler(this);
+        FPixelCommand fpixelCmd = new FPixelCommand(this, chunkHandler);
         getCommand("fpixel").setExecutor(fpixelCmd);
         getCommand("fpixel").setTabCompleter(fpixelCmd);
+        getCommand("fill").setExecutor(fpixelCmd);
+        getCommand("fill").setTabCompleter(fpixelCmd);
+        getCommand("empty").setExecutor(fpixelCmd);
+        getCommand("empty").setTabCompleter(fpixelCmd);
 
         LobbyCommand lobbyCmd = new LobbyCommand(this);
         getCommand("lobby").setExecutor(lobbyCmd);
@@ -141,39 +145,6 @@ public class FPixelPlugin extends JavaPlugin {
         getCommand("coins").setTabCompleter(coinsCmd);
         getCommand("addcoins").setExecutor(coinsCmd);
         getCommand("addcoins").setTabCompleter(coinsCmd);
-
-        FillChunkCommand fillChunkCmd = new FillChunkCommand(this);
-        getCommand("fillchunk").setExecutor(fillChunkCmd);
-        getCommand("fillchunk").setTabCompleter(fillChunkCmd);
-
-        GlassWallCommand glassWallCmd = new GlassWallCommand(this);
-        getCommand("glasswall").setExecutor(glassWallCmd);
-        getCommand("glasswall").setTabCompleter(glassWallCmd);
-
-        CleanSpongeCommand cleanSpongeCmd = new CleanSpongeCommand(this);
-        getCommand("cleansponge").setExecutor(cleanSpongeCmd);
-        getCommand("cleansponge").setTabCompleter(cleanSpongeCmd);
-
-        CleanGlassCommand cleanGlassCmd = new CleanGlassCommand(this);
-        getCommand("cleanglass").setExecutor(cleanGlassCmd);
-        getCommand("cleanglass").setTabCompleter(cleanGlassCmd);
-
-        CleanWaterAndGlassCommand cleanWaterAndGlassCmd = new CleanWaterAndGlassCommand(this);
-        getCommand("cleanwaterandglass").setExecutor(cleanWaterAndGlassCmd);
-        getCommand("cleanwaterandglass").setTabCompleter(cleanWaterAndGlassCmd);
-
-        SelectionManager selectionManager = new SelectionManager();
-        SelectionCommand selectionCmd = new SelectionCommand(this, selectionManager);
-        getCommand("pos1").setExecutor(selectionCmd);
-        getCommand("pos2").setExecutor(selectionCmd);
-        getCommand("wand").setExecutor(selectionCmd);
-        getCommand("set").setExecutor(selectionCmd);
-        getCommand("set").setTabCompleter(selectionCmd);
-        getCommand("replace").setExecutor(selectionCmd);
-        getCommand("replace").setTabCompleter(selectionCmd);
-        getCommand("undo").setExecutor(selectionCmd);
-
-        getServer().getPluginManager().registerEvents(new WandListener(this, selectionManager), this);
 
 
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)

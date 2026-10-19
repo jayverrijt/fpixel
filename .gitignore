@@ -37,3 +37,6 @@ server/plugins/SkinsRestorer/skins/
 server/plugins/SkinsRestorer/players/
 server/world_safety_snapshots/
 server/plugins/FPixelCore/survival_data/
+server/usercache.json
+server/FPixelCore.jar
+

@@ -9,8 +9,17 @@ softdepend:
   - Geyser-Spigot
 commands:
   fpixel:
-    description: Main FPixel Network command
+    description: Unified FPixel Network, Fill, and Empty command
     permission: fpixel.admin
+    aliases: [fp]
+  fill:
+    description: Unified FPixel chunk fill command
+    permission: fpixel.admin
+    aliases: [chunkfill, fillchunk, fillchunck]
+  empty:
+    description: Unified FPixel chunk empty command
+    permission: fpixel.admin
+    aliases: [chunkempty, emptychunk]
   lobby:
     description: Teleport to network hub / lobby
     aliases: [hub, l, spawn]
@@ -59,50 +68,3 @@ commands:
   addcoins:
     description: Add coins to a player
     permission: fpixel.admin
-  fillchunk:
-    description: Fill current chunk with air between Y levels with ocean glass protection
-    permission: fpixel.admin
-    aliases: [chunkfill, clearchunk, chunkclear, fillchunck, chunckfill, clearchunck, floodfill, fillflood, chunkflood]
-  glasswall:
-    description: Build glass walls between ocean and build chunks, dry loose water, and restore ocean
-    permission: fpixel.admin
-    aliases: [glazenmuur, sealarea, fixwater, fixocean, waterwall]
-  cleansponge:
-    description: Remove all sponges, wet sponges, and glass in the chunk with air
-    permission: fpixel.admin
-    aliases: [spongeclean, removesponge, clearsponge]
-  cleanglass:
-    description: Remove glass that actively holds back an ocean/water
-    permission: fpixel.admin
-    aliases: [glassclean]
-  cleanwaterandglass:
-    description: Remove all water, glass, and sponges across chunk radius with air
-    permission: fpixel.admin
-    aliases: [cleanwaterglass, cleanwater, cleanglasswater, waterandglass, cleanall]
-  pos1:
-    description: Set position 1 for region selection
-    permission: fpixel.admin
-    aliases: [hpos1]
-  pos2:
-    description: Set position 2 for region selection
-    permission: fpixel.admin
-    aliases: [hpos2]
-  wand:
-    description: Get the region selection wooden axe wand
-    permission: fpixel.admin
-    aliases: [selectwand]
-  set:
-    description: Fill the selected region with a block
-    permission: fpixel.admin
-    aliases: [fillregion, regionfill]
-  replace:
-    description: Replace specific blocks in the selected region
-    permission: fpixel.admin
-    aliases: [replaceregion]
-  undo:
-    description: Undo the last WorldEdit / chunk action
-    permission: fpixel.admin
-    aliases: [weundo]
-
-
-
