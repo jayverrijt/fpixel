@@ -64,11 +64,18 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
         int toY = 81;
         boolean placeGlass = true;
         Material fillMaterial = Material.AIR;
+        boolean isSafeMode = false;
 
         List<String> remainingArgs = new ArrayList<>();
         for (String arg : args) {
             if (arg.equalsIgnoreCase("noglass")) {
                 placeGlass = false;
+                continue;
+            }
+            if (arg.equalsIgnoreCase("safe") || arg.equalsIgnoreCase("save")
+                    || arg.equalsIgnoreCase("keep") || arg.equalsIgnoreCase("safemode")
+                    || arg.equalsIgnoreCase("savemode")) {
+                isSafeMode = true;
                 continue;
             }
             Material m = Material.matchMaterial(arg);
@@ -91,7 +98,7 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
                 fromY = parseY(remainingArgs.get(0), playerY);
                 toY = parseY(remainingArgs.get(1), playerY);
             } catch (NumberFormatException e) {
-                ChatUtil.sendMessage(player, "§c§lCHUNK §8» §cOngeldige Y-waarden! Gebruik: §e/fillchunk [vanY] [totY] [materiaal]");
+                ChatUtil.sendMessage(player, "§c§lCHUNK §8» §cOngeldige Y-waarden! Gebruik: §e/fillchunk [vanY] [totY] [materiaal] [safe]");
                 return true;
             }
         }
@@ -111,6 +118,7 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
         int glassCount = 0;
         int waterPreserved = 0;
         int fillCount = 0;
+        int skippedCount = 0;
 
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
@@ -148,6 +156,12 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
                         }
                     } else {
                         // Filling with specific material (e.g. STONE)
+                        if (isSafeMode && !type.isAir()) {
+                            // Safe mode: do not overwrite existing blocks (e.g. dirt, stone, wood, etc.)
+                            skippedCount++;
+                            continue;
+                        }
+
                         if (type != fillMaterial) {
                             snapshots.add(new BlockSnapshot(block.getLocation(), block.getBlockData().clone()));
                             block.setType(fillMaterial, false);
@@ -179,6 +193,9 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
             int layerCount = maxY - minY + 1;
             ChatUtil.sendMessage(player, "§a§lCHUNK §8» §aChunk succesvol gevuld met §e" + fillMaterial.name().toLowerCase() + " §atussen Y=§e" + minY + " §aen Y=§e" + maxY + "§a! §7(" + layerCount + " lagen)");
             ChatUtil.sendMessage(player, "§7» §f" + fillCount + " §7blokken geplaatst");
+            if (isSafeMode) {
+                ChatUtil.sendMessage(player, "§7» §a§lSAFE MODE: §f" + skippedCount + " §7bestaande blokken (zoals dirt/steen) beschermd en behouden!");
+            }
         }
         ChatUtil.sendMessage(player, "§7» §eTyp §6/" + label + " undo §eom dit ongedaan te maken.");
         ChatUtil.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
@@ -249,6 +266,13 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
             completions.add("dirt");
             completions.add("glass");
             completions.add("air");
+            completions.add("safe");
+            completions.add("save");
+            completions.add("noglass");
+        } else if (args.length == 4) {
+            completions.add("safe");
+            completions.add("save");
+            completions.add("keep");
             completions.add("noglass");
         }
         return completions;
