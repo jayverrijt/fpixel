@@ -18,6 +18,8 @@ import net.fpixel.lobby.listeners.LobbyListener;
 import net.fpixel.party.PartyManager;
 import net.fpixel.survival.SurvivalListener;
 import net.fpixel.survival.SurvivalManager;
+import net.fpixel.core.selection.SelectionManager;
+import net.fpixel.core.selection.WandListener;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -159,6 +161,19 @@ public class FPixelPlugin extends JavaPlugin {
         CleanWaterAndGlassCommand cleanWaterAndGlassCmd = new CleanWaterAndGlassCommand(this);
         getCommand("cleanwaterandglass").setExecutor(cleanWaterAndGlassCmd);
         getCommand("cleanwaterandglass").setTabCompleter(cleanWaterAndGlassCmd);
+
+        SelectionManager selectionManager = new SelectionManager();
+        SelectionCommand selectionCmd = new SelectionCommand(this, selectionManager);
+        getCommand("pos1").setExecutor(selectionCmd);
+        getCommand("pos2").setExecutor(selectionCmd);
+        getCommand("wand").setExecutor(selectionCmd);
+        getCommand("set").setExecutor(selectionCmd);
+        getCommand("set").setTabCompleter(selectionCmd);
+        getCommand("replace").setExecutor(selectionCmd);
+        getCommand("replace").setTabCompleter(selectionCmd);
+        getCommand("undo").setExecutor(selectionCmd);
+
+        getServer().getPluginManager().registerEvents(new WandListener(this, selectionManager), this);
 
 
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)

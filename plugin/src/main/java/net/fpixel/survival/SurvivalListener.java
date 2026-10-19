@@ -147,7 +147,11 @@ public class SurvivalListener implements Listener {
                     || lower.startsWith("/cleanglass") || lower.startsWith("/glassclean")
                     || lower.startsWith("/glasswall") || lower.startsWith("/glazenmuur")
                     || lower.startsWith("/fillchunk") || lower.startsWith("/fillchunck")
-                    || lower.startsWith("/floodfill") || lower.startsWith("/fillflood")) {
+                    || lower.startsWith("/floodfill") || lower.startsWith("/fillflood")
+                    || lower.startsWith("/pos1") || lower.startsWith("/pos2")
+                    || lower.startsWith("/hpos1") || lower.startsWith("/hpos2")
+                    || lower.startsWith("/wand") || lower.startsWith("/set")
+                    || lower.startsWith("/replace") || lower.startsWith("/undo")) {
                 event.setMessage(singleSlash);
             }
         }

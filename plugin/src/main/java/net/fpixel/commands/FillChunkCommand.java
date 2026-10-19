@@ -167,38 +167,17 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
                 int px = player.getLocation().getBlockX();
                 int pz = player.getLocation().getBlockZ();
                 if (px >= minX && px <= maxX && pz >= minZ && pz <= maxZ) {
-                    int py = Math.min(maxY, Math.max(minY, player.getLocation().getBlockY()));
-                    if (isFillable(world.getBlockAt(px, py, pz))) {
-                        foundX = px;
-                        foundY = py;
-                        foundZ = pz;
-                    } else {
-                        for (int y = minY; y <= maxY; y++) {
-                            if (isFillable(world.getBlockAt(px, y, pz))) {
-                                foundX = px;
-                                foundY = y;
-                                foundZ = pz;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (foundY == -1) {
-                double bestDistSq = Double.MAX_VALUE;
-                Location eye = player.getEyeLocation();
-                for (int x = minX; x <= maxX; x++) {
-                    for (int z = minZ; z <= maxZ; z++) {
-                        for (int y = minY; y <= maxY; y++) {
-                            Block b = world.getBlockAt(x, y, z);
-                            if (isFillable(b)) {
-                                double d2 = eye.distanceSquared(new Location(world, x + 0.5, y + 0.5, z + 0.5));
-                                if (d2 < bestDistSq) {
-                                    bestDistSq = d2;
-                                    foundX = x;
+                    for (int dx = -2; dx <= 2 && foundY == -1; dx++) {
+                        for (int dz = -2; dz <= 2 && foundY == -1; dz++) {
+                            int cx = px + dx;
+                            int cz = pz + dz;
+                            if (cx < minX || cx > maxX || cz < minZ || cz > maxZ) continue;
+                            for (int y = minY; y <= maxY; y++) {
+                                if (isFillable(world.getBlockAt(cx, y, cz))) {
+                                    foundX = cx;
                                     foundY = y;
-                                    foundZ = z;
+                                    foundZ = cz;
+                                    break;
                                 }
                             }
                         }
@@ -207,7 +186,9 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
             }
 
             if (foundY == -1) {
-                ChatUtil.sendMessage(player, "§c§lCHUNK §8» §cGeen lege lucht (air) gevonden aan deze kant van de muur!");
+                ChatUtil.sendMessage(player, "§c§lCHUNK §8» §cGeen lege lucht (air) gevonden aan jouw kant tussen Y=§e" + minY + " §cen Y=§e" + maxY + "§c!");
+                ChatUtil.sendMessage(player, "§7» §eJouw kant is op deze hoogte al massief gevuld. Er is niets meer te vullen zonder over de muur te gaan.");
+                ChatUtil.sendMessage(player, "§7» §aTip: Gebruik §6//wand §eof §6//pos1 §e+ §6//pos2 §eom zelf het exacte rechthoekige gebied te vullen met §6//set " + fillMaterial.name().toLowerCase() + "§a!");
                 return true;
             }
 

@@ -79,5 +79,30 @@ commands:
     description: Remove all water, glass, and sponges across chunk radius with air
     permission: fpixel.admin
     aliases: [cleanwaterglass, cleanwater, cleanglasswater, waterandglass, cleanall]
+  pos1:
+    description: Set position 1 for region selection
+    permission: fpixel.admin
+    aliases: [hpos1]
+  pos2:
+    description: Set position 2 for region selection
+    permission: fpixel.admin
+    aliases: [hpos2]
+  wand:
+    description: Get the region selection wooden axe wand
+    permission: fpixel.admin
+    aliases: [selectwand]
+  set:
+    description: Fill the selected region with a block
+    permission: fpixel.admin
+    aliases: [fillregion, regionfill]
+  replace:
+    description: Replace specific blocks in the selected region
+    permission: fpixel.admin
+    aliases: [replaceregion]
+  undo:
+    description: Undo the last WorldEdit / chunk action
+    permission: fpixel.admin
+    aliases: [weundo]
+
 
 
