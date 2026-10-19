@@ -74,6 +74,10 @@ commands:
   cleanglass:
     description: Remove glass that actively holds back an ocean/water
     permission: fpixel.admin
-    aliases: [glassclean, clearwaterglass, cleanwaterglass]
+    aliases: [glassclean]
+  cleanwaterandglass:
+    description: Remove all water, glass, and sponges across chunk radius with air
+    permission: fpixel.admin
+    aliases: [cleanwaterglass, cleanwater, cleanglasswater, waterandglass, cleanall]
 
 
