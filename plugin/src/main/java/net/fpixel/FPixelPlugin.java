@@ -144,6 +144,10 @@ public class FPixelPlugin extends JavaPlugin {
         getCommand("fillchunk").setExecutor(fillChunkCmd);
         getCommand("fillchunk").setTabCompleter(fillChunkCmd);
 
+        GlassWallCommand glassWallCmd = new GlassWallCommand(this);
+        getCommand("glasswall").setExecutor(glassWallCmd);
+        getCommand("glasswall").setTabCompleter(glassWallCmd);
+
 
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);
