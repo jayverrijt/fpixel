@@ -140,6 +140,10 @@ public class FPixelPlugin extends JavaPlugin {
         getCommand("addcoins").setExecutor(coinsCmd);
         getCommand("addcoins").setTabCompleter(coinsCmd);
 
+        FillChunkCommand fillChunkCmd = new FillChunkCommand(this);
+        getCommand("fillchunk").setExecutor(fillChunkCmd);
+        getCommand("fillchunk").setTabCompleter(fillChunkCmd);
+
 
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);

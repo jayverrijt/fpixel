@@ -59,5 +59,9 @@ commands:
   addcoins:
     description: Add coins to a player
     permission: fpixel.admin
+  fillchunk:
+    description: Fill current chunk with air between Y levels with ocean glass protection
+    permission: fpixel.admin
+    aliases: [chunkfill, clearchunk, chunkclear, fillchunck, chunckfill, clearchunck]
 
 
