@@ -123,7 +123,14 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
         int minY = Math.max(world.getMinHeight(), Math.min(fromY, toY));
         int maxY = Math.min(world.getMaxHeight() - 1, Math.max(fromY, toY));
 
-        Chunk chunk = player.getLocation().getChunk();
+        Chunk chunk;
+        Block targetLook = player.getTargetBlockExact(64);
+        if (targetLook != null && (isFloodFill || player.isSneaking())) {
+            chunk = targetLook.getChunk();
+        } else {
+            chunk = player.getLocation().getChunk();
+        }
+
         int minX = chunk.getX() << 4;
         int maxX = minX + 15;
         int minZ = chunk.getZ() << 4;
@@ -144,8 +151,15 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
 
             org.bukkit.util.RayTraceResult rayTrace = player.rayTraceBlocks(64);
             if (rayTrace != null && rayTrace.getHitBlock() != null && rayTrace.getHitBlockFace() != null) {
-                Block adjacent = rayTrace.getHitBlock().getRelative(rayTrace.getHitBlockFace());
-                if (adjacent.getX() >= minX && adjacent.getX() <= maxX && adjacent.getZ() >= minZ && adjacent.getZ() <= maxZ) {
+                Block hit = rayTrace.getHitBlock();
+                Block adjacent = hit.getRelative(rayTrace.getHitBlockFace());
+
+                if (hit.getX() >= minX && hit.getX() <= maxX && hit.getZ() >= minZ && hit.getZ() <= maxZ
+                        && hit.getY() >= minY && hit.getY() <= maxY && isFillable(hit)) {
+                    foundX = hit.getX();
+                    foundY = hit.getY();
+                    foundZ = hit.getZ();
+                } else if (adjacent.getX() >= minX && adjacent.getX() <= maxX && adjacent.getZ() >= minZ && adjacent.getZ() <= maxZ) {
                     if (adjacent.getY() >= minY && adjacent.getY() <= maxY && isFillable(adjacent)) {
                         foundX = adjacent.getX();
                         foundY = adjacent.getY();
@@ -240,8 +254,10 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
             undoHistory.put(player.getUniqueId(), snapshots);
 
             int layerCount = maxY - minY + 1;
-            ChatUtil.sendMessage(player, "§a§lCHUNK §8» §aFlood Fill voltooid! Alleen jouw kant van de muur gevuld met §e" + fillMaterial.name().toLowerCase() + "§a!");
+            ChatUtil.sendMessage(player, "§a§lCHUNK §8» §aFlood Fill voltooid! Gevuld met §e" + fillMaterial.name().toLowerCase() + "§a!");
             ChatUtil.sendMessage(player, "§7» §f" + fillCount + " §7blokken geplaatst (tussen Y=§e" + minY + " §7en Y=§e" + maxY + "§7, §e" + layerCount + " lagen§7)");
+            ChatUtil.sendMessage(player, "§7» §7Doel-chunk: §e[X: " + chunk.getX() + ", Z: " + chunk.getZ() + "] §7(X: §f" + minX + ".." + maxX + "§7, Z: §f" + minZ + ".." + maxZ + "§7)");
+            ChatUtil.sendMessage(player, "§7» §7Startpositie: §eX: " + foundX + ", Y: " + foundY + ", Z: " + foundZ);
             ChatUtil.sendMessage(player, "§7» §aDe andere kant van de muur is 100% onaangeroerd gebleven.");
             ChatUtil.sendMessage(player, "§7» §eTyp §6/" + label + " undo §eom dit ongedaan te maken.");
             ChatUtil.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
