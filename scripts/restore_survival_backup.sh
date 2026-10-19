@@ -46,17 +46,19 @@ docker run --rm -v "${SERVER_DIR}:/server" alpine sh -c "
 "
 echo "Safety snapshot saved to ${SERVER_DIR}/world_safety_snapshots/ (timestamp: ${SNAPSHOT_TIME})"
 
+TARGET_REF="${1:-${REMOTE_NAME}/${BRANCH_NAME}}"
+
 # 3. Fetch latest backup from GitHub
 echo "Fetching latest backup from ${REMOTE_NAME}/${BRANCH_NAME}..."
 cd "${REPO_DIR}"
 git fetch "${REMOTE_NAME}" "${BRANCH_NAME}"
 
-LATEST_COMMIT="$(git log -n 1 --format='%h - %s (%ci)' "${REMOTE_NAME}/${BRANCH_NAME}")"
-echo "Restoring commit: ${LATEST_COMMIT}"
+COMMIT_INFO="$(git log -n 1 --format='%h - %s (%ci)' "${TARGET_REF}")"
+echo "Restoring target: ${TARGET_REF} (${COMMIT_INFO})"
 
 # 4. Extract archive to temporary directory
 mkdir -p "${TEMP_RESTORE_DIR}"
-git archive "${REMOTE_NAME}/${BRANCH_NAME}" | tar -x -C "${TEMP_RESTORE_DIR}"
+git archive "${TARGET_REF}" | tar -x -C "${TEMP_RESTORE_DIR}"
 
 if [ -f "${TEMP_RESTORE_DIR}/BACKUP_INFO.md" ]; then
     echo "Backup Metadata:"
