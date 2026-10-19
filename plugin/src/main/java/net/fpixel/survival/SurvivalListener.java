@@ -134,4 +134,19 @@ public class SurvivalListener implements Listener {
             plugin.getScoreboardManager().remove(player);
         }
     }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPlayerCommandPreprocess(org.bukkit.event.player.PlayerCommandPreprocessEvent event) {
+        String msg = event.getMessage();
+        if (msg.startsWith("//")) {
+            String singleSlash = "/" + msg.substring(2);
+            String lower = singleSlash.toLowerCase();
+            if (lower.startsWith("/cleansponge") || lower.startsWith("/spongeclean")
+                    || lower.startsWith("/cleanglass") || lower.startsWith("/glassclean")
+                    || lower.startsWith("/glasswall") || lower.startsWith("/fillchunk")
+                    || lower.startsWith("/fillchunck")) {
+                event.setMessage(singleSlash);
+            }
+        }
+    }
 }

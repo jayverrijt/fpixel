@@ -152,6 +152,10 @@ public class FPixelPlugin extends JavaPlugin {
         getCommand("cleansponge").setExecutor(cleanSpongeCmd);
         getCommand("cleansponge").setTabCompleter(cleanSpongeCmd);
 
+        CleanGlassCommand cleanGlassCmd = new CleanGlassCommand(this);
+        getCommand("cleanglass").setExecutor(cleanGlassCmd);
+        getCommand("cleanglass").setTabCompleter(cleanGlassCmd);
+
 
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);

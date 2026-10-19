@@ -70,6 +70,10 @@ commands:
   cleansponge:
     description: Remove all sponges, wet sponges, and glass in the chunk with air
     permission: fpixel.admin
-    aliases: [spongeclean, cleanglass, removesponge, clearsponge]
+    aliases: [spongeclean, removesponge, clearsponge]
+  cleanglass:
+    description: Remove glass that actively holds back an ocean/water
+    permission: fpixel.admin
+    aliases: [glassclean, clearwaterglass, cleanwaterglass]
 
 
