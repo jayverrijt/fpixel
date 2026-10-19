@@ -67,5 +67,9 @@ commands:
     description: Build glass walls between ocean and build chunks, dry loose water, and restore ocean
     permission: fpixel.admin
     aliases: [glazenmuur, sealarea, fixwater, fixocean, waterwall]
+  cleansponge:
+    description: Remove all sponges, wet sponges, and glass in the chunk with air
+    permission: fpixel.admin
+    aliases: [spongeclean, cleanglass, removesponge, clearsponge]
 
 
