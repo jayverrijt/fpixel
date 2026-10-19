@@ -63,24 +63,36 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
         int fromY = playerY;
         int toY = 81;
         boolean placeGlass = true;
+        Material fillMaterial = Material.AIR;
 
-        if (args.length == 1) {
-            try {
-                toY = parseY(args[0], playerY);
-            } catch (NumberFormatException e) {
-                ChatUtil.sendMessage(player, "§c§lCHUNK §8» §cOngeldige Y-waarde: §e" + args[0]);
-                return true;
-            }
-        } else if (args.length >= 2) {
-            try {
-                fromY = parseY(args[0], playerY);
-                toY = parseY(args[1], playerY);
-            } catch (NumberFormatException e) {
-                ChatUtil.sendMessage(player, "§c§lCHUNK §8» §cOngeldige Y-waarden! Gebruik: §e/fillchunk [vanY] [totY]");
-                return true;
-            }
-            if (args.length >= 3 && args[2].equalsIgnoreCase("noglass")) {
+        List<String> remainingArgs = new ArrayList<>();
+        for (String arg : args) {
+            if (arg.equalsIgnoreCase("noglass")) {
                 placeGlass = false;
+                continue;
+            }
+            Material m = Material.matchMaterial(arg);
+            if (m != null && m.isBlock()) {
+                fillMaterial = m;
+                continue;
+            }
+            remainingArgs.add(arg);
+        }
+
+        if (remainingArgs.size() == 1) {
+            try {
+                toY = parseY(remainingArgs.get(0), playerY);
+            } catch (NumberFormatException e) {
+                ChatUtil.sendMessage(player, "§c§lCHUNK §8» §cOngeldige Y-waarde: §e" + remainingArgs.get(0));
+                return true;
+            }
+        } else if (remainingArgs.size() >= 2) {
+            try {
+                fromY = parseY(remainingArgs.get(0), playerY);
+                toY = parseY(remainingArgs.get(1), playerY);
+            } catch (NumberFormatException e) {
+                ChatUtil.sendMessage(player, "§c§lCHUNK §8» §cOngeldige Y-waarden! Gebruik: §e/fillchunk [vanY] [totY] [materiaal]");
+                return true;
             }
         }
 
@@ -98,6 +110,7 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
         int airCount = 0;
         int glassCount = 0;
         int waterPreserved = 0;
+        int fillCount = 0;
 
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
@@ -110,26 +123,35 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
                         continue;
                     }
 
-                    // Keep ocean water intact
-                    if (isWater(block)) {
-                        waterPreserved++;
-                        continue;
-                    }
+                    if (fillMaterial == Material.AIR) {
+                        // Keep ocean water intact
+                        if (isWater(block)) {
+                            waterPreserved++;
+                            continue;
+                        }
 
-                    // Check if block borders water
-                    boolean touchesWater = placeGlass && touchesAnyWater(world, x, y, z);
+                        // Check if block borders water
+                        boolean touchesWater = placeGlass && touchesAnyWater(world, x, y, z);
 
-                    if (touchesWater) {
-                        if (type != Material.GLASS) {
-                            snapshots.add(new BlockSnapshot(block.getLocation(), block.getBlockData().clone()));
-                            block.setType(Material.GLASS, false);
-                            glassCount++;
+                        if (touchesWater) {
+                            if (type != Material.GLASS) {
+                                snapshots.add(new BlockSnapshot(block.getLocation(), block.getBlockData().clone()));
+                                block.setType(Material.GLASS, false);
+                                glassCount++;
+                            }
+                        } else {
+                            if (!type.isAir()) {
+                                snapshots.add(new BlockSnapshot(block.getLocation(), block.getBlockData().clone()));
+                                block.setType(Material.AIR, false);
+                                airCount++;
+                            }
                         }
                     } else {
-                        if (type != Material.AIR && type != Material.CAVE_AIR && type != Material.VOID_AIR) {
+                        // Filling with specific material (e.g. STONE)
+                        if (type != fillMaterial) {
                             snapshots.add(new BlockSnapshot(block.getLocation(), block.getBlockData().clone()));
-                            block.setType(Material.AIR, false);
-                            airCount++;
+                            block.setType(fillMaterial, false);
+                            fillCount++;
                         }
                     }
                 }
@@ -139,20 +161,26 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
         // Store for undo
         undoHistory.put(player.getUniqueId(), snapshots);
 
-        // Prevent suffocating if player feet got turned into glass
-        if (player.getLocation().getBlock().getType() == Material.GLASS) {
+        // Prevent suffocating if player feet got turned into solid block
+        if (player.getLocation().getBlock().getType().isSolid()) {
             player.teleport(player.getLocation().add(0, 1, 0));
         }
 
-        ChatUtil.sendMessage(player, "§a§lCHUNK §8» §aChunk succesvol leeggemaakt tussen Y=§e" + minY + " §aen Y=§e" + maxY + "§a!");
-        ChatUtil.sendMessage(player, "§7» §f" + airCount + " §7blokken verwijderd (lucht)");
-        if (glassCount > 0) {
-            ChatUtil.sendMessage(player, "§7» §b" + glassCount + " §7glasblokken geplaatst (oceaan-bescherming)");
+        if (fillMaterial == Material.AIR) {
+            ChatUtil.sendMessage(player, "§a§lCHUNK §8» §aChunk leeggemaakt tussen Y=§e" + minY + " §aen Y=§e" + maxY + "§a!");
+            ChatUtil.sendMessage(player, "§7» §f" + airCount + " §7blokken verwijderd (lucht)");
+            if (glassCount > 0) {
+                ChatUtil.sendMessage(player, "§7» §b" + glassCount + " §7glasblokken geplaatst (oceaan-bescherming)");
+            }
+            if (waterPreserved > 0) {
+                ChatUtil.sendMessage(player, "§7» §9" + waterPreserved + " §7oceaan/waterblokken behouden");
+            }
+        } else {
+            int layerCount = maxY - minY + 1;
+            ChatUtil.sendMessage(player, "§a§lCHUNK §8» §aChunk succesvol gevuld met §e" + fillMaterial.name().toLowerCase() + " §atussen Y=§e" + minY + " §aen Y=§e" + maxY + "§a! §7(" + layerCount + " lagen)");
+            ChatUtil.sendMessage(player, "§7» §f" + fillCount + " §7blokken geplaatst");
         }
-        if (waterPreserved > 0) {
-            ChatUtil.sendMessage(player, "§7» §9" + waterPreserved + " §7oceaan/waterblokken behouden");
-        }
-        ChatUtil.sendMessage(player, "§7» §eTyp §6/fillchunk undo §eom dit ongedaan te maken.");
+        ChatUtil.sendMessage(player, "§7» §eTyp §6/" + label + " undo §eom dit ongedaan te maken.");
         ChatUtil.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
 
         return true;
@@ -205,14 +233,22 @@ public class FillChunkCommand implements CommandExecutor, TabCompleter {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         List<String> completions = new ArrayList<>();
         if (args.length == 1) {
+            completions.add("52");
             completions.add("81");
             completions.add("~");
             completions.add("undo");
+            completions.add("stone");
         } else if (args.length == 2) {
+            completions.add("54");
+            completions.add("55");
             completions.add("81");
-            completions.add("~");
+            completions.add("stone");
         } else if (args.length == 3) {
+            completions.add("stone");
+            completions.add("deepslate");
+            completions.add("dirt");
             completions.add("glass");
+            completions.add("air");
             completions.add("noglass");
         }
         return completions;
