@@ -111,7 +111,7 @@ public class SurvivalListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        if (plugin.getSurvivalManager().isSurvivalWorld(player.getWorld()) || plugin.getSurvivalManager().isPlayerInSurvival(player)) {
+        if (plugin.getSurvivalManager().isPlayerInSurvival(player)) {
             plugin.getSurvivalManager().getProfileManager().saveProfile(player);
             plugin.getSurvivalManager().removeSurvivalPlayer(player);
         }

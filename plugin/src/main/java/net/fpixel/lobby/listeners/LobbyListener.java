@@ -53,11 +53,6 @@ public class LobbyListener implements Listener {
         Player player = event.getPlayer();
         event.joinMessage(null); // Silent join message, Hypixel style
 
-        // Preserve and save survival profile if reconnecting in a survival world
-        if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().isSurvivalWorld(player.getWorld())) {
-            plugin.getSurvivalManager().getProfileManager().saveProfile(player);
-        }
-
         plugin.getRankManager().updatePlayerDisplayName(player);
         plugin.getLobbyManager().teleportToLobby(player);
 

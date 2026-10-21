@@ -434,7 +434,7 @@ public class SurvivalProfileManager {
      */
     public void saveProfile(Player player) {
         if (plugin.getSurvivalManager() != null) {
-            if (!plugin.getSurvivalManager().isSurvivalWorld(player.getWorld()) && !plugin.getSurvivalManager().isPlayerInSurvival(player)) {
+            if (!plugin.getSurvivalManager().isPlayerInSurvival(player)) {
                 return;
             }
         } else if (!player.getWorld().getName().equalsIgnoreCase("survival")) {
