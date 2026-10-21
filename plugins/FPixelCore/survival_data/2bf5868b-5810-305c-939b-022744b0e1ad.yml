@@ -1,10 +1,10 @@
 location:
   world: survival
-  x: -947.5551454036607
-  y: 63.0
-  z: -163.90881718277112
-  yaw: -79.69351
-  pitch: 27.514011
+  x: -902.8800292139197
+  y: 81.57918953913438
+  z: -160.93346112470414
+  yaw: -95.743416
+  pitch: -31.95002
 level: 14
 exp: 0.611016
 health: 20.0
@@ -83,7 +83,11 @@ inventory:
   components:
     minecraft:bundle_contents: '[{count:16,id:"minecraft:leather"},{count:7,id:"minecraft:stick"},{count:3,id:"minecraft:sulfur_spike"},{count:12,id:"minecraft:oak_fence"},{id:"minecraft:oak_fence_gate"},{count:2,id:"minecraft:lead"},{count:3,id:"minecraft:blaze_rod"},{id:"minecraft:magma_cream"},{count:2,id:"minecraft:feather"},{id:"minecraft:diamond"},{count:3,id:"minecraft:brown_wool"},{count:2,id:"minecraft:gravel"},{id:"minecraft:acacia_planks"},{count:2,id:"minecraft:acacia_slab"},{count:6,id:"minecraft:potato"}]'
   schema_version: 1
-- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:lead
+  count: 1
+  schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:water_bucket

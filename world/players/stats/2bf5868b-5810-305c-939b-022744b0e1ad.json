@@ -1,46 +1,5 @@
 {
   "stats": {
-    "minecraft:picked_up": {
-      "minecraft:lead": 1,
-      "minecraft:red_wool": 80,
-      "minecraft:shears": 1,
-      "minecraft:leather_boots": 2,
-      "minecraft:gold_ingot": 11,
-      "minecraft:diamond": 8,
-      "minecraft:leather_helmet": 2,
-      "minecraft:leather_chestplate": 2,
-      "minecraft:emerald": 1,
-      "minecraft:iron_ingot": 28,
-      "minecraft:golden_apple": 2
-    },
-    "minecraft:custom": {
-      "minecraft:damage_resisted": 248,
-      "minecraft:time_since_rest": 33250,
-      "minecraft:walk_one_cm": 86435,
-      "minecraft:leave_game": 1,
-      "minecraft:damage_taken": 1017,
-      "minecraft:damage_dealt": 1379,
-      "minecraft:play_time": 33250,
-      "minecraft:damage_absorbed": 157,
-      "minecraft:jump": 476,
-      "minecraft:time_since_death": 33250,
-      "minecraft:open_barrel": 1,
-      "minecraft:interact_with_furnace": 5,
-      "minecraft:sprint_one_cm": 56918,
-      "minecraft:open_chest": 3,
-      "minecraft:fall_one_cm": 7117,
-      "minecraft:happy_ghast_one_cm": 2659274,
-      "minecraft:total_world_time": 33250,
-      "minecraft:fly_one_cm": 124062,
-      "minecraft:walk_on_water_one_cm": 73,
-      "minecraft:crouch_one_cm": 953,
-      "minecraft:sneak_time": 176,
-      "minecraft:player_kills": 2
-    },
-    "minecraft:crafted": {
-      "minecraft:cooked_beef": 4,
-      "minecraft:air": 0
-    },
     "minecraft:used": {
       "minecraft:red_wool": 32,
       "minecraft:stone_sword": 11,
@@ -52,6 +11,47 @@
       "minecraft:crossbow": 1,
       "minecraft:diamond_sword": 55,
       "minecraft:bow": 22
+    },
+    "minecraft:custom": {
+      "minecraft:damage_resisted": 248,
+      "minecraft:time_since_rest": 39996,
+      "minecraft:walk_one_cm": 90936,
+      "minecraft:leave_game": 2,
+      "minecraft:damage_taken": 1017,
+      "minecraft:damage_dealt": 1379,
+      "minecraft:play_time": 39996,
+      "minecraft:damage_absorbed": 157,
+      "minecraft:jump": 515,
+      "minecraft:time_since_death": 39996,
+      "minecraft:interact_with_furnace": 5,
+      "minecraft:open_barrel": 1,
+      "minecraft:sprint_one_cm": 62855,
+      "minecraft:open_chest": 3,
+      "minecraft:fall_one_cm": 7342,
+      "minecraft:happy_ghast_one_cm": 2799933,
+      "minecraft:total_world_time": 39996,
+      "minecraft:fly_one_cm": 220147,
+      "minecraft:walk_on_water_one_cm": 382,
+      "minecraft:crouch_one_cm": 953,
+      "minecraft:sneak_time": 253,
+      "minecraft:player_kills": 2
+    },
+    "minecraft:crafted": {
+      "minecraft:cooked_beef": 4,
+      "minecraft:air": 0
+    },
+    "minecraft:picked_up": {
+      "minecraft:lead": 2,
+      "minecraft:red_wool": 80,
+      "minecraft:shears": 1,
+      "minecraft:leather_boots": 2,
+      "minecraft:gold_ingot": 11,
+      "minecraft:diamond": 8,
+      "minecraft:leather_helmet": 2,
+      "minecraft:leather_chestplate": 2,
+      "minecraft:emerald": 1,
+      "minecraft:iron_ingot": 28,
+      "minecraft:golden_apple": 2
     }
   },
   "DataVersion": 5023

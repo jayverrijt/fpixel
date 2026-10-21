@@ -1,55 +1,23 @@
 location:
   world: survival
-  x: -950.3000000119209
-  y: 60.0
-  z: -94.32323185251065
-  yaw: -106.89294
-  pitch: 49.423527
+  x: -970.7415127673598
+  y: 52.0
+  z: -139.71481383129455
+  yaw: -144.69287
+  pitch: 14.172544
 level: 68
-exp: 0.7515662
-health: 12.0
+exp: 0.7625794
+health: 20.0
 food: 19
 inventory:
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:lava_bucket
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:firefly_bush
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:glass
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:stone
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:dirt
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:deepslate_bricks
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:gravel
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:sandstone
-  count: 1
-  schema_version: 1
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
 - null
 - null
 - null
