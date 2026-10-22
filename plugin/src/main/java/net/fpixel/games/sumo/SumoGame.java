@@ -152,19 +152,26 @@ public class SumoGame extends Arena {
         var world = center.getWorld();
         if (world == null) return;
 
-        for (int x = -6; x <= 6; x++) {
-            for (int z = -6; z <= 6; z++) {
+        for (int x = -7; x <= 7; x++) {
+            for (int z = -7; z <= 7; z++) {
                 double dist = Math.sqrt(x * x + z * z);
-                if (dist >= 3.8 && dist <= 5.8) {
-                    org.bukkit.block.Block b = world.getBlockAt(cx + x, cy, cz + z);
-                    if (b.getType() != Material.AIR) {
-                        rollbackEngine.logCustomChange(b);
-                        if (warningPhase) {
-                            b.setType(Material.RED_CONCRETE, false);
-                        } else {
-                            b.setType(Material.AIR, false);
-                            world.playSound(b.getLocation(), Sound.ENTITY_WITHER_BREAK_BLOCK, 0.4f, 1.2f);
+                if (dist >= 3.8 && dist <= 7.2) {
+                    // Clear entire column down to void so NO blocks underneath remain!
+                    for (int y = cy; y >= cy - 14; y--) {
+                        org.bukkit.block.Block b = world.getBlockAt(cx + x, y, cz + z);
+                        if (b.getType() != Material.AIR) {
+                            rollbackEngine.logCustomChange(b);
+                            if (warningPhase) {
+                                if (y == cy) {
+                                    b.setType(Material.RED_CONCRETE, false);
+                                }
+                            } else {
+                                b.setType(Material.AIR, false);
+                            }
                         }
+                    }
+                    if (!warningPhase) {
+                        world.playSound(world.getBlockAt(cx + x, cy, cz + z).getLocation(), Sound.ENTITY_WITHER_BREAK_BLOCK, 0.15f, 1.2f);
                     }
                 }
             }
@@ -285,6 +292,9 @@ public class SumoGame extends Arena {
 
     @Override
     public void onArenaReset() {
+        // Rollback all collapsed platform blocks
+        rollbackEngine.rollback();
+
         score1 = 0;
         score2 = 0;
         currentRound = 1;

@@ -19,6 +19,12 @@ echo "=========================================="
 
 mkdir -p "${BACKUP_DIR}"
 
+# Fix file ownership via docker exec if running inside docker container to prevent permission denied errors
+CONTAINER_NAME="${CONTAINER_NAME:-fpixel-minecraft}"
+if command -v docker >/dev/null 2>&1 && docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    docker exec "${CONTAINER_NAME}" chown -R 1000:1000 /data 2>/dev/null || true
+fi
+
 if [ ! -d "${SERVER_DIR}" ]; then
   # Fallback if server directory is directly at BASE_DIR
   if [ -d "${BASE_DIR}/survival" ]; then

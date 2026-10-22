@@ -738,6 +738,8 @@ public class MurderMysteryGame extends Arena {
         }
     }
 
+    private UUID lastHeroKiller = null;
+
     public void eliminatePlayer(Player victim, Player killer, String cause) {
         alivePlayers.remove(victim.getUniqueId());
         Role vRole = roles.get(victim.getUniqueId());
@@ -751,6 +753,10 @@ public class MurderMysteryGame extends Arena {
         victim.getWorld().spawnParticle(Particle.DUST, victim.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, new Particle.DustOptions(Color.RED, 1.5f));
         ChatUtil.playSound(victim, Sound.ENTITY_PLAYER_DEATH, 1.0f, 1.0f);
         ChatUtil.sendTitle(victim, "§c§lYOU DIED!", "§7You were " + cause + "!", 5, 40, 10);
+
+        if (killer != null && isMurderer(victim)) {
+            lastHeroKiller = killer.getUniqueId();
+        }
 
         // Detective Bow Drop
         if (vRole == Role.DETECTIVE && !isMurderer(victim)) {
@@ -769,11 +775,23 @@ public class MurderMysteryGame extends Arena {
     }
 
     @Override
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        Player player = event.getPlayer();
+        event.getDrops().clear();
+        event.setCancelled(true);
+        player.setHealth(20.0);
+        if (alivePlayers.contains(player.getUniqueId())) {
+            eliminatePlayer(player, null, "fell into the abyss");
+        }
+    }
+
+    @Override
     public void eliminateSimulatedPlayer(net.fpixel.core.testing.SimulatedPlayer bot) {
         if (bot != null) {
             alivePlayers.remove(bot.getUuid());
         }
         super.eliminateSimulatedPlayer(bot);
+        checkWinCondition();
     }
 
     @Override
@@ -790,10 +808,23 @@ public class MurderMysteryGame extends Arena {
             }
         }
 
-        // 1. Murderer died
+        // 1. Murderer died -> Innocents win!
         if (mId != null && !alivePlayers.contains(mId)) {
-            endGame(null); // Innocents win
+            Player hero = lastHeroKiller != null ? Bukkit.getPlayer(lastHeroKiller) : null;
+            if (hero == null) {
+                for (UUID u : alivePlayers) {
+                    Player p = Bukkit.getPlayer(u);
+                    if (p != null) { hero = p; break; }
+                }
+            }
             broadcast("§a§lINNOCENTS WIN! §7The Murderer was defeated!");
+            endGame(hero);
+            for (Player p : getAllBukkitPlayers()) {
+                if (roles.get(p.getUniqueId()) != Role.MURDERER) {
+                    ChatUtil.sendTitle(p, "§a§lVICTORY!", "§fThe Innocents have won the game!", 10, 60, 20);
+                    ChatUtil.playSound(p, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                }
+            }
             return;
         }
 
@@ -807,15 +838,35 @@ public class MurderMysteryGame extends Arena {
 
         if (aliveInnocents == 0) {
             Player murderer = mId != null ? Bukkit.getPlayer(mId) : null;
-            endGame(murderer);
+            if (murderer == null && !getBukkitPlayers().isEmpty()) {
+                for (Player p : getBukkitPlayers()) {
+                    if (isMurderer(p)) { murderer = p; break; }
+                }
+            }
             broadcast("§c§lMURDERER WINS! §7All survivors have been eliminated!");
+            endGame(murderer);
+            if (murderer != null) {
+                ChatUtil.sendTitle(murderer, "§c§lVICTORY!", "§eYou eliminated all survivors!", 10, 60, 20);
+                ChatUtil.playSound(murderer, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+            }
             return;
         }
 
         // 3. Time out (Innocents win)
         if (gameTime >= maxGameDuration) {
-            endGame(null);
+            Player hero = null;
+            for (UUID u : alivePlayers) {
+                Player p = Bukkit.getPlayer(u);
+                if (p != null) { hero = p; break; }
+            }
             broadcast("§a§lINNOCENTS WIN! §7Time ran out and survivors survived!");
+            endGame(hero);
+            for (Player p : getAllBukkitPlayers()) {
+                if (roles.get(p.getUniqueId()) != Role.MURDERER) {
+                    ChatUtil.sendTitle(p, "§a§lVICTORY!", "§fSurvivors outlasted the Murderer!", 10, 60, 20);
+                    ChatUtil.playSound(p, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                }
+            }
         }
     }
 
@@ -839,8 +890,6 @@ public class MurderMysteryGame extends Arena {
 
         for (Player p : getAllBukkitPlayers()) {
             p.removePotionEffect(PotionEffectType.INVISIBILITY);
-            p.setAllowFlight(false);
-            p.setFlying(false);
         }
 
         for (Item item : activeGold) {

@@ -1400,22 +1400,40 @@ public class WorldManager {
             java.util.Random rnd = new java.util.Random((i + 1) * 314159L);
 
             for (int cp = 1; cp <= 4; cp++) {
-                int jumpCount = 4 + rnd.nextInt(3); // 4 to 6 randomized jumps per checkpoint
+                int jumpCount = 4 + rnd.nextInt(2); // 4 to 5 clean jumps per checkpoint
                 for (int j = 0; j < jumpCount; j++) {
-                    int dx = rnd.nextInt(5) - 2; // -2 to +2
-                    int dz = 3 + (rnd.nextInt(100) < 35 ? 1 : 0); // 3 or 4 blocks distance
                     int dy = rnd.nextInt(3) - 1; // -1, 0, or +1 elevation
+                    if (curY + dy < cy || curY + dy > cy + 6) dy = 0;
 
-                    // Keep Y within safe jumping bounds [cy - 2, cy + 8]
-                    if (curY + dy < cy - 2 || curY + dy > cy + 8) dy = 0;
+                    int dz;
+                    int dx;
+
+                    if (dy == 1) {
+                        // Upwards jump (+1 Y): strictly 2 blocks forward to guarantee 100% possible jumps
+                        dz = 2;
+                        dx = (rnd.nextInt(100) < 25) ? (rnd.nextBoolean() ? 1 : -1) : 0;
+                    } else if (dy == 0) {
+                        // Flat jump (0 Y): 2 or 3 blocks forward (no sharp diagonal 4-block jumps)
+                        boolean far = rnd.nextBoolean();
+                        dz = far ? 3 : 2;
+                        dx = far ? 0 : (rnd.nextInt(3) - 1);
+                    } else {
+                        // Downward jump (-1 Y): 2 to 3 blocks forward
+                        dz = 2 + rnd.nextInt(2);
+                        dx = rnd.nextInt(3) - 1;
+                    }
+
+                    // Keep path comfortably centered around cx
+                    if (curX + dx > cx + 3) dx = -1;
+                    if (curX + dx < cx - 3) dx = 1;
 
                     curX += dx;
                     curY += dy;
                     curZ += dz;
 
                     Material jumpMat = palette[rnd.nextInt(palette.length)];
-                    // Occasional special obstacle
-                    if (j == 2 && i % 2 == 1) {
+                    // Task 8: Greatly reduce boosted slime jumps (at most 1 safe bounce on checkpoint 2 of every 3rd course)
+                    if (cp == 2 && j == 1 && i % 3 == 1) {
                         jumpMat = Material.SLIME_BLOCK;
                     }
                     defaultWorld.getBlockAt(curX, curY, curZ).setType(jumpMat, false);
@@ -1640,10 +1658,26 @@ public class WorldManager {
             for (int cp = 1; cp <= 4; cp++) {
                 int jumpCount = 4;
                 for (int j = 0; j < jumpCount; j++) {
-                    int dx = rnd.nextInt(3) - 1; // -1, 0, +1
-                    int dz = 3 + (rnd.nextBoolean() ? 1 : 0);
                     int dy = rnd.nextInt(3) - 1; // -1, 0, +1
-                    if (curY + dy < cy - 1 || curY + dy > cy + 6) dy = 0;
+                    if (curY + dy < cy || curY + dy > cy + 5) dy = 0;
+
+                    int dz;
+                    int dx;
+                    if (dy == 1) {
+                        dz = 2;
+                        dx = 0; // Upward jump strictly forward
+                    } else if (dy == 0) {
+                        boolean far = rnd.nextBoolean();
+                        dz = far ? 3 : 2;
+                        dx = far ? 0 : (rnd.nextInt(3) - 1);
+                    } else {
+                        dz = 2 + rnd.nextInt(2);
+                        dx = rnd.nextInt(3) - 1;
+                    }
+
+                    if (curX + dx > cx + 3) dx = -1;
+                    if (curX + dx < cx - 3) dx = 1;
+
                     curX += dx;
                     curY += dy;
                     curZ += dz;

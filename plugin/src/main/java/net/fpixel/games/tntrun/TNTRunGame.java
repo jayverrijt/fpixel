@@ -20,6 +20,7 @@ public class TNTRunGame extends Arena {
 
     private Location arenaSpawn;
     private int decayTicks = 8;
+    private int gracePeriodSeconds = 3;
 
     public TNTRunGame(FPixelPlugin plugin, String id, String displayName, int minPlayers, int maxPlayers, int deathY) {
         super(plugin, id, displayName, "TNTRUN", minPlayers, maxPlayers);
@@ -50,7 +51,8 @@ public class TNTRunGame extends Arena {
             if (spawnTarget != null) {
                 p.teleport(spawnTarget);
             }
-            ChatUtil.sendTitle(p, "§6§lTNT RUN", "§eRun and don't stop! The floor is falling!", 5, 40, 10);
+            ChatUtil.sendTitle(p, "§a§lGRACE PERIOD!", "§eFloor decay begins in 3 seconds! Spread out!", 5, 40, 10);
+            ChatUtil.sendMessage(p, "§a§l[TNT RUN] §eGrace period active for 3 seconds! Spread out from the start block!");
             ChatUtil.sendMessage(p, "§aYou have §b3 Double Jumps§a! Double-tap space to use them.");
         }
 
@@ -63,6 +65,18 @@ public class TNTRunGame extends Arena {
 
     @Override
     public void handleGameTick() {
+        if (gameTime < gracePeriodSeconds) {
+            int remaining = gracePeriodSeconds - gameTime;
+            for (Player p : getAllBukkitPlayers()) {
+                ChatUtil.sendActionBar(p, "§a§lGRACE PERIOD: §e" + remaining + "s §7- Spread out from the start platform!");
+            }
+        } else if (gameTime == gracePeriodSeconds) {
+            for (Player p : getAllBukkitPlayers()) {
+                ChatUtil.sendActionBar(p, "§c§lFLOOR DECAY ACTIVATED! §eRUN!");
+                ChatUtil.playSound(p, Sound.ENTITY_TNT_PRIMED, 1.0f, 1.2f);
+            }
+        }
+
         // Check alive players
         for (Player p : getBukkitPlayers()) {
             if (p.getLocation().getY() <= deathY) {
@@ -136,6 +150,7 @@ public class TNTRunGame extends Arena {
     }
 
     private void decayBlock(Block block) {
+        if (gameTime < gracePeriodSeconds) return; // Grace period active
         if (block == null || block.getType() == Material.AIR || !block.getType().isSolid()) return;
         // Don't decay bedrock floor or barriers; glass will decay if walked on
         if (block.getType() == Material.BEDROCK || block.getType() == Material.BARRIER) {
@@ -219,6 +234,9 @@ public class TNTRunGame extends Arena {
 
     @Override
     public void onArenaReset() {
+        // Rollback all decayed TNT and floor blocks
+        rollbackEngine.rollback();
+
         decayingBlocks.clear();
         doubleJumps.clear();
         decayTicks = 8;

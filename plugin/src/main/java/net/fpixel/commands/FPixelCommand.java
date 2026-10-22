@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class FPixelCommand implements CommandExecutor, TabCompleter {
@@ -225,6 +226,67 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             } catch (NumberFormatException e) {
                 sender.sendMessage(ChatUtil.colorize("§cInvalid amount."));
             }
+        } else if (sub.equals("import")) {
+            if (args.length < 2 || args[1].equalsIgnoreCase("list")) {
+                List<java.io.File> zips = plugin.getMapImporter() != null ? plugin.getMapImporter().getAvailableZipFiles() : Collections.emptyList();
+                ChatUtil.sendMessage(sender, "§6§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                ChatUtil.sendMessage(sender, "§e§l           MAP & HUB IMPORTER");
+                ChatUtil.sendMessage(sender, "§7Plaats .zip bestanden in §bimport_worlds/ §7of §bimport_maps/§7.");
+                ChatUtil.sendMessage(sender, "§fBeschikbare ZIP bestanden:");
+                if (zips.isEmpty()) {
+                    ChatUtil.sendMessage(sender, " §7(Geen gevonden in import_worlds/)");
+                } else {
+                    for (java.io.File z : zips) {
+                        ChatUtil.sendMessage(sender, " §a• " + z.getName() + " §7(" + (z.length() / (1024 * 1024)) + "MB)");
+                    }
+                }
+                ChatUtil.sendMessage(sender, "§fActieve geimporteerde maps:");
+                if (plugin.getMapImporter() != null) {
+                    for (String m : plugin.getMapImporter().getImportedMaps()) {
+                        ChatUtil.sendMessage(sender, " §b• " + m);
+                    }
+                }
+                ChatUtil.sendMessage(sender, "§7Commando's:");
+                ChatUtil.sendMessage(sender, " §e/fpixel import hub <zipnaam> §7- Importeer custom Hub");
+                ChatUtil.sendMessage(sender, " §e/fpixel import map <gametype> <naam> <zipnaam> §7- Importeer minigame map");
+                ChatUtil.sendMessage(sender, " §e/fpixel import scan §7- Scan & verwerk alle nieuwe maps");
+                ChatUtil.sendMessage(sender, "§6§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                return true;
+            }
+
+            String action = args[1].toLowerCase();
+            if (action.equals("scan") || action.equals("auto")) {
+                if (plugin.getMapImporter() != null) {
+                    plugin.getMapImporter().autoScanAndImport();
+                    ChatUtil.sendMessage(sender, "§aAuto-scan voltooid!");
+                }
+            } else if (action.equals("hub")) {
+                if (args.length < 3) {
+                    ChatUtil.sendMessage(sender, "§cGebruik: §e/fpixel import hub <bestand.zip>");
+                    return true;
+                }
+                if (plugin.getMapImporter() != null) {
+                    plugin.getMapImporter().importHub(sender, args[2]);
+                }
+            } else if (action.equals("map")) {
+                if (args.length < 5) {
+                    ChatUtil.sendMessage(sender, "§cGebruik: §e/fpixel import map <BEDWARS|SKYWARS|BRIDGE|SUMO|TNTRUN|PARKOUR|MM|PH> <MapNaam> <bestand.zip>");
+                    return true;
+                }
+                String gameType = args[2];
+                String displayName = args[3];
+                String zipFile = args[4];
+                if (plugin.getMapImporter() != null) {
+                    plugin.getMapImporter().importMinigameMap(sender, gameType, displayName, zipFile);
+                }
+            }
+            return true;
+        } else if (sub.equals("update")) {
+            Bukkit.dispatchCommand(sender, "serverupdate");
+            return true;
+        } else if (sub.equals("backup")) {
+            Bukkit.dispatchCommand(sender, "serverbackup");
+            return true;
         } else {
             sendHelp(sender);
         }
@@ -254,6 +316,9 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel undo §7- Herstel laatste actie"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel rebuildhub §7- Rebuild Hub"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel setlobby §7- Set hub spawn point"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel import §7- Map & Hub Importer (/fpixel import list|hub|map|scan)"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel update §7- Start whole-server update (backup, git, compile, restart)"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel backup §7- Create full server backup snapshot"));
     }
 
     @Override
@@ -276,7 +341,25 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
 
         List<String> list = new ArrayList<>();
         if (args.length == 1) {
-            list.addAll(Arrays.asList("fill", "empty", "undo", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
+            list.addAll(Arrays.asList("fill", "empty", "undo", "import", "update", "backup", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
+        } else if (args[0].equalsIgnoreCase("import")) {
+            if (args.length == 2) {
+                list.addAll(Arrays.asList("list", "hub", "map", "scan"));
+            } else if (args.length == 3 && args[1].equalsIgnoreCase("map")) {
+                list.addAll(Arrays.asList("BEDWARS", "SKYWARS", "BRIDGE", "SUMO", "TNTRUN", "PARKOUR", "MURDER_MYSTERY", "PROP_HUNT"));
+            } else if (args.length == 3 && args[1].equalsIgnoreCase("hub")) {
+                if (plugin.getMapImporter() != null) {
+                    for (java.io.File f : plugin.getMapImporter().getAvailableZipFiles()) {
+                        list.add(f.getName());
+                    }
+                }
+            } else if (args.length == 5 && args[1].equalsIgnoreCase("map")) {
+                if (plugin.getMapImporter() != null) {
+                    for (java.io.File f : plugin.getMapImporter().getAvailableZipFiles()) {
+                        list.add(f.getName());
+                    }
+                }
+            }
         } else if (args[0].equalsIgnoreCase("fill")) {
             if (args.length == 2) {
                 list.add("52");

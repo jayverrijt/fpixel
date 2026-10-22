@@ -39,6 +39,8 @@ public class FPixelPlugin extends JavaPlugin {
     private DuelManager duelManager;
     private PartyManager partyManager;
     private SurvivalManager survivalManager;
+    private net.fpixel.survival.waypoints.WaypointManager waypointManager;
+    private net.fpixel.core.map.MapImporter mapImporter;
     private net.fpixel.lobby.HubNPCManager hubNPCManager;
     private net.fpixel.lobby.HubLoreManager hubLoreManager;
     private net.fpixel.core.testing.TestingManager testingManager;
@@ -68,6 +70,8 @@ public class FPixelPlugin extends JavaPlugin {
         this.partyManager = new PartyManager(this);
         this.survivalManager = new SurvivalManager(this);
         this.survivalManager.init();
+        this.waypointManager = new net.fpixel.survival.waypoints.WaypointManager(this);
+        this.mapImporter = new net.fpixel.core.map.MapImporter(this);
 
         // 2. Visual & Display Managers (Scoreboards & Tablist)
         this.scoreboardManager = new ScoreboardManager(this);
@@ -146,6 +150,18 @@ public class FPixelPlugin extends JavaPlugin {
         getCommand("addcoins").setExecutor(coinsCmd);
         getCommand("addcoins").setTabCompleter(coinsCmd);
 
+        WaypointCommand wpCmd = new WaypointCommand(this);
+        getCommand("waypoint").setExecutor(wpCmd);
+        getCommand("waypoint").setTabCompleter(wpCmd);
+        getCommand("worldmap").setExecutor(wpCmd);
+        getCommand("worldmap").setTabCompleter(wpCmd);
+
+        ServerUpdateCommand updateCmd = new ServerUpdateCommand(this);
+        getCommand("serverupdate").setExecutor(updateCmd);
+
+        ServerBackupCommand sBackupCmd = new ServerBackupCommand(this);
+        getCommand("serverbackup").setExecutor(sBackupCmd);
+
 
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);
@@ -189,6 +205,8 @@ public class FPixelPlugin extends JavaPlugin {
     public DuelManager getDuelManager() { return duelManager; }
     public PartyManager getPartyManager() { return partyManager; }
     public SurvivalManager getSurvivalManager() { return survivalManager; }
+    public net.fpixel.survival.waypoints.WaypointManager getWaypointManager() { return waypointManager; }
+    public net.fpixel.core.map.MapImporter getMapImporter() { return mapImporter; }
     public net.fpixel.lobby.HubNPCManager getHubNPCManager() { return hubNPCManager; }
     public net.fpixel.lobby.HubLoreManager getHubLoreManager() { return hubLoreManager; }
     public net.fpixel.core.testing.TestingManager getTestingManager() { return testingManager; }

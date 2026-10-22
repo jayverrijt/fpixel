@@ -578,6 +578,9 @@ public class BedWarsGame extends Arena {
 
     @Override
     public void onArenaReset() {
+        // Rollback all placed blocks and broken map blocks
+        rollbackEngine.rollback();
+
         for (BedWarsTeam team : teams.values()) {
             team.setBedAlive(true);
             team.getMembers().clear();
@@ -599,12 +602,35 @@ public class BedWarsGame extends Arena {
             spawner.reset();
         }
 
-        // Clean up any remaining dragons
+        // Clean up any remaining dragons and dropped items (iron, gold, diamond, emerald, blocks)
         if (lobbySpawn != null && lobbySpawn.getWorld() != null) {
             for (org.bukkit.entity.Entity e : lobbySpawn.getWorld().getEntities()) {
-                if (e instanceof org.bukkit.entity.EnderDragon) {
+                if (e instanceof org.bukkit.entity.EnderDragon || e instanceof org.bukkit.entity.Item) {
                     e.remove();
                 }
+            }
+        }
+    }
+
+    @Override
+    public void onEntityExplode(org.bukkit.event.entity.EntityExplodeEvent event) {
+        if (state != GameState.IN_GAME) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // Never destroy beds via explosions
+        event.blockList().removeIf(b -> b.getType().name().contains("BED"));
+
+        // Only allow explosions to break player-placed blocks (wool, wood, end stone)
+        // Original island blocks are completely preserved
+        Iterator<org.bukkit.block.Block> it = event.blockList().iterator();
+        while (it.hasNext()) {
+            org.bukkit.block.Block b = it.next();
+            if (rollbackEngine.isPlayerPlaced(b.getLocation())) {
+                rollbackEngine.logBlockBreak(b);
+            } else {
+                it.remove();
             }
         }
     }

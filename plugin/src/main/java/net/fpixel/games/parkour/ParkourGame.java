@@ -139,9 +139,9 @@ public class ParkourGame extends Arena {
         // 3. Dynamic Interactive Map Pads (Launch Pads & Speed Boosters)
         Material standOn = loc.clone().subtract(0, 0.5, 0).getBlock().getType();
         if (standOn == Material.SLIME_BLOCK || standOn == Material.EMERALD_BLOCK) {
-            p.setVelocity(p.getLocation().getDirection().multiply(1.35).setY(0.8));
+            p.setVelocity(p.getLocation().getDirection().multiply(0.75).setY(0.6));
             ChatUtil.playSound(p, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 0.8f, 1.4f);
-            ChatUtil.sendActionBar(p, "§a⚡ Super Launch Pad! ⚡");
+            ChatUtil.sendActionBar(p, "§a⚡ Slime Springboard! ⚡");
             p.getWorld().spawnParticle(org.bukkit.Particle.FIREWORK, loc, 15, 0.2, 0.2, 0.2, 0.1);
         } else if (standOn == Material.GOLD_BLOCK || standOn == Material.REDSTONE_BLOCK) {
             p.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SPEED, 80, 1, false, false, true));

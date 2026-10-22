@@ -461,6 +461,12 @@ public abstract class Arena {
     public abstract void checkWinCondition();
     public abstract List<String> getScoreboardLines(Player player);
 
+    public org.bukkit.World getWorld() {
+        if (lobbySpawn != null) return lobbySpawn.getWorld();
+        if (spectatorSpawn != null) return spectatorSpawn.getWorld();
+        return null;
+    }
+
     public void onPlayerJoin(Player player) {}
     public void onPlayerLeave(Player player) {}
     public void onBlockBreak(BlockBreakEvent event) {}
@@ -476,6 +482,8 @@ public abstract class Arena {
     public void onPlayerDropItem(org.bukkit.event.player.PlayerDropItemEvent event) {}
     public void onPlayerSwapHandItems(org.bukkit.event.player.PlayerSwapHandItemsEvent event) {}
     public void onItemConsume(org.bukkit.event.player.PlayerItemConsumeEvent event) {}
+    public void onEntityExplode(org.bukkit.event.entity.EntityExplodeEvent event) {}
+    public void onBlockExplode(org.bukkit.event.block.BlockExplodeEvent event) {}
 
     public boolean isSpectator(UUID uuid) {
         return spectators.contains(uuid);

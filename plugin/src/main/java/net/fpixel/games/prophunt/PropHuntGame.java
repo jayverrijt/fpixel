@@ -160,10 +160,10 @@ public class PropHuntGame extends Arena {
                 p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 1, false, false));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, hidingPhaseTime * 20, 0, false, false));
 
-                // Equip disguise on head for Bedrock/Geyser 3rd person visibility
-                p.getInventory().setHelmet(new ItemStack(disguise));
+                // Do not equip helmet block when BlockDisplay is active to prevent dual overlapping glitch on Bedrock
                 givePropItems(p);
                 spawnPropDisplay(p, disguise);
+                hidePropNametag(p);
 
                 ChatUtil.sendTitle(p, "§a§lYOU ARE A PROP!", "§7Disguised as: §e" + disguise.name(), 10, 60, 20);
                 ChatUtil.sendMessage(p, "§a§lROLE: §2Prop (" + disguise.name() + ")");
@@ -206,13 +206,52 @@ public class PropHuntGame extends Arena {
         // Leave hands completely empty so NO floating bell is visible to hunters!
     }
 
+    private void hidePropNametag(Player player) {
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            org.bukkit.scoreboard.Scoreboard sb = online.getScoreboard();
+            if (sb != null) {
+                org.bukkit.scoreboard.Team team = sb.getTeam("ph_props");
+                if (team == null) {
+                    team = sb.registerNewTeam("ph_props");
+                    team.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, org.bukkit.scoreboard.Team.OptionStatus.NEVER);
+                }
+                team.addEntry(player.getName());
+            }
+        }
+    }
+
+    private void restorePropNametag(Player player) {
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            org.bukkit.scoreboard.Scoreboard sb = online.getScoreboard();
+            if (sb != null) {
+                org.bukkit.scoreboard.Team team = sb.getTeam("ph_props");
+                if (team != null) {
+                    team.removeEntry(player.getName());
+                }
+            }
+        }
+    }
+
+    private void clearPropTeams() {
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            org.bukkit.scoreboard.Scoreboard sb = online.getScoreboard();
+            if (sb != null) {
+                org.bukkit.scoreboard.Team team = sb.getTeam("ph_props");
+                if (team != null) {
+                    try { team.unregister(); } catch (Exception ignored) {}
+                }
+            }
+        }
+    }
+
     private void spawnPropDisplay(Player player, Material material) {
         try {
             BlockData blockData = material.createBlockData();
             BlockDisplay display = player.getWorld().spawn(player.getLocation(), BlockDisplay.class);
             display.setBlock(blockData);
-            display.setInterpolationDuration(2);
-            display.setTeleportDuration(2);
+            // 0 duration ensures instantaneous updates without Bedrock lerp/flicker
+            display.setInterpolationDuration(0);
+            display.setTeleportDuration(0);
             // Center block around player feet
             org.bukkit.util.Transformation trans = new org.bukkit.util.Transformation(
                     new org.joml.Vector3f(-0.5f, 0f, -0.5f),
@@ -324,6 +363,15 @@ public class PropHuntGame extends Arena {
             Location to = event.getTo();
             if (to != null && (from.getX() != to.getX() || from.getZ() != to.getZ())) {
                 event.setTo(new Location(from.getWorld(), from.getX(), from.getY(), from.getZ(), to.getYaw(), to.getPitch()));
+            }
+            return;
+        }
+
+        // Smoothly track BlockDisplay to moving prop to avoid teleport lag/twitching on Bedrock & Java
+        if (roles.get(p.getUniqueId()) == Role.PROP && !p.isSneaking()) {
+            BlockDisplay display = propDisplays.get(p.getUniqueId());
+            if (display != null && display.isValid()) {
+                display.teleport(p.getLocation());
             }
         }
     }
@@ -567,6 +615,7 @@ public class PropHuntGame extends Arena {
         roles.remove(uid);
         propDisguises.remove(uid);
         lastTauntTime.remove(uid);
+        restorePropNametag(player);
 
         BlockDisplay display = propDisplays.remove(uid);
         if (display != null) {
@@ -586,7 +635,9 @@ public class PropHuntGame extends Arena {
     @Override
     public void onGameEnd(Player winner) {
         clearAllDisplays();
+        clearPropTeams();
         for (Player p : getAllBukkitPlayers()) {
+            restorePropNametag(p);
             p.getInventory().setHelmet(null);
             p.removePotionEffect(PotionEffectType.INVISIBILITY);
             p.setAllowFlight(false);
@@ -612,6 +663,7 @@ public class PropHuntGame extends Arena {
         roles.clear();
         propDisguises.clear();
         clearAllDisplays();
+        clearPropTeams();
         aliveProps.clear();
         aliveHunters.clear();
         lastTauntTime.clear();

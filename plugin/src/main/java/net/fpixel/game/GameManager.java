@@ -262,6 +262,26 @@ public class GameManager implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onEntityExplode(org.bukkit.event.entity.EntityExplodeEvent event) {
+        org.bukkit.Location loc = event.getLocation();
+        for (Arena arena : arenas.values()) {
+            if (arena.getWorld() != null && arena.getWorld().equals(loc.getWorld())) {
+                arena.onEntityExplode(event);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onBlockExplode(org.bukkit.event.block.BlockExplodeEvent event) {
+        org.bukkit.Location loc = event.getBlock().getLocation();
+        for (Arena arena : arenas.values()) {
+            if (arena.getWorld() != null && arena.getWorld().equals(loc.getWorld())) {
+                arena.onBlockExplode(event);
+            }
+        }
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onProjectileHit(ProjectileHitEvent event) {
         if (event.getEntity().getShooter() instanceof Player player) {

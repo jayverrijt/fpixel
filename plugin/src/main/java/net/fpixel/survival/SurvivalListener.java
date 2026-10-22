@@ -11,6 +11,7 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.inventory.ItemStack;
 
 public class SurvivalListener implements Listener {
     private final FPixelPlugin plugin;
@@ -34,6 +35,9 @@ public class SurvivalListener implements Listener {
         if (fromSurvival && !toSurvival) {
             if (plugin.getSurvivalManager().isPlayerInSurvival(player)) {
                 plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+                if (plugin.getWaypointManager() != null) {
+                    plugin.getWaypointManager().savePlayerWaypoints(player.getUniqueId());
+                }
                 plugin.getSurvivalManager().removeSurvivalPlayer(player);
                 player.getInventory().clear();
                 player.getInventory().setArmorContents(null);
@@ -102,9 +106,12 @@ public class SurvivalListener implements Listener {
                 player.setGameMode(GameMode.ADVENTURE);
             }
         } else if (!fromSurvival && currentSurvival) {
-            // Entering survival: remove lobby scoreboard
+            // Entering survival: remove lobby scoreboard and load waypoints
             plugin.getScoreboardManager().remove(player);
             plugin.getSurvivalManager().addSurvivalPlayer(player);
+            if (plugin.getWaypointManager() != null) {
+                plugin.getWaypointManager().loadPlayerWaypoints(player.getUniqueId());
+            }
         }
     }
 
@@ -113,7 +120,45 @@ public class SurvivalListener implements Listener {
         Player player = event.getPlayer();
         if (plugin.getSurvivalManager().isPlayerInSurvival(player)) {
             plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+            if (plugin.getWaypointManager() != null) {
+                plugin.getWaypointManager().savePlayerWaypoints(player.getUniqueId());
+            }
             plugin.getSurvivalManager().removeSurvivalPlayer(player);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onMapGuiClick(org.bukkit.event.inventory.InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        String title = event.getView().getTitle();
+        if (title.contains("Survival Map & Waypoints")) {
+            event.setCancelled(true);
+            ItemStack item = event.getCurrentItem();
+            if (item == null || item.getType() == org.bukkit.Material.AIR) return;
+
+            if (item.getType() == org.bukkit.Material.FILLED_MAP) {
+                player.closeInventory();
+                net.fpixel.core.util.ChatUtil.sendMessage(player, "§6§lSURVIVAL MAP §8» §aOpen live interactive map: §bhttps://fpixel.nl/map");
+                net.fpixel.core.util.ChatUtil.playSound(player, org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.2f);
+            } else if (item.getType() == org.bukkit.Material.COMPASS) {
+                player.closeInventory();
+                player.performCommand("wp menu");
+            } else if (item.getType() == org.bukkit.Material.LIME_DYE || item.getType() == org.bukkit.Material.GRAY_DYE) {
+                if (plugin.getWaypointManager() != null) {
+                    plugin.getWaypointManager().toggleHud(player);
+                    player.performCommand("map");
+                }
+            }
+        } else if (title.contains("My Waypoints")) {
+            event.setCancelled(true);
+            ItemStack item = event.getCurrentItem();
+            if (item == null || item.getType() == org.bukkit.Material.AIR || !item.hasItemMeta() || !item.getItemMeta().hasDisplayName()) return;
+
+            String wpName = org.bukkit.ChatColor.stripColor(item.getItemMeta().getDisplayName());
+            if (plugin.getWaypointManager() != null) {
+                plugin.getWaypointManager().setTracked(player, wpName);
+                player.closeInventory();
+            }
         }
     }
 

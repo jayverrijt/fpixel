@@ -31,7 +31,21 @@ commands:
     permission: fpixel.admin
   maps:
     description: Browse and select a minigame map
-    aliases: [map]
+    aliases: [arenas]
+  waypoint:
+    description: Survival waypoints and minimap navigation
+    aliases: [wp, waypoints]
+  worldmap:
+    description: Survival interactive map and on-screen minimap HUD
+    aliases: [map, minimap]
+  serverupdate:
+    description: Full server update with pre-update backup, git pull, and restart
+    permission: fpixel.admin
+    aliases: [updateserver]
+  serverbackup:
+    description: Full server-wide snapshot backup
+    permission: fpixel.admin
+    aliases: [backup]
   duels:
     description: Challenge players to 1v1 duels
     aliases: [duel]
