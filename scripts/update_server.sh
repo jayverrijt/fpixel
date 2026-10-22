@@ -35,11 +35,20 @@ echo ">>> [2/5] Updating codebase from Git repository..."
 cd "${BASE_DIR}"
 if [ -d ".git" ]; then
     git fetch origin main || true
-    # Only reset if clean or requested
-    if git diff --quiet && git diff --cached --quiet; then
-        git merge origin/main --ff-only || true
-    else
-        echo "Local uncommitted changes detected; preserving local working tree."
+    # Stash local runtime changes (e.g., paper/skins caches), merge origin/main, and restore
+    HAS_CHANGES=0
+    if ! git diff --quiet || ! git diff --cached --quiet; then
+        HAS_CHANGES=1
+        echo "Stashing local runtime changes before update..."
+        git stash push -m "pre-update-runtime-state" || true
+    fi
+
+    echo "Merging latest changes from origin/main..."
+    git merge origin/main --ff-only || git rebase origin/main || true
+
+    if [ "${HAS_CHANGES}" -eq 1 ]; then
+        echo "Restoring local runtime state..."
+        git stash pop || true
     fi
 fi
 
@@ -51,10 +60,12 @@ if [ -f "${PLUGIN_DIR}/gradlew" ]; then
         cd "${PLUGIN_DIR}"
         ./gradlew build -x test --no-daemon
     )
-    if [ -f "${PLUGIN_DIR}/build/libs/FPixelCore-1.0.0.jar" ]; then
+    if [ -f "${PLUGIN_DIR}/build/libs/FPixelCore.jar" ]; then
         mkdir -p "${SERVER_DIR}/plugins"
-        cp -f "${PLUGIN_DIR}/build/libs/FPixelCore-1.0.0.jar" "${SERVER_DIR}/plugins/FPixelCore.jar"
+        cp -f "${PLUGIN_DIR}/build/libs/FPixelCore.jar" "${SERVER_DIR}/plugins/FPixelCore.jar"
         echo "  -> Deployed FPixelCore.jar to ${SERVER_DIR}/plugins/FPixelCore.jar"
+    elif [ -f "${SERVER_DIR}/plugins/FPixelCore.jar" ]; then
+        echo "  -> FPixelCore.jar verified at ${SERVER_DIR}/plugins/FPixelCore.jar"
     fi
 fi
 
