@@ -1,10 +1,10 @@
 location:
   world: survival
-  x: -902.8800292139197
-  y: 81.57918953913438
-  z: -160.93346112470414
-  yaw: -95.743416
-  pitch: -31.95002
+  x: -1564.6733040696731
+  y: 64.0
+  z: 302.92500001192093
+  yaw: 112.3843
+  pitch: 37.91546
 level: 14
 exp: 0.611016
 health: 20.0
@@ -34,7 +34,7 @@ inventory:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:efficiency":5,"minecraft:fortune":3,"minecraft:unbreaking":3}'
-    minecraft:damage: '292'
+    minecraft:damage: '297'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -55,9 +55,13 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:bread
-  count: 22
+  count: 21
   schema_version: 1
-- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:cobblestone
+  count: 3
+  schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:cooked_beef
