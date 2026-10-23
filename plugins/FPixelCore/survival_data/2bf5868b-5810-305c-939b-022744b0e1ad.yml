@@ -1,14 +1,14 @@
 location:
   world: survival
-  x: -1564.6733040696731
-  y: 64.0
-  z: 302.92500001192093
-  yaw: 112.3843
-  pitch: 37.91546
-level: 14
-exp: 0.611016
+  x: -1571.9654001419276
+  y: 69.0
+  z: 250.07953833035583
+  yaw: -142.19188
+  pitch: 47.10042
+level: 15
+exp: 0.60501504
 health: 20.0
-food: 20
+food: 19
 inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -17,15 +17,7 @@ inventory:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:fire_aspect":2,"minecraft:looting":3,"minecraft:sharpness":3,"minecraft:unbreaking":3}'
-    minecraft:damage: '321'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:bow
-  count: 1
-  components:
-    minecraft:enchantments: '{"minecraft:infinity":1}'
-    minecraft:damage: '36'
+    minecraft:damage: '322'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -34,7 +26,7 @@ inventory:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:efficiency":5,"minecraft:fortune":3,"minecraft:unbreaking":3}'
-    minecraft:damage: '297'
+    minecraft:damage: '306'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -42,7 +34,15 @@ inventory:
   count: 1
   components:
     minecraft:enchantments: '{"minecraft:efficiency":3,"minecraft:fortune":2,"minecraft:unbreaking":3}'
-    minecraft:damage: '64'
+    minecraft:damage: '82'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:bow
+  count: 1
+  components:
+    minecraft:enchantments: '{"minecraft:infinity":1}'
+    minecraft:damage: '37'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -54,18 +54,68 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
+  id: minecraft:ladder
+  count: 50
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:water_bucket
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:oak_planks
+  count: 39
+  schema_version: 1
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:arrow
+  count: 32
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:bundle
+  count: 1
+  components:
+    minecraft:bundle_contents: '[{count:2,id:"minecraft:oak_fence"},{id:"minecraft:torch"},{count:2,id:"minecraft:bucket"},{count:16,id:"minecraft:leather"},{count:3,id:"minecraft:sulfur_spike"},{count:2,id:"minecraft:lead"},{count:3,id:"minecraft:blaze_rod"},{id:"minecraft:magma_cream"},{count:2,id:"minecraft:feather"},{id:"minecraft:diamond"},{count:3,id:"minecraft:brown_wool"},{count:2,id:"minecraft:gravel"},{id:"minecraft:acacia_planks"},{count:2,id:"minecraft:acacia_slab"},{count:6,id:"minecraft:potato"}]'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:bundle
+  count: 1
+  components:
+    minecraft:bundle_contents: '[{id:"minecraft:spruce_fence"},{id:"minecraft:spruce_stairs"},{id:"minecraft:oak_log"},{count:7,id:"minecraft:leaf_litter"},{count:2,id:"minecraft:acacia_sapling"},{id:"minecraft:sugar_cane"},{count:5,id:"minecraft:gunpowder"},{count:14,id:"minecraft:rotten_flesh"},{id:"minecraft:string"},{count:2,id:"minecraft:composter"},{count:3,id:"minecraft:egg"},{id:"minecraft:oak_planks"},{id:"minecraft:ender_pearl"},{count:5,id:"minecraft:pointed_dripstone"},{id:"minecraft:gold_ingot"}]'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:iron_ingot
+  count: 12
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
   id: minecraft:bread
   count: 21
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:cobblestone
-  count: 3
+  id: minecraft:stick
+  count: 35
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:cooked_beef
-  count: 6
+  id: minecraft:oak_sapling
+  count: 15
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:wheat
+  count: 5
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:wheat
+  count: 64
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -77,57 +127,10 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:arrow
-  count: 32
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:bundle
+  id: minecraft:diamond_hoe
   count: 1
   components:
-    minecraft:bundle_contents: '[{count:16,id:"minecraft:leather"},{count:7,id:"minecraft:stick"},{count:3,id:"minecraft:sulfur_spike"},{count:12,id:"minecraft:oak_fence"},{id:"minecraft:oak_fence_gate"},{count:2,id:"minecraft:lead"},{count:3,id:"minecraft:blaze_rod"},{id:"minecraft:magma_cream"},{count:2,id:"minecraft:feather"},{id:"minecraft:diamond"},{count:3,id:"minecraft:brown_wool"},{count:2,id:"minecraft:gravel"},{id:"minecraft:acacia_planks"},{count:2,id:"minecraft:acacia_slab"},{count:6,id:"minecraft:potato"}]'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:lead
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:water_bucket
-  count: 1
-  schema_version: 1
-- null
-- null
-- null
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:wheat
-  count: 5
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:wheat
-  count: 64
-  schema_version: 1
-- null
-- null
-- null
-- null
-- null
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:iron_sword
-  count: 1
-  components:
-    minecraft:damage: '218'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:iron_pickaxe
-  count: 1
-  components:
-    minecraft:damage: '67'
+    minecraft:damage: '624'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -139,15 +142,29 @@ inventory:
 - null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:stick
+  id: minecraft:cooked_beef
+  count: 8
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:cooked_mutton
+  count: 2
+  schema_version: 1
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:apple
   count: 5
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:bundle
-  count: 1
-  components:
-    minecraft:bundle_contents: '[{id:"minecraft:oak_log"},{count:7,id:"minecraft:leaf_litter"},{count:2,id:"minecraft:acacia_sapling"},{id:"minecraft:sugar_cane"},{count:5,id:"minecraft:gunpowder"},{count:14,id:"minecraft:rotten_flesh"},{id:"minecraft:string"},{count:2,id:"minecraft:composter"},{count:3,id:"minecraft:egg"},{id:"minecraft:oak_planks"},{id:"minecraft:ender_pearl"},{count:5,id:"minecraft:pointed_dripstone"},{id:"minecraft:gold_ingot"}]'
+  id: minecraft:cobblestone
+  count: 40
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:cobblestone
+  count: 64
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -156,23 +173,40 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:raw_iron
-  count: 16
+  id: minecraft:water_bucket
+  count: 1
   schema_version: 1
-- null
-- null
-- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:cooked_mutton
+  id: minecraft:cooked_porkchop
+  count: 2
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:red_banner
+  count: 13
+  components:
+    minecraft:banner_patterns: '[{color:"black",pattern:"minecraft:gradient"},{color:"yellow",pattern:"minecraft:mojang"},{color:"orange",pattern:"minecraft:flower"},{color:"black",pattern:"minecraft:skull"}]'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:oak_log
+  count: 6
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:oak_planks
+  count: 64
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:cobblestone
   count: 3
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:diamond_hoe
+  id: minecraft:lead
   count: 1
-  components:
-    minecraft:damage: '624'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -180,7 +214,7 @@ inventory:
   count: 1
   components:
     minecraft:enchantments: '{"minecraft:blast_protection":4,"minecraft:unbreaking":3}'
-    minecraft:damage: '81'
+    minecraft:damage: '82'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -189,7 +223,7 @@ inventory:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:protection":3,"minecraft:swift_sneak":2}'
-    minecraft:damage: '107'
+    minecraft:damage: '108'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -205,14 +239,15 @@ inventory:
   count: 1
   components:
     minecraft:enchantments: '{"minecraft:protection":4,"minecraft:respiration":3}'
-    minecraft:damage: '107'
+    minecraft:damage: '108'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:shield
   count: 1
   components:
-    minecraft:damage: '311'
+    minecraft:banner_patterns: '[{color:"black",pattern:"minecraft:gradient"},{color:"yellow",pattern:"minecraft:mojang"},{color:"orange",pattern:"minecraft:flower"},{color:"black",pattern:"minecraft:skull"}]'
+    minecraft:base_color: '"red"'
   schema_version: 1
 - null
 - null
@@ -223,7 +258,7 @@ armor:
   count: 1
   components:
     minecraft:enchantments: '{"minecraft:blast_protection":4,"minecraft:unbreaking":3}'
-    minecraft:damage: '81'
+    minecraft:damage: '82'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -232,7 +267,7 @@ armor:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:protection":3,"minecraft:swift_sneak":2}'
-    minecraft:damage: '107'
+    minecraft:damage: '108'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -248,7 +283,7 @@ armor:
   count: 1
   components:
     minecraft:enchantments: '{"minecraft:protection":4,"minecraft:respiration":3}'
-    minecraft:damage: '107'
+    minecraft:damage: '108'
   schema_version: 1
 offhand:
   ==: org.bukkit.inventory.ItemStack
@@ -256,7 +291,8 @@ offhand:
   id: minecraft:shield
   count: 1
   components:
-    minecraft:damage: '311'
+    minecraft:banner_patterns: '[{color:"black",pattern:"minecraft:gradient"},{color:"yellow",pattern:"minecraft:mojang"},{color:"orange",pattern:"minecraft:flower"},{color:"black",pattern:"minecraft:skull"}]'
+    minecraft:base_color: '"red"'
   schema_version: 1
 enderchest:
 - null
