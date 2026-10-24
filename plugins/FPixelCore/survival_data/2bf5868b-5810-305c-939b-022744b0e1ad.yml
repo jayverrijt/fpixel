@@ -1,12 +1,12 @@
 location:
   world: survival
-  x: -1571.9654001419276
+  x: -1582.402939375979
   y: 69.0
-  z: 250.07953833035583
-  yaw: -142.19188
-  pitch: 47.10042
+  z: 247.6545273390461
+  yaw: 78.15037
+  pitch: 24.000051
 level: 15
-exp: 0.60501504
+exp: 0.7131231
 health: 20.0
 food: 19
 inventory:
@@ -67,7 +67,11 @@ inventory:
   id: minecraft:oak_planks
   count: 39
   schema_version: 1
-- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:cobblestone
+  count: 43
+  schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:arrow
@@ -156,11 +160,7 @@ inventory:
   id: minecraft:apple
   count: 5
   schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:cobblestone
-  count: 40
-  schema_version: 1
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:cobblestone
@@ -198,11 +198,7 @@ inventory:
   id: minecraft:oak_planks
   count: 64
   schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:cobblestone
-  count: 3
-  schema_version: 1
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:lead
