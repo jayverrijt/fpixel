@@ -1,29 +1,19 @@
 location:
   world: survival
-  x: -986.8461341487435
-  y: 52.0
-  z: -126.27950978173294
-  yaw: -45.36136
-  pitch: 14.63353
-level: 68
-exp: 0.99385685
+  x: -962.4511157808553
+  y: 53.0
+  z: -109.4078048469179
+  yaw: 171.91211
+  pitch: 6.7964926
+level: 69
+exp: 0.037172824
 health: 20.0
 food: 20
 inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:wooden_sword
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:sand
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:lead
-  count: 1
+  id: minecraft:glass
+  count: 64
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -32,7 +22,32 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:deepslate_brick_stairs
+  id: minecraft:deepslate_bricks
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:spruce_planks
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:spruce_stairs
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:sea_lantern
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:stone_bricks
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:stripped_spruce_log
   count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
@@ -42,13 +57,8 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:gravel
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:dirt
-  count: 17
+  id: minecraft:arrow
+  count: 64
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -57,18 +67,8 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:arrow
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:torch
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
   id: minecraft:string
-  count: 2
+  count: 3
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -82,7 +82,7 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:deepslate_bricks
+  id: minecraft:sponge
   count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
@@ -100,30 +100,18 @@ inventory:
   id: minecraft:andesite
   count: 64
   schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:rotten_flesh
-  count: 2
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:stone
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:stone
-  count: 64
-  schema_version: 1
+- null
+- null
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:ender_pearl
-  count: 2
+  count: 3
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:gunpowder
-  count: 3
+  count: 5
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -187,8 +175,8 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:glass
-  count: 64
+  id: minecraft:water_bucket
+  count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
