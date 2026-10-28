@@ -282,9 +282,17 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             }
             return true;
         } else if (sub.equals("update")) {
+            if (!sender.hasPermission("fpixel.owner") && !sender.isOp()) {
+                sender.sendMessage(ChatUtil.colorize("§cAlleen Owners kunnen de server updaten/stoppen."));
+                return true;
+            }
             Bukkit.dispatchCommand(sender, "serverupdate");
             return true;
         } else if (sub.equals("backup")) {
+            if (!sender.hasPermission("fpixel.owner") && !sender.isOp()) {
+                sender.sendMessage(ChatUtil.colorize("§cAlleen Owners kunnen handmatige server backups uitvoeren."));
+                return true;
+            }
             Bukkit.dispatchCommand(sender, "serverbackup");
             return true;
         } else {

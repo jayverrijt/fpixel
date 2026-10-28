@@ -54,6 +54,7 @@ public class LobbyListener implements Listener {
         event.joinMessage(null); // Silent join message, Hypixel style
 
         plugin.getRankManager().updatePlayerDisplayName(player);
+        plugin.getRankManager().applyPermissions(player);
         plugin.getLobbyManager().teleportToLobby(player);
 
         // Welcome Title
@@ -70,6 +71,7 @@ public class LobbyListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         event.quitMessage(null);
         Player player = event.getPlayer();
+        plugin.getRankManager().removePermissions(player);
         plugin.getScoreboardManager().remove(player);
         plugin.getUserManager().unloadUser(player.getUniqueId());
     }

@@ -22,8 +22,8 @@ public class ServerUpdateCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (!sender.hasPermission("fpixel.admin")) {
-            ChatUtil.sendMessage(sender, "§cYou do not have permission to update the server.");
+        if (!sender.hasPermission("fpixel.owner") && !sender.isOp()) {
+            ChatUtil.sendMessage(sender, "§cYou do not have permission to update or restart the server (Owner only).");
             return true;
         }
 

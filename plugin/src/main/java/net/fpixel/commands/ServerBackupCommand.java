@@ -22,8 +22,8 @@ public class ServerBackupCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (!sender.hasPermission("fpixel.admin")) {
-            ChatUtil.sendMessage(sender, "§cYou do not have permission to run server backups.");
+        if (!sender.hasPermission("fpixel.owner") && !sender.isOp()) {
+            ChatUtil.sendMessage(sender, "§cYou do not have permission to run server backups (Owner only).");
             return true;
         }
 

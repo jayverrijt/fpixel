@@ -23,8 +23,8 @@ public class RankCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("fpixel.admin")) {
-            sender.sendMessage(ChatUtil.colorize("§cYou do not have permission to execute this command."));
+        if (!sender.hasPermission("fpixel.owner") && !sender.isOp()) {
+            sender.sendMessage(ChatUtil.colorize("§cYou do not have permission to execute this command (Owner only)."));
             return true;
         }
 

@@ -28,7 +28,7 @@ commands:
     aliases: [play]
   setrank:
     description: Set a player's rank
-    permission: fpixel.admin
+    permission: fpixel.owner
   maps:
     description: Browse and select a minigame map
     aliases: [arenas]
@@ -40,11 +40,11 @@ commands:
     aliases: [map, minimap]
   serverupdate:
     description: Full server update with pre-update backup, git pull, and restart
-    permission: fpixel.admin
+    permission: fpixel.owner
     aliases: [updateserver]
   serverbackup:
     description: Full server-wide snapshot backup
-    permission: fpixel.admin
+    permission: fpixel.owner
     aliases: [backup]
   duels:
     description: Challenge players to 1v1 duels
@@ -63,6 +63,7 @@ commands:
     aliases: [smp]
   testing:
     description: Toggle testing mode and manage simulated players for game testing
+    permission: fpixel.owner
     aliases: [test]
   shop:
     description: Open the BedWars item shop
@@ -74,7 +75,7 @@ commands:
     aliases: [secret, lore, relics]
   survivalbackup:
     description: Trigger an immediate survival world backup pushed directly to GitHub
-    permission: fpixel.admin
+    permission: fpixel.owner
     aliases: [backupnow, smpbackup]
   coins:
     description: Manage and view your FPixel coins

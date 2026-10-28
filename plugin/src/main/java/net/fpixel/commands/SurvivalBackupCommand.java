@@ -22,8 +22,8 @@ public class SurvivalBackupCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (!sender.hasPermission("fpixel.admin")) {
-            ChatUtil.sendMessage(sender, "§cYou do not have permission to run backups.");
+        if (!sender.hasPermission("fpixel.owner") && !sender.isOp()) {
+            ChatUtil.sendMessage(sender, "§cYou do not have permission to run survival backups (Owner only).");
             return true;
         }
 

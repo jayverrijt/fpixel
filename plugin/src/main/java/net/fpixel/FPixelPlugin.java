@@ -21,6 +21,7 @@ import net.fpixel.survival.SurvivalManager;
 import net.fpixel.core.chunk.FPixelChunkHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 
@@ -171,15 +172,24 @@ public class FPixelPlugin extends JavaPlugin {
         });
 
         getLogger().info("FPixelCore has successfully loaded! Ready for players.");
+
+        // Apply rank permissions and names to all currently online players
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            rankManager.updatePlayerDisplayName(p);
+            rankManager.applyPermissions(p);
+        }
     }
 
     @Override
     public void onDisable() {
+        if (rankManager != null) {
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                rankManager.removePermissions(p);
+            }
+            rankManager.saveRanks();
+        }
         if (userManager != null) {
             userManager.saveAll();
-        }
-        if (rankManager != null) {
-            rankManager.saveRanks();
         }
         if (survivalManager != null) {
             survivalManager.saveAllActiveProfiles();
