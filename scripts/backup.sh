@@ -3,6 +3,10 @@ set -euo pipefail
 
 # Configuration with environment overrides
 BASE_DIR="${BASE_DIR:-/home/jayv/fpixel}"
+if [ ! -d "${BASE_DIR}" ] && [ -d "/Users/jayv/Projects/Fpixel2" ]; then
+    BASE_DIR="/Users/jayv/Projects/Fpixel2"
+    BACKUP_DIR="${BACKUP_DIR:-/Users/jayv/Projects/Fpixel2_backups}"
+fi
 SERVER_DIR="${SERVER_DIR:-$BASE_DIR/server}"
 BACKUP_DIR="${BACKUP_DIR:-/home/jayv/backups}"
 MAX_BACKUPS="${MAX_BACKUPS:-15}"

@@ -35,8 +35,8 @@ def download_file(url, target_path):
     print("\nDownload complete!")
 
 def fetch_paper():
-    print("Fetching Paper 1.21.4 (build 232)...")
-    paper_url = "https://fill-data.papermc.io/v1/objects/5ee4f542f628a14c644410b08c94ea42e772ef4d29fe92973636b6813d4eaffc/paper-1.21.4-232.jar"
+    print("Fetching Paper 26.3 (build 227)...")
+    paper_url = "https://fill-data.papermc.io/v1/objects/416b7d105b1d0192df4afa4b29d2800d9dbeda092a82fbc5b511248a54adde15/paper-26.3-227.jar"
     paper_jar = os.path.join(SERVER_DIR, "paper.jar")
     download_file(paper_url, paper_jar)
 

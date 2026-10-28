@@ -38,20 +38,18 @@ if [ ! -f "${SERVER_DIR}/paper.jar" ] || [ $(stat -c%s "${SERVER_DIR}/paper.jar"
     echo "Copying bootstrap paper.jar from /shared/fpixel/survival..."
     cp "/shared/fpixel/survival/paper.jar" "${SERVER_DIR}/paper.jar"
   else
-    echo "Downloading Paper 26.3..."
-    curl -sSL "https://fill-data.papermc.io/v1/objects/09d38bfa3a7100e4d80554b9a964dfbf124f1d62c9ceabe482769e8a1098b4c3/paper-26.3-183.jar" -o "${SERVER_DIR}/paper.jar" || true
+    echo "Downloading Paper 26.3 build 227..."
+    curl -sSL "https://fill-data.papermc.io/v1/objects/416b7d105b1d0192df4afa4b29d2800d9dbeda092a82fbc5b511248a54adde15/paper-26.3-227.jar" -o "${SERVER_DIR}/paper.jar" || true
   fi
 fi
 
-# Check Geyser-Spigot.jar
-if [ ! -f "${SERVER_DIR}/plugins/Geyser-Spigot.jar" ]; then
-  if [ -f "/shared/fpixel/survival/plugins/Geyser-Spigot.jar" ]; then
-    echo "Copying Geyser-Spigot.jar from /shared/fpixel..."
-    cp "/shared/fpixel/survival/plugins/Geyser-Spigot.jar" "${SERVER_DIR}/plugins/Geyser-Spigot.jar"
-  else
-    echo "Downloading latest Geyser-Spigot.jar..."
-    curl -sSL "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot" -o "${SERVER_DIR}/plugins/Geyser-Spigot.jar" || true
-  fi
+# Download/verify Geyser-Spigot.jar
+echo "Verifying latest Geyser-Spigot.jar..."
+curl -sSL "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot" -o "${SERVER_DIR}/plugins/Geyser-Spigot.jar" || true
+
+# Ensure NetherNet transport is enabled in Geyser config
+if [ -f "${SERVER_DIR}/plugins/Geyser-Spigot/config.yml" ]; then
+  sed -i 's/transport: raknet/transport: nethernet/' "${SERVER_DIR}/plugins/Geyser-Spigot/config.yml" || true
 fi
 
 # Check floodgate-spigot.jar

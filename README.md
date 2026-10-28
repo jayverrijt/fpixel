@@ -18,17 +18,17 @@ cd server
   - Versie: `Minecraft 26.3` (Vanilla client, geen mods nodig!)
 - **Bedrock Edition (Telefoon, Tablet, Windows 10/11, Console)**:
   - Server IP: `localhost`
-  - Poort: `19132` (UDP)
-  - Draait via **GeyserMC 26.3 Preview** en **Floodgate**!
+  - Poort: `19132` (TCP voor NetherNet signaling & UDP voor WebRTC)
+  - Draait via **GeyserMC 2.12.1 (NetherNet enabled)** en **Floodgate**!
 
 ---
 
 ## 🌟 Nieuwste Updates
 
-### ⚡ Paper 26.3 & Geyser 26.3
-- Server geüpgraded naar **Paper 26.3 build 181** (draaiend op OpenJDK 25).
-- Geyser geüpgraded naar de officiële **26.3 build** (`pr.6712 #3108`), waardoor Bedrock clients naadloos kunnen verbinden.
-- Plugin toolchain geüpgraded naar Java 25 & `paper-api:26.3.build.181-stable`.
+### ⚡ Paper 26.3 & Geyser 2.12.1 (Bedrock 26.60+ & NetherNet)
+- Server geüpgraded naar **Paper 26.3 build 227** (draaiend op OpenJDK 25).
+- Geyser geüpgraded naar **2.12.1 build 1276** met volledige ondersteuning voor **Minecraft Bedrock 26.60+** via het nieuwe **NetherNet transport** protocol.
+- Plugin toolchain geüpgraded naar Java 25 & `paper-api:26.3.build.227-stable`.
 
 ### 👤 Skins Fix (SkinsRestorer)
 - **SkinsRestorer** geïntegreerd in de server:
