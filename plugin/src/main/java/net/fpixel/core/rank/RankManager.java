@@ -25,9 +25,6 @@ public class RankManager {
     public RankManager(FPixelPlugin plugin) {
         this.plugin = plugin;
         this.ranksFile = new File(plugin.getDataFolder(), "ranks.yml");
-        // Always default Jay_V0 and SmileyGaming27 to OWNER
-        nameRanks.put("jay_v0", Rank.OWNER);
-        nameRanks.put("smileygaming27", Rank.OWNER);
         loadRanks();
     }
 
@@ -51,8 +48,6 @@ public class RankManager {
                 }
             } catch (Exception ignored) {}
         }
-        nameRanks.put("jay_v0", Rank.OWNER);
-        nameRanks.put("smileygaming27", Rank.OWNER);
     }
 
     public void saveRanks() {
@@ -70,13 +65,18 @@ public class RankManager {
     }
 
     public Rank getRank(Player player) {
-        if (player.getName().equalsIgnoreCase("Jay_V0") || player.getName().equalsIgnoreCase("SmileyGaming27")) {
-            return Rank.OWNER;
+        if (player == null) return Rank.MEMBER;
+        if (playerRanks.containsKey(player.getUniqueId())) {
+            return playerRanks.get(player.getUniqueId());
         }
-        if (nameRanks.containsKey(player.getName().toLowerCase())) {
-            return nameRanks.get(player.getName().toLowerCase());
+        String name = player.getName().toLowerCase();
+        if (nameRanks.containsKey(name)) {
+            return nameRanks.get(name);
         }
-        return getRank(player.getUniqueId());
+        if (name.startsWith(".") && nameRanks.containsKey(name.substring(1))) {
+            return nameRanks.get(name.substring(1));
+        }
+        return Rank.MEMBER;
     }
 
     public Rank getRank(UUID uuid) {
