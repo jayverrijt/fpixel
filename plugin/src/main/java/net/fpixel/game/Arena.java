@@ -240,13 +240,11 @@ public abstract class Arena {
                 resetArena();
             } else {
                 // Join as spectator
-                if (player.getWorld() != null && player.getWorld().getName().equalsIgnoreCase("survival")) {
-                    if (plugin.getSurvivalManager() != null) {
-                        if (plugin.getSurvivalManager().getProfileManager() != null) {
-                            plugin.getSurvivalManager().getProfileManager().saveProfile(player);
-                        }
-                        plugin.getSurvivalManager().removeSurvivalPlayer(player);
+                if (plugin.getSurvivalManager() != null) {
+                    if (plugin.getSurvivalManager().isSurvivalWorld(player.getWorld())) {
+                        plugin.getSurvivalManager().getProfileManager().saveProfile(player);
                     }
+                    plugin.getSurvivalManager().removeSurvivalPlayer(player);
                 }
                 spectators.add(player.getUniqueId());
                 plugin.getSpectatorManager().makeSpectator(player, this);
@@ -262,13 +260,11 @@ public abstract class Arena {
             return false;
         }
 
-        if (player.getWorld() != null && player.getWorld().getName().equalsIgnoreCase("survival")) {
-            if (plugin.getSurvivalManager() != null) {
-                if (plugin.getSurvivalManager().getProfileManager() != null) {
-                    plugin.getSurvivalManager().getProfileManager().saveProfile(player);
-                }
-                plugin.getSurvivalManager().removeSurvivalPlayer(player);
+        if (plugin.getSurvivalManager() != null) {
+            if (plugin.getSurvivalManager().isSurvivalWorld(player.getWorld())) {
+                plugin.getSurvivalManager().getProfileManager().saveProfile(player);
             }
+            plugin.getSurvivalManager().removeSurvivalPlayer(player);
         }
 
         // Clear active potion effects on joining arena

@@ -106,9 +106,10 @@ public class SurvivalListener implements Listener {
                 player.setGameMode(GameMode.ADVENTURE);
             }
         } else if (!fromSurvival && currentSurvival) {
-            // Entering survival: remove lobby scoreboard and load waypoints
+            // Entering survival: remove lobby scoreboard, load survival profile and waypoints
             plugin.getScoreboardManager().remove(player);
             plugin.getSurvivalManager().addSurvivalPlayer(player);
+            plugin.getSurvivalManager().getProfileManager().loadProfile(player, player.getWorld());
             if (plugin.getWaypointManager() != null) {
                 plugin.getWaypointManager().loadPlayerWaypoints(player.getUniqueId());
             }
@@ -118,13 +119,13 @@ public class SurvivalListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        if (plugin.getSurvivalManager().isPlayerInSurvival(player)) {
+        if (plugin.getSurvivalManager().isSurvivalWorld(player.getWorld())) {
             plugin.getSurvivalManager().getProfileManager().saveProfile(player);
-            if (plugin.getWaypointManager() != null) {
-                plugin.getWaypointManager().savePlayerWaypoints(player.getUniqueId());
-            }
-            plugin.getSurvivalManager().removeSurvivalPlayer(player);
         }
+        if (plugin.getWaypointManager() != null) {
+            plugin.getWaypointManager().savePlayerWaypoints(player.getUniqueId());
+        }
+        plugin.getSurvivalManager().removeSurvivalPlayer(player);
     }
 
     @EventHandler(priority = EventPriority.HIGH)

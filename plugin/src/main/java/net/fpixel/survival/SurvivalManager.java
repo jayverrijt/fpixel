@@ -46,7 +46,7 @@ public class SurvivalManager {
     private void startAutoSaveTask() {
         Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
-                if (isSurvivalWorld(player.getWorld()) || isPlayerInSurvival(player)) {
+                if (isSurvivalWorld(player.getWorld())) {
                     profileManager.saveProfile(player);
                 }
             }
@@ -55,7 +55,7 @@ public class SurvivalManager {
 
     public void saveAllActiveProfiles() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (isSurvivalWorld(player.getWorld()) || isPlayerInSurvival(player)) {
+            if (isSurvivalWorld(player.getWorld())) {
                 profileManager.saveProfile(player);
             }
         }

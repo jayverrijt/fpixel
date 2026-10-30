@@ -53,7 +53,9 @@ public class DuelManager {
 
         Arena senderArena = plugin.getGameManager().getPlayerArena(sender);
         Arena targetArena = plugin.getGameManager().getPlayerArena(target);
-        if (senderArena != null || targetArena != null) {
+        boolean senderInSurvival = plugin.getSurvivalManager() != null && plugin.getSurvivalManager().isSurvivalWorld(sender.getWorld());
+        boolean targetInSurvival = plugin.getSurvivalManager() != null && plugin.getSurvivalManager().isSurvivalWorld(target.getWorld());
+        if (senderArena != null || targetArena != null || senderInSurvival || targetInSurvival) {
             ChatUtil.sendMessage(sender, "§cBoth players must be in the Lobby to duel.");
             return;
         }

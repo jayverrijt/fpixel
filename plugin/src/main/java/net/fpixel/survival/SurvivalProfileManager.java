@@ -98,6 +98,7 @@ public class SurvivalProfileManager {
      */
     public void loadProfile(Player player, World survivalWorld) {
         File ymlFile = new File(dataDir, player.getUniqueId().toString() + ".yml");
+        File bakFile = new File(dataDir, player.getUniqueId().toString() + ".yml.bak");
 
         // Clear any leftover items completely before loading
         player.getInventory().clear();
@@ -110,17 +111,47 @@ public class SurvivalProfileManager {
             YamlConfiguration config = YamlConfiguration.loadConfiguration(ymlFile);
             boolean hasItems = hasSurvivalItems(config);
 
-            // If YAML has no survival items but an imported JSON file exists, prioritize the imported file!
-            if (!hasItems && importedFile != null && importedFile.exists()) {
-                plugin.getLogger().info("YAML profile for " + player.getName() + " had no items; restoring from imported profile: " + importedFile.getName());
-                ymlFile.delete();
-                loadFromJson(player, importedFile, survivalWorld);
-                saveProfile(player);
-                return;
+            // If YAML has no survival items, check .bak file first!
+            if (!hasItems) {
+                if (bakFile.exists()) {
+                    try {
+                        YamlConfiguration bakConfig = YamlConfiguration.loadConfiguration(bakFile);
+                        if (hasSurvivalItems(bakConfig)) {
+                            plugin.getLogger().info("YAML profile for " + player.getName() + " had no items; restoring from backup profile: " + bakFile.getName());
+                            loadFromYaml(player, bakConfig, survivalWorld);
+                            java.nio.file.Files.copy(bakFile.toPath(), ymlFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                            return;
+                        }
+                    } catch (Exception e) {
+                        plugin.getLogger().warning("Failed to restore from backup profile for " + player.getName() + ": " + e.getMessage());
+                    }
+                }
+
+                // If no .bak with items, check imported JSON file
+                if (importedFile != null && importedFile.exists()) {
+                    plugin.getLogger().info("YAML profile for " + player.getName() + " had no items; restoring from imported profile: " + importedFile.getName());
+                    ymlFile.delete();
+                    loadFromJson(player, importedFile, survivalWorld);
+                    saveProfile(player);
+                    return;
+                }
             }
 
             loadFromYaml(player, config, survivalWorld);
             return;
+        }
+
+        // If no ymlFile exists, check .bak file
+        if (bakFile.exists()) {
+            try {
+                YamlConfiguration bakConfig = YamlConfiguration.loadConfiguration(bakFile);
+                if (hasSurvivalItems(bakConfig)) {
+                    plugin.getLogger().info("No YAML profile for " + player.getName() + "; restoring from backup profile: " + bakFile.getName());
+                    loadFromYaml(player, bakConfig, survivalWorld);
+                    java.nio.file.Files.copy(bakFile.toPath(), ymlFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    return;
+                }
+            } catch (Exception ignored) {}
         }
 
         // Check if an imported JSON file exists from the user's world zip
@@ -433,8 +464,9 @@ public class SurvivalProfileManager {
      * Saves the current survival profile (location, inventory, armor, offhand, XP, health, food) to disk.
      */
     public void saveProfile(Player player) {
+        // SAFETY GUARD: NEVER save a survival profile if the player is not physically in a survival world!
         if (plugin.getSurvivalManager() != null) {
-            if (!plugin.getSurvivalManager().isPlayerInSurvival(player)) {
+            if (!plugin.getSurvivalManager().isSurvivalWorld(player.getWorld())) {
                 return;
             }
         } else if (!player.getWorld().getName().equalsIgnoreCase("survival")) {
@@ -442,6 +474,18 @@ public class SurvivalProfileManager {
         }
 
         File ymlFile = new File(dataDir, player.getUniqueId().toString() + ".yml");
+        File bakFile = new File(dataDir, player.getUniqueId().toString() + ".yml.bak");
+
+        // Backup existing profile if it contains survival items
+        if (ymlFile.exists()) {
+            try {
+                YamlConfiguration existingConfig = YamlConfiguration.loadConfiguration(ymlFile);
+                if (hasSurvivalItems(existingConfig)) {
+                    java.nio.file.Files.copy(ymlFile.toPath(), bakFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                }
+            } catch (Exception ignored) {}
+        }
+
         try {
             YamlConfiguration config = new YamlConfiguration();
             Location loc = player.getLocation();
