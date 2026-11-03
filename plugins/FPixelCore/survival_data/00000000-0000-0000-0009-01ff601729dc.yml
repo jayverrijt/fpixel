@@ -1,10 +1,10 @@
 location:
   world: survival
-  x: 1297.7367
-  y: 56.0
-  z: 97.388504
-  yaw: 140.42041
-  pitch: 39.917847
+  x: 1299.668
+  y: 55.0
+  z: 101.03279
+  yaw: -67.37241
+  pitch: 5.865143
 level: 4
 exp: 0.20000005
 health: 20.0
@@ -34,8 +34,8 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:egg
-  count: 3
+  id: minecraft:dirt
+  count: 8
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -44,7 +44,11 @@ inventory:
   components:
     minecraft:damage: '168'
   schema_version: 1
-- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:egg
+  count: 1
+  schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:carrot
@@ -62,8 +66,8 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:feather
-  count: 2
+  id: minecraft:wheat_seeds
+  count: 33
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -87,11 +91,7 @@ inventory:
   id: minecraft:furnace
   count: 2
   schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:coal
-  count: 10
-  schema_version: 1
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:iron_sword
@@ -126,11 +126,7 @@ inventory:
   id: minecraft:chicken
   count: 1
   schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:rotten_flesh
-  count: 2
-  schema_version: 1
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:stone_pickaxe
@@ -148,28 +144,10 @@ inventory:
   id: minecraft:spruce_boat
   count: 1
   schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:arrow
-  count: 6
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:ominous_bottle
-  count: 1
-  components:
-    minecraft:ominous_bottle_amplifier: '3'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:wheat_seeds
-  count: 19
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:bone
-  count: 6
-  schema_version: 1
+- null
+- null
+- null
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:cobblestone
@@ -180,11 +158,7 @@ inventory:
   id: minecraft:spruce_log
   count: 37
   schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:dirt
-  count: 8
-  schema_version: 1
+- null
 - null
 - null
 - null
