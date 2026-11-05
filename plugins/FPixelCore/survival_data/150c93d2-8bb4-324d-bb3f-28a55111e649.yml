@@ -1,28 +1,28 @@
 location:
   world: survival
-  x: -920.708797919389
-  y: 63.0
-  z: -171.99186648562426
-  yaw: -166.84674
-  pitch: 40.224865
+  x: -906.7650503139743
+  y: 55.03755621695814
+  z: -210.47104594812882
+  yaw: 60.916016
+  pitch: 53.780704
 level: 69
-exp: 0.050131723
+exp: 0.08468895
 health: 20.0
 food: 20
 inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:netherite_sword
+  id: minecraft:tnt
+  count: 64
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:flint_and_steel
   count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:sand
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:lead
+  id: minecraft:grass_block
   count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
@@ -33,7 +33,7 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:deepslate_bricks
-  count: 1
+  count: 3
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -42,13 +42,13 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:gravel
-  count: 1
+  id: minecraft:diorite
+  count: 5
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:dirt
-  count: 17
+  count: 64
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -77,10 +77,14 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:grass_block
+  id: minecraft:lead
   count: 1
   schema_version: 1
-- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:cobblestone
+  count: 64
+  schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:deepslate_brick_wall
@@ -139,7 +143,7 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:andesite
-  count: 39
+  count: 49
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023

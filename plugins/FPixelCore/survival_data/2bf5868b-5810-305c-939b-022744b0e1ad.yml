@@ -1,10 +1,10 @@
 location:
   world: survival
-  x: -1577.3640651428295
-  y: 63.0
-  z: 300.8062004377529
-  yaw: 141.15002
-  pitch: 22.949839
+  x: -1574.5248206496879
+  y: 71.25402572284952
+  z: 316.0827055652297
+  yaw: -154.64813
+  pitch: 81.30002
 level: 15
 exp: 0.7131231
 health: 20.0
@@ -46,16 +46,13 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:diamond_shovel
+  id: minecraft:white_wool
   count: 1
-  components:
-    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:fortune":3,"minecraft:unbreaking":3}'
-    minecraft:damage: '680'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:ladder
-  count: 50
+  id: minecraft:stick
+  count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -64,8 +61,8 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:oak_fence
-  count: 40
+  id: minecraft:oak_planks
+  count: 20
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -82,7 +79,7 @@ inventory:
   id: minecraft:bundle
   count: 1
   components:
-    minecraft:bundle_contents: '[{count:2,id:"minecraft:bucket"},{id:"minecraft:torch"},{count:16,id:"minecraft:leather"},{count:3,id:"minecraft:sulfur_spike"},{count:3,id:"minecraft:blaze_rod"},{id:"minecraft:magma_cream"},{count:2,id:"minecraft:feather"},{id:"minecraft:diamond"},{count:3,id:"minecraft:brown_wool"},{count:2,id:"minecraft:gravel"},{id:"minecraft:acacia_planks"},{count:2,id:"minecraft:acacia_slab"},{count:6,id:"minecraft:potato"}]'
+    minecraft:bundle_contents: '[{count:5,id:"minecraft:wheat"},{count:2,id:"minecraft:cooked_porkchop"},{count:2,id:"minecraft:bucket"},{id:"minecraft:torch"},{count:16,id:"minecraft:leather"},{count:3,id:"minecraft:sulfur_spike"},{count:3,id:"minecraft:blaze_rod"},{id:"minecraft:magma_cream"},{count:2,id:"minecraft:feather"},{id:"minecraft:diamond"},{count:3,id:"minecraft:brown_wool"},{count:2,id:"minecraft:gravel"},{id:"minecraft:acacia_planks"},{count:2,id:"minecraft:acacia_slab"},{count:6,id:"minecraft:potato"}]'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -103,8 +100,8 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:stick
-  count: 1
+  id: minecraft:dirt
+  count: 18
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -113,8 +110,8 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:wheat
-  count: 5
+  id: minecraft:torch
+  count: 3
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -168,7 +165,11 @@ inventory:
   id: minecraft:apple
   count: 5
   schema_version: 1
-- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:ladder
+  count: 50
+  schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:cobblestone
@@ -186,8 +187,11 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:cooked_porkchop
-  count: 2
+  id: minecraft:diamond_shovel
+  count: 1
+  components:
+    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:fortune":3,"minecraft:unbreaking":3}'
+    minecraft:damage: '709'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -196,12 +200,20 @@ inventory:
   components:
     minecraft:banner_patterns: '[{color:"black",pattern:"minecraft:gradient"},{color:"yellow",pattern:"minecraft:mojang"},{color:"orange",pattern:"minecraft:flower"},{color:"black",pattern:"minecraft:skull"}]'
   schema_version: 1
-- null
-- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:oak_planks
+  id: minecraft:sand
   count: 64
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:sand
+  count: 8
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:oak_fence
+  count: 40
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
