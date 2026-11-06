@@ -1,10 +1,10 @@
 location:
   world: survival
-  x: -906.7650503139743
-  y: 55.03755621695814
-  z: -210.47104594812882
-  yaw: 69.60791
-  pitch: 53.35705
+  x: -941.5
+  y: 63.5
+  z: -183.5
+  yaw: -45.011078
+  pitch: 4.708808
 level: 69
 exp: 0.08468895
 health: 20.0
@@ -260,9 +260,9 @@ armor:
   schema_version: 1
 offhand:
   ==: org.bukkit.inventory.ItemStack
-  schema_version: 1
-  id: minecraft:air
   DataVersion: 5023
+  id: minecraft:air
+  schema_version: 1
 enderchest:
 - null
 - null
