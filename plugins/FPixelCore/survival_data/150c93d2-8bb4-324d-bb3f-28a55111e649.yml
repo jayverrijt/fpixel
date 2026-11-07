@@ -1,12 +1,12 @@
 location:
   world: survival
-  x: -941.5
-  y: 63.5
-  z: -183.5
-  yaw: -45.011078
-  pitch: 4.708808
+  x: -931.4242549829544
+  y: 63.0
+  z: -168.36919976930469
+  yaw: -171.28906
+  pitch: 26.635159
 level: 69
-exp: 0.08468895
+exp: 0.10844704
 health: 20.0
 food: 20
 inventory:
@@ -33,7 +33,7 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:deepslate_bricks
-  count: 3
+  count: 8
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -43,7 +43,7 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:diorite
-  count: 5
+  count: 29
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -143,7 +143,7 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:andesite
-  count: 49
+  count: 64
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
