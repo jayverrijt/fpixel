@@ -1,74 +1,53 @@
 location:
   world: survival
-  x: 1313.6335
+  x: 1314.7544
   y: 55.0
-  z: 104.04155
-  yaw: -163.7768
-  pitch: 20.735397
-level: 12
-exp: 0.7096771
+  z: 102.48716
+  yaw: 176.27664
+  pitch: 34.11664
+level: 7
+exp: 0.42857128
 health: 20.0
-food: 17
+food: 20
 inventory:
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:iron_sword
-  count: 1
-  components:
-    minecraft:damage: '212'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:bread
-  count: 13
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:porkchop
-  count: 2
-  schema_version: 1
-- null
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:stone_sword
-  count: 1
-  components:
-    minecraft:damage: '82'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:gold_nugget
-  count: 14
-  schema_version: 1
-- null
-- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:diamond_pickaxe
   count: 1
   components:
-    minecraft:damage: '7'
+    minecraft:damage: '75'
+  schema_version: 1
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:crafting_table
+  count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:crimson_fungus
   count: 1
   schema_version: 1
+- null
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:spruce_log
-  count: 46
+  id: minecraft:bread
+  count: 32
+  schema_version: 1
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:shield
+  count: 1
+  components:
+    minecraft:damage: '319'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:spruce_planks
-  count: 10
+  id: minecraft:basalt
+  count: 4
   schema_version: 1
-- null
-- null
-- null
-- null
-- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:stick
@@ -76,51 +55,70 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:copper_axe
-  count: 1
-  components:
-    minecraft:damage: '30'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:gold_nugget
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
   id: minecraft:bundle
   count: 1
   schema_version: 1
 - null
-- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:brown_wool
-  count: 22
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:crafting_table
-  count: 1
-  schema_version: 1
-- null
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:iron_axe
+  id: minecraft:shears
   count: 1
   components:
-    minecraft:damage: '232'
+    minecraft:damage: '29'
+  schema_version: 1
+- null
+- null
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:cooked_porkchop
+  count: 5
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:cooked_chicken
-  count: 4
+  id: minecraft:diamond_sword
+  count: 1
+  components:
+    minecraft:damage: '60'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:carrot
-  count: 11
+  id: minecraft:polished_blackstone_bricks
+  count: 3
   schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:spruce_planks
+  count: 2
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:netherrack
+  count: 59
+  schema_version: 1
+- null
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:blackstone
+  count: 5
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:chest
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:spruce_log
+  count: 43
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:gilded_blackstone
+  count: 7
+  schema_version: 1
+- null
 - null
 - null
 - null
@@ -140,28 +138,28 @@ inventory:
   id: minecraft:iron_leggings
   count: 1
   components:
-    minecraft:damage: '104'
+    minecraft:damage: '6'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:iron_chestplate
   count: 1
   components:
-    minecraft:damage: '104'
+    minecraft:damage: '6'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:iron_helmet
   count: 1
   components:
-    minecraft:damage: '104'
+    minecraft:damage: '7'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:shield
   count: 1
   components:
-    minecraft:damage: '208'
+    minecraft:damage: '12'
   schema_version: 1
 - null
 - null
@@ -178,21 +176,21 @@ armor:
   id: minecraft:iron_leggings
   count: 1
   components:
-    minecraft:damage: '104'
+    minecraft:damage: '6'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:iron_chestplate
   count: 1
   components:
-    minecraft:damage: '104'
+    minecraft:damage: '6'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:iron_helmet
   count: 1
   components:
-    minecraft:damage: '104'
+    minecraft:damage: '7'
   schema_version: 1
 offhand:
   ==: org.bukkit.inventory.ItemStack
@@ -200,7 +198,7 @@ offhand:
   id: minecraft:shield
   count: 1
   components:
-    minecraft:damage: '208'
+    minecraft:damage: '12'
   schema_version: 1
 enderchest:
 - null
