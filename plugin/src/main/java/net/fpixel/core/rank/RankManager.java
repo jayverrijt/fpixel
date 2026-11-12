@@ -192,6 +192,8 @@ public class RankManager {
                 // Grant all administrative, world building, and gameplay commands
                 attachment.setPermission("fpixel.admin", true);
                 attachment.setPermission("fpixel.mod", true);
+                attachment.setPermission("fpixel.parkour", true);
+                attachment.setPermission("fpixel.test", true);
                 attachment.setPermission("fpixel.fly", true);
                 attachment.setPermission("fpixel.worldedit", true);
                 attachment.setPermission("fpixel.fill", true);
@@ -262,6 +264,8 @@ public class RankManager {
             } else if (rank == Rank.MOD) {
                 // Mod gets moderation, teleportation and minigame force start
                 attachment.setPermission("fpixel.mod", true);
+                attachment.setPermission("fpixel.parkour", true);
+                attachment.setPermission("fpixel.test", true);
                 attachment.setPermission("fpixel.fly", true);
                 attachment.setPermission("fpixel.forcestart", true);
                 attachment.setPermission("minecraft.command.kick", true);

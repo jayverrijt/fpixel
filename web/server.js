@@ -300,6 +300,33 @@ function saveWhitelist(list) {
   }
 }
 
+// Custom Parkour Maps helper
+function getParkourMaps() {
+  const file = resolveFilePath('plugins/FPixelCore/custom_parkour.json');
+  if (file && fs.existsSync(file)) {
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf8')) || [];
+    } catch (e) {
+      console.error('Failed to read custom_parkour.json:', e);
+      return [];
+    }
+  }
+  return [];
+}
+
+function saveParkourMaps(maps) {
+  const file = resolveFilePath('plugins/FPixelCore/custom_parkour.json') || path.join(SERVER_DIR, 'plugins/FPixelCore/custom_parkour.json');
+  try {
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(maps, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Failed to save custom_parkour.json:', e);
+    return false;
+  }
+}
+
 // Whitelist requests helper
 function getWhitelistRequests() {
   const file = resolveFilePath('whitelist_requests.json');
@@ -879,6 +906,87 @@ app.post('/api/admin/whitelist/remove', async (req, res) => {
   } catch (err) {}
 
   res.json({ success: true, message: `${username} verwijderd van whitelist.` });
+});
+
+// ==========================================
+// PARKOUR STUDIO & CMS MAP REVIEWS
+// ==========================================
+
+// API: /api/parkour/maps (Get all custom parkour maps)
+app.get('/api/parkour/maps', (req, res) => {
+  const user = getSessionUser(req);
+  const maps = getParkourMaps();
+  const isOwner = Boolean(user && user.rank === 'OWNER');
+  res.json({
+    maps,
+    isOwner,
+    isAdmin: Boolean(user && user.isAdmin)
+  });
+});
+
+// API: /api/parkour/approve (Owner only: approve and activate map)
+app.post('/api/parkour/approve', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen spelers met de [OWNER] rang kunnen parkour maps goedkeuren.' });
+  }
+
+  const { id } = req.body;
+  const maps = getParkourMaps();
+  const map = maps.find(m => m.id && m.id.toLowerCase() === (id || '').toLowerCase());
+
+  if (!map) {
+    return res.status(404).json({ error: 'Parkour map niet gevonden.' });
+  }
+
+  map.status = 'APPROVED';
+  map.reviewer = user.username;
+  map.reviewedAt = Date.now();
+  saveParkourMaps(maps);
+
+  // Send RCON command to Minecraft server to immediately synchronize & register the arena live
+  try {
+    await sendRconCommand('fpixel parkour reload');
+    await sendRconCommand(`say §6[PARKOUR] §eMap §a"${map.name}" §7(${map.id}) §eis goedgekeurd door §c${user.username} §een is nu speelbaar!`);
+  } catch (err) {
+    console.warn('RCON parkour approve warning:', err.message);
+  }
+
+  res.json({
+    success: true,
+    message: `Parkour map "${map.name}" (${map.id}) is succesvol goedgekeurd en geactiveerd in de minigames!`
+  });
+});
+
+// API: /api/parkour/reject (Owner only: reject map)
+app.post('/api/parkour/reject', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen spelers met de [OWNER] rang kunnen parkour maps afkeuren.' });
+  }
+
+  const { id, reason } = req.body;
+  const maps = getParkourMaps();
+  const map = maps.find(m => m.id && m.id.toLowerCase() === (id || '').toLowerCase());
+
+  if (!map) {
+    return res.status(404).json({ error: 'Parkour map niet gevonden.' });
+  }
+
+  map.status = 'REJECTED';
+  map.reviewer = user.username;
+  map.reviewedAt = Date.now();
+  map.rejectReason = reason || 'Niet goedgekeurd door eigenaar';
+  saveParkourMaps(maps);
+
+  try {
+    await sendRconCommand('fpixel parkour reload');
+  } catch (err) {}
+
+  res.json({
+    success: true,
+    message: `Parkour map "${map.name}" (${map.id}) is gemarkeerd als afgewezen.`
+  });
 });
 
 app.listen(PORT, '0.0.0.0', () => {

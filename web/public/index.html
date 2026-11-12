@@ -29,6 +29,9 @@
         <button id="nav-admin-btn" class="nav-link admin-link" style="display: none;" onclick="switchTab('admin')">
           ⚙️ Admin Beheer <span id="admin-badge" class="counter-pill">0</span>
         </button>
+        <button id="nav-parkour-btn" class="nav-link owner-link" style="display: none;" onclick="switchTab('parkour')">
+          🏃 Parkour Studio <span id="parkour-badge" class="counter-pill">0</span>
+        </button>
       </nav>
 
       <div class="nav-auth">
@@ -289,6 +292,64 @@
                 <!-- Rendered via JS -->
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: PARKOUR STUDIO & REVIEWS (VISIBLE FOR OWNER / ADMIN) -->
+    <section id="tab-parkour" class="tab-pane">
+      <div class="admin-wrapper">
+        <div class="admin-header">
+          <div>
+            <span class="admin-badge owner-badge">👑 OWNER REVIEW CMS</span>
+            <h2>🏃 Community Parkour Studio</h2>
+            <p>Beoordeel door moderators ontworpen parcoursen. Gebruik <code>/fpixel test &lt;id&gt;</code> in-game en keur ze goed zodat spelers ze direct kunnen spelen in Parkour games!</p>
+          </div>
+          <button class="btn btn-sm btn-secondary" onclick="loadParkourData()">🔄 Verversen</button>
+        </div>
+
+        <!-- Parkour Stats Summary Grid -->
+        <div class="stats-overview-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🗺️</div>
+            <div class="stat-content">
+              <span class="stat-number" id="pk-stat-total">0</span>
+              <span class="stat-label">Totaal Aantal Maps</span>
+            </div>
+          </div>
+          <div class="stat-card stat-pending-border">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-content">
+              <span class="stat-number highlight-pending" id="pk-stat-pending">0</span>
+              <span class="stat-label">In Afwachting van Review</span>
+            </div>
+          </div>
+          <div class="stat-card stat-approved-border">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+              <span class="stat-number highlight-approved" id="pk-stat-approved">0</span>
+              <span class="stat-label">Goedgekeurd & Speelbaar</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Workflow Guide Callout -->
+        <div class="info-callout">
+          <div class="callout-icon">💡</div>
+          <div class="callout-text">
+            <strong>Hoe Parkour Review werkt:</strong>
+            Bouwers met [MOD] rang of hoger typen <code>/fpixel parkour create [naam]</code> en worden naar een leeg void canvas gestuurd.
+            Als [OWNER] kopieer je hieronder het commando <code>/fpixel test &lt;id&gt;</code> om het parcours in Minecraft te testen.
+            Bevalt de map? Klik dan op <strong>✅ Goedkeuren & Live Zetten</strong>. De map wordt direct geregistreerd en speelbaar voor iedereen die een Parkour game joint!
+          </div>
+        </div>
+
+        <!-- Maps Grid Container -->
+        <div class="admin-section">
+          <h3>📬 Ingezonden Parkour Parcoursen</h3>
+          <div id="parkour-maps-list" class="parkour-cards-grid">
+            <!-- Rendered dynamically via app.js -->
           </div>
         </div>
       </div>

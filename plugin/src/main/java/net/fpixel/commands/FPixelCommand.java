@@ -8,8 +8,11 @@ import net.fpixel.core.util.ChatUtil;
 import net.fpixel.game.Arena;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -21,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,7 +37,7 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
         this.chunkHandler = chunkHandler;
     }
 
-    private boolean checkPermission(CommandSender sender) {
+    private boolean checkAdminPermission(CommandSender sender) {
         if (sender.hasPermission("fpixel.admin") || sender.isOp()) return true;
         if (sender instanceof Player player) {
             Rank rank = plugin.getRankManager().getRank(player);
@@ -42,13 +46,26 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
         return false;
     }
 
+    private boolean checkModPermission(CommandSender sender) {
+        if (sender.hasPermission("fpixel.admin") || sender.hasPermission("fpixel.mod") || sender.isOp()) return true;
+        if (sender instanceof Player player) {
+            Rank rank = plugin.getRankManager().getRank(player);
+            return rank != null && rank.getWeight() >= Rank.MOD.getWeight();
+        }
+        return false;
+    }
+
+    private boolean checkOwnerPermission(CommandSender sender) {
+        if (sender.hasPermission("fpixel.owner") || sender.isOp()) return true;
+        if (sender instanceof Player player) {
+            Rank rank = plugin.getRankManager().getRank(player);
+            return rank != null && rank.getWeight() >= Rank.OWNER.getWeight();
+        }
+        return false;
+    }
+
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] rawArgs) {
-        if (!checkPermission(sender)) {
-            sender.sendMessage(ChatUtil.colorize("§cYou do not have permission to execute this command."));
-            return true;
-        }
-
         String cmdLabel = label.toLowerCase();
         if (cmdLabel.startsWith("/")) cmdLabel = cmdLabel.substring(1);
 
@@ -68,11 +85,58 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 0) {
+            if (!checkModPermission(sender)) {
+                sender.sendMessage(ChatUtil.colorize("§cYou do not have permission to execute this command."));
+                return true;
+            }
             sendHelp(sender);
             return true;
         }
 
         String sub = args[0].toLowerCase();
+
+        // ------------------------------------------
+        // ADVANCED PARKOUR STUDIO & REVIEW
+        // ------------------------------------------
+        if (sub.equals("parkour")) {
+            return handleParkourCommand(sender, args);
+        }
+
+        if (sub.equals("test")) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage("Alleen spelers kunnen /fpixel test gebruiken.");
+                return true;
+            }
+            if (!checkModPermission(sender)) {
+                ChatUtil.sendMessage(player, "§cJe hebt minstens de §2[MOD] §crang nodig om parkour maps te reviewen.");
+                return true;
+            }
+            if (args.length < 2) {
+                ChatUtil.sendMessage(player, "§cGebruik: §e/fpixel test <map-id>");
+                return true;
+            }
+            plugin.getParkourManager().startTestingSession(player, args[1]);
+            return true;
+        }
+
+        if (sub.equals("approve")) {
+            if (!checkOwnerPermission(sender)) {
+                sender.sendMessage(ChatUtil.colorize("§cAlleen [OWNER] rang kan parkour maps goedkeuren."));
+                return true;
+            }
+            if (args.length < 2) {
+                sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel approve <map-id>"));
+                return true;
+            }
+            plugin.getParkourManager().approveMap(sender, args[1]);
+            return true;
+        }
+
+        // All other administrative commands require Admin permission (weight >= 90 or OP)
+        if (!checkAdminPermission(sender)) {
+            sender.sendMessage(ChatUtil.colorize("§cYou do not have permission to execute this command."));
+            return true;
+        }
 
         // ------------------------------------------
         // UNIFIED /fpixel fill
@@ -302,6 +366,242 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private boolean handleParkourCommand(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sendParkourHelp(sender);
+            return true;
+        }
+
+        String action = args[1].toLowerCase();
+
+        switch (action) {
+            case "create" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage("Alleen spelers kunnen /fpixel parkour create gebruiken.");
+                    return true;
+                }
+                if (!checkModPermission(player)) {
+                    ChatUtil.sendMessage(player, "§cJe hebt minstens de §2[MOD] §crang nodig om een parkour map te ontwerpen.");
+                    return true;
+                }
+                String name = "";
+                if (args.length > 2) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 2; i < args.length; i++) {
+                        if (i > 2) sb.append(" ");
+                        sb.append(args[i]);
+                    }
+                    name = sb.toString();
+                }
+                plugin.getParkourManager().createMap(player, name);
+                return true;
+            }
+            case "test" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage("Alleen spelers kunnen test gebruiken.");
+                    return true;
+                }
+                if (!checkModPermission(player)) {
+                    ChatUtil.sendMessage(player, "§cJe hebt minstens de §2[MOD] §crang nodig om parkour maps te reviewen.");
+                    return true;
+                }
+                if (args.length < 3) {
+                    ChatUtil.sendMessage(player, "§cGebruik: §e/fpixel parkour test <map-id>");
+                    return true;
+                }
+                plugin.getParkourManager().startTestingSession(player, args[2]);
+                return true;
+            }
+            case "approve" -> {
+                if (!checkOwnerPermission(sender)) {
+                    sender.sendMessage(ChatUtil.colorize("§cAlleen spelers met de [OWNER] rang kunnen parkour maps goedkeuren."));
+                    return true;
+                }
+                if (args.length < 3) {
+                    sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel parkour approve <map-id>"));
+                    return true;
+                }
+                plugin.getParkourManager().approveMap(sender, args[2]);
+                return true;
+            }
+            case "reject" -> {
+                if (!checkOwnerPermission(sender)) {
+                    sender.sendMessage(ChatUtil.colorize("§cAlleen spelers met de [OWNER] rang kunnen parkour maps afkeuren."));
+                    return true;
+                }
+                if (args.length < 3) {
+                    sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel parkour reject <map-id> [reden]"));
+                    return true;
+                }
+                String reason = "";
+                if (args.length > 3) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 3; i < args.length; i++) {
+                        if (i > 3) sb.append(" ");
+                        sb.append(args[i]);
+                    }
+                    reason = sb.toString();
+                }
+                plugin.getParkourManager().rejectMap(sender, args[2], reason);
+                return true;
+            }
+            case "setstart" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage("Alleen spelers kunnen setstart gebruiken.");
+                    return true;
+                }
+                if (!checkModPermission(player)) {
+                    ChatUtil.sendMessage(player, "§cJe hebt minstens de §2[MOD] §crang nodig.");
+                    return true;
+                }
+                String mapId = plugin.getParkourManager().getEditingMapId(player);
+                if (mapId == null) {
+                    ChatUtil.sendMessage(player, "§cJe bent momenteel geen map aan het bewerken! Gebruik eerst §e/fpixel parkour build <id> §cof §e/fpixel parkour create§c.");
+                    return true;
+                }
+                net.fpixel.games.parkour.CustomParkourMap map = plugin.getParkourManager().getMap(mapId);
+                if (map != null) {
+                    map.setStart(player.getLocation());
+                    plugin.getParkourManager().saveMaps();
+                    ChatUtil.sendMessage(player, "§aStartpunt voor map §e" + mapId + " §abijgewerkt naar je huidige positie!");
+                }
+                return true;
+            }
+            case "checkpoint", "addcheckpoint" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage("Alleen spelers kunnen checkpoints toevoegen.");
+                    return true;
+                }
+                if (!checkModPermission(player)) {
+                    ChatUtil.sendMessage(player, "§cJe hebt minstens de §2[MOD] §crang nodig.");
+                    return true;
+                }
+                String mapId = plugin.getParkourManager().getEditingMapId(player);
+                if (mapId == null) {
+                    ChatUtil.sendMessage(player, "§cJe bent momenteel geen map aan het bewerken! Gebruik eerst §e/fpixel parkour build <id>§c.");
+                    return true;
+                }
+                net.fpixel.games.parkour.CustomParkourMap map = plugin.getParkourManager().getMap(mapId);
+                if (map != null) {
+                    map.addCheckpoint(player.getLocation());
+                    plugin.getParkourManager().saveMaps();
+                    ChatUtil.sendMessage(player, "§aCheckpoint #" + map.getCheckpoints().size() + " toegevoegd op je huidige positie!");
+                }
+                return true;
+            }
+            case "setfinish" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage("Alleen spelers kunnen setfinish gebruiken.");
+                    return true;
+                }
+                if (!checkModPermission(player)) {
+                    ChatUtil.sendMessage(player, "§cJe hebt minstens de §2[MOD] §crang nodig.");
+                    return true;
+                }
+                String mapId = plugin.getParkourManager().getEditingMapId(player);
+                if (mapId == null) {
+                    ChatUtil.sendMessage(player, "§cJe bent momenteel geen map aan het bewerken! Gebruik eerst §e/fpixel parkour build <id>§c.");
+                    return true;
+                }
+                net.fpixel.games.parkour.CustomParkourMap map = plugin.getParkourManager().getMap(mapId);
+                if (map != null) {
+                    map.setFinish(player.getLocation());
+                    plugin.getParkourManager().saveMaps();
+                    ChatUtil.sendMessage(player, "§6Finish lijn voor map §e" + mapId + " §6ingesteld op je huidige positie!");
+                }
+                return true;
+            }
+            case "clearcheckpoints" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage("Alleen spelers kunnen checkpoints wissen.");
+                    return true;
+                }
+                String mapId = plugin.getParkourManager().getEditingMapId(player);
+                if (mapId == null) {
+                    ChatUtil.sendMessage(player, "§cJe bent momenteel geen map aan het bewerken!");
+                    return true;
+                }
+                net.fpixel.games.parkour.CustomParkourMap map = plugin.getParkourManager().getMap(mapId);
+                if (map != null) {
+                    map.getCheckpoints().clear();
+                    plugin.getParkourManager().saveMaps();
+                    ChatUtil.sendMessage(player, "§cAlle checkpoints gewist voor map §e" + mapId + "§c.");
+                }
+                return true;
+            }
+            case "build" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage("Alleen spelers kunnen bouwen.");
+                    return true;
+                }
+                if (!checkModPermission(player)) {
+                    ChatUtil.sendMessage(player, "§cJe hebt minstens de §2[MOD] §crang nodig.");
+                    return true;
+                }
+                if (args.length < 3) {
+                    ChatUtil.sendMessage(player, "§cGebruik: §e/fpixel parkour build <map-id>");
+                    return true;
+                }
+                net.fpixel.games.parkour.CustomParkourMap map = plugin.getParkourManager().getMap(args[2]);
+                if (map == null) {
+                    ChatUtil.sendMessage(player, "§cGeen parkour map gevonden met ID: §e" + args[2]);
+                    return true;
+                }
+                World w = plugin.getParkourManager().getOrCreateParkourWorld();
+                Location start = map.getStartLocation(w);
+                if (start != null) {
+                    plugin.getParkourManager().setEditingMapId(player, map.getId());
+                    player.teleport(start.clone().add(0, 0.2, 0));
+                    player.setGameMode(GameMode.CREATIVE);
+                    player.setAllowFlight(true);
+                    player.setFlying(true);
+                    plugin.getParkourManager().giveBuilderTools(player, map);
+                    ChatUtil.sendMessage(player, "§aJe bewerkt nu map: §e" + map.getName() + " §7(" + map.getId() + ")");
+                }
+                return true;
+            }
+            case "list" -> {
+                sender.sendMessage(ChatUtil.colorize("§6§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
+                sender.sendMessage(ChatUtil.colorize("§e§l         COMMUNITY PARKOUR MAPS"));
+                Collection<net.fpixel.games.parkour.CustomParkourMap> all = plugin.getParkourManager().getAllMaps();
+                if (all.isEmpty()) {
+                    sender.sendMessage(ChatUtil.colorize(" §7(Nog geen custom maps aangemaakt. Gebruik /fpixel parkour create)"));
+                } else {
+                    for (net.fpixel.games.parkour.CustomParkourMap m : all) {
+                        String stColor = m.isApproved() ? "§a" : (m.getStatus().equals("REJECTED") ? "§c" : "§e");
+                        sender.sendMessage(ChatUtil.colorize(" §e• §b" + m.getId() + " §f\"" + m.getName() + "\" §7door §a" + m.getCreatorName() +
+                                " " + stColor + "[" + m.getStatus() + "] §7(" + m.getCheckpoints().size() + " CPs)"));
+                    }
+                }
+                sender.sendMessage(ChatUtil.colorize("§7Testen: §e/fpixel test <id> §7| Goedkeuren: §e/fpixel approve <id>"));
+                sender.sendMessage(ChatUtil.colorize("§6§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
+                return true;
+            }
+            case "reload" -> {
+                plugin.getParkourManager().loadMaps();
+                sender.sendMessage(ChatUtil.colorize("§aParkour maps herladen en actieve arena's gesynchroniseerd!"));
+                return true;
+            }
+            default -> {
+                sendParkourHelp(sender);
+                return true;
+            }
+        }
+    }
+
+    private void sendParkourHelp(CommandSender sender) {
+        sender.sendMessage(ChatUtil.colorize("§6§lParkour Creator Studio Commando's:"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour create [naam] §7- Maak een nieuwe lege parkour canvas (MOD+)"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour build <id> §7- Bewerk een bestaande parkour map"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour setstart §7- Verplaats startpunt naar jouw locatie"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour checkpoint §7- Voeg checkpoint toe"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour setfinish §7- Verplaats finishlijn"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour list §7- Bekijk overzicht van alle custom maps"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel test <id> §7- Test / review een parkour parcours"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour approve <id> §7- Keur map goed & activeer in games (OWNER)"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour reject <id> [reden] §7- Wijs map af (OWNER)"));
+    }
+
     private int parseY(String arg, int playerY) {
         if (arg.equals("~")) return playerY;
         if (arg.startsWith("~")) return playerY + Integer.parseInt(arg.substring(1));
@@ -310,6 +610,10 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
 
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(ChatUtil.colorize("§6§lFPixel Unified Commands:"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour create [naam] §7- Bouw een parkour map in de void (MOD+)"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour list §7- Bekijk alle gemaakte parkour maps"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel test <id> §7- Test / review een parkour parcours"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour approve <id> §7- Keur parkour map goed (OWNER)"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel fill <vanY> <totY> [blok] [all|safe|oneside] §7- Vul chunk"));
         sender.sendMessage(ChatUtil.colorize("   §f• all: §7vult hele chunk tussen Y hoogtes"));
         sender.sendMessage(ChatUtil.colorize("   §f• safe: §7behoudt geplaatste blokken"));
@@ -349,7 +653,24 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
 
         List<String> list = new ArrayList<>();
         if (args.length == 1) {
-            list.addAll(Arrays.asList("fill", "empty", "undo", "import", "update", "backup", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
+            list.addAll(Arrays.asList("parkour", "test", "approve", "fill", "empty", "undo", "import", "update", "backup", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
+        } else if (args[0].equalsIgnoreCase("parkour")) {
+            if (args.length == 2) {
+                list.addAll(Arrays.asList("create", "build", "setstart", "checkpoint", "setfinish", "clearcheckpoints", "list", "test", "approve", "reject", "reload"));
+            } else if (args.length == 3) {
+                String sub = args[1].toLowerCase();
+                if (sub.equals("test") || sub.equals("approve") || sub.equals("reject") || sub.equals("build")) {
+                    for (net.fpixel.games.parkour.CustomParkourMap m : plugin.getParkourManager().getAllMaps()) {
+                        list.add(m.getId());
+                    }
+                }
+            }
+        } else if (args[0].equalsIgnoreCase("test") || args[0].equalsIgnoreCase("approve")) {
+            if (args.length == 2) {
+                for (net.fpixel.games.parkour.CustomParkourMap m : plugin.getParkourManager().getAllMaps()) {
+                    list.add(m.getId());
+                }
+            }
         } else if (args[0].equalsIgnoreCase("import")) {
             if (args.length == 2) {
                 list.addAll(Arrays.asList("list", "hub", "map", "scan"));

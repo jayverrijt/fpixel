@@ -46,6 +46,7 @@ public class FPixelPlugin extends JavaPlugin {
     private net.fpixel.lobby.HubLoreManager hubLoreManager;
     private net.fpixel.core.testing.TestingManager testingManager;
     private net.fpixel.core.security.HostnameListener hostnameListener;
+    private net.fpixel.games.parkour.ParkourManager parkourManager;
 
 
     @Override
@@ -73,6 +74,7 @@ public class FPixelPlugin extends JavaPlugin {
         this.survivalManager.init();
         this.waypointManager = new net.fpixel.survival.waypoints.WaypointManager(this);
         this.mapImporter = new net.fpixel.core.map.MapImporter(this);
+        this.parkourManager = new net.fpixel.games.parkour.ParkourManager(this);
 
         // 2. Visual & Display Managers (Scoreboards & Tablist)
         this.scoreboardManager = new ScoreboardManager(this);
@@ -86,6 +88,7 @@ public class FPixelPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new LaunchpadListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ChatListener(this), this);
         Bukkit.getPluginManager().registerEvents(new SurvivalListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new net.fpixel.games.parkour.ParkourListener(this, this.parkourManager), this);
 
 
         // 4. Register Commands
@@ -221,6 +224,7 @@ public class FPixelPlugin extends JavaPlugin {
     public net.fpixel.lobby.HubLoreManager getHubLoreManager() { return hubLoreManager; }
     public net.fpixel.core.testing.TestingManager getTestingManager() { return testingManager; }
     public net.fpixel.core.security.HostnameListener getHostnameListener() { return hostnameListener; }
+    public net.fpixel.games.parkour.ParkourManager getParkourManager() { return parkourManager; }
 
     @Override
     public org.bukkit.generator.ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {

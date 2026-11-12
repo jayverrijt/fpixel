@@ -9,8 +9,7 @@ softdepend:
   - Geyser-Spigot
 commands:
   fpixel:
-    description: Unified FPixel Network, Fill, and Empty command
-    permission: fpixel.admin
+    description: Unified FPixel Network, Parkour, Fill, and Empty command
     aliases: [fp]
   fill:
     description: Unified FPixel chunk fill command

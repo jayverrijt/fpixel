@@ -127,6 +127,11 @@ function switchTab(tabId) {
   if (tabId === 'admin') {
     loadAdminData();
   }
+
+  // Parkour studio loading
+  if (tabId === 'parkour') {
+    loadParkourData();
+  }
 }
 
 // ==========================================
@@ -199,6 +204,17 @@ function renderLoggedIn(user) {
   } else {
     adminBtn.style.display = 'none';
   }
+
+  // Parkour Button Toggle (Shown for OWNER or Admin)
+  const parkourBtn = document.getElementById('nav-parkour-btn');
+  if (parkourBtn) {
+    if (user.rank === 'OWNER' || user.isAdmin) {
+      parkourBtn.style.display = 'inline-flex';
+      fetchParkourBadgeCount();
+    } else {
+      parkourBtn.style.display = 'none';
+    }
+  }
 }
 
 function renderLoggedOut() {
@@ -208,6 +224,8 @@ function renderLoggedOut() {
   document.getElementById('welcome-banner').style.display = 'block';
   document.getElementById('personal-card').style.display = 'none';
   document.getElementById('nav-admin-btn').style.display = 'none';
+  const parkourBtn = document.getElementById('nav-parkour-btn');
+  if (parkourBtn) parkourBtn.style.display = 'none';
 }
 
 function openLoginModal() {
@@ -778,6 +796,237 @@ function renderOffline() {
   if (pill && statusText) {
     pill.className = 'status-pill offline';
     statusText.innerText = 'OFFLINE';
+  }
+}
+
+// ==========================================
+// PARKOUR STUDIO & REVIEWS
+// ==========================================
+
+async function fetchParkourBadgeCount() {
+  try {
+    const res = await fetch('/api/parkour/maps');
+    const data = await res.json();
+    const pendingCount = (data.maps || []).filter(m => (m.status || '').toUpperCase() === 'PENDING_REVIEW').length;
+    const badge = document.getElementById('parkour-badge');
+    if (badge) {
+      badge.innerText = pendingCount;
+      badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+    }
+  } catch (err) {}
+}
+
+async function loadParkourData() {
+  const container = document.getElementById('parkour-maps-list');
+  if (!container) return;
+
+  container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-dim);">Laden van parkour kaarten...</div>`;
+
+  try {
+    const res = await fetch('/api/parkour/maps');
+    const data = await res.json();
+    const maps = data.maps || [];
+    const isOwner = data.isOwner;
+
+    // Update stats
+    const total = maps.length;
+    const pending = maps.filter(m => (m.status || '').toUpperCase() === 'PENDING_REVIEW').length;
+    const approved = maps.filter(m => (m.status || '').toUpperCase() === 'APPROVED').length;
+
+    const elTotal = document.getElementById('pk-stat-total');
+    const elPending = document.getElementById('pk-stat-pending');
+    const elApproved = document.getElementById('pk-stat-approved');
+    if (elTotal) elTotal.innerText = total;
+    if (elPending) elPending.innerText = pending;
+    if (elApproved) elApproved.innerText = approved;
+
+    const badge = document.getElementById('parkour-badge');
+    if (badge) {
+      badge.innerText = pending;
+      badge.style.display = pending > 0 ? 'inline-block' : 'none';
+    }
+
+    if (maps.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state-card" style="grid-column: 1 / -1; text-align: center; padding: 48px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+          <div style="font-size: 3rem; margin-bottom: 12px;">🏃</div>
+          <h3 style="margin-bottom: 8px;">Nog Geen Parkour Kaarten</h3>
+          <p style="color: var(--text-dim); max-width: 500px; margin: 0 auto;">Laat een speler met [MOD] rang of hoger <code>/fpixel parkour create [naam]</code> uitvoeren in Minecraft om een nieuw parcours in de void te bouwen.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Sort: pending first, then by createdAt desc
+    maps.sort((a, b) => {
+      const aPending = (a.status || '').toUpperCase() === 'PENDING_REVIEW';
+      const bPending = (b.status || '').toUpperCase() === 'PENDING_REVIEW';
+      if (aPending && !bPending) return -1;
+      if (!aPending && bPending) return 1;
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+
+    container.innerHTML = maps.map(map => {
+      const statusUpper = (map.status || 'PENDING_REVIEW').toUpperCase();
+      let statusBadgeClass = 'status-pending';
+      let statusLabel = '⏳ In Afwachting';
+
+      if (statusUpper === 'APPROVED') {
+        statusBadgeClass = 'status-approved';
+        statusLabel = '✅ Goedgekeurd & Speelbaar';
+      } else if (statusUpper === 'REJECTED') {
+        statusBadgeClass = 'status-rejected';
+        statusLabel = '❌ Afgewezen';
+      }
+
+      const creator = map.creatorName || 'Onbekend';
+      const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(creator)}/64`;
+      const dateStr = map.createdAt ? new Date(map.createdAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Onlangs';
+      const checkpointsCount = Array.isArray(map.checkpoints) ? map.checkpoints.length : 0;
+      const testCmd = `/fpixel test ${map.id}`;
+
+      let actionsHtml = '';
+      if (isOwner) {
+        if (statusUpper === 'PENDING_REVIEW') {
+          actionsHtml = `
+            <div class="card-actions-row">
+              <button class="btn btn-sm btn-primary" onclick="approveParkourMap('${map.id}')">
+                ✅ Goedkeuren & Live Zetten
+              </button>
+              <button class="btn btn-sm btn-danger" onclick="promptRejectParkourMap('${map.id}')">
+                ❌ Afwijzen
+              </button>
+            </div>
+          `;
+        } else if (statusUpper === 'APPROVED') {
+          actionsHtml = `
+            <div class="card-actions-row">
+              <span class="active-game-pill">🎮 Actief in Parkour Game Rotatie</span>
+              <button class="btn btn-xs btn-outline-danger" onclick="promptRejectParkourMap('${map.id}')" title="Alsnog intrekken">
+                Deactiveren
+              </button>
+            </div>
+          `;
+        } else {
+          actionsHtml = `
+            <div class="card-actions-row">
+              <span class="rejected-game-pill">Afgewezen: ${escapeHtml(map.rejectReason || 'Niet passend')}</span>
+              <button class="btn btn-xs btn-outline-success" onclick="approveParkourMap('${map.id}')">
+                Alsnog Goedkeuren
+              </button>
+            </div>
+          `;
+        }
+      }
+
+      return `
+        <div class="parkour-card ${statusUpper === 'PENDING_REVIEW' ? 'pending-highlight' : ''}">
+          <div class="parkour-card-header">
+            <div class="header-left">
+              <span class="parkour-id-pill">${map.id}</span>
+              <span class="parkour-status-badge ${statusBadgeClass}">${statusLabel}</span>
+            </div>
+            <span class="map-date-text">${dateStr}</span>
+          </div>
+
+          <div class="parkour-card-body">
+            <div class="creator-row">
+              <img class="creator-avatar" src="${avatarUrl}" alt="${creator}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/64'">
+              <div class="creator-meta">
+                <h3 class="parkour-title">${escapeHtml(map.name || ('Parkour ' + map.id))}</h3>
+                <span class="creator-name">Maker: <strong>${escapeHtml(creator)}</strong></span>
+              </div>
+            </div>
+
+            <div class="parkour-metrics-grid">
+              <div class="metric-item">
+                <span class="metric-k">🏁 Checkpoints:</span>
+                <span class="metric-v"><strong>${checkpointsCount}</strong> punten</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-k">📍 Start:</span>
+                <span class="metric-v"><code>X: ${Math.round(map.startX || 0)}, Y: ${Math.round(map.startY || 100)}, Z: ${Math.round(map.startZ || 0)}</code></span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-k">⚠️ Void Y:</span>
+                <span class="metric-v">&lt; ${map.voidY || 70}</span>
+              </div>
+            </div>
+
+            <!-- In-game Test Command Quick Copy -->
+            <div class="test-command-widget" onclick="copyToClipboard('${testCmd}', 'Test commando gekopieerd: ${testCmd}')" title="Klik om commando te kopiëren">
+              <div class="test-cmd-content">
+                <span class="test-cmd-icon">🎮</span>
+                <div class="test-cmd-text">
+                  <span class="test-cmd-label">In-Game Testen (Review):</span>
+                  <code class="test-cmd-code">${testCmd}</code>
+                </div>
+              </div>
+              <button class="btn btn-xs btn-copy-cmd" type="button">📋 Kopieer</button>
+            </div>
+
+            ${actionsHtml}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error('Fout bij laden van parkour kaarten:', err);
+    container.innerHTML = `<div class="error-box">Fout bij laden van parkour kaarten: ${err.message}</div>`;
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+
+async function approveParkourMap(mapId) {
+  if (!confirm(`Weet je zeker dat je parkour map ${mapId} wilt goedkeuren? De map wordt direct speelbaar in de parkour minigames!`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/parkour/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: mapId })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.message || 'Map succesvol goedgekeurd!');
+      loadParkourData();
+    } else {
+      showToast('Fout: ' + (data.error || 'Kon map niet goedkeuren'));
+    }
+  } catch (err) {
+    showToast('Netwerkfout bij goedkeuren.');
+  }
+}
+
+function promptRejectParkourMap(mapId) {
+  const reason = prompt('Voer een reden in voor de afwijzing van deze parkour map:', 'Parcours is te moeilijk of incompleet');
+  if (reason === null) return; // Cancelled
+  rejectParkourMap(mapId, reason);
+}
+
+async function rejectParkourMap(mapId, reason) {
+  try {
+    const res = await fetch('/api/parkour/reject', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: mapId, reason })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.message || 'Map afgewezen.');
+      loadParkourData();
+    } else {
+      showToast('Fout: ' + (data.error || 'Kon map niet afwijzen'));
+    }
+  } catch (err) {
+    showToast('Netwerkfout bij afwijzen.');
   }
 }
 
