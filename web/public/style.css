@@ -1079,6 +1079,10 @@ input[type="text"]:focus, textarea:focus {
   border-left: 4px solid var(--green);
 }
 
+.stat-card.stat-disabled-border {
+  border-left: 4px solid #64748b;
+}
+
 .stat-icon {
   font-size: 2rem;
   background: rgba(255, 255, 255, 0.04);
@@ -1109,6 +1113,10 @@ input[type="text"]:focus, textarea:focus {
 
 .highlight-approved {
   color: var(--green);
+}
+
+.highlight-disabled {
+  color: #94a3b8;
 }
 
 .stat-label {
@@ -1229,6 +1237,12 @@ input[type="text"]:focus, textarea:focus {
   background: rgba(239, 68, 68, 0.2);
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.status-disabled {
+  background: rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.4);
 }
 
 .map-date-text {
@@ -1404,6 +1418,34 @@ input[type="text"]:focus, textarea:focus {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.disabled-game-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.1);
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  flex: 1;
+}
+
+.btn-outline-warning {
+  background: transparent;
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-outline-warning:hover {
+  background: rgba(245, 158, 11, 0.15);
 }
 
 .btn-outline-danger {

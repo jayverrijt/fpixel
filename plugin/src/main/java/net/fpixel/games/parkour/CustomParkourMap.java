@@ -200,4 +200,8 @@ public class CustomParkourMap {
     public boolean isApproved() {
         return "APPROVED".equalsIgnoreCase(status);
     }
+
+    public boolean isDisabled() {
+        return "DISABLED".equalsIgnoreCase(status) || "DEACTIVATED".equalsIgnoreCase(status);
+    }
 }

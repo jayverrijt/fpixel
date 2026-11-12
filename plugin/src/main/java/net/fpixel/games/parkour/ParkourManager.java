@@ -210,23 +210,39 @@ public class ParkourManager {
 
     public void giveBuilderTools(Player player, CustomParkourMap map) {
         player.getInventory().clear();
-        player.getInventory().setItem(0, new ItemBuilder(Material.LIGHT_WEIGHTED_PRESSURE_PLATE)
-                .name("§e§lCheckpoint Marker §7(Plaats om toe te voegen)")
+        player.getInventory().setItem(0, new ItemBuilder(Material.STONE_PRESSURE_PLATE)
+                .name("§b§lCheckpoint Marker §7(Plaats om toe te voegen)")
                 .lore("§7Plaats deze drukplaat op je parcours", "§7om een checkpoint in te stellen.")
                 .build());
 
-        player.getInventory().setItem(1, new ItemBuilder(Material.HEAVY_WEIGHTED_PRESSURE_PLATE)
-                .name("§6§lFinish Lijn Marker §7(Plaats om in te stellen)")
+        player.getInventory().setItem(1, new ItemBuilder(Material.LIGHT_WEIGHTED_PRESSURE_PLATE)
+                .name("§6§l🚀 Giga Boost Pad §7(Gouden Drukplaat)")
+                .lore("§7Plaats deze gouden drukplaat om spelers", "§7een gigantische lancering / boost te geven!")
+                .build());
+
+        player.getInventory().setItem(2, new ItemBuilder(Material.HEAVY_WEIGHTED_PRESSURE_PLATE)
+                .name("§c§l🏁 Finish Lijn Marker §7(Plaats voor finish)")
                 .lore("§7Plaats deze drukplaat waar het parcours", "§7succesvol eindigt.")
                 .build());
 
-        player.getInventory().setItem(2, new ItemBuilder(Material.OAK_PLANKS)
-                .name("§f§lBouwblok")
+        player.getInventory().setItem(3, new ItemBuilder(Material.SLIME_BLOCK)
+                .name("§a§lStandaard Slime Block §7(Normaal stuiteren)")
+                .lore("§7Standaard vanilla slime block zonder boost.")
+                .build());
+
+        player.getInventory().setItem(4, new ItemBuilder(Material.EMERALD_BLOCK)
+                .name("§2§l⚡ Boost Slime Basis §7(Plaats onder slime)")
+                .lore("§7Plaats dit smaragdblok onder een slime block", "§7om een krachtige Slime Springboard te creëren!")
+                .build());
+
+        player.getInventory().setItem(5, new ItemBuilder(Material.GOLD_BLOCK)
+                .name("§e§lBouwblok")
                 .amount(64)
                 .build());
 
         player.getInventory().setItem(7, new ItemBuilder(Material.COMPASS)
                 .name("§b§lTeleporteer naar Start §7(Rechtsklik)")
+                .lore("§7Teleporteert je direct terug naar het startplatform.")
                 .build());
 
         player.getInventory().setItem(8, new ItemBuilder(Material.RED_BED)
@@ -391,6 +407,27 @@ public class ParkourManager {
     }
 
     /**
+     * Disables an approved map and takes it out of active circulation.
+     */
+    public boolean disableMap(CommandSender sender, String mapId) {
+        CustomParkourMap map = getMap(mapId);
+        if (map == null) {
+            ChatUtil.sendMessage(sender, "§cGeen parkour map gevonden met ID: §e" + mapId);
+            return false;
+        }
+
+        map.setStatus("DISABLED");
+        saveMaps();
+
+        String arenaId = "parkour-" + map.getId().toLowerCase().replace("-", "");
+        plugin.getGameManager().unregisterArena(arenaId);
+
+        ChatUtil.sendMessage(sender, "§6§lPARKOUR §8» §cMap §e\"" + map.getName() + "\" §7(" + map.getId() + ") §cis uit circulatie gehaald en niet meer speelbaar in games.");
+        plugin.getLogger().info("Parkour map " + map.getId() + " disabled by " + sender.getName());
+        return true;
+    }
+
+    /**
      * Registers an approved custom map as an active ParkourGame arena in GameManager.
      */
     public void registerMapAsArena(CustomParkourMap map) {
@@ -438,8 +475,11 @@ public class ParkourManager {
 
     public void registerAllApprovedArenas() {
         for (CustomParkourMap map : maps.values()) {
+            String arenaId = "parkour-" + map.getId().toLowerCase().replace("-", "");
             if (map.isApproved()) {
                 registerMapAsArena(map);
+            } else {
+                plugin.getGameManager().unregisterArena(arenaId);
             }
         }
     }

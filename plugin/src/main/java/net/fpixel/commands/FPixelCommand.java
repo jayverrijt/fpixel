@@ -132,6 +132,19 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if (sub.equals("disable") || sub.equals("deactivate")) {
+            if (!checkOwnerPermission(sender)) {
+                sender.sendMessage(ChatUtil.colorize("§cAlleen [OWNER] rang kan parkour maps uit circulatie halen."));
+                return true;
+            }
+            if (args.length < 2) {
+                sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel disable <map-id>"));
+                return true;
+            }
+            plugin.getParkourManager().disableMap(sender, args[1]);
+            return true;
+        }
+
         // All other administrative commands require Admin permission (weight >= 90 or OP)
         if (!checkAdminPermission(sender)) {
             sender.sendMessage(ChatUtil.colorize("§cYou do not have permission to execute this command."));
@@ -445,6 +458,30 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
                 plugin.getParkourManager().rejectMap(sender, args[2], reason);
                 return true;
             }
+            case "disable", "deactivate", "unapprove" -> {
+                if (!checkOwnerPermission(sender)) {
+                    sender.sendMessage(ChatUtil.colorize("§cAlleen spelers met de [OWNER] rang kunnen parkour maps uit circulatie halen."));
+                    return true;
+                }
+                if (args.length < 3) {
+                    sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel parkour disable <map-id>"));
+                    return true;
+                }
+                plugin.getParkourManager().disableMap(sender, args[2]);
+                return true;
+            }
+            case "enable" -> {
+                if (!checkOwnerPermission(sender)) {
+                    sender.sendMessage(ChatUtil.colorize("§cAlleen spelers met de [OWNER] rang kunnen parkour maps activeren."));
+                    return true;
+                }
+                if (args.length < 3) {
+                    sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel parkour enable <map-id>"));
+                    return true;
+                }
+                plugin.getParkourManager().approveMap(sender, args[2]);
+                return true;
+            }
             case "setstart" -> {
                 if (!(sender instanceof Player player)) {
                     sender.sendMessage("Alleen spelers kunnen setstart gebruiken.");
@@ -599,6 +636,8 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour list §7- Bekijk overzicht van alle custom maps"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel test <id> §7- Test / review een parkour parcours"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour approve <id> §7- Keur map goed & activeer in games (OWNER)"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour disable <id> §7- Haal map uit circulatie (OWNER)"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour enable <id> §7- Activeer map opnieuw in games (OWNER)"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel parkour reject <id> [reden] §7- Wijs map af (OWNER)"));
     }
 
@@ -653,19 +692,19 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
 
         List<String> list = new ArrayList<>();
         if (args.length == 1) {
-            list.addAll(Arrays.asList("parkour", "test", "approve", "fill", "empty", "undo", "import", "update", "backup", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
+            list.addAll(Arrays.asList("parkour", "test", "approve", "disable", "fill", "empty", "undo", "import", "update", "backup", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
         } else if (args[0].equalsIgnoreCase("parkour")) {
             if (args.length == 2) {
-                list.addAll(Arrays.asList("create", "build", "setstart", "checkpoint", "setfinish", "clearcheckpoints", "list", "test", "approve", "reject", "reload"));
+                list.addAll(Arrays.asList("create", "build", "setstart", "checkpoint", "setfinish", "clearcheckpoints", "list", "test", "approve", "disable", "enable", "reject", "reload"));
             } else if (args.length == 3) {
                 String sub = args[1].toLowerCase();
-                if (sub.equals("test") || sub.equals("approve") || sub.equals("reject") || sub.equals("build")) {
+                if (sub.equals("test") || sub.equals("approve") || sub.equals("disable") || sub.equals("enable") || sub.equals("reject") || sub.equals("build")) {
                     for (net.fpixel.games.parkour.CustomParkourMap m : plugin.getParkourManager().getAllMaps()) {
                         list.add(m.getId());
                     }
                 }
             }
-        } else if (args[0].equalsIgnoreCase("test") || args[0].equalsIgnoreCase("approve")) {
+        } else if (args[0].equalsIgnoreCase("test") || args[0].equalsIgnoreCase("approve") || args[0].equalsIgnoreCase("disable")) {
             if (args.length == 2) {
                 for (net.fpixel.games.parkour.CustomParkourMap m : plugin.getParkourManager().getAllMaps()) {
                     list.add(m.getId());

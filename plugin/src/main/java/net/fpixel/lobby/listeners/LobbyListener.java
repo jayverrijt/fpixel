@@ -39,10 +39,19 @@ public class LobbyListener implements Listener {
     }
 
     private boolean isInLobby(Player player) {
+        if (player == null || player.getWorld() == null) return false;
         if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().isSurvivalWorld(player.getWorld())) {
             return false;
         }
-        if (player.getWorld().getName().equalsIgnoreCase("survival")) {
+        String worldName = player.getWorld().getName().toLowerCase();
+        if (worldName.contains("survival") || worldName.contains("parkour_studio")) {
+            return false;
+        }
+        if (plugin.getParkourManager() != null && (plugin.getParkourManager().isInTestSession(player) || plugin.getParkourManager().getEditingMapId(player) != null)) {
+            return false;
+        }
+        Location spawn = plugin.getLobbyManager().getSpawnLocation();
+        if (spawn != null && spawn.getWorld() != null && !player.getWorld().equals(spawn.getWorld())) {
             return false;
         }
         return plugin.getGameManager().getPlayerArena(player) == null;

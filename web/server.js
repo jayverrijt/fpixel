@@ -958,6 +958,40 @@ app.post('/api/parkour/approve', async (req, res) => {
   });
 });
 
+// API: /api/parkour/disable (Owner only: take map out of circulation)
+app.post('/api/parkour/disable', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen spelers met de [OWNER] rang kunnen parkour maps uit circulatie halen.' });
+  }
+
+  const { id } = req.body;
+  const maps = getParkourMaps();
+  const map = maps.find(m => m.id && m.id.toLowerCase() === (id || '').toLowerCase());
+
+  if (!map) {
+    return res.status(404).json({ error: 'Parkour map niet gevonden.' });
+  }
+
+  map.status = 'DISABLED';
+  map.disabledBy = user.username;
+  map.disabledAt = Date.now();
+  saveParkourMaps(maps);
+
+  // Send RCON command to Minecraft server to immediately unregister the arena live
+  try {
+    await sendRconCommand(`fpixel parkour disable ${map.id}`);
+    await sendRconCommand(`say §6[PARKOUR] §eMap §7"${map.name}" (${map.id}) §cis tijdelijk uit circulatie gehaald.`);
+  } catch (err) {
+    console.warn('RCON parkour disable warning:', err.message);
+  }
+
+  res.json({
+    success: true,
+    message: `Parkour map "${map.name}" (${map.id}) is uit circulatie gehaald.`
+  });
+});
+
 // API: /api/parkour/reject (Owner only: reject map)
 app.post('/api/parkour/reject', async (req, res) => {
   const user = getSessionUser(req);

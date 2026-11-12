@@ -832,13 +832,16 @@ async function loadParkourData() {
     const total = maps.length;
     const pending = maps.filter(m => (m.status || '').toUpperCase() === 'PENDING_REVIEW').length;
     const approved = maps.filter(m => (m.status || '').toUpperCase() === 'APPROVED').length;
+    const disabled = maps.filter(m => (m.status || '').toUpperCase() === 'DISABLED').length;
 
     const elTotal = document.getElementById('pk-stat-total');
     const elPending = document.getElementById('pk-stat-pending');
     const elApproved = document.getElementById('pk-stat-approved');
+    const elDisabled = document.getElementById('pk-stat-disabled');
     if (elTotal) elTotal.innerText = total;
     if (elPending) elPending.innerText = pending;
     if (elApproved) elApproved.innerText = approved;
+    if (elDisabled) elDisabled.innerText = disabled;
 
     const badge = document.getElementById('parkour-badge');
     if (badge) {
@@ -857,7 +860,7 @@ async function loadParkourData() {
       return;
     }
 
-    // Sort: pending first, then by createdAt desc
+    // Sort: pending first, then approved, then by createdAt desc
     maps.sort((a, b) => {
       const aPending = (a.status || '').toUpperCase() === 'PENDING_REVIEW';
       const bPending = (b.status || '').toUpperCase() === 'PENDING_REVIEW';
@@ -874,6 +877,9 @@ async function loadParkourData() {
       if (statusUpper === 'APPROVED') {
         statusBadgeClass = 'status-approved';
         statusLabel = '✅ Goedgekeurd & Speelbaar';
+      } else if (statusUpper === 'DISABLED') {
+        statusBadgeClass = 'status-disabled';
+        statusLabel = '⏸️ Uit Circulatie';
       } else if (statusUpper === 'REJECTED') {
         statusBadgeClass = 'status-rejected';
         statusLabel = '❌ Afgewezen';
@@ -901,9 +907,18 @@ async function loadParkourData() {
         } else if (statusUpper === 'APPROVED') {
           actionsHtml = `
             <div class="card-actions-row">
-              <span class="active-game-pill">🎮 Actief in Parkour Game Rotatie</span>
-              <button class="btn btn-xs btn-outline-danger" onclick="promptRejectParkourMap('${map.id}')" title="Alsnog intrekken">
-                Deactiveren
+              <span class="active-game-pill">🎮 Actief in Parkour Games</span>
+              <button class="btn btn-sm btn-outline-warning" onclick="disableParkourMap('${map.id}')">
+                ⏸️ Uit Circulatie Halen
+              </button>
+            </div>
+          `;
+        } else if (statusUpper === 'DISABLED') {
+          actionsHtml = `
+            <div class="card-actions-row">
+              <span class="disabled-game-pill">⏸️ Tijdelijk Uitgeschakeld</span>
+              <button class="btn btn-sm btn-primary" onclick="approveParkourMap('${map.id}')">
+                ▶️ Opnieuw Activeren
               </button>
             </div>
           `;

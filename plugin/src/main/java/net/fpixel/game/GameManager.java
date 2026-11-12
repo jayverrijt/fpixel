@@ -50,6 +50,15 @@ public class GameManager implements Listener {
         plugin.getLogger().info("Registered arena: " + arena.getId() + " (" + arena.getGameType() + ")");
     }
 
+    public void unregisterArena(String id) {
+        if (id == null) return;
+        Arena arena = arenas.remove(id.toLowerCase());
+        if (arena != null) {
+            arena.resetArena();
+            plugin.getLogger().info("Unregistered arena: " + id);
+        }
+    }
+
     public Arena getArena(String id) {
         return arenas.get(id.toLowerCase());
     }
