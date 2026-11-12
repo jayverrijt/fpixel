@@ -44,6 +44,10 @@ public class ParkourListener implements Listener {
         lastBoostTime.put(uuid, System.currentTimeMillis());
     }
 
+    private boolean isPressurePlate(Material m) {
+        return m != null && m.name().endsWith("_PRESSURE_PLATE");
+    }
+
     @EventHandler(priority = EventPriority.HIGH)
     public void onBlockPlace(BlockPlaceEvent event) {
         Player player = event.getPlayer();
@@ -58,32 +62,48 @@ public class ParkourListener implements Listener {
         Block block = event.getBlockPlaced();
         Material mat = block.getType();
 
-        // 1. Checkpoint Marker: Stone, Oak, or Polished Blackstone pressure plates
-        if (mat == Material.STONE_PRESSURE_PLATE || mat == Material.OAK_PRESSURE_PLATE || mat == Material.POLISHED_BLACKSTONE_PRESSURE_PLATE) {
-            Location loc = block.getLocation();
-            map.addCheckpoint(loc.getX(), loc.getY(), loc.getZ());
-            parkourManager.saveMaps();
-            ChatUtil.sendActionBar(player, "§a§l✔ Checkpoint #" + map.getCheckpoints().size() + " geregistreerd!");
-            ChatUtil.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.8f);
+        // 1. Interactive Pressure Plates
+        if (isPressurePlate(mat)) {
+            Block blockBelow = block.getRelative(org.bukkit.block.BlockFace.DOWN);
+            Material belowMat = blockBelow.getType();
+
+            // A. Giga Boost Pad (Golden Pressure Plate)
+            if (mat == Material.LIGHT_WEIGHTED_PRESSURE_PLATE) {
+                ChatUtil.sendActionBar(player, "§6§l🚀 Giga Boost Pad geplaatst! (Gouden Drukplaat)");
+                ChatUtil.playSound(player, Sound.ITEM_TRIDENT_RIPTIDE_2, 0.8f, 1.5f);
+            }
+            // B. Jump Boost Pad (Pressure Plate on Emerald)
+            else if (belowMat == Material.EMERALD_BLOCK || belowMat == Material.REDSTONE_BLOCK) {
+                ChatUtil.sendActionBar(player, "§a§l⚡ Jump Boost Pad geplaatst! (Drukplaat op Emerald)");
+                ChatUtil.playSound(player, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 0.8f, 1.5f);
+            }
+            // C. Speed Boost Pad (Pressure Plate on Gold)
+            else if (belowMat == Material.GOLD_BLOCK) {
+                ChatUtil.sendActionBar(player, "§e§l⚡ Speed Boost Pad geplaatst! (Drukplaat op Gold)");
+                ChatUtil.playSound(player, Sound.BLOCK_BEACON_POWER_SELECT, 0.8f, 1.5f);
+            }
+            // D. Finish Line Marker (Heavy Weighted Pressure Plate)
+            else if (mat == Material.HEAVY_WEIGHTED_PRESSURE_PLATE) {
+                Location loc = block.getLocation();
+                map.setFinish(loc.getX() + 0.5, loc.getY(), loc.getZ() + 0.5);
+                parkourManager.saveMaps();
+                ChatUtil.sendActionBar(player, "§c§l🏁 Finish lijn geregistreerd op deze positie!");
+                ChatUtil.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
+            }
+            // E. Normal Checkpoint Marker (e.g. Stone Pressure Plate on neutral block)
+            else {
+                Location loc = block.getLocation();
+                map.addCheckpoint(loc.getX(), loc.getY(), loc.getZ());
+                parkourManager.saveMaps();
+                ChatUtil.sendActionBar(player, "§a§l✔ Checkpoint #" + map.getCheckpoints().size() + " geregistreerd!");
+                ChatUtil.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.8f);
+            }
         }
-        // 2. GIGA BOOST PAD: Light Weighted Pressure Plate (Gold)
-        else if (mat == Material.LIGHT_WEIGHTED_PRESSURE_PLATE) {
-            ChatUtil.sendActionBar(player, "§6§l🚀 Giga Boost Pad geregistreerd! (Gouden Drukplaat)");
-            ChatUtil.playSound(player, Sound.ITEM_TRIDENT_RIPTIDE_2, 0.8f, 1.5f);
-        }
-        // 3. Finish Line Marker: Heavy Weighted Pressure Plate (Iron)
-        else if (mat == Material.HEAVY_WEIGHTED_PRESSURE_PLATE) {
-            Location loc = block.getLocation();
-            map.setFinish(loc.getX(), loc.getY(), loc.getZ());
-            parkourManager.saveMaps();
-            ChatUtil.sendActionBar(player, "§6§l🏁 Finish lijn geregistreerd op deze positie!");
-            ChatUtil.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
-        }
-        // 4. Slime Blocks: Boost Slime vs Standaard Slime
+        // 2. Slime Blocks: Boost Slime vs Standaard Slime
         else if (mat == Material.SLIME_BLOCK) {
             Block baseBlock = block.getRelative(org.bukkit.block.BlockFace.DOWN);
             if (baseBlock.getType() == Material.EMERALD_BLOCK || baseBlock.getType() == Material.REDSTONE_BLOCK) {
-                ChatUtil.sendActionBar(player, "§a§l⚡ Boost Slime Block geplaatst! (Lanceert spelers)");
+                ChatUtil.sendActionBar(player, "§a§l⚡ Boost Slime Block geplaatst! (Springboard launch)");
                 ChatUtil.playSound(player, Sound.BLOCK_SLIME_BLOCK_FALL, 1.0f, 1.8f);
             } else {
                 ChatUtil.sendActionBar(player, "§aStandaard Slime Block geplaatst (normaal stuiteren).");
@@ -171,63 +191,89 @@ public class ParkourListener implements Listener {
             }
         }
 
-        // 3. Dynamic Interactive Map Pads (Giga Boost & Slime Boosters)
-        Block underPlayer = loc.getBlock();
-        Block belowPlayer = loc.clone().subtract(0, 0.5, 0).getBlock();
+        // 3. Dynamic Interactive Map Pads (Giga Boost, Jump Boost & Speed Boost)
+        Block currentBlock = loc.getBlock();
+        Block blockBelow = loc.clone().subtract(0, 0.5, 0).getBlock();
 
-        // A. GIGA BOOST PAD: Golden Pressure Plate (LIGHT_WEIGHTED_PRESSURE_PLATE)
-        if (underPlayer.getType() == Material.LIGHT_WEIGHTED_PRESSURE_PLATE || belowPlayer.getType() == Material.LIGHT_WEIGHTED_PRESSURE_PLATE) {
-            if (canBoost(player.getUniqueId())) {
-                recordBoost(player.getUniqueId());
-                org.bukkit.util.Vector dir = player.getLocation().getDirection();
-                dir.setY(0).normalize().multiply(1.85);
-                dir.setY(0.95);
-                player.setVelocity(dir);
-                player.setFallDistance(0);
-                ChatUtil.playSound(player, Sound.ITEM_TRIDENT_RIPTIDE_2, 1.0f, 1.5f);
-                ChatUtil.playSound(player, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 0.8f, 1.2f);
-                ChatUtil.sendActionBar(player, "§6§l🚀 GIGA BOOST! 🚀");
-                player.getWorld().spawnParticle(org.bukkit.Particle.FIREWORK, loc, 25, 0.3, 0.3, 0.3, 0.15);
-                player.getWorld().spawnParticle(org.bukkit.Particle.CLOUD, loc, 15, 0.2, 0.1, 0.2, 0.05);
-            }
+        Block plateBlock = null;
+        Block baseBlock = null;
+
+        if (isPressurePlate(currentBlock.getType())) {
+            plateBlock = currentBlock;
+            baseBlock = currentBlock.getRelative(org.bukkit.block.BlockFace.DOWN);
+        } else if (isPressurePlate(blockBelow.getType())) {
+            plateBlock = blockBelow;
+            baseBlock = blockBelow.getRelative(org.bukkit.block.BlockFace.DOWN);
         }
 
-        // B. Slime Blocks: Boost Slime Block vs Standard Slime Block
-        Material standOn = belowPlayer.getType();
-        if (standOn == Material.SLIME_BLOCK) {
-            Block baseBlock = loc.clone().subtract(0, 1.5, 0).getBlock();
-            if (baseBlock.getType() == Material.EMERALD_BLOCK || baseBlock.getType() == Material.REDSTONE_BLOCK) {
+        if (plateBlock != null) {
+            // A. GIGA BOOST: Golden Pressure Plate (LIGHT_WEIGHTED_PRESSURE_PLATE)
+            if (plateBlock.getType() == Material.LIGHT_WEIGHTED_PRESSURE_PLATE) {
                 if (canBoost(player.getUniqueId())) {
                     recordBoost(player.getUniqueId());
                     org.bukkit.util.Vector dir = player.getLocation().getDirection();
-                    dir.setY(0).normalize().multiply(1.1);
-                    dir.setY(0.75);
+                    dir.setY(0).normalize().multiply(1.85);
+                    dir.setY(0.95);
+                    player.setVelocity(dir);
+                    player.setFallDistance(0);
+                    ChatUtil.playSound(player, Sound.ITEM_TRIDENT_RIPTIDE_2, 1.0f, 1.5f);
+                    ChatUtil.playSound(player, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 0.8f, 1.2f);
+                    ChatUtil.sendActionBar(player, "§6§l🚀 GIGA BOOST! 🚀");
+                    player.getWorld().spawnParticle(org.bukkit.Particle.FIREWORK, loc, 25, 0.3, 0.3, 0.3, 0.15);
+                    player.getWorld().spawnParticle(org.bukkit.Particle.CLOUD, loc, 15, 0.2, 0.1, 0.2, 0.05);
+                }
+            }
+            // B. JUMP BOOST: Any pressure plate placed on an Emerald Block (or Redstone Block)
+            else if (baseBlock != null && (baseBlock.getType() == Material.EMERALD_BLOCK || baseBlock.getType() == Material.REDSTONE_BLOCK)) {
+                if (canBoost(player.getUniqueId())) {
+                    recordBoost(player.getUniqueId());
+                    org.bukkit.util.Vector dir = player.getLocation().getDirection();
+                    dir.setY(0).normalize().multiply(1.25);
+                    dir.setY(0.85);
                     player.setVelocity(dir);
                     player.setFallDistance(0);
                     ChatUtil.playSound(player, Sound.BLOCK_SLIME_BLOCK_FALL, 1.0f, 1.8f);
                     ChatUtil.playSound(player, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 0.7f, 1.4f);
-                    ChatUtil.sendActionBar(player, "§a⚡ Slime Springboard Boost! ⚡");
+                    ChatUtil.sendActionBar(player, "§a⚡ Jump Boost! ⚡");
                     player.getWorld().spawnParticle(org.bukkit.Particle.ITEM_SLIME, loc, 20, 0.3, 0.3, 0.3, 0.1);
                 }
             }
-            // Standard slime block: no forced velocity override, vanilla bounce physics apply!
-        } else if (standOn == Material.EMERALD_BLOCK) {
-            if (canBoost(player.getUniqueId())) {
-                recordBoost(player.getUniqueId());
-                org.bukkit.util.Vector dir = player.getLocation().getDirection();
-                dir.setY(0).normalize().multiply(1.1);
-                dir.setY(0.75);
-                player.setVelocity(dir);
-                player.setFallDistance(0);
-                ChatUtil.playSound(player, Sound.BLOCK_SLIME_BLOCK_FALL, 1.0f, 1.8f);
-                ChatUtil.playSound(player, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 0.7f, 1.4f);
-                ChatUtil.sendActionBar(player, "§a⚡ Slime Springboard Boost! ⚡");
-                player.getWorld().spawnParticle(org.bukkit.Particle.ITEM_SLIME, loc, 20, 0.3, 0.3, 0.3, 0.1);
+            // C. SPEED BOOST: Any pressure plate placed on a Gold Block
+            else if (baseBlock != null && baseBlock.getType() == Material.GOLD_BLOCK) {
+                if (canBoost(player.getUniqueId())) {
+                    recordBoost(player.getUniqueId());
+                    org.bukkit.util.Vector dir = player.getLocation().getDirection();
+                    dir.setY(0.15).normalize().multiply(1.35);
+                    dir.setY(0.2);
+                    player.setVelocity(dir);
+                    player.setFallDistance(0);
+                    player.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SPEED, 80, 1, false, false, true));
+                    ChatUtil.playSound(player, Sound.BLOCK_BEACON_POWER_SELECT, 0.8f, 1.8f);
+                    ChatUtil.sendActionBar(player, "§e⚡ Speed Boost! ⚡");
+                }
             }
-        } else if (standOn == Material.GOLD_BLOCK || standOn == Material.REDSTONE_BLOCK) {
-            player.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SPEED, 80, 1, false, false, true));
-            ChatUtil.playSound(player, Sound.BLOCK_BEACON_POWER_SELECT, 0.6f, 1.8f);
-            ChatUtil.sendActionBar(player, "§e⚡ Speed Boost! ⚡");
+            // D. Regular Checkpoint Pressure Plate (on neutral blocks like stone, andesite) -> NO BOOST!
+        } else {
+            // Check for Slime Block underneath feet
+            Material standOn = blockBelow.getType();
+            if (standOn == Material.SLIME_BLOCK) {
+                Block underSlime = blockBelow.getRelative(org.bukkit.block.BlockFace.DOWN);
+                if (underSlime.getType() == Material.EMERALD_BLOCK || underSlime.getType() == Material.REDSTONE_BLOCK) {
+                    if (canBoost(player.getUniqueId())) {
+                        recordBoost(player.getUniqueId());
+                        org.bukkit.util.Vector dir = player.getLocation().getDirection();
+                        dir.setY(0).normalize().multiply(1.1);
+                        dir.setY(0.75);
+                        player.setVelocity(dir);
+                        player.setFallDistance(0);
+                        ChatUtil.playSound(player, Sound.BLOCK_SLIME_BLOCK_FALL, 1.0f, 1.8f);
+                        ChatUtil.playSound(player, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 0.7f, 1.4f);
+                        ChatUtil.sendActionBar(player, "§a⚡ Slime Springboard Boost! ⚡");
+                        player.getWorld().spawnParticle(org.bukkit.Particle.ITEM_SLIME, loc, 20, 0.3, 0.3, 0.3, 0.1);
+                    }
+                }
+                // Standard slime block: no forced velocity override, vanilla bounce physics apply!
+            }
         }
 
         // 4. Check finish line trigger

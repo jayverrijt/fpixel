@@ -151,11 +151,11 @@ public class ParkourManager {
         // 1. Clear a 80x80x350 void cuboid area
         MapBuilder.fillBox(world, cx - 40, cy - 30, cz - 20, cx + 40, cy + 50, cz + 300, Material.AIR);
 
-        // 2. Generate initial starting platform (5x5 polished andesite with gold border)
+        // 2. Generate initial starting platform (5x5 polished andesite with stone bricks border)
         MapBuilder.fillCircle(world, cx, cy, cz, 3, Material.POLISHED_ANDESITE);
-        MapBuilder.fillRing(world, cx, cy, cz, 2, 3, Material.GOLD_BLOCK);
-        world.getBlockAt(cx, cy, cz).setType(Material.EMERALD_BLOCK, false);
-        world.getBlockAt(cx, cy + 1, cz).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
+        MapBuilder.fillRing(world, cx, cy, cz, 2, 3, Material.STONE_BRICKS);
+        world.getBlockAt(cx, cy, cz).setType(Material.POLISHED_ANDESITE, false);
+        world.getBlockAt(cx, cy + 1, cz).setType(Material.STONE_PRESSURE_PLATE, false);
 
         // 3. Generate initial finish platform 40 blocks ahead as a clear design goal
         MapBuilder.fillCircle(world, cx, cy, cz + 40, 3, Material.QUARTZ_BLOCK);
@@ -189,10 +189,16 @@ public class ParkourManager {
         ChatUtil.sendMessage(creator, "§7 Je bent geteleporteerd naar een leeg parkour canvas in de void!");
         ChatUtil.sendMessage(creator, "§7 Ontwerp je obstakels en sprongen vanaf dit startplatform.");
         ChatUtil.sendMessage(creator, " ");
-        ChatUtil.sendMessage(creator, "§e§lBouw Instructies:");
-        ChatUtil.sendMessage(creator, " §b• Plaats Gouden Drukplaten §7(Light Pressure Plate) voor §aCheckpoints§7.");
-        ChatUtil.sendMessage(creator, " §6• Plaats een IJzeren Drukplaat §7(Heavy Pressure Plate) voor de §eFinish§7.");
-        ChatUtil.sendMessage(creator, " §a• Commando's:");
+        ChatUtil.sendMessage(creator, "§e§lBouw Instructies & Mechanica:");
+        ChatUtil.sendMessage(creator, " §b• Stenen Drukplaat: §7Plaats voor §aCheckpoints§7 (geen boost).");
+        ChatUtil.sendMessage(creator, " §6• Gouden Drukplaat: §6§lGiga Boost Pad 🚀§7.");
+        ChatUtil.sendMessage(creator, " §2• Drukplaat op Emerald: §a§lJump Boost Pad ⚡§7.");
+        ChatUtil.sendMessage(creator, " §e• Drukplaat op Gold: §e§lSpeed Boost Pad ⚡§7.");
+        ChatUtil.sendMessage(creator, " §a• Slime Block op Emerald: §a§lBoost Slime Springboard§7.");
+        ChatUtil.sendMessage(creator, " §7• Slime Block op normaal blok: §fStandaard Slime (normaal bouncen)§7.");
+        ChatUtil.sendMessage(creator, " §c• IJzeren Drukplaat: §c§lFinish Lijn Marker 🏁§7.");
+        ChatUtil.sendMessage(creator, " ");
+        ChatUtil.sendMessage(creator, "§a• Commando's:");
         ChatUtil.sendMessage(creator, "    §e/fpixel parkour setstart §7- Verplaats startpunt");
         ChatUtil.sendMessage(creator, "    §e/fpixel parkour checkpoint §7- Voeg checkpoint toe");
         ChatUtil.sendMessage(creator, "    §e/fpixel parkour setfinish §7- Verplaats finishlijn");
@@ -211,33 +217,39 @@ public class ParkourManager {
     public void giveBuilderTools(Player player, CustomParkourMap map) {
         player.getInventory().clear();
         player.getInventory().setItem(0, new ItemBuilder(Material.STONE_PRESSURE_PLATE)
-                .name("§b§lCheckpoint Marker §7(Plaats om toe te voegen)")
-                .lore("§7Plaats deze drukplaat op je parcours", "§7om een checkpoint in te stellen.")
+                .name("§b§lCheckpoint Marker §7(Stenen Drukplaat)")
+                .lore("§7Plaats op een neutraal blok voor een checkpoint.", "§8(Geeft géén boost op normale blokken)")
                 .build());
 
         player.getInventory().setItem(1, new ItemBuilder(Material.LIGHT_WEIGHTED_PRESSURE_PLATE)
                 .name("§6§l🚀 Giga Boost Pad §7(Gouden Drukplaat)")
-                .lore("§7Plaats deze gouden drukplaat om spelers", "§7een gigantische lancering / boost te geven!")
+                .lore("§7Plaats deze gouden drukplaat om spelers", "§7een gigantische lancering / giga boost te geven!")
                 .build());
 
         player.getInventory().setItem(2, new ItemBuilder(Material.HEAVY_WEIGHTED_PRESSURE_PLATE)
-                .name("§c§l🏁 Finish Lijn Marker §7(Plaats voor finish)")
+                .name("§c§l🏁 Finish Lijn Marker §7(IJzeren Drukplaat)")
                 .lore("§7Plaats deze drukplaat waar het parcours", "§7succesvol eindigt.")
                 .build());
 
         player.getInventory().setItem(3, new ItemBuilder(Material.SLIME_BLOCK)
-                .name("§a§lStandaard Slime Block §7(Normaal stuiteren)")
-                .lore("§7Standaard vanilla slime block zonder boost.")
+                .name("§a§lSlime Block")
+                .lore("§7• Op neutraal blok: §fNormaal stuiteren (vanilla)", "§7• Op Emerald block: §aBoost Slime Springboard!")
                 .build());
 
         player.getInventory().setItem(4, new ItemBuilder(Material.EMERALD_BLOCK)
-                .name("§2§l⚡ Boost Slime Basis §7(Plaats onder slime)")
-                .lore("§7Plaats dit smaragdblok onder een slime block", "§7om een krachtige Slime Springboard te creëren!")
+                .name("§2§l⚡ Jump Boost Basis §7(Emerald Block)")
+                .lore("§7Plaats een drukplaat óf slime block hierop", "§7om een opwaartse Jump Boost te activeren!")
                 .build());
 
         player.getInventory().setItem(5, new ItemBuilder(Material.GOLD_BLOCK)
-                .name("§e§lBouwblok")
+                .name("§e§l⚡ Speed Boost Basis §7(Gold Block)")
+                .lore("§7Plaats een drukplaat hierop voor Speed Boost,", "§7of gebruik als decoratief bouwblok.")
+                .build());
+
+        player.getInventory().setItem(6, new ItemBuilder(Material.POLISHED_ANDESITE)
+                .name("§f§lNeutraal Bouwblok")
                 .amount(64)
+                .lore("§7Veilig neutraal blok voor platforms en checkpoints.")
                 .build());
 
         player.getInventory().setItem(7, new ItemBuilder(Material.COMPASS)
