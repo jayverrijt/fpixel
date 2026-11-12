@@ -1,0 +1,56 @@
+{
+  "stats": {
+    "minecraft:dropped": {
+      "minecraft:string": 1
+    },
+    "minecraft:mined": {
+      "minecraft:chest": 1,
+      "minecraft:blue_bed": 1
+    },
+    "minecraft:picked_up": {
+      "minecraft:rabbit": 1,
+      "minecraft:stick": 6,
+      "minecraft:rabbit_hide": 1,
+      "minecraft:cooked_beef": 8,
+      "minecraft:oak_planks": 37,
+      "minecraft:cherry_sapling": 3,
+      "minecraft:oak_sapling": 2,
+      "minecraft:iron_ingot": 44,
+      "minecraft:apple": 1,
+      "minecraft:string": 1,
+      "minecraft:stone_sword": 1,
+      "minecraft:gold_ingot": 11,
+      "minecraft:chest": 1,
+      "minecraft:golden_apple": 2
+    },
+    "minecraft:custom": {
+      "minecraft:time_since_rest": 5774,
+      "minecraft:walk_one_cm": 31478,
+      "minecraft:leave_game": 14,
+      "minecraft:walk_under_water_one_cm": 1631,
+      "minecraft:damage_taken": 2907,
+      "minecraft:damage_dealt": 110,
+      "minecraft:play_time": 38618,
+      "minecraft:jump": 337,
+      "minecraft:time_since_death": 5754,
+      "minecraft:drop": 1,
+      "minecraft:interact_with_furnace": 2,
+      "minecraft:open_barrel": 1,
+      "minecraft:sprint_one_cm": 46782,
+      "minecraft:open_chest": 5,
+      "minecraft:fall_one_cm": 29061,
+      "minecraft:total_world_time": 38618,
+      "minecraft:fly_one_cm": 228436,
+      "minecraft:walk_on_water_one_cm": 1220,
+      "minecraft:crouch_one_cm": 7676,
+      "minecraft:sneak_time": 1333,
+      "minecraft:deaths": 1
+    },
+    "minecraft:used": {
+      "minecraft:wooden_sword": 1,
+      "minecraft:oak_planks": 63,
+      "minecraft:white_wool": 23
+    }
+  },
+  "DataVersion": 5023
+}

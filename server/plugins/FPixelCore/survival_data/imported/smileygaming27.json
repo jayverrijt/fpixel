@@ -1,0 +1,290 @@
+{
+  "username": "SmileyGaming27",
+  "old_uuid": "5b1b0551-cb77-4973-b3f8-306f4292fd0b",
+  "offline_uuid": "5b1b0551-cb77-4973-b3f8-306f4292fd0b",
+  "x": -698.8046584754511,
+  "y": 65.875,
+  "z": 348.0573068282522,
+  "yaw": -115.67262268066406,
+  "pitch": 25.77301597595215,
+  "level": 55,
+  "exp": 0.033002421259880066,
+  "health": 20.0,
+  "food": 20,
+  "inventory": [
+    {
+      "slot": 0,
+      "material": "DIAMOND_SWORD",
+      "count": 1,
+      "repair_cost": 1,
+      "enchantments": {
+        "mending": 1,
+        "fire_aspect": 2,
+        "sharpness": 3,
+        "unbreaking": 3,
+        "sweeping_edge": 3
+      }
+    },
+    {
+      "slot": 1,
+      "material": "BOW",
+      "count": 1,
+      "damage": 83,
+      "enchantments": {
+        "power": 4,
+        "unbreaking": 3
+      }
+    },
+    {
+      "slot": 2,
+      "material": "COOKED_COD",
+      "count": 58
+    },
+    {
+      "slot": 3,
+      "material": "DIAMOND_AXE",
+      "count": 1,
+      "damage": 668,
+      "repair_cost": 1,
+      "enchantments": {
+        "mending": 1,
+        "unbreaking": 3,
+        "efficiency": 4
+      }
+    },
+    {
+      "slot": 4,
+      "material": "DIAMOND_PICKAXE",
+      "count": 1,
+      "damage": 22,
+      "enchantments": {
+        "unbreaking": 3,
+        "silk_touch": 1,
+        "efficiency": 4
+      }
+    },
+    {
+      "slot": 5,
+      "material": "DIAMOND_HOE",
+      "count": 1,
+      "damage": 80,
+      "enchantments": {
+        "mending": 1,
+        "vanishing_curse": 1,
+        "efficiency": 4,
+        "unbreaking": 3
+      }
+    },
+    {
+      "slot": 7,
+      "material": "GLASS_PANE",
+      "count": 10
+    },
+    {
+      "slot": 8,
+      "material": "WATER_BUCKET",
+      "count": 1
+    },
+    {
+      "slot": 9,
+      "material": "BUNDLE",
+      "count": 1
+    },
+    {
+      "slot": 10,
+      "material": "SPRUCE_PLANKS",
+      "count": 64
+    },
+    {
+      "slot": 11,
+      "material": "SPRUCE_STAIRS",
+      "count": 7
+    },
+    {
+      "slot": 12,
+      "material": "TORCH",
+      "count": 4
+    },
+    {
+      "slot": 13,
+      "material": "DARK_OAK_PLANKS",
+      "count": 64
+    },
+    {
+      "slot": 14,
+      "material": "DARK_OAK_SLAB",
+      "count": 64
+    },
+    {
+      "slot": 15,
+      "material": "DIAMOND_PICKAXE",
+      "count": 1,
+      "damage": 8,
+      "repair_cost": 1,
+      "enchantments": {
+        "mending": 1,
+        "efficiency": 4,
+        "fortune": 3,
+        "unbreaking": 3
+      }
+    },
+    {
+      "slot": 16,
+      "material": "DARK_OAK_PLANKS",
+      "count": 12
+    },
+    {
+      "slot": 17,
+      "material": "DARK_OAK_SLAB",
+      "count": 64
+    },
+    {
+      "slot": 18,
+      "material": "BUNDLE",
+      "count": 1
+    },
+    {
+      "slot": 19,
+      "material": "DARK_OAK_SLAB",
+      "count": 48
+    },
+    {
+      "slot": 20,
+      "material": "SHIELD",
+      "count": 1,
+      "damage": 14
+    },
+    {
+      "slot": 21,
+      "material": "BARREL",
+      "count": 7
+    },
+    {
+      "slot": 22,
+      "material": "BOOKSHELF",
+      "count": 1
+    },
+    {
+      "slot": 23,
+      "material": "SPRUCE_PLANKS",
+      "count": 55
+    },
+    {
+      "slot": 24,
+      "material": "OAK_LOG",
+      "count": 18
+    },
+    {
+      "slot": 25,
+      "material": "COBBLESTONE_STAIRS",
+      "count": 5
+    },
+    {
+      "slot": 26,
+      "material": "OAK_DOOR",
+      "count": 2
+    },
+    {
+      "slot": 27,
+      "material": "ARROW",
+      "count": 64
+    },
+    {
+      "slot": 28,
+      "material": "COBBLESTONE",
+      "count": 41
+    },
+    {
+      "slot": 29,
+      "material": "COOKED_COD",
+      "count": 20
+    },
+    {
+      "slot": 30,
+      "material": "BAMBOO_PLANKS",
+      "count": 64
+    },
+    {
+      "slot": 31,
+      "material": "SPRUCE_TRAPDOOR",
+      "count": 16
+    },
+    {
+      "slot": 32,
+      "material": "SPLASH_POTION",
+      "count": 1
+    },
+    {
+      "slot": 33,
+      "material": "DIRT",
+      "count": 24
+    },
+    {
+      "slot": 34,
+      "material": "BAMBOO_PLANKS",
+      "count": 26
+    }
+  ],
+  "equipment": {
+    "offhand": {
+      "slot": 0,
+      "material": "TRIDENT",
+      "count": 1,
+      "repair_cost": 7,
+      "enchantments": {
+        "mending": 1,
+        "impaling": 5,
+        "unbreaking": 3,
+        "riptide": 3
+      }
+    },
+    "legs": {
+      "slot": 0,
+      "material": "DIAMOND_LEGGINGS",
+      "count": 1,
+      "repair_cost": 3,
+      "enchantments": {
+        "mending": 1,
+        "fire_protection": 4,
+        "unbreaking": 3,
+        "swift_sneak": 3
+      }
+    },
+    "head": {
+      "slot": 0,
+      "material": "DIAMOND_HELMET",
+      "count": 1,
+      "repair_cost": 1,
+      "enchantments": {
+        "mending": 1,
+        "aqua_affinity": 1,
+        "protection": 4,
+        "unbreaking": 3
+      }
+    },
+    "chest": {
+      "slot": 0,
+      "material": "DIAMOND_CHESTPLATE",
+      "count": 1,
+      "repair_cost": 1,
+      "enchantments": {
+        "mending": 1,
+        "unbreaking": 3,
+        "protection": 4
+      }
+    },
+    "feet": {
+      "slot": 0,
+      "material": "DIAMOND_BOOTS",
+      "count": 1,
+      "damage": 2,
+      "repair_cost": 1,
+      "enchantments": {
+        "mending": 1,
+        "protection": 4,
+        "depth_strider": 3,
+        "unbreaking": 3
+      }
+    }
+  }
+}

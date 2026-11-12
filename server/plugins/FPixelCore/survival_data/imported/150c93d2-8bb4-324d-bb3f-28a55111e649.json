@@ -1,0 +1,245 @@
+{
+  "username": "Jay_V0",
+  "old_uuid": "9c61a572-30f1-42cb-a4d4-baf9f91471ee",
+  "offline_uuid": "150c93d2-8bb4-324d-bb3f-28a55111e649",
+  "x": -653.6980282224779,
+  "y": -22.0,
+  "z": -116.55584226656939,
+  "yaw": 87.87026977539062,
+  "pitch": 8.946702003479004,
+  "level": 68,
+  "exp": 0.7515661716461182,
+  "health": 20.0,
+  "food": 19,
+  "inventory": [
+    {
+      "slot": 0,
+      "material": "DIAMOND_PICKAXE",
+      "count": 1,
+      "damage": 173,
+      "repair_cost": 7,
+      "enchantments": {
+        "mending": 1,
+        "efficiency": 4,
+        "silk_touch": 1,
+        "unbreaking": 3
+      }
+    },
+    {
+      "slot": 1,
+      "material": "DIAMOND_AXE",
+      "count": 1,
+      "damage": 70,
+      "repair_cost": 3,
+      "enchantments": {
+        "fortune": 3,
+        "unbreaking": 3,
+        "efficiency": 4
+      }
+    },
+    {
+      "slot": 2,
+      "material": "DIAMOND_SHOVEL",
+      "count": 1,
+      "damage": 423,
+      "repair_cost": 1,
+      "enchantments": {
+        "unbreaking": 3,
+        "silk_touch": 1,
+        "efficiency": 4
+      }
+    },
+    {
+      "slot": 3,
+      "material": "DIAMOND_SWORD",
+      "count": 1,
+      "damage": 405,
+      "repair_cost": 15,
+      "enchantments": {
+        "fire_aspect": 2,
+        "looting": 3,
+        "sharpness": 5,
+        "knockback": 2,
+        "unbreaking": 3
+      }
+    },
+    {
+      "slot": 4,
+      "material": "WATER_BUCKET",
+      "count": 1
+    },
+    {
+      "slot": 5,
+      "material": "DEEPSLATE_REDSTONE_ORE",
+      "count": 34
+    },
+    {
+      "slot": 6,
+      "material": "COOKED_COD",
+      "count": 25
+    },
+    {
+      "slot": 7,
+      "material": "SHEARS",
+      "count": 1
+    },
+    {
+      "slot": 8,
+      "material": "COOKED_BEEF",
+      "count": 29
+    },
+    {
+      "slot": 9,
+      "material": "ARROW",
+      "count": 64
+    },
+    {
+      "slot": 12,
+      "material": "SPIDER_EYE",
+      "count": 37
+    },
+    {
+      "slot": 13,
+      "material": "ROTTEN_FLESH",
+      "count": 4
+    },
+    {
+      "slot": 16,
+      "material": "ARROW",
+      "count": 20
+    },
+    {
+      "slot": 20,
+      "material": "BONE",
+      "count": 4
+    },
+    {
+      "slot": 21,
+      "material": "ENDER_PEARL",
+      "count": 2
+    },
+    {
+      "slot": 22,
+      "material": "DIAMOND_PICKAXE",
+      "count": 1,
+      "damage": 59,
+      "repair_cost": 1,
+      "enchantments": {
+        "fortune": 3,
+        "unbreaking": 3,
+        "efficiency": 4
+      }
+    },
+    {
+      "slot": 23,
+      "material": "DEEPSLATE_GOLD_ORE",
+      "count": 23
+    },
+    {
+      "slot": 24,
+      "material": "PRISMARINE_SHARD",
+      "count": 25
+    },
+    {
+      "slot": 26,
+      "material": "PRISMARINE_CRYSTALS",
+      "count": 39
+    },
+    {
+      "slot": 27,
+      "material": "SCAFFOLDING",
+      "count": 32
+    },
+    {
+      "slot": 29,
+      "material": "DEEPSLATE_IRON_ORE",
+      "count": 15
+    },
+    {
+      "slot": 31,
+      "material": "STRING",
+      "count": 13
+    },
+    {
+      "slot": 34,
+      "material": "GUNPOWDER",
+      "count": 12
+    },
+    {
+      "slot": 35,
+      "material": "CROSSBOW",
+      "count": 1,
+      "damage": 4,
+      "repair_cost": 1,
+      "enchantments": {
+        "unbreaking": 3,
+        "piercing": 4
+      }
+    }
+  ],
+  "equipment": {
+    "offhand": {
+      "slot": 0,
+      "material": "TRIDENT",
+      "count": 1,
+      "repair_cost": 1,
+      "enchantments": {
+        "mending": 1,
+        "impaling": 4,
+        "unbreaking": 3,
+        "riptide": 2
+      }
+    },
+    "legs": {
+      "slot": 0,
+      "material": "DIAMOND_LEGGINGS",
+      "count": 1,
+      "repair_cost": 31,
+      "enchantments": {
+        "mending": 1,
+        "protection": 4,
+        "thorns": 3,
+        "unbreaking": 3,
+        "swift_sneak": 3
+      }
+    },
+    "head": {
+      "slot": 0,
+      "material": "DIAMOND_HELMET",
+      "count": 1,
+      "repair_cost": 15,
+      "enchantments": {
+        "mending": 1,
+        "respiration": 3,
+        "aqua_affinity": 1,
+        "protection": 4,
+        "unbreaking": 3
+      }
+    },
+    "chest": {
+      "slot": 0,
+      "material": "DIAMOND_CHESTPLATE",
+      "count": 1,
+      "repair_cost": 7,
+      "enchantments": {
+        "mending": 1,
+        "protection": 4,
+        "thorns": 3,
+        "unbreaking": 3
+      }
+    },
+    "feet": {
+      "slot": 0,
+      "material": "DIAMOND_BOOTS",
+      "count": 1,
+      "repair_cost": 7,
+      "enchantments": {
+        "mending": 1,
+        "feather_falling": 4,
+        "protection": 4,
+        "depth_strider": 3,
+        "unbreaking": 3
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+name: Jay_V0
+coins: 500
+level: 4
+experience: 0
+visibility: ALL
+stats:
+  bedwars:
+    wins: 1
+    losses: 0
+    kills: 0
+    finalKills: 0
+    bedsBroken: 1
+  tntrun:
+    wins: 0
+    losses: 0
+  sumo:
+    wins: 0
+    losses: 0
+    streak: 0
