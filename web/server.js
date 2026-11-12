@@ -933,7 +933,12 @@ app.post('/api/parkour/approve', async (req, res) => {
 
   const { id } = req.body;
   const maps = getParkourMaps();
-  const map = maps.find(m => m.id && m.id.toLowerCase() === (id || '').toLowerCase());
+  const searchId = (id || '').toLowerCase().trim();
+  const map = maps.find(m => 
+    (m.id && m.id.toLowerCase() === searchId) ||
+    (m.name && m.name.toLowerCase() === searchId) ||
+    (m.id && m.id.toLowerCase() === 'pk-' + searchId)
+  );
 
   if (!map) {
     return res.status(404).json({ error: 'Parkour map niet gevonden.' });
@@ -967,7 +972,12 @@ app.post('/api/parkour/disable', async (req, res) => {
 
   const { id } = req.body;
   const maps = getParkourMaps();
-  const map = maps.find(m => m.id && m.id.toLowerCase() === (id || '').toLowerCase());
+  const searchId = (id || '').toLowerCase().trim();
+  const map = maps.find(m => 
+    (m.id && m.id.toLowerCase() === searchId) ||
+    (m.name && m.name.toLowerCase() === searchId) ||
+    (m.id && m.id.toLowerCase() === 'pk-' + searchId)
+  );
 
   if (!map) {
     return res.status(404).json({ error: 'Parkour map niet gevonden.' });
@@ -1001,7 +1011,12 @@ app.post('/api/parkour/reject', async (req, res) => {
 
   const { id, reason } = req.body;
   const maps = getParkourMaps();
-  const map = maps.find(m => m.id && m.id.toLowerCase() === (id || '').toLowerCase());
+  const searchId = (id || '').toLowerCase().trim();
+  const map = maps.find(m => 
+    (m.id && m.id.toLowerCase() === searchId) ||
+    (m.name && m.name.toLowerCase() === searchId) ||
+    (m.id && m.id.toLowerCase() === 'pk-' + searchId)
+  );
 
   if (!map) {
     return res.status(404).json({ error: 'Parkour map niet gevonden.' });
@@ -1021,6 +1036,263 @@ app.post('/api/parkour/reject', async (req, res) => {
     success: true,
     message: `Parkour map "${map.name}" (${map.id}) is gemarkeerd als afgewezen.`
   });
+});
+
+// ==========================================
+// RANK MANAGEMENT (OWNER ONLY)
+// ==========================================
+
+function saveRanks(ranks) {
+  const file = resolveFilePath('plugins/FPixelCore/ranks.yml');
+  if (!file) return false;
+  try {
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const lines = [];
+    for (const [u, r] of Object.entries(ranks)) {
+      if (u && r) lines.push(`${u}: ${r.toUpperCase()}`);
+    }
+    fs.writeFileSync(file, lines.join('\n') + '\n', 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Failed to save ranks.yml:', e);
+    return false;
+  }
+}
+
+// API: /api/admin/ranks (Get all player ranks)
+app.get('/api/admin/ranks', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen de [OWNER] kan rangen beheren.' });
+  }
+  const ranks = getRanks();
+  const whitelist = getWhitelist();
+  res.json({
+    success: true,
+    ranks,
+    whitelist,
+    availableRanks: ['OWNER', 'ADMIN', 'MOD', 'YOUTUBE', 'MVP_PLUS', 'MVP', 'VIP_PLUS', 'VIP', 'MEMBER']
+  });
+});
+
+// API: /api/admin/ranks/set (Owner sets player rank)
+app.post('/api/admin/ranks/set', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen de [OWNER] kan rangen aanpassen.' });
+  }
+
+  const { username, rank } = req.body;
+  if (!username || !rank) {
+    return res.status(400).json({ error: 'Vul een gebruikersnaam en rang in.' });
+  }
+
+  const validRanks = ['OWNER', 'ADMIN', 'MOD', 'YOUTUBE', 'MVP_PLUS', 'MVP', 'VIP_PLUS', 'VIP', 'MEMBER'];
+  const cleanRank = rank.trim().toUpperCase();
+  if (!validRanks.includes(cleanRank)) {
+    return res.status(400).json({ error: 'Ongeldige rang: ' + cleanRank });
+  }
+
+  const cleanUser = username.trim();
+  const ranks = getRanks();
+  ranks[cleanUser.toLowerCase()] = cleanRank;
+  saveRanks(ranks);
+
+  // Sync to Minecraft live via RCON
+  try {
+    await sendRconCommand(`setrank ${cleanUser} ${cleanRank}`);
+    await sendRconCommand(`say §6[RANG] §e${cleanUser} heeft nu de rang §a[${cleanRank}] §egekregen van §c${user.username}§e!`);
+  } catch (err) {
+    console.warn('RCON setrank warning:', err.message);
+  }
+
+  res.json({
+    success: true,
+    message: `Rang van ${cleanUser} is succesvol gewijzigd naar [${cleanRank}].`
+  });
+});
+
+// ==========================================
+// SERVER CONTROLS (STOP & BACKUP)
+// ==========================================
+
+// API: /api/server/stop (Owner only: safely stop server)
+app.post('/api/server/stop', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen spelers met de [OWNER] rang kunnen de server stoppen.' });
+  }
+
+  try {
+    await sendRconCommand(`say §c§l[SERVER WAARSCHUWING] §eDe Minecraft server wordt over 5 seconden gestopt door Eigenaar ${user.username} via mc.fpixel.nl!`);
+    setTimeout(async () => {
+      try {
+        await sendRconCommand('stop');
+      } catch (e) {}
+    }, 4000);
+
+    res.json({
+      success: true,
+      message: 'Server stop signaal succesvol verzonden. De server sluit over enkele seconden veilig af.'
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Kon server stop niet uitvoeren: ' + err.message });
+  }
+});
+
+// API: /api/server/backup (Admin or Owner: trigger server snapshot)
+app.post('/api/server/backup', async (req, res) => {
+  const user = getSessionUser(req);
+  const isAllowed = user && (user.rank === 'OWNER' || user.rank === 'ADMIN');
+  if (!isAllowed) {
+    return res.status(403).json({ error: 'Minimaal [ADMIN] rang vereist om een server backup te starten.' });
+  }
+
+  try {
+    // Announce and save world chunks first
+    try {
+      await sendRconCommand(`say §6§l[BACKUP] §eHandmatige server backup gestart door ${user.username} via mc.fpixel.nl...`);
+      await sendRconCommand('save-all');
+    } catch (e) {}
+
+    // Check for backup script
+    const backupScript = path.resolve(__dirname, '../scripts/backup.sh');
+    if (fs.existsSync(backupScript)) {
+      const { exec } = require('child_process');
+      exec(`bash "${backupScript}"`, (err, stdout, stderr) => {
+        if (err) console.error('Backup script error:', err);
+        else console.log('Manual backup finished successfully:', stdout);
+      });
+      return res.json({
+        success: true,
+        message: 'Server backup is succesvol op de achtergrond gestart! Alle werelden worden veilig opgeslagen.'
+      });
+    } else {
+      await sendRconCommand('fpixel backup');
+      return res.json({
+        success: true,
+        message: 'Server backup commando verzonden naar de Minecraft server.'
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Backup starten mislukt: ' + err.message });
+  }
+});
+
+// ==========================================
+// SURVIVAL WAYPOINTS MANAGEMENT
+// ==========================================
+
+function getWaypoints() {
+  const file = resolveFilePath('plugins/FPixelCore/survival_data/web_waypoints.json');
+  if (file && fs.existsSync(file)) {
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf8')) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+  return [];
+}
+
+function saveWaypoints(list) {
+  const file = resolveFilePath('plugins/FPixelCore/survival_data/web_waypoints.json');
+  if (!file) return false;
+  try {
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(list, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Failed to save web_waypoints.json:', e);
+    return false;
+  }
+}
+
+// API: /api/waypoints (Public and authenticated waypoints)
+app.get('/api/waypoints', (req, res) => {
+  const user = getSessionUser(req);
+  const all = getWaypoints();
+  if (!user) {
+    return res.json({ waypoints: all });
+  }
+  res.json({
+    waypoints: all,
+    currentUser: user.username,
+    isOwnerOrAdmin: Boolean(user.rank === 'OWNER' || user.rank === 'ADMIN')
+  });
+});
+
+// API: /api/waypoints/add (Authenticated: add waypoint to survival map)
+app.post('/api/waypoints/add', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Je moet ingelogd zijn om waypoints toe te voegen.' });
+  }
+
+  const { name, x, y, z, world, color, icon } = req.body;
+  if (!name || x === undefined || z === undefined) {
+    return res.status(400).json({ error: 'Vul een naam en coördinaten (X en Z) in.' });
+  }
+
+  const waypoints = getWaypoints();
+  const newWp = {
+    id: 'wp_' + Date.now(),
+    name: name.trim(),
+    x: Math.round(Number(x)),
+    y: y !== undefined ? Math.round(Number(y)) : 64,
+    z: Math.round(Number(z)),
+    world: world || 'survival',
+    color: color || '#38bdf8',
+    icon: icon || '📍',
+    createdBy: user.username,
+    createdAt: Date.now()
+  };
+
+  waypoints.push(newWp);
+  saveWaypoints(waypoints);
+
+  // Announce in-game
+  try {
+    const tellrawJson = JSON.stringify([
+      { text: "[Survival Kaart] ", color: "gold", bold: true },
+      { text: user.username, color: "aqua" },
+      { text: " heeft waypoint ", color: "yellow" },
+      { text: newWp.name, color: "green", bold: true },
+      { text: ` toegevoegd op X: ${newWp.x}, Z: ${newWp.z}! Bekijk op mc.fpixel.nl`, color: "gray" }
+    ]);
+    await sendRconCommand(`tellraw @a ${tellrawJson}`);
+  } catch (e) {}
+
+  res.json({
+    success: true,
+    waypoint: newWp,
+    message: `Waypoint "${newWp.name}" succesvol geplaatst op X: ${newWp.x}, Z: ${newWp.z}!`
+  });
+});
+
+// API: /api/waypoints/delete (Creator or Admin/Owner)
+app.post('/api/waypoints/delete', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Je moet ingelogd zijn.' });
+  }
+
+  const { id } = req.body;
+  let waypoints = getWaypoints();
+  const wp = waypoints.find(w => w.id === id);
+  if (!wp) {
+    return res.status(404).json({ error: 'Waypoint niet gevonden.' });
+  }
+
+  if (wp.createdBy.toLowerCase() !== user.username.toLowerCase() && user.rank !== 'OWNER' && user.rank !== 'ADMIN') {
+    return res.status(403).json({ error: 'Je kunt alleen je eigen waypoints verwijderen.' });
+  }
+
+  waypoints = waypoints.filter(w => w.id !== id);
+  saveWaypoints(waypoints);
+  res.json({ success: true, message: `Waypoint "${wp.name}" is verwijderd.` });
 });
 
 app.listen(PORT, '0.0.0.0', () => {

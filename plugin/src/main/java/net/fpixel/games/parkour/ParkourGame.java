@@ -52,11 +52,11 @@ public class ParkourGame extends Arena {
                 .build());
         ChatUtil.sendMessage(player, " ");
         ChatUtil.sendMessage(player, "§6§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        ChatUtil.sendMessage(player, "§a§l           PARKOUR RACE");
-        ChatUtil.sendMessage(player, "§7  Sprint and jump through the obstacles to reach the goal!");
-        ChatUtil.sendMessage(player, "§7• Step on §aPressure Plates §7to save your Checkpoint.");
-        ChatUtil.sendMessage(player, "§7• Falling will teleport you back to your last Checkpoint.");
-        ChatUtil.sendMessage(player, "§e• Use your §c§lRed Bed §ein slot 9 or type §b/hub §eto leave.");
+        ChatUtil.sendMessage(player, "§a§l     PARKOUR: §e§l" + displayName);
+        ChatUtil.sendMessage(player, "§7  Sprint en spring door de hindernissen naar de finish!");
+        ChatUtil.sendMessage(player, "§7• Stap op §aDrukplaten §7om je Checkpoint op te slaan.");
+        ChatUtil.sendMessage(player, "§7• Val je in de void? Dan teleporteer je terug naar je Checkpoint.");
+        ChatUtil.sendMessage(player, "§e• Gebruik je §c§lRode Bed §ein slot 9 of typ §b/hub §eom te vertrekken.");
         ChatUtil.sendMessage(player, "§6§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         ChatUtil.sendMessage(player, " ");
     }
@@ -283,14 +283,16 @@ public class ParkourGame extends Arena {
     @Override
     public List<String> getScoreboardLines(Player player) {
         List<String> lines = new ArrayList<>();
-        lines.add("§7" + id);
+        lines.add("§6§l" + displayName);
+        lines.add("§8" + id);
         lines.add(" ");
         if (state == GameState.WAITING || state == GameState.STARTING) {
             lines.add("§fPlayers: §a" + players.size() + "/" + maxPlayers);
             lines.add("§fStarting in: §a" + countdown + "s");
         } else if (state == GameState.IN_GAME) {
             int cp = playerProgress.getOrDefault(player.getUniqueId(), 0);
-            lines.add("§fProgress: §a" + cp + "/" + checkpoints.size());
+            lines.add("§fMap: §e" + displayName);
+            lines.add("§fCheckpoints: §a" + cp + "/" + checkpoints.size());
             lines.add("§fTime: §e" + (gameTime / 60) + ":" + String.format("%02d", gameTime % 60));
         } else {
             lines.add("§fGame: §eEnding");

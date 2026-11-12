@@ -105,6 +105,29 @@ public class ParkourManager {
     }
 
     public String generateUniqueId() {
+        return generateUniqueId(null);
+    }
+
+    public String generateUniqueId(String preferredName) {
+        if (preferredName != null && !preferredName.trim().isEmpty()) {
+            String slug = preferredName.trim().toUpperCase().replaceAll("[^A-Z0-9_-]", "");
+            if (!slug.isEmpty()) {
+                if (!maps.containsKey(slug)) {
+                    return slug;
+                }
+                String pkSlug = "PK-" + slug;
+                if (!maps.containsKey(pkSlug)) {
+                    return pkSlug;
+                }
+                for (int i = 2; i <= 99; i++) {
+                    String numbered = slug + "-" + i;
+                    if (!maps.containsKey(numbered)) {
+                        return numbered;
+                    }
+                }
+            }
+        }
+
         for (int attempts = 0; attempts < 1000; attempts++) {
             StringBuilder sb = new StringBuilder("PK-");
             for (int i = 0; i < 4; i++) {
@@ -115,7 +138,7 @@ public class ParkourManager {
                 return candidate;
             }
         }
-        return "PK-" + System.currentTimeMillis() % 10000;
+        return "PK-" + (System.currentTimeMillis() % 10000);
     }
 
     public int getNextSlotIndex() {
@@ -138,10 +161,19 @@ public class ParkourManager {
             return null;
         }
 
-        String id = generateUniqueId();
-        String mapName = (customName != null && !customName.trim().isEmpty())
-                ? customName.trim()
-                : "Parkour " + id;
+        String id = generateUniqueId(customName);
+        String mapName;
+        if (customName != null && !customName.trim().isEmpty()) {
+            String trimmed = customName.trim();
+            // Capitalize first letter if entered lowercase
+            if (trimmed.length() > 1 && Character.isLowerCase(trimmed.charAt(0))) {
+                mapName = Character.toUpperCase(trimmed.charAt(0)) + trimmed.substring(1);
+            } else {
+                mapName = trimmed;
+            }
+        } else {
+            mapName = "Parkour " + id;
+        }
 
         int slot = getNextSlotIndex();
         int cx = slot * 500;
@@ -496,9 +528,24 @@ public class ParkourManager {
         }
     }
 
-    public CustomParkourMap getMap(String id) {
-        if (id == null) return null;
-        return maps.get(id.toUpperCase().trim());
+    public CustomParkourMap getMap(String idOrName) {
+        if (idOrName == null) return null;
+        String clean = idOrName.trim();
+        CustomParkourMap m = maps.get(clean.toUpperCase());
+        if (m != null) return m;
+
+        // Try lookup by exact name (case-insensitive)
+        for (CustomParkourMap candidate : maps.values()) {
+            if (candidate.getName() != null && candidate.getName().equalsIgnoreCase(clean)) {
+                return candidate;
+            }
+        }
+
+        // Try lookup with PK- prefix
+        CustomParkourMap pk = maps.get("PK-" + clean.toUpperCase());
+        if (pk != null) return pk;
+
+        return null;
     }
 
     public Collection<CustomParkourMap> getAllMaps() {

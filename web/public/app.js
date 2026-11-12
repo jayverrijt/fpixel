@@ -1,281 +1,261 @@
-// FPixel SMP Vrienden Portaal & Kaart Script
+/**
+ * FPixel Network - Official Web Portal & Community Hub
+ * Modern, High-Performance ES6 Client Logic
+ */
 
+// Global State
 let currentUser = null;
-let leafletMap = null;
+let currentTab = 'home';
 let currentMapWorld = 'survival';
-let mapTileLayer = null;
-
-const mapWorldsConfig = {
-  survival: {
-    tilePath: 'minecraft_survival',
-    name: 'Overworld (Survival)',
-    spawn: { x: 240, z: -256 },
-    maxZoom: 3,
-    extraZoom: 2,
-    background: '#0d1527',
-    label: '🌍 Dimensie: Overworld (Survival)'
-  },
-  nether: {
-    tilePath: 'minecraft_the_nether',
-    name: 'The Nether',
-    spawn: { x: 0, z: 0 },
-    maxZoom: 3,
-    extraZoom: 2,
-    background: '#180808',
-    label: '🔥 Dimensie: The Nether'
-  },
-  end: {
-    tilePath: 'minecraft_the_end',
-    name: 'The End',
-    spawn: { x: 0, z: 0 },
-    maxZoom: 3,
-    extraZoom: 2,
-    background: '#08040d',
-    label: '🌌 Dimensie: The End'
-  }
-};
+let leafletMap = null;
+let currentTileLayer = null;
+let waypointMarkers = [];
+let cachedWaypoints = [];
+let pendingClickCoords = null;
 
 // ==========================================
-// TOAST & UTILITIES
+// INITIALIZATION
 // ==========================================
 
-function showToast(msg) {
-  const toast = document.getElementById('toast') || document.getElementById('copy-toast');
+document.addEventListener('DOMContentLoaded', () => {
+  initAuth();
+  loadStats();
+  initMap();
+
+  // Refresh server stats every 30 seconds
+  setInterval(loadStats, 30000);
+});
+
+// ==========================================
+// NOTIFICATIONS & TOASTS
+// ==========================================
+
+function showToast(message, isError = false) {
+  const toast = document.getElementById('toast');
   if (!toast) return;
-  toast.innerText = msg;
-  toast.classList.add('show');
+
+  toast.textContent = message;
+  toast.className = 'toast ' + (isError ? 'toast-error' : 'toast-success');
+  toast.style.display = 'block';
+
   setTimeout(() => {
-    toast.classList.remove('show');
-  }, 3000);
+    toast.style.display = 'none';
+  }, 4000);
 }
 
-function copyToClipboard(text, message) {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => {
-      showToast(message || 'Gekopieerd naar klembord!');
-    }).catch(() => fallbackCopy(text, message));
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// Copy to clipboard with toast
+function copyIp(text, label = 'Tekst') {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(`📋 ${label} gekopieerd: ${text}`);
+  }).catch(() => {
+    // Fallback
+    const input = document.createElement('input');
+    input.value = text;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    document.body.removeChild(input);
+    showToast(`📋 ${label} gekopieerd: ${text}`);
+  });
+}
+
+// Skin preview for whitelist form
+function previewSkin(name) {
+  const head = document.getElementById('skin-preview-head');
+  if (!head) return;
+  const clean = (name || '').trim();
+  if (clean.length >= 2) {
+    head.src = `https://mc-heads.net/avatar/${encodeURIComponent(clean)}/64`;
   } else {
-    fallbackCopy(text, message);
-  }
-}
-
-function fallbackCopy(text, message) {
-  const textarea = document.createElement('textarea');
-  textarea.value = text;
-  document.body.appendChild(textarea);
-  textarea.select();
-  document.execCommand('copy');
-  document.body.removeChild(textarea);
-  showToast(message || 'Gekopieerd!');
-}
-
-function copyIp(text) {
-  copyToClipboard(text, `Gekopieerd: ${text}`);
-}
-
-function getRankBadgeClass(rank) {
-  switch ((rank || '').toUpperCase()) {
-    case 'OWNER': return 'rank-owner';
-    case 'ADMIN': return 'rank-admin';
-    case 'MVP+':
-    case 'MVP_PLUS': return 'rank-mvp-plus';
-    case 'MVP': return 'rank-mvp';
-    case 'VIP+':
-    case 'VIP_PLUS': return 'rank-vip-plus';
-    case 'VIP': return 'rank-vip';
-    default: return 'rank-default';
+    head.src = 'https://mc-heads.net/avatar/MHF_Steve/64';
   }
 }
 
 // ==========================================
-// NAVIGATION & TAB SWITCHING
+// NAVIGATION & TABS
 // ==========================================
 
 function switchTab(tabId) {
-  // Update nav buttons
-  const navLinks = document.querySelectorAll('.nav-link');
-  navLinks.forEach(link => {
-    if (link.getAttribute('onclick')?.includes(tabId)) {
-      link.classList.add('active');
-    } else {
-      link.classList.remove('active');
-    }
-  });
+  currentTab = tabId;
 
-  // Update tab panes
-  const panes = document.querySelectorAll('.tab-pane');
-  panes.forEach(pane => {
-    if (pane.id === `tab-${tabId}`) {
-      pane.classList.add('active');
-    } else {
-      pane.classList.remove('active');
-    }
-  });
+  // Update nav buttons active state
+  document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
 
-  // Map initialization or resizing
+  const activeBtn = document.querySelector(`.nav-link[onclick*="'${tabId}'"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  // Toggle tab panes
+  document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+  const targetPane = document.getElementById(`tab-${tabId}`);
+  if (targetPane) targetPane.classList.add('active');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Tab-specific triggers
   if (tabId === 'map') {
-    if (!leafletMap) {
-      setTimeout(initSurvivalMap, 80);
-    } else {
-      setTimeout(() => {
+    setTimeout(() => {
+      if (leafletMap) {
         leafletMap.invalidateSize();
-      }, 100);
-    }
-  }
-
-  // Admin panel loading
-  if (tabId === 'admin') {
+      }
+      loadWaypoints();
+    }, 150);
+  } else if (tabId === 'admin') {
     loadAdminData();
-  }
-
-  // Parkour studio loading
-  if (tabId === 'parkour') {
-    loadParkourData();
+  } else if (tabId === 'owner') {
+    loadOwnerData();
   }
 }
 
 // ==========================================
-// AUTHENTICATION & PROFILE
+// AUTHENTICATION (/api/me, login, logout, reset)
 // ==========================================
 
-async function checkAuth() {
+async function initAuth() {
   try {
     const res = await fetch('/api/me');
     const data = await res.json();
-    if (data.loggedIn && data.user) {
-      renderLoggedIn(data.user);
-    } else {
-      renderLoggedOut();
-    }
+    currentUser = data.user || null;
+    renderAuthState();
   } catch (err) {
-    console.warn('Auth check error:', err);
-    renderLoggedOut();
+    console.error('Failed to check session:', err);
+    currentUser = null;
+    renderAuthState();
   }
 }
 
-function renderLoggedIn(user) {
-  currentUser = user;
+function renderAuthState() {
+  const loggedOutBox = document.getElementById('auth-logged-out');
+  const loggedInBox = document.getElementById('auth-logged-in');
+  const personalCard = document.getElementById('personal-card');
+  const adminNavBtn = document.getElementById('nav-admin-btn');
+  const ownerNavBtn = document.getElementById('nav-owner-btn');
+  const openWpBtn = document.getElementById('btn-open-waypoint-modal');
 
-  // Header User Pill
-  document.getElementById('auth-logged-out').style.display = 'none';
-  document.getElementById('auth-logged-in').style.display = 'flex';
-  
-  const avatar = document.getElementById('nav-user-avatar');
-  avatar.src = `https://mc-heads.net/avatar/${encodeURIComponent(user.username)}/64`;
-  avatar.onerror = () => { avatar.src = 'https://mc-heads.net/avatar/MHF_Steve/64'; };
+  if (currentUser) {
+    // Logged In
+    if (loggedOutBox) loggedOutBox.style.display = 'none';
+    if (loggedInBox) loggedInBox.style.display = 'flex';
+    if (personalCard) personalCard.style.display = 'block';
 
-  document.getElementById('nav-username').innerText = user.username;
-  document.getElementById('nav-user-coins').innerText = `🪙 ${(user.coins || 0).toLocaleString()}`;
-  
-  const rankPill = document.getElementById('nav-user-rank');
-  rankPill.innerText = user.rank;
-  rankPill.className = `rank-badge ${getRankBadgeClass(user.rank)}`;
+    const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(currentUser.username)}/64`;
+    const bustUrl = `https://mc-heads.net/body/${encodeURIComponent(currentUser.username)}/120`;
 
-  // Dashboard Personal Card
-  document.getElementById('welcome-banner').style.display = 'none';
-  const pCard = document.getElementById('personal-card');
-  pCard.style.display = 'block';
+    const navAvatar = document.getElementById('nav-user-avatar');
+    if (navAvatar) navAvatar.src = avatarUrl;
 
-  const bustImg = document.getElementById('profile-bust');
-  bustImg.src = `https://mc-heads.net/body/${encodeURIComponent(user.username)}/right`;
-  bustImg.onerror = () => { bustImg.src = 'https://mc-heads.net/body/MHF_Steve/right'; };
+    const navUsername = document.getElementById('nav-username');
+    if (navUsername) navUsername.textContent = currentUser.username;
 
-  document.getElementById('profile-name').innerText = user.username;
-  const pRank = document.getElementById('profile-rank');
-  pRank.innerText = user.rank;
-  pRank.className = `rank-badge ${getRankBadgeClass(user.rank)}`;
-  document.getElementById('profile-uuid').innerText = `UUID: ${user.uuid}`;
-  document.getElementById('profile-coins').innerText = (user.coins || 0).toLocaleString();
+    const navCoins = document.getElementById('nav-user-coins');
+    if (navCoins) navCoins.textContent = `🪙 ${(currentUser.coins || 0).toLocaleString()}`;
 
-  // Urban SMP Stats
-  const uCoords = user.stats?.urban?.coords || { x: -653, y: -22, z: -116 };
-  document.getElementById('urban-coords').innerText = `X: ${uCoords.x}, Y: ${uCoords.y}, Z: ${uCoords.z}`;
-  document.getElementById('urban-level').innerText = `Lvl ${user.stats?.urban?.level || 0}`;
-
-  const hp = user.stats?.urban?.health || 20;
-  const hearts = '❤️'.repeat(Math.min(10, Math.max(1, Math.round(hp / 2))));
-  document.getElementById('urban-health').innerText = `${hearts} (${hp} HP)`;
-
-  // Admin Button Toggle
-  const adminBtn = document.getElementById('nav-admin-btn');
-  if (user.isAdmin) {
-    adminBtn.style.display = 'inline-flex';
-    fetchAdminBadgeCount();
-  } else {
-    adminBtn.style.display = 'none';
-  }
-
-  // Parkour Button Toggle (Shown for OWNER or Admin)
-  const parkourBtn = document.getElementById('nav-parkour-btn');
-  if (parkourBtn) {
-    if (user.rank === 'OWNER' || user.isAdmin) {
-      parkourBtn.style.display = 'inline-flex';
-      fetchParkourBadgeCount();
-    } else {
-      parkourBtn.style.display = 'none';
+    const navRank = document.getElementById('nav-user-rank');
+    if (navRank) {
+      navRank.textContent = currentUser.rank || 'MEMBER';
+      navRank.className = `rank-badge rank-${(currentUser.rank || 'default').toLowerCase().replace('_', '')}`;
     }
+
+    // Personal Card info
+    const profileBust = document.getElementById('profile-bust');
+    if (profileBust) profileBust.src = bustUrl;
+
+    const profileName = document.getElementById('profile-name');
+    if (profileName) profileName.textContent = currentUser.username;
+
+    const profileRank = document.getElementById('profile-rank');
+    if (profileRank) {
+      profileRank.textContent = currentUser.rank || 'MEMBER';
+      profileRank.className = `rank-badge rank-${(currentUser.rank || 'default').toLowerCase().replace('_', '')}`;
+    }
+
+    const profileCoins = document.getElementById('profile-coins');
+    if (profileCoins) profileCoins.textContent = (currentUser.coins || 0).toLocaleString();
+
+    const profileUuid = document.getElementById('profile-uuid');
+    if (profileUuid) profileUuid.textContent = `UUID: ${currentUser.uuid || 'N/A'}`;
+
+    const urbanCoords = document.getElementById('urban-coords');
+    if (urbanCoords) {
+      if (currentUser.urbanCoords) {
+        urbanCoords.textContent = `X: ${currentUser.urbanCoords.x}, Y: ${currentUser.urbanCoords.y}, Z: ${currentUser.urbanCoords.z}`;
+      } else {
+        urbanCoords.textContent = 'Survival Wereld (Spawn)';
+      }
+    }
+
+    const urbanLevel = document.getElementById('urban-level');
+    if (urbanLevel) urbanLevel.textContent = `Lvl ${currentUser.urbanLevel ?? 0}`;
+
+    const statUserRank = document.getElementById('stat-user-rank-display');
+    if (statUserRank) statUserRank.textContent = currentUser.rank || 'MEMBER';
+
+    // Permissions visibility
+    const isOwner = currentUser.rank === 'OWNER';
+    const isAdmin = currentUser.isAdmin || isOwner;
+
+    if (adminNavBtn) adminNavBtn.style.display = isAdmin ? 'flex' : 'none';
+    if (ownerNavBtn) ownerNavBtn.style.display = isOwner ? 'flex' : 'none';
+    if (openWpBtn) openWpBtn.style.display = 'inline-flex';
+
+  } else {
+    // Logged Out
+    if (loggedOutBox) loggedOutBox.style.display = 'flex';
+    if (loggedInBox) loggedInBox.style.display = 'none';
+    if (personalCard) personalCard.style.display = 'none';
+    if (adminNavBtn) adminNavBtn.style.display = 'none';
+    if (ownerNavBtn) ownerNavBtn.style.display = 'none';
   }
 }
 
-function renderLoggedOut() {
-  currentUser = null;
-  document.getElementById('auth-logged-out').style.display = 'flex';
-  document.getElementById('auth-logged-in').style.display = 'none';
-  document.getElementById('welcome-banner').style.display = 'block';
-  document.getElementById('personal-card').style.display = 'none';
-  document.getElementById('nav-admin-btn').style.display = 'none';
-  const parkourBtn = document.getElementById('nav-parkour-btn');
-  if (parkourBtn) parkourBtn.style.display = 'none';
-}
-
-function openLoginModal() {
+// Modal open/close
+function openLoginModal(mode = 'login') {
   const modal = document.getElementById('login-modal');
-  if (modal) {
-    switchLoginMode('login');
-    modal.classList.add('open');
-  }
+  if (modal) modal.classList.add('active');
+  switchLoginMode(mode);
 }
 
 function closeLoginModal() {
   const modal = document.getElementById('login-modal');
-  if (modal) modal.classList.remove('open');
+  if (modal) modal.classList.remove('active');
 }
 
 function switchLoginMode(mode) {
   const tabLogin = document.getElementById('modal-tab-login');
   const tabCode = document.getElementById('modal-tab-code');
   const formLogin = document.getElementById('form-login');
-  const formCode = document.getElementById('form-code-section');
+  const formCodeSection = document.getElementById('form-code-section');
+  const modalTitle = document.getElementById('modal-title');
 
-  if (!tabLogin || !tabCode || !formLogin || !formCode) return;
-
-  if (mode === 'code') {
-    tabLogin.classList.remove('active');
-    tabCode.classList.add('active');
-    formLogin.style.display = 'none';
-    formCode.style.display = 'block';
-
-    const loginUser = document.getElementById('login-username')?.value.trim();
-    if (loginUser && document.getElementById('setup-username')) {
-      document.getElementById('setup-username').value = loginUser;
-    }
+  if (mode === 'login') {
+    if (tabLogin) tabLogin.classList.add('active');
+    if (tabCode) tabCode.classList.remove('active');
+    if (formLogin) formLogin.style.display = 'block';
+    if (formCodeSection) formCodeSection.style.display = 'none';
+    if (modalTitle) modalTitle.textContent = '🔑 Inloggen op FPixel';
   } else {
-    tabCode.classList.remove('active');
-    tabLogin.classList.add('active');
-    formCode.style.display = 'none';
-    formLogin.style.display = 'block';
+    if (tabLogin) tabLogin.classList.remove('active');
+    if (tabCode) tabCode.classList.add('active');
+    if (formLogin) formLogin.style.display = 'none';
+    if (formCodeSection) formCodeSection.style.display = 'block';
+    if (modalTitle) modalTitle.textContent = '✉️ Wachtwoord Resetten via Minecraft Chat';
   }
 }
 
-async function handlePasswordLogin(event) {
-  event.preventDefault();
+// Standard Password Login
+async function handlePasswordLogin(e) {
+  e.preventDefault();
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
-
-  if (!username || !password) {
-    showToast('Vul je gebruikersnaam en wachtwoord in.');
-    return;
-  }
 
   try {
     const res = await fetch('/api/login', {
@@ -284,63 +264,57 @@ async function handlePasswordLogin(event) {
       body: JSON.stringify({ username, password })
     });
     const data = await res.json();
-    if (res.ok && data.success) {
-      closeLoginModal();
-      checkAuth();
-      showToast(`Ingelogd als ${data.user.username}!`);
-      fetchStats();
-    } else {
-      showToast(data.error || 'Inloggen mislukt.');
+    if (!res.ok) {
+      showToast(data.error || 'Inloggen mislukt.', true);
+      return;
     }
+
+    currentUser = data.user;
+    renderAuthState();
+    closeLoginModal();
+    showToast(`Welkom terug, ${currentUser.username}!`);
   } catch (err) {
-    showToast('Fout bij verbinden met de server.');
+    showToast('Fout bij inloggen: ' + err.message, true);
   }
 }
 
+// Request In-Game Code via RCON tellraw
 async function requestInGameCode() {
-  const input = document.getElementById('setup-username');
-  const username = input ? input.value.trim() : '';
+  const username = document.getElementById('setup-username').value.trim();
   if (!username) {
-    showToast('Vul eerst je Minecraft gebruikersnaam in.');
+    showToast('Vul eerst je Minecraft gebruikersnaam in.', true);
     return;
   }
 
+  showToast('Code versturen naar in-game chat...', false);
+
   try {
-    showToast('Verificatiecode verzenden naar Minecraft...');
     const res = await fetch('/api/auth/send-code', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username })
     });
     const data = await res.json();
-    if (res.ok && data.success) {
-      showToast(data.message);
-      const verifyInput = document.getElementById('verify-code');
-      if (verifyInput) verifyInput.focus();
-    } else {
-      showToast(data.error || 'Kan verificatiecode niet sturen.');
+    if (!res.ok) {
+      showToast(data.error || 'Kon code niet verzenden.', true);
+      return;
     }
+
+    showToast(data.message || 'Verificatiecode verzonden naar je Minecraft chat!');
   } catch (err) {
-    showToast('Fout bij verzenden van verificatiecode.');
+    showToast('Netwerkfout bij aanvragen code: ' + err.message, true);
   }
 }
 
-async function handleVerifyCodeAndSetPassword(event) {
-  event.preventDefault();
+// Verify Code & Set Password
+async function handleVerifyCodeAndSetPassword(e) {
+  e.preventDefault();
   const username = document.getElementById('setup-username').value.trim();
   const code = document.getElementById('verify-code').value.trim();
   const password = document.getElementById('setup-new-password').value;
 
-  if (!username) {
-    showToast('Vul je Minecraft gebruikersnaam in.');
-    return;
-  }
-  if (!code || code.length !== 6) {
-    showToast('Vul de 6-cijferige verificatiecode in.');
-    return;
-  }
-  if (!password || password.length < 4) {
-    showToast('Wachtwoord moet minimaal 4 tekens bevatten.');
+  if (!username || !code || !password) {
+    showToast('Vul alle velden in.', true);
     return;
   }
 
@@ -351,157 +325,357 @@ async function handleVerifyCodeAndSetPassword(event) {
       body: JSON.stringify({ username, code, password })
     });
     const data = await res.json();
-    if (res.ok && data.success) {
-      closeLoginModal();
-      checkAuth();
-      showToast(data.message || 'Wachtwoord ingesteld en ingelogd!');
-      fetchStats();
-    } else {
-      showToast(data.error || 'Verificatie mislukt.');
+    if (!res.ok) {
+      showToast(data.error || 'Ongeldige code.', true);
+      return;
     }
+
+    currentUser = data.user;
+    renderAuthState();
+    closeLoginModal();
+    showToast(data.message || 'Wachtwoord succesvol opgeslagen! Je bent nu ingelogd.');
   } catch (err) {
-    showToast('Fout bij verifiëren van code.');
+    showToast('Fout bij verifiëren: ' + err.message, true);
   }
 }
 
+// Logout
 async function logout() {
   try {
     await fetch('/api/logout', { method: 'POST' });
-    checkAuth();
-    switchTab('dashboard');
+    currentUser = null;
+    renderAuthState();
     showToast('Je bent uitgelogd.');
-  } catch (e) {
-    console.error(e);
+    if (currentTab === 'admin' || currentTab === 'owner') {
+      switchTab('home');
+    }
+  } catch (err) {
+    showToast('Fout bij uitloggen: ' + err.message, true);
   }
 }
 
 // ==========================================
-// INTERACTIVE SURVIVAL MAP (LEAFLET + SQUAREMAP TILES)
+// SERVER STATS & LEADERBOARD (/api/stats)
 // ==========================================
 
-const MAP_MAX_ZOOM = 3;
-const MAP_SCALE = 1 / Math.pow(2, MAP_MAX_ZOOM);
+async function loadStats() {
+  try {
+    const res = await fetch('/api/stats');
+    const data = await res.json();
 
-function mcToLatLng(x, z) {
-  return L.latLng(-z * MAP_SCALE, x * MAP_SCALE);
+    const statusPill = document.getElementById('server-status-pill');
+    const statusText = document.getElementById('status-text');
+    const heroPlayerCount = document.getElementById('hero-player-count');
+
+    if (data.server && data.server.online) {
+      if (statusPill) statusPill.className = 'status-indicator online';
+      if (statusText) statusText.textContent = 'ONLINE';
+      if (heroPlayerCount) heroPlayerCount.textContent = `${data.server.playersOnline || 0} / ${data.server.playersMax || 100}`;
+    } else {
+      if (statusPill) statusPill.className = 'status-indicator offline';
+      if (statusText) statusText.textContent = 'OFFLINE';
+      if (heroPlayerCount) heroPlayerCount.textContent = '0';
+    }
+
+    renderFriendsLeaderboard(data.leaderboard || []);
+  } catch (err) {
+    console.warn('Could not load server stats:', err.message);
+  }
 }
 
-function latLngToMc(latlng) {
-  return {
-    x: Math.round(latlng.lng / MAP_SCALE),
-    z: Math.round(-latlng.lat / MAP_SCALE)
-  };
+function renderFriendsLeaderboard(players) {
+  const tbody = document.getElementById('friends-tbody');
+  if (!tbody) return;
+
+  if (!players || players.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-dim); padding: 24px;">Nog geen spelerdata beschikbaar.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = players.map(p => {
+    const rank = p.rank || 'MEMBER';
+    const rankClass = `rank-${rank.toLowerCase().replace('_', '')}`;
+    const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(p.username)}/32`;
+
+    let coordsStr = 'Spawn';
+    if (p.urbanCoords) {
+      coordsStr = `X: ${p.urbanCoords.x}, Z: ${p.urbanCoords.z}`;
+    }
+
+    return `
+      <tr>
+        <td>
+          <div class="table-player-cell">
+            <img class="table-player-avatar" src="${avatarUrl}" alt="${p.username}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/32'">
+            <span class="table-player-name">${escapeHtml(p.username)}</span>
+          </div>
+        </td>
+        <td><span class="rank-badge ${rankClass}">${escapeHtml(rank)}</span></td>
+        <td><strong style="color: var(--gold);">🪙 ${(p.coins || 0).toLocaleString()}</strong></td>
+        <td><span class="stat-v highlight">Lvl ${p.urbanLevel ?? 0}</span></td>
+        <td><code>${coordsStr}</code></td>
+        <td><span class="text-green font-bold">Actief</span></td>
+      </tr>
+    `;
+  }).join('');
 }
 
-function initSurvivalMap() {
+// ==========================================
+// INTERACTIVE SURVIVAL MAP & WAYPOINTS
+// ==========================================
+
+function initMap() {
   const container = document.getElementById('survival-map-container');
   if (!container || leafletMap) return;
 
+  // Standard flat CRS for Minecraft maps
   leafletMap = L.map('survival-map-container', {
     crs: L.CRS.Simple,
     minZoom: 0,
-    maxZoom: 5,
-    zoomSnap: 1,
-    attributionControl: false,
-    noWrap: true
+    maxZoom: 4,
+    zoomControl: true,
+    attributionControl: false
   });
 
-  // Track live Minecraft block coordinates on mouse move
+  leafletMap.setView([-128, 128], 1);
+
+  // Set default tile layer
+  updateMapLayer('survival');
+
+  // Mouse move updates coordinates
   leafletMap.on('mousemove', (e) => {
-    const mc = latLngToMc(e.latlng);
     const coordsEl = document.getElementById('map-coords');
-    if (coordsEl) {
-      coordsEl.innerText = `X: ${mc.x}, Z: ${mc.z}`;
+    if (!coordsEl) return;
+    const x = Math.round(e.latlng.lng * 4);
+    const z = Math.round(-e.latlng.lat * 4);
+    coordsEl.textContent = `X: ${x}, Z: ${z}`;
+  });
+
+  // Map click triggers waypoint add
+  leafletMap.on('click', (e) => {
+    const x = Math.round(e.latlng.lng * 4);
+    const z = Math.round(-e.latlng.lat * 4);
+    pendingClickCoords = { x, z, world: currentMapWorld };
+
+    if (currentUser) {
+      openAddWaypointModal(x, z, currentMapWorld);
+    } else {
+      showToast(`Coördinaten X: ${x}, Z: ${z}. Log in om een waypoint toe te voegen!`);
     }
   });
-
-  loadMapWorld(currentMapWorld);
 }
 
-function loadMapWorld(worldKey) {
+function updateMapLayer(worldId) {
   if (!leafletMap) return;
-  const cfg = mapWorldsConfig[worldKey] || mapWorldsConfig.survival;
-  currentMapWorld = worldKey;
 
-  // Set container background color to match dimension
-  const container = document.getElementById('survival-map-container');
-  if (container) {
-    container.style.backgroundColor = cfg.background;
+  if (currentTileLayer) {
+    leafletMap.removeLayer(currentTileLayer);
   }
 
-  // Remove previous tile layer
-  if (mapTileLayer) {
-    leafletMap.removeLayer(mapTileLayer);
-    mapTileLayer = null;
-  }
-
-  // Create high-res Squaremap tile layer (Strictly no markers)
-  mapTileLayer = L.tileLayer(`/tiles/${cfg.tilePath}/{z}/{x}_{y}.png`, {
-    tileSize: 512,
-    minZoom: 0,
-    maxZoom: cfg.maxZoom + cfg.extraZoom,
-    maxNativeZoom: cfg.maxZoom,
-    noWrap: true,
-    errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
-  }).addTo(leafletMap);
-
-  // Center on dimension spawn point
-  const spawnLatLng = mcToLatLng(cfg.spawn.x, cfg.spawn.z);
-  leafletMap.setView(spawnLatLng, 2);
+  currentMapWorld = worldId;
 
   // Update dimension label in footer
   const dimLabel = document.getElementById('map-dim-label');
   if (dimLabel) {
-    dimLabel.innerText = cfg.label;
+    if (worldId === 'nether') dimLabel.textContent = '🔥 Dimensie: The Nether';
+    else if (worldId === 'end') dimLabel.textContent = '🌌 Dimensie: The End';
+    else dimLabel.textContent = '🌍 Dimensie: Overworld (Survival)';
   }
+
+  // Use internal tile router
+  const tilePath = worldId === 'nether' ? 'minecraft_the_nether' : (worldId === 'end' ? 'minecraft_the_end' : 'minecraft_survival');
+  currentTileLayer = L.tileLayer(`/tiles/${tilePath}/0/0/{z}_{x}_{y}.png`, {
+    tileSize: 512,
+    noWrap: true,
+    errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+  }).addTo(leafletMap);
+
+  renderWaypointMarkers();
 }
 
-function changeMapWorld(worldKey) {
-  currentMapWorld = worldKey;
+function changeMapWorld(worldId) {
+  document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`btn-world-${worldId}`);
+  if (btn) btn.classList.add('active');
 
-  // Update button active state
-  ['survival', 'nether', 'end'].forEach(k => {
-    const btn = document.getElementById(`btn-world-${k}`);
-    if (btn) {
-      if (k === worldKey) btn.classList.add('active');
-      else btn.classList.remove('active');
-    }
-  });
-
-  loadMapWorld(worldKey);
+  updateMapLayer(worldId);
 }
 
 function resetMapView() {
   if (leafletMap) {
-    const cfg = mapWorldsConfig[currentMapWorld] || mapWorldsConfig.survival;
-    const spawnLatLng = mcToLatLng(cfg.spawn.x, cfg.spawn.z);
-    leafletMap.setView(spawnLatLng, 2);
+    leafletMap.setView([-128, 128], 1);
+  }
+}
+
+// Load and Render Waypoints (/api/waypoints)
+async function loadWaypoints() {
+  try {
+    const res = await fetch('/api/waypoints');
+    const data = await res.json();
+    cachedWaypoints = data.waypoints || [];
+
+    const countBadge = document.getElementById('waypoint-count');
+    if (countBadge) countBadge.textContent = `${cachedWaypoints.length} punten`;
+
+    renderWaypointsDrawer();
+    renderWaypointMarkers();
+  } catch (err) {
+    console.error('Failed to load waypoints:', err);
+  }
+}
+
+function renderWaypointMarkers() {
+  if (!leafletMap) return;
+
+  // Clear existing markers
+  waypointMarkers.forEach(m => leafletMap.removeLayer(m));
+  waypointMarkers = [];
+
+  const worldWaypoints = cachedWaypoints.filter(w => (w.world || 'survival') === currentMapWorld);
+
+  worldWaypoints.forEach(wp => {
+    // Transform Minecraft coords to leaflet LatLng (lng = x/4, lat = -z/4)
+    const lat = -wp.z / 4;
+    const lng = wp.x / 4;
+
+    const iconHtml = `<div style="font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); text-align: center;">${wp.icon || '📍'}</div>`;
+    const customIcon = L.divIcon({
+      className: 'custom-wp-icon',
+      html: iconHtml,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+
+    const marker = L.marker([lat, lng], { icon: customIcon }).addTo(leafletMap);
+
+    const deleteBtn = (currentUser && (wp.createdBy === currentUser.username || currentUser.rank === 'OWNER' || currentUser.rank === 'ADMIN'))
+      ? `<br><button onclick="deleteWaypoint('${wp.id}')" style="background:#ef4444; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-weight:700; margin-top:6px; cursor:pointer;">Verwijder 🗑️</button>`
+      : '';
+
+    marker.bindPopup(`
+      <div style="font-family:'Plus Jakarta Sans',sans-serif; min-width:140px;">
+        <strong style="font-size:14px; color:#fff;">${escapeHtml(wp.name)}</strong><br>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#38bdf8;">X: ${wp.x}, Y: ${wp.y || 64}, Z: ${wp.z}</span><br>
+        <span style="font-size:11px; color:#94a3b8;">Door: ${escapeHtml(wp.createdBy || 'Server')}</span>
+        ${deleteBtn}
+      </div>
+    `);
+
+    waypointMarkers.push(marker);
+  });
+}
+
+function renderWaypointsDrawer() {
+  const container = document.getElementById('waypoints-list');
+  if (!container) return;
+
+  if (cachedWaypoints.length === 0) {
+    container.innerHTML = `<div style="color:var(--text-dim); font-size:0.85rem;">Nog geen waypoints geplaatst. Klik op de kaart om er één toe te voegen!</div>`;
+    return;
+  }
+
+  container.innerHTML = cachedWaypoints.map(wp => {
+    const isOwnerOfWp = currentUser && (wp.createdBy === currentUser.username || currentUser.rank === 'OWNER' || currentUser.rank === 'ADMIN');
+    return `
+      <div class="waypoint-item">
+        <div class="wp-meta">
+          <span class="wp-name">${wp.icon || '📍'} ${escapeHtml(wp.name)}</span>
+          <span class="wp-coords">X: ${wp.x}, Y: ${wp.y || 64}, Z: ${wp.z} (${escapeHtml(wp.world || 'survival')})</span>
+          <span class="wp-by">Geplaatst door <strong>${escapeHtml(wp.createdBy || 'Server')}</strong></span>
+        </div>
+        ${isOwnerOfWp ? `<button class="btn btn-xs btn-outline-danger" onclick="deleteWaypoint('${wp.id}')">Verwijder</button>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function openAddWaypointModal(x = 0, z = 0, world = 'survival') {
+  if (!currentUser) {
+    openLoginModal('login');
+    showToast('Log eerst in om waypoints op te slaan.', true);
+    return;
+  }
+
+  const modal = document.getElementById('waypoint-modal');
+  if (modal) modal.classList.add('active');
+
+  const xInput = document.getElementById('wp-x');
+  const zInput = document.getElementById('wp-z');
+  const worldSelect = document.getElementById('wp-world');
+
+  if (xInput) xInput.value = x;
+  if (zInput) zInput.value = z;
+  if (worldSelect) worldSelect.value = world;
+}
+
+function closeAddWaypointModal() {
+  const modal = document.getElementById('waypoint-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+async function handleWaypointSubmit(e) {
+  e.preventDefault();
+  const name = document.getElementById('wp-name').value.trim();
+  const x = document.getElementById('wp-x').value;
+  const y = document.getElementById('wp-y').value;
+  const z = document.getElementById('wp-z').value;
+  const world = document.getElementById('wp-world').value;
+  const icon = document.getElementById('wp-icon').value;
+
+  try {
+    const res = await fetch('/api/waypoints/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, x, y, z, world, icon })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Kon waypoint niet toevoegen.', true);
+      return;
+    }
+
+    closeAddWaypointModal();
+    showToast(data.message || 'Waypoint succesvol geplaatst!');
+    loadWaypoints();
+  } catch (err) {
+    showToast('Fout bij toevoegen: ' + err.message, true);
+  }
+}
+
+async function deleteWaypoint(id) {
+  if (!confirm('Weet je zeker dat je dit waypoint wilt verwijderen?')) return;
+
+  try {
+    const res = await fetch('/api/waypoints/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Kon niet verwijderen.', true);
+      return;
+    }
+    showToast('Waypoint verwijderd.');
+    loadWaypoints();
+  } catch (err) {
+    showToast('Fout: ' + err.message, true);
   }
 }
 
 // ==========================================
-// WHITELIST REQUEST FORM
+// WHITELIST REQUEST FORM (PUBLIC)
 // ==========================================
 
-function previewSkin(username) {
-  const head = document.getElementById('skin-preview-head');
-  if (!head) return;
-  const clean = (username || '').trim();
-  if (clean.length >= 2) {
-    head.src = `https://mc-heads.net/avatar/${encodeURIComponent(clean)}/64`;
-    head.onerror = () => { head.src = 'https://mc-heads.net/avatar/MHF_Steve/64'; };
-  } else {
-    head.src = 'https://mc-heads.net/avatar/MHF_Steve/64';
-  }
-}
-
-async function handleWhitelistSubmit(event) {
-  event.preventDefault();
+async function handleWhitelistSubmit(e) {
+  e.preventDefault();
   const username = document.getElementById('wl-username').value.trim();
   const reason = document.getElementById('wl-reason').value.trim();
+  const discord = document.getElementById('wl-discord').value.trim();
+  const edition = document.querySelector('input[name="wl-edition"]:checked')?.value || 'Java';
 
   if (!username) {
-    showToast('Vul een geldige Minecraft naam in.');
+    showToast('Vul een Minecraft gebruikersnaam in.', true);
     return;
   }
 
@@ -509,170 +683,163 @@ async function handleWhitelistSubmit(event) {
     const res = await fetch('/api/whitelist/request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, reason })
+      body: JSON.stringify({
+        username,
+        reason: `${reason}${discord ? ` (Discord: ${discord})` : ''} [${edition}]`
+      })
     });
     const data = await res.json();
-    if (res.ok && data.success) {
-      showToast(data.message);
-      document.getElementById('whitelist-form').reset();
-      previewSkin('');
-      if (currentUser?.isAdmin) {
-        fetchAdminBadgeCount();
-      }
-    } else {
-      showToast(data.error || 'Er is een fout opgetreden.');
+    if (!res.ok) {
+      showToast(data.error || 'Aanvraag mislukt.', true);
+      return;
     }
+
+    showToast('✅ Aanvraag succesvol verstuurd! Een admin zal deze spoedig beoordelen.');
+    document.getElementById('whitelist-form').reset();
+    previewSkin('');
   } catch (err) {
-    showToast('Fout bij versturen van whitelist aanvraag.');
+    showToast('Fout bij versturen: ' + err.message, true);
   }
 }
 
 // ==========================================
-// ADMIN CONTROL PANEL
+// ADMIN CONTROL PANEL (/api/admin/*)
 // ==========================================
-
-async function fetchAdminBadgeCount() {
-  if (!currentUser?.isAdmin) return;
-  try {
-    const res = await fetch('/api/admin/whitelist/requests');
-    if (!res.ok) return;
-    const data = await res.json();
-    const pending = (data.requests || []).filter(r => r.status === 'PENDING').length;
-    const badge = document.getElementById('admin-badge');
-    if (badge) badge.innerText = pending;
-  } catch (e) {}
-}
 
 async function loadAdminData() {
-  if (!currentUser?.isAdmin) return;
+  loadPendingRequests();
+  loadWhitelist();
+}
 
-  // 1. Load Requests
+async function loadPendingRequests() {
   try {
-    const reqRes = await fetch('/api/admin/whitelist/requests');
-    if (reqRes.ok) {
-      const data = await reqRes.json();
-      renderAdminRequests(data.requests || []);
+    const res = await fetch('/api/admin/whitelist/requests');
+    const data = await res.json();
+    const list = data.requests || [];
+
+    const badge = document.getElementById('admin-badge');
+    if (badge) badge.textContent = list.length;
+
+    const countLabel = document.getElementById('pending-req-count');
+    if (countLabel) countLabel.textContent = list.length;
+
+    const container = document.getElementById('pending-requests-list');
+    if (!container) return;
+
+    if (list.length === 0) {
+      container.innerHTML = `<div style="grid-column: 1 / -1; padding: 20px; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); color: var(--text-dim); text-align: center;">Geen openstaande whitelist aanvragen.</div>`;
+      return;
     }
-  } catch (err) {
-    console.error('Error fetching admin requests:', err);
-  }
 
-  // 2. Load Whitelisted Players
-  try {
-    const wlRes = await fetch('/api/admin/whitelist/list');
-    if (wlRes.ok) {
-      const data = await wlRes.json();
-      renderAdminWhitelist(data.whitelist || []);
-    }
-  } catch (err) {
-    console.error('Error fetching admin whitelist list:', err);
-  }
-}
+    container.innerHTML = list.map(req => {
+      const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(req.username)}/48`;
+      const dateStr = new Date(req.createdAt).toLocaleString('nl-NL');
 
-function renderAdminRequests(requests) {
-  const container = document.getElementById('pending-requests-list');
-  if (!container) return;
-
-  const pending = requests.filter(r => r.status === 'PENDING');
-  const badge = document.getElementById('admin-badge');
-  if (badge) badge.innerText = pending.length;
-
-  if (pending.length === 0) {
-    container.innerHTML = `
-      <div style="grid-column: 1 / -1; padding: 24px; text-align: center; color: var(--text-dim); background: var(--bg-card); border-radius: var(--radius-md);">
-        ✨ Geen openstaande aanvragen. Iedereen is beoordeeld!
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = pending.map(r => `
-    <div class="request-card">
-      <div class="req-top">
-        <img class="req-avatar" src="https://mc-heads.net/avatar/${encodeURIComponent(r.username)}/64" alt="${r.username}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/64'">
-        <div>
-          <div class="req-name">${r.username}</div>
-          <div class="req-who" style="color: var(--text-dim);">Aangevraagd op ${new Date(r.createdAt).toLocaleDateString('nl-NL')}</div>
+      return `
+        <div class="request-card">
+          <div class="request-header">
+            <img class="req-avatar" src="${avatarUrl}" alt="${req.username}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/48'">
+            <div class="req-meta">
+              <span class="req-name">${escapeHtml(req.username)}</span>
+              <span class="req-date">${dateStr}</span>
+            </div>
+          </div>
+          <div class="req-details-box">
+            <div class="req-line"><span class="req-k">Bericht / Toelichting:</span></div>
+            <div class="req-line"><span class="req-v">"${escapeHtml(req.reason || 'Geen toelichting opgegeven')}"</span></div>
+          </div>
+          <div class="request-actions">
+            <button class="btn btn-sm btn-success" onclick="approveRequest('${req.id}')">✅ Goedkeuren</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="rejectRequest('${req.id}')">❌ Afwijzen</button>
+          </div>
         </div>
-      </div>
-      <div class="req-body">
-        "${r.reason || 'Geen toelichting opgegeven.'}"
-      </div>
-      <div class="req-actions">
-        <button class="btn btn-sm btn-approve" onclick="approveRequest('${r.id}', '${r.username}')">✅ Goedkeuren</button>
-        <button class="btn btn-sm btn-reject" onclick="rejectRequest('${r.id}')">❌ Afwijzen</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function renderAdminWhitelist(list) {
-  const tbody = document.getElementById('whitelist-table-body');
-  if (!tbody) return;
-
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-dim); padding: 18px;">Geen spelers op whitelist.</td></tr>`;
-    return;
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Error loading pending requests:', err);
   }
-
-  tbody.innerHTML = list.map(p => `
-    <tr>
-      <td>
-        <div class="player-cell">
-          <img class="player-avatar" src="https://mc-heads.net/avatar/${encodeURIComponent(p.name)}/64" alt="${p.name}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/64'">
-          <span>${p.name}</span>
-        </div>
-      </td>
-      <td><code style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-dim);">${p.uuid}</code></td>
-      <td>
-        <button class="btn btn-sm btn-secondary" style="color: var(--red); border-color: rgba(239, 68, 68, 0.3);" onclick="removeWhitelisted('${p.name}')">Verwijder 🗑️</button>
-      </td>
-    </tr>
-  `).join('');
 }
 
-async function approveRequest(requestId, username) {
+async function approveRequest(id) {
   try {
     const res = await fetch('/api/admin/whitelist/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requestId })
+      body: JSON.stringify({ id })
     });
     const data = await res.json();
-    if (res.ok && data.success) {
-      showToast(`✅ ${username} is goedgekeurd & in-game gewhitelist!`);
-      loadAdminData();
-      fetchStats();
-    } else {
-      showToast(data.error || 'Fout bij goedkeuren.');
+    if (!res.ok) {
+      showToast(data.error || 'Goedkeuren mislukt.', true);
+      return;
     }
+    showToast(data.message || 'Speler goedgekeurd en toegevoegd aan whitelist!');
+    loadAdminData();
   } catch (err) {
-    showToast('Fout bij communicatie met admin API.');
+    showToast('Fout: ' + err.message, true);
   }
 }
 
-async function rejectRequest(requestId) {
+async function rejectRequest(id) {
   try {
     const res = await fetch('/api/admin/whitelist/reject', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requestId })
+      body: JSON.stringify({ id })
     });
     const data = await res.json();
-    if (res.ok && data.success) {
-      showToast('Aanvraag afgewezen.');
-      loadAdminData();
-    } else {
-      showToast(data.error || 'Fout bij afwijzen.');
+    if (!res.ok) {
+      showToast(data.error || 'Afwijzen mislukt.', true);
+      return;
     }
+    showToast('Aanvraag afgewezen.');
+    loadPendingRequests();
   } catch (err) {
-    showToast('Fout bij communicatie met admin API.');
+    showToast('Fout: ' + err.message, true);
+  }
+}
+
+async function loadWhitelist() {
+  try {
+    const res = await fetch('/api/admin/whitelist/list');
+    const data = await res.json();
+    const list = data.whitelist || [];
+
+    const countLabel = document.getElementById('active-wl-count');
+    if (countLabel) countLabel.textContent = list.length;
+
+    const tbody = document.getElementById('whitelist-table-body');
+    if (!tbody) return;
+
+    if (list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-dim); padding: 24px;">Whitelist is leeg.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(item => {
+      const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(item.name)}/32`;
+      return `
+        <tr>
+          <td>
+            <div class="table-player-cell">
+              <img class="table-player-avatar" src="${avatarUrl}" alt="${item.name}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/32'">
+              <span class="table-player-name">${escapeHtml(item.name)}</span>
+            </div>
+          </td>
+          <td><code style="font-size: 0.75rem; color: var(--text-dim);">${item.uuid || 'Offline/Bedrock'}</code></td>
+          <td>
+            <button class="btn btn-xs btn-outline-danger" onclick="removeWhitelist('${escapeHtml(item.name)}')">Verwijder ❌</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Error loading whitelist:', err);
   }
 }
 
 async function manualAddWhitelist() {
   const input = document.getElementById('manual-wl-input');
-  const username = input ? input.value.trim() : '';
+  const username = input.value.trim();
   if (!username) return;
 
   try {
@@ -682,23 +849,20 @@ async function manualAddWhitelist() {
       body: JSON.stringify({ username })
     });
     const data = await res.json();
-    if (res.ok && data.success) {
-      showToast(data.message);
-      input.value = '';
-      loadAdminData();
-      fetchStats();
-    } else {
-      showToast(data.error || 'Toevoegen mislukt.');
+    if (!res.ok) {
+      showToast(data.error || 'Toevoegen mislukt.', true);
+      return;
     }
+    showToast(data.message || `${username} toegevoegd aan whitelist.`);
+    input.value = '';
+    loadWhitelist();
   } catch (err) {
-    showToast('Fout bij toevoegen.');
+    showToast('Fout: ' + err.message, true);
   }
 }
 
-async function removeWhitelisted(username) {
-  if (!confirm(`Weet je zeker dat je ${username} van de Minecraft whitelist wilt verwijderen?`)) {
-    return;
-  }
+async function removeWhitelist(username) {
+  if (!confirm(`Weet je zeker dat je ${username} wilt verwijderen van de whitelist?`)) return;
 
   try {
     const res = await fetch('/api/admin/whitelist/remove', {
@@ -707,130 +871,113 @@ async function removeWhitelisted(username) {
       body: JSON.stringify({ username })
     });
     const data = await res.json();
-    if (res.ok && data.success) {
-      showToast(`${username} is verwijderd.`);
-      loadAdminData();
-      fetchStats();
-    } else {
-      showToast(data.error || 'Verwijderen mislukt.');
+    if (!res.ok) {
+      showToast(data.error || 'Verwijderen mislukt.', true);
+      return;
     }
+    showToast(data.message || `${username} verwijderd.`);
+    loadWhitelist();
   } catch (err) {
-    showToast('Fout bij verwijderen van whitelist.');
+    showToast('Fout: ' + err.message, true);
   }
 }
 
-// ==========================================
-// LIVE STATS & LEADERBOARD
-// ==========================================
+async function triggerServerBackup() {
+  if (!confirm('Wil je nu direct een volledige server backup snapshot maken?')) return;
+  showToast('Server backup wordt gestart...', false);
 
-async function fetchStats() {
   try {
-    const res = await fetch('/api/stats');
-    if (!res.ok) throw new Error('API fetch error');
+    const res = await fetch('/api/server/backup', { method: 'POST' });
     const data = await res.json();
-    renderStats(data);
+    if (!res.ok) {
+      showToast(data.error || 'Backup starten mislukt.', true);
+      return;
+    }
+    showToast(data.message || 'Backup succesvol gestart op de achtergrond!');
   } catch (err) {
-    console.warn('Stats fetch error:', err);
-    renderOffline();
-  }
-}
-
-function renderStats(data) {
-  const s = data.server || {};
-
-  // Status pill
-  const pill = document.getElementById('server-status-pill');
-  const statusText = document.getElementById('status-text');
-  if (pill && statusText) {
-    if (s.online) {
-      pill.className = 'status-pill online';
-      statusText.innerText = 'ONLINE';
-    } else {
-      pill.className = 'status-pill offline';
-      statusText.innerText = 'OFFLINE';
-    }
-  }
-
-  // Friends Leaderboard & Roster
-  const tbody = document.getElementById('friends-tbody');
-  if (tbody && data.leaderboard) {
-    if (data.leaderboard.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-dim); padding: 24px;">Nog geen survival data beschikbaar.</td></tr>`;
-    } else {
-      tbody.innerHTML = data.leaderboard.map(p => {
-        const isOnline = (s.samplePlayers || []).some(sp => sp.id === p.uuid || sp.name?.toLowerCase() === p.username.toLowerCase());
-        const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(p.username)}/64`;
-        const rankClass = getRankBadgeClass(p.rank);
-        const coords = p.stats?.urban?.coords ? `X: ${p.stats.urban.coords.x}, Z: ${p.stats.urban.coords.z}` : 'X: 0, Z: 0';
-        const level = p.stats?.urban?.level || 0;
-        const coins = (p.coins || 0).toLocaleString();
-
-        return `
-          <tr>
-            <td>
-              <div class="player-cell">
-                <img class="player-avatar" src="${avatarUrl}" alt="${p.username}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/64'">
-                <span>${p.username}</span>
-              </div>
-            </td>
-            <td><span class="rank-badge ${rankClass}">${p.rank}</span></td>
-            <td><strong style="color: var(--gold);">🪙 ${coins}</strong></td>
-            <td><span style="font-weight: 700; color: #fff;">Lvl ${level}</span></td>
-            <td><code style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--cyan);">${coords}</code></td>
-            <td>
-              <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.85rem; color: ${isOnline ? 'var(--green)' : 'var(--text-dim)'};">
-                <span style="width: 8px; height: 8px; border-radius: 50%; background: ${isOnline ? 'var(--green)' : 'var(--text-dim)'};"></span>
-                ${isOnline ? 'In-Game' : 'Offline'}
-              </span>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-  }
-}
-
-function renderOffline() {
-  const pill = document.getElementById('server-status-pill');
-  const statusText = document.getElementById('status-text');
-  if (pill && statusText) {
-    pill.className = 'status-pill offline';
-    statusText.innerText = 'OFFLINE';
+    showToast('Fout bij starten backup: ' + err.message, true);
   }
 }
 
 // ==========================================
-// PARKOUR STUDIO & REVIEWS
+// OWNER CONTROL PANEL (RANKS, PARKOUR, STOP)
 // ==========================================
 
-async function fetchParkourBadgeCount() {
+async function loadOwnerData() {
+  loadRanksData();
+  loadParkourData();
+}
+
+async function loadRanksData() {
   try {
-    const res = await fetch('/api/parkour/maps');
+    const res = await fetch('/api/admin/ranks');
     const data = await res.json();
-    const pendingCount = (data.maps || []).filter(m => (m.status || '').toUpperCase() === 'PENDING_REVIEW').length;
-    const badge = document.getElementById('parkour-badge');
-    if (badge) {
-      badge.innerText = pendingCount;
-      badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+    if (!data.success) return;
+
+    const ranks = data.ranks || {};
+    const container = document.getElementById('ranks-overview-container');
+    if (!container) return;
+
+    const entries = Object.entries(ranks);
+    if (entries.length === 0) {
+      container.innerHTML = `<div style="color:var(--text-dim); font-size:0.85rem;">Geen speciale rangen ingesteld.</div>`;
+      return;
     }
-  } catch (err) {}
+
+    container.innerHTML = entries.map(([name, rank]) => {
+      const rankClass = `rank-${rank.toLowerCase().replace('_', '')}`;
+      return `
+        <div class="rank-item-pill">
+          <span class="rank-user-name">${escapeHtml(name)}</span>
+          <span class="rank-badge ${rankClass}">[${escapeHtml(rank)}]</span>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Error loading ranks:', err);
+  }
 }
 
+async function handleSetRankSubmit(e) {
+  e.preventDefault();
+  const username = document.getElementById('rank-username').value.trim();
+  const rank = document.getElementById('rank-select').value;
+
+  if (!username) {
+    showToast('Vul een gebruikersnaam in.', true);
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/admin/ranks/set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, rank })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Rang toekennen mislukt.', true);
+      return;
+    }
+
+    showToast(data.message || `Rang succesvol gewijzigd naar [${rank}]!`);
+    document.getElementById('rank-username').value = '';
+    loadRanksData();
+  } catch (err) {
+    showToast('Fout bij toekennen rang: ' + err.message, true);
+  }
+}
+
+// Parkour Studio CMS (/api/parkour/*)
 async function loadParkourData() {
-  const container = document.getElementById('parkour-maps-list');
-  if (!container) return;
-
-  container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-dim);">Laden van parkour kaarten...</div>`;
-
   try {
     const res = await fetch('/api/parkour/maps');
     const data = await res.json();
     const maps = data.maps || [];
-    const isOwner = data.isOwner;
 
-    // Update stats
+    // Update Summary Counters
     const total = maps.length;
-    const pending = maps.filter(m => (m.status || '').toUpperCase() === 'PENDING_REVIEW').length;
+    const pending = maps.filter(m => (m.status || 'PENDING_REVIEW').toUpperCase() === 'PENDING_REVIEW').length;
     const approved = maps.filter(m => (m.status || '').toUpperCase() === 'APPROVED').length;
     const disabled = maps.filter(m => (m.status || '').toUpperCase() === 'DISABLED').length;
 
@@ -838,100 +985,88 @@ async function loadParkourData() {
     const elPending = document.getElementById('pk-stat-pending');
     const elApproved = document.getElementById('pk-stat-approved');
     const elDisabled = document.getElementById('pk-stat-disabled');
+    const parkourBadge = document.getElementById('parkour-badge');
+
     if (elTotal) elTotal.innerText = total;
     if (elPending) elPending.innerText = pending;
     if (elApproved) elApproved.innerText = approved;
     if (elDisabled) elDisabled.innerText = disabled;
+    if (parkourBadge) parkourBadge.innerText = pending;
 
-    const badge = document.getElementById('parkour-badge');
-    if (badge) {
-      badge.innerText = pending;
-      badge.style.display = pending > 0 ? 'inline-block' : 'none';
-    }
+    const container = document.getElementById('parkour-maps-list');
+    if (!container) return;
 
     if (maps.length === 0) {
       container.innerHTML = `
-        <div class="empty-state-card" style="grid-column: 1 / -1; text-align: center; padding: 48px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
-          <div style="font-size: 3rem; margin-bottom: 12px;">🏃</div>
-          <h3 style="margin-bottom: 8px;">Nog Geen Parkour Kaarten</h3>
-          <p style="color: var(--text-dim); max-width: 500px; margin: 0 auto;">Laat een speler met [MOD] rang of hoger <code>/fpixel parkour create [naam]</code> uitvoeren in Minecraft om een nieuw parcours in de void te bouwen.</p>
+        <div style="grid-column: 1 / -1; padding: 36px; background: rgba(0, 0, 0, 0.2); border-radius: var(--radius-md); text-align: center; color: var(--text-dim);">
+          <div style="font-size: 2.2rem; margin-bottom: 10px;">🏃</div>
+          <h4 style="color: #fff; margin-bottom: 6px;">Nog Geen Community Maps Gemaakt</h4>
+          <p style="font-size: 0.9rem;">Spelers met [MOD] rang of hoger kunnen een map bouwen via <code>/fpixel parkour create [naam]</code>.</p>
         </div>
       `;
       return;
     }
 
-    // Sort: pending first, then approved, then by createdAt desc
-    maps.sort((a, b) => {
-      const aPending = (a.status || '').toUpperCase() === 'PENDING_REVIEW';
-      const bPending = (b.status || '').toUpperCase() === 'PENDING_REVIEW';
-      if (aPending && !bPending) return -1;
-      if (!aPending && bPending) return 1;
-      return (b.createdAt || 0) - (a.createdAt || 0);
-    });
-
     container.innerHTML = maps.map(map => {
-      const statusUpper = (map.status || 'PENDING_REVIEW').toUpperCase();
-      let statusBadgeClass = 'status-pending';
-      let statusLabel = '⏳ In Afwachting';
-
-      if (statusUpper === 'APPROVED') {
-        statusBadgeClass = 'status-approved';
-        statusLabel = '✅ Goedgekeurd & Speelbaar';
-      } else if (statusUpper === 'DISABLED') {
-        statusBadgeClass = 'status-disabled';
-        statusLabel = '⏸️ Uit Circulatie';
-      } else if (statusUpper === 'REJECTED') {
-        statusBadgeClass = 'status-rejected';
-        statusLabel = '❌ Afgewezen';
-      }
-
       const creator = map.creatorName || 'Onbekend';
       const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(creator)}/64`;
-      const dateStr = map.createdAt ? new Date(map.createdAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Onlangs';
       const checkpointsCount = Array.isArray(map.checkpoints) ? map.checkpoints.length : 0;
-      const testCmd = `/fpixel test ${map.id}`;
+      const statusUpper = (map.status || 'PENDING_REVIEW').toUpperCase();
+      const dateStr = map.createdAt ? new Date(map.createdAt).toLocaleDateString('nl-NL') : 'Recent';
+
+      let statusLabel = '⏳ In Review';
+      let statusBadgeClass = 'status-pending';
+
+      if (statusUpper === 'APPROVED') {
+        statusLabel = '✅ Goedgekeurd';
+        statusBadgeClass = 'status-approved';
+      } else if (statusUpper === 'DISABLED') {
+        statusLabel = '⏸️ Uit Circulatie';
+        statusBadgeClass = 'status-disabled';
+      } else if (statusUpper === 'REJECTED') {
+        statusLabel = '❌ Afgewezen';
+        statusBadgeClass = 'status-rejected';
+      }
 
       let actionsHtml = '';
-      if (isOwner) {
-        if (statusUpper === 'PENDING_REVIEW') {
-          actionsHtml = `
-            <div class="card-actions-row">
-              <button class="btn btn-sm btn-primary" onclick="approveParkourMap('${map.id}')">
-                ✅ Goedkeuren & Live Zetten
-              </button>
-              <button class="btn btn-sm btn-danger" onclick="promptRejectParkourMap('${map.id}')">
-                ❌ Afwijzen
-              </button>
-            </div>
-          `;
-        } else if (statusUpper === 'APPROVED') {
-          actionsHtml = `
-            <div class="card-actions-row">
-              <span class="active-game-pill">🎮 Actief in Parkour Games</span>
-              <button class="btn btn-sm btn-outline-warning" onclick="disableParkourMap('${map.id}')">
-                ⏸️ Uit Circulatie Halen
-              </button>
-            </div>
-          `;
-        } else if (statusUpper === 'DISABLED') {
-          actionsHtml = `
-            <div class="card-actions-row">
-              <span class="disabled-game-pill">⏸️ Tijdelijk Uitgeschakeld</span>
-              <button class="btn btn-sm btn-primary" onclick="approveParkourMap('${map.id}')">
-                ▶️ Opnieuw Activeren
-              </button>
-            </div>
-          `;
-        } else {
-          actionsHtml = `
-            <div class="card-actions-row">
-              <span class="rejected-game-pill">Afgewezen: ${escapeHtml(map.rejectReason || 'Niet passend')}</span>
-              <button class="btn btn-xs btn-outline-success" onclick="approveParkourMap('${map.id}')">
-                Alsnog Goedkeuren
-              </button>
-            </div>
-          `;
-        }
+      if (statusUpper === 'PENDING_REVIEW') {
+        actionsHtml = `
+          <div class="card-actions-row">
+            <button class="btn btn-sm btn-success" onclick="approveParkourMap('${map.id}')">
+              ✅ Goedkeuren & Live
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="rejectParkourMap('${map.id}')">
+              ❌ Afwijzen
+            </button>
+          </div>
+        `;
+      } else if (statusUpper === 'APPROVED') {
+        actionsHtml = `
+          <div class="card-actions-row">
+            <span class="active-game-pill">🎮 Actief in Parkour Games</span>
+            <button class="btn btn-sm btn-outline-warning" onclick="disableParkourMap('${map.id}')">
+              ⏸️ Uit Circulatie
+            </button>
+          </div>
+        `;
+      } else if (statusUpper === 'DISABLED') {
+        actionsHtml = `
+          <div class="card-actions-row">
+            <span class="disabled-game-pill">⏸️ Inactief</span>
+            <button class="btn btn-sm btn-primary" onclick="approveParkourMap('${map.id}')">
+              ▶️ Opnieuw Activeren
+            </button>
+          </div>
+        `;
+      } else {
+        actionsHtml = `
+          <div class="card-actions-row">
+            <span class="rejected-game-pill">Afgewezen: ${escapeHtml(map.rejectReason || 'Niet passend')}</span>
+            <button class="btn btn-xs btn-outline-success" onclick="approveParkourMap('${map.id}')">
+              Alsnog Goedkeuren
+            </button>
+          </div>
+        `;
       }
 
       return `
@@ -948,7 +1083,7 @@ async function loadParkourData() {
             <div class="creator-row">
               <img class="creator-avatar" src="${avatarUrl}" alt="${creator}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/64'">
               <div class="creator-meta">
-                <h3 class="parkour-title">${escapeHtml(map.name || ('Parkour ' + map.id))}</h3>
+                <h3 class="parkour-title">${escapeHtml(map.name || map.id)}</h3>
                 <span class="creator-name">Maker: <strong>${escapeHtml(creator)}</strong></span>
               </div>
             </div>
@@ -962,22 +1097,11 @@ async function loadParkourData() {
                 <span class="metric-k">📍 Start:</span>
                 <span class="metric-v"><code>X: ${Math.round(map.startX || 0)}, Y: ${Math.round(map.startY || 100)}, Z: ${Math.round(map.startZ || 0)}</code></span>
               </div>
-              <div class="metric-item">
-                <span class="metric-k">⚠️ Void Y:</span>
-                <span class="metric-v">&lt; ${map.voidY || 70}</span>
-              </div>
             </div>
 
-            <!-- In-game Test Command Quick Copy -->
-            <div class="test-command-widget" onclick="copyToClipboard('${testCmd}', 'Test commando gekopieerd: ${testCmd}')" title="Klik om commando te kopiëren">
-              <div class="test-cmd-content">
-                <span class="test-cmd-icon">🎮</span>
-                <div class="test-cmd-text">
-                  <span class="test-cmd-label">In-Game Testen (Review):</span>
-                  <code class="test-cmd-code">${testCmd}</code>
-                </div>
-              </div>
-              <button class="btn btn-xs btn-copy-cmd" type="button">📋 Kopieer</button>
+            <div class="test-command-widget" onclick="copyIp('/fpixel test ${map.id}', 'Test Commando')" title="Klik om in-game test commando te kopiëren">
+              <div class="test-cmd-code">/fpixel test ${map.id}</div>
+              <button class="btn-copy-cmd">Kopieer 📋</button>
             </div>
 
             ${actionsHtml}
@@ -985,23 +1109,12 @@ async function loadParkourData() {
         </div>
       `;
     }).join('');
-
   } catch (err) {
-    console.error('Fout bij laden van parkour kaarten:', err);
-    container.innerHTML = `<div class="error-box">Fout bij laden van parkour kaarten: ${err.message}</div>`;
+    console.error('Error loading parkour maps:', err);
   }
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
 
 async function approveParkourMap(mapId) {
-  if (!confirm(`Weet je zeker dat je parkour map ${mapId} wilt goedkeuren? De map wordt direct speelbaar in de parkour minigames!`)) {
-    return;
-  }
-
   try {
     const res = await fetch('/api/parkour/approve', {
       method: 'POST',
@@ -1009,24 +1122,40 @@ async function approveParkourMap(mapId) {
       body: JSON.stringify({ id: mapId })
     });
     const data = await res.json();
-    if (res.ok) {
-      showToast(data.message || 'Map succesvol goedgekeurd!');
-      loadParkourData();
-    } else {
-      showToast('Fout: ' + (data.error || 'Kon map niet goedkeuren'));
+    if (!res.ok) {
+      showToast(data.error || 'Kon map niet goedkeuren.', true);
+      return;
     }
+    showToast(data.message || 'Map succesvol goedgekeurd!');
+    loadParkourData();
   } catch (err) {
-    showToast('Netwerkfout bij goedkeuren.');
+    showToast('Fout bij goedkeuren: ' + err.message, true);
   }
 }
 
-function promptRejectParkourMap(mapId) {
-  const reason = prompt('Voer een reden in voor de afwijzing van deze parkour map:', 'Parcours is te moeilijk of incompleet');
-  if (reason === null) return; // Cancelled
-  rejectParkourMap(mapId, reason);
+async function disableParkourMap(mapId) {
+  try {
+    const res = await fetch('/api/parkour/disable', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: mapId })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Kon map niet uitschakelen.', true);
+      return;
+    }
+    showToast(data.message || 'Map uit circulatie gehaald.');
+    loadParkourData();
+  } catch (err) {
+    showToast('Fout: ' + err.message, true);
+  }
 }
 
-async function rejectParkourMap(mapId, reason) {
+async function rejectParkourMap(mapId) {
+  const reason = prompt('Wat is de reden voor afwijzing? (optioneel):', 'Voldoet nog niet aan de kwaliteitsnormen');
+  if (reason === null) return;
+
   try {
     const res = await fetch('/api/parkour/reject', {
       method: 'POST',
@@ -1034,18 +1163,50 @@ async function rejectParkourMap(mapId, reason) {
       body: JSON.stringify({ id: mapId, reason })
     });
     const data = await res.json();
-    if (res.ok) {
-      showToast(data.message || 'Map afgewezen.');
-      loadParkourData();
-    } else {
-      showToast('Fout: ' + (data.error || 'Kon map niet afwijzen'));
+    if (!res.ok) {
+      showToast(data.error || 'Kon map niet afwijzen.', true);
+      return;
     }
+    showToast(data.message || 'Map afgewezen.');
+    loadParkourData();
   } catch (err) {
-    showToast('Netwerkfout bij afwijzen.');
+    showToast('Fout bij afwijzen: ' + err.message, true);
   }
 }
 
-// Initial Boot
-checkAuth();
-fetchStats();
-setInterval(fetchStats, 5000);
+// Stop Server Modal
+function openStopServerModal() {
+  const modal = document.getElementById('stop-server-modal');
+  if (modal) {
+    document.getElementById('stop-confirm-input').value = '';
+    modal.classList.add('active');
+  }
+}
+
+function closeStopServerModal() {
+  const modal = document.getElementById('stop-server-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+async function confirmStopServer() {
+  const input = document.getElementById('stop-confirm-input');
+  if (!input || input.value.trim().toUpperCase() !== 'STOP') {
+    showToast('Typ exact "STOP" om te bevestigen.', true);
+    return;
+  }
+
+  closeStopServerModal();
+  showToast('Server stop signaal wordt verstuurd...', false);
+
+  try {
+    const res = await fetch('/api/server/stop', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Kon server niet stoppen.', true);
+      return;
+    }
+    showToast(data.message || 'Server sluit over enkele seconden af.');
+  } catch (err) {
+    showToast('Fout bij stoppen: ' + err.message, true);
+  }
+}
