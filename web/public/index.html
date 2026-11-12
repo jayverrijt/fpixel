@@ -36,16 +36,10 @@
           <span class="nav-icon">📝</span> Whitelist Aanvragen
         </button>
 
-        <!-- Authenticated Admin Tab (Admins & Owners) -->
-        <button id="nav-admin-btn" class="nav-link admin-pill-link" style="display: none;" onclick="switchTab('admin')">
-          <span class="nav-icon">🛡️</span> Beheer
-          <span id="admin-badge" class="counter-pill">0</span>
-        </button>
-
-        <!-- Authenticated Owner Tab (Owner only) -->
-        <button id="nav-owner-btn" class="nav-link owner-pill-link" style="display: none;" onclick="switchTab('owner')">
-          <span class="nav-icon">👑</span> Owner Panel
-          <span id="parkour-badge" class="counter-pill">0</span>
+        <!-- Authenticated Unified CMS Tab (Admins, Owners & Staff) -->
+        <button id="nav-cms-btn" class="nav-link cms-pill-link" style="display: none;" onclick="switchTab('cms')">
+          <span class="nav-icon">🛠️</span> CMS Beheer
+          <span id="cms-badge" class="counter-pill">0</span>
         </button>
       </nav>
 
@@ -447,166 +441,365 @@
     </section>
 
     <!-- ======================================================== -->
-    <!-- TAB 4: ADMIN BEHEER (WHITELIST, REQUESTS, BACKUP)        -->
+    <!-- TAB 4: UNIFIED CMS BEHEER (ADMIN & OWNER IN 1 PLATFORM)   -->
     <!-- ======================================================== -->
-    <section id="tab-admin" class="tab-pane">
-      <div class="admin-wrapper">
-        <div class="admin-header">
-          <div>
-            <span class="admin-badge">🛡️ ADMIN CONTROLPANEL</span>
-            <h2>Server Beheer & Whitelist Controle</h2>
-            <p>Beoordeel openstaande aanvragen, beheer gewhiteliste spelers en maak volledige server backups.</p>
+    <section id="tab-cms" class="tab-pane">
+      <div class="cms-wrapper">
+
+        <!-- 1. CMS Header Bar -->
+        <div class="cms-header-card">
+          <div class="cms-header-left">
+            <div class="cms-breadcrumbs">
+              <span class="crumb-net">FPixel Network</span>
+              <span class="crumb-div">/</span>
+              <span class="crumb-active">CMS Beheerplatform</span>
+            </div>
+            <h2 class="cms-heading">Server Management CMS</h2>
+            <p class="cms-subheading">Centraal controlecentrum voor whitelist aanvragen, spelers, rangen, community parkours en systeembeheer.</p>
           </div>
-          <div class="admin-actions-bar">
-            <button class="btn btn-sm btn-secondary" onclick="loadAdminData()">🔄 Gegevens Verversen</button>
-            <button class="btn btn-sm btn-success" onclick="triggerServerBackup()">💾 Server Backup Maken</button>
+
+          <div class="cms-header-right">
+            <div id="cms-role-badge" class="cms-role-pill role-pill-owner">
+              <span class="role-icon">🛡️</span>
+              <span id="cms-role-text">Toegangsniveau: Laden...</span>
+            </div>
+            <div class="cms-header-actions">
+              <button class="btn btn-sm btn-secondary" onclick="refreshCmsData()">🔄 Verversen</button>
+              <button id="cms-backup-btn" class="btn btn-sm btn-success" onclick="triggerServerBackup()">💾 Backup Maken</button>
+              <button id="cms-stop-btn" class="btn btn-sm btn-danger owner-only-btn" onclick="openStopServerModal()">🛑 Server Stoppen</button>
+            </div>
           </div>
         </div>
 
-        <!-- 1. Openstaande Aanvragen Grid -->
-        <div class="admin-section">
-          <div class="sub-header">
-            <h3>📬 Openstaande Join Aanvragen (<span id="pending-req-count">0</span>)</h3>
-            <span class="subtitle">Keur nieuwe spelers goed om ze direct in Minecraft toe te laten.</span>
-          </div>
-          <div id="pending-requests-list" class="requests-grid">
-            <!-- Rendered dynamically -->
-          </div>
+        <!-- 2. CMS Sub-Navigation Tab Bar -->
+        <div class="cms-nav-bar">
+          <button id="cms-tabbtn-overview" class="cms-tab-btn active" onclick="switchCmsSubTab('overview')">
+            <span class="tab-icon">📊</span> Overzicht
+          </button>
+          <button id="cms-tabbtn-whitelist" class="cms-tab-btn" onclick="switchCmsSubTab('whitelist')">
+            <span class="tab-icon">📬</span> Whitelist & Aanvragen
+            <span id="cms-tab-wl-badge" class="cms-tab-badge">0</span>
+          </button>
+          <button id="cms-tabbtn-ranks" class="cms-tab-btn" onclick="switchCmsSubTab('ranks')">
+            <span class="tab-icon">👑</span> Spelers & Rangen
+          </button>
+          <button id="cms-tabbtn-parkour" class="cms-tab-btn" onclick="switchCmsSubTab('parkour')">
+            <span class="tab-icon">🏃</span> Parkour Studio
+            <span id="cms-tab-pk-badge" class="cms-tab-badge">0</span>
+          </button>
+          <button id="cms-tabbtn-system" class="cms-tab-btn" onclick="switchCmsSubTab('system')">
+            <span class="tab-icon">⚙️</span> Server & Systeem
+          </button>
         </div>
 
-        <!-- 2. Actieve Whitelist Tabel & Handmatig Toevoegen -->
-        <div class="admin-section">
-          <div class="sub-header">
-            <div>
-              <h3>✅ Actieve Whitelist Spelers (<span id="active-wl-count">0</span>)</h3>
-              <span class="subtitle">Spelers die momenteel mogen inloggen op de server.</span>
+        <!-- 3. CMS Content Panes -->
+        <div class="cms-content-area">
+
+          <!-- SUBTAB 1: OVERZICHT (DASHBOARD) -->
+          <div id="cms-subtab-overview" class="cms-subtab-pane active">
+            <div class="cms-kpi-grid">
+              <div class="kpi-card" onclick="switchCmsSubTab('whitelist')">
+                <div class="kpi-icon">👥</div>
+                <div class="kpi-details">
+                  <span class="kpi-value" id="cms-kpi-whitelist">0</span>
+                  <span class="kpi-label">Gewhiteliste Spelers</span>
+                </div>
+                <span class="kpi-link">Beheer &rarr;</span>
+              </div>
+
+              <div class="kpi-card kpi-card-warning" onclick="switchCmsSubTab('whitelist')">
+                <div class="kpi-icon">📬</div>
+                <div class="kpi-details">
+                  <span class="kpi-value" id="cms-kpi-requests">0</span>
+                  <span class="kpi-label">Openstaande Aanvragen</span>
+                </div>
+                <span class="kpi-link">Beoordelen &rarr;</span>
+              </div>
+
+              <div class="kpi-card kpi-card-info" onclick="switchCmsSubTab('parkour')">
+                <div class="kpi-icon">🏃</div>
+                <div class="kpi-details">
+                  <span class="kpi-value" id="cms-kpi-parkour">0</span>
+                  <span class="kpi-label">Parkour Maps</span>
+                </div>
+                <span class="kpi-link">Studio &rarr;</span>
+              </div>
+
+              <div class="kpi-card kpi-card-purple" onclick="switchCmsSubTab('ranks')">
+                <div class="kpi-icon">👑</div>
+                <div class="kpi-details">
+                  <span class="kpi-value" id="cms-kpi-ranks">0</span>
+                  <span class="kpi-label">Staf & Speciale Rangen</span>
+                </div>
+                <span class="kpi-link">Bekijk &rarr;</span>
+              </div>
             </div>
-            <div class="manual-add-box">
-              <input type="text" id="manual-wl-input" placeholder="Minecraft speler toevoegen...">
-              <button class="btn btn-sm btn-primary" onclick="manualAddWhitelist()">+ Whitelisten</button>
+
+            <!-- Server Quick Health Box -->
+            <div class="cms-panel-card">
+              <div class="panel-header">
+                <h3>🖥️ Systeemstatus & Netwerk Overzicht</h3>
+                <span class="status-indicator online"><span class="status-pulse"></span> Operationeel</span>
+              </div>
+              <div class="cms-specs-grid">
+                <div class="spec-item">
+                  <span class="spec-k">Minecraft Versie</span>
+                  <span class="spec-v">Paper 1.21.x (Java 25)</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-k">Java Server Adres</span>
+                  <span class="spec-v">mc.fpixel.nl:25565</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-k">Bedrock Crossplay</span>
+                  <span class="spec-v">mc.fpixel.nl:19132 (Geyser/Floodgate)</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-k">RCON Server Bridge</span>
+                  <span class="spec-v text-green">Actief & Verbonden</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-k">Web authenticatie</span>
+                  <span class="spec-v">In-game chat verificatiecode</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-k">Backups</span>
+                  <span class="spec-v">Geautomatiseerd snapshot systeem</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="table-responsive">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Speler</th>
-                  <th>UUID</th>
-                  <th>Acties</th>
-                </tr>
-              </thead>
-              <tbody id="whitelist-table-body">
+
+          <!-- SUBTAB 2: WHITELIST & AANVRAGEN -->
+          <div id="cms-subtab-whitelist" class="cms-subtab-pane">
+
+            <!-- 1. Openstaande Aanvragen -->
+            <div class="cms-panel-card">
+              <div class="panel-header">
+                <div>
+                  <h3>📬 Openstaande Join Aanvragen (<span id="pending-req-count">0</span>)</h3>
+                  <span class="subtitle">Keur nieuwe spelers goed om ze direct in Minecraft toe te laten.</span>
+                </div>
+                <div class="panel-header-actions">
+                  <button class="btn btn-sm btn-outline" onclick="cleanFakeRequests()" title="Verwijdert testaanvragen zoals gaysteve en testfriend">🧹 Oude / Test Aanvragen Opschonen</button>
+                  <button class="btn btn-sm btn-outline-danger" onclick="clearAllRequests()" title="Wist alle aanvragen">🗑️ Alle Aanvragen Wissen</button>
+                </div>
+              </div>
+
+              <div id="pending-requests-list" class="requests-grid">
                 <!-- Rendered dynamically -->
-              </tbody>
-            </table>
+              </div>
+            </div>
+
+            <!-- 2. Actieve Whitelist -->
+            <div class="cms-panel-card">
+              <div class="panel-header">
+                <div>
+                  <h3>✅ Actieve Whitelist Spelers (<span id="active-wl-count">0</span>)</h3>
+                  <span class="subtitle">Spelers die momenteel zijn toegelaten op de server.</span>
+                </div>
+                <div class="whitelist-toolbar">
+                  <div class="search-box">
+                    <input type="text" id="wl-search-input" placeholder="🔍 Zoek speler..." oninput="filterWhitelist(this.value)">
+                  </div>
+                  <div class="manual-add-box">
+                    <input type="text" id="manual-wl-input" placeholder="Minecraft speler toevoegen...">
+                    <button class="btn btn-sm btn-primary" onclick="manualAddWhitelist()">+ Whitelisten</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Speler</th>
+                      <th>UUID / Identificatie</th>
+                      <th style="width: 120px; text-align: right;">Actie</th>
+                    </tr>
+                  </thead>
+                  <tbody id="whitelist-table-body">
+                    <!-- Rendered dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
+
+          <!-- SUBTAB 3: SPELERS & RANGEN -->
+          <div id="cms-subtab-ranks" class="cms-subtab-pane">
+
+            <!-- Lock Notice for Non-Owners -->
+            <div id="ranks-perm-notice" class="cms-lock-banner" style="display: none;">
+              <span class="lock-icon">🔒</span>
+              <div>
+                <strong>Alleen-lezen weergave:</strong> Alleen spelers met de <code>[OWNER]</code> rang hebben bevoegdheid om rangen toe te kennen of te wijzigen.
+              </div>
+            </div>
+
+            <!-- Rank Assignment Card -->
+            <div class="cms-panel-card" id="rank-assign-card">
+              <div class="panel-header">
+                <div>
+                  <h3>🎖️ Spelers Rangen Toekennen</h3>
+                  <span class="subtitle">Wijzig rangen live in Minecraft ([OWNER], [ADMIN], [MOD], [VIP], etc.).</span>
+                </div>
+              </div>
+
+              <form onsubmit="handleSetRankSubmit(event)" class="rank-assign-form" id="rank-assign-form">
+                <div class="form-group inline-group">
+                  <label for="rank-username">Speler Gebruikersnaam:</label>
+                  <input type="text" id="rank-username" required placeholder="bijv. Jay_V0 of SmileyGaming27">
+                </div>
+                <div class="form-group inline-group">
+                  <label for="rank-select">Nieuwe Rang:</label>
+                  <select id="rank-select" required>
+                    <option value="MEMBER">MEMBER (Standaard Speler)</option>
+                    <option value="VIP">VIP (Groen)</option>
+                    <option value="VIP_PLUS">VIP+ (Groen / Goud)</option>
+                    <option value="MVP">MVP (Aqua)</option>
+                    <option value="MVP_PLUS">MVP+ (Aqua / Rood)</option>
+                    <option value="MOD">MOD (Donkergroen Moderator)</option>
+                    <option value="ADMIN">ADMIN (Rood Administrator)</option>
+                    <option value="OWNER">OWNER (Donkerrood Eigenaar)</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary" id="btn-submit-rank">Rang Toekennen & Live Opslaan</button>
+              </form>
+            </div>
+
+            <!-- Ranks Overview Table (Clean CMS Table - No broken overlapping badges!) -->
+            <div class="cms-panel-card">
+              <div class="panel-header">
+                <div>
+                  <h3>👑 Huidige Server Rangen</h3>
+                  <span class="subtitle">Overzicht van alle spelers met een speciale rang of stafbevoegdheid.</span>
+                </div>
+                <div class="search-box">
+                  <input type="text" id="ranks-search-input" placeholder="🔍 Filter op speler of rang..." oninput="filterRanksTable(this.value)">
+                </div>
+              </div>
+
+              <div class="table-responsive">
+                <table class="data-table ranks-data-table">
+                  <thead>
+                    <tr>
+                      <th>Speler</th>
+                      <th>Rang</th>
+                      <th>Type / Status</th>
+                      <th style="width: 150px; text-align: right;">Beheer</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ranks-table-body">
+                    <!-- Rendered dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- SUBTAB 4: PARKOUR STUDIO -->
+          <div id="cms-subtab-parkour" class="cms-subtab-pane">
+
+            <!-- Stats Overview Grid -->
+            <div class="stats-overview-grid">
+              <div class="stat-card" onclick="filterParkourCards('ALL')">
+                <div class="stat-icon">🗺️</div>
+                <div class="stat-content">
+                  <span class="stat-number" id="pk-stat-total">0</span>
+                  <span class="stat-label">Totaal Aantal Maps</span>
+                </div>
+              </div>
+              <div class="stat-card stat-pending-border" onclick="filterParkourCards('PENDING')">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-content">
+                  <span class="stat-number highlight-pending" id="pk-stat-pending">0</span>
+                  <span class="stat-label">In Afwachting (Review)</span>
+                </div>
+              </div>
+              <div class="stat-card stat-approved-border" onclick="filterParkourCards('APPROVED')">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                  <span class="stat-number highlight-approved" id="pk-stat-approved">0</span>
+                  <span class="stat-label">Goedgekeurd & Speelbaar</span>
+                </div>
+              </div>
+              <div class="stat-card stat-disabled-border" onclick="filterParkourCards('DISABLED')">
+                <div class="stat-icon">⏸️</div>
+                <div class="stat-content">
+                  <span class="stat-number highlight-disabled" id="pk-stat-disabled">0</span>
+                  <span class="stat-label">Uit Circulatie (Inactief)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Parkour Manager Panel -->
+            <div class="cms-panel-card">
+              <div class="panel-header">
+                <div>
+                  <h3>🏃 Community Parkour Manager</h3>
+                  <span class="subtitle">Beoordeel parcoursen gemaakt via <code>/fpixel parkour create [naam]</code> en zet ze live of haal ze uit circulatie.</span>
+                </div>
+                <button class="btn btn-sm btn-secondary" onclick="loadParkourData()">🔄 Parcoursen Verversen</button>
+              </div>
+
+              <div id="parkour-maps-list" class="parkour-cards-grid">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+
+          </div>
+
+          <!-- SUBTAB 5: SERVER & SYSTEEM -->
+          <div id="cms-subtab-system" class="cms-subtab-pane">
+
+            <!-- In-Game Broadcast Tool -->
+            <div class="cms-panel-card">
+              <div class="panel-header">
+                <div>
+                  <h3>📢 In-Game Chat Omroep (Broadcast)</h3>
+                  <span class="subtitle">Stuur direct een server-brede aankondiging naar alle spelers die momenteel online zijn.</span>
+                </div>
+              </div>
+
+              <form onsubmit="handleBroadcastSubmit(event)" class="broadcast-form">
+                <div class="form-group inline-group" style="flex: 1;">
+                  <input type="text" id="broadcast-message-input" required placeholder="Type hier je bericht voor in-game chat...">
+                </div>
+                <button type="submit" class="btn btn-primary">📢 Verstuur naar Minecraft</button>
+              </form>
+            </div>
+
+            <!-- Server Snapshot & Backups -->
+            <div class="cms-panel-card">
+              <div class="panel-header">
+                <div>
+                  <h3>💾 Server Backups & Wereldveiligheid</h3>
+                  <span class="subtitle">Maak handmatig een complete momentopname van alle Paper werelden en configuraties.</span>
+                </div>
+                <button class="btn btn-success" onclick="triggerServerBackup()">💾 Nu Volledige Backup Maken</button>
+              </div>
+              <p style="color: var(--text-dim); font-size: 0.9rem;">
+                Backups worden opgeslagen in <code>/home/jayv/backups/</code> en bevatten de Overworld, Nether, End, plugins en configuratiebestanden.
+              </p>
+            </div>
+
+            <!-- Server Noodstop (Strictly OWNER) -->
+            <div class="cms-panel-card panel-danger">
+              <div class="panel-header">
+                <div>
+                  <h3 class="text-danger">🛑 Server Veilig Stoppen (Gevaarlijke Zone)</h3>
+                  <span class="subtitle">Alleen toegankelijk voor <code>[OWNER]</code>. Stuurt een 5-seconden waarschuwing en sluit de server veilig af.</span>
+                </div>
+                <button id="system-stop-btn" class="btn btn-danger owner-only-btn" onclick="openStopServerModal()">🛑 Server Stoppen</button>
+              </div>
+            </div>
+
+          </div>
+
         </div>
-
-      </div>
-    </section>
-
-    <!-- ======================================================== -->
-    <!-- TAB 5: OWNER CONTROL (RANKS, PARKOUR, STOP SERVER)       -->
-    <!-- ======================================================== -->
-    <section id="tab-owner" class="tab-pane">
-      <div class="admin-wrapper">
-        <div class="admin-header">
-          <div>
-            <span class="admin-badge owner-badge">👑 OWNER CONTROL PANEL</span>
-            <h2>Eigenaars Controlecentrum</h2>
-            <p>Exclusieve bevoegdheden: wijs server rangen toe, beheer community parkour maps en beheer de server status.</p>
-          </div>
-          <div class="admin-actions-bar">
-            <button class="btn btn-sm btn-secondary" onclick="loadOwnerData()">🔄 Verversen</button>
-            <button class="btn btn-sm btn-danger" onclick="openStopServerModal()">🛑 Server Veilig Stoppen</button>
-          </div>
-        </div>
-
-        <!-- 1. Rang Beheer Tool -->
-        <div class="admin-section">
-          <div class="sub-header">
-            <div>
-              <h3>🎖️ Spelers Rangen Toekennen</h3>
-              <span class="subtitle">Wijzig rangen live in Minecraft ([OWNER], [ADMIN], [MOD], [VIP], etc.).</span>
-            </div>
-          </div>
-
-          <div class="rank-assign-card">
-            <form onsubmit="handleSetRankSubmit(event)" class="rank-assign-form">
-              <div class="form-group inline-group">
-                <label for="rank-username">Speler Gebruikersnaam:</label>
-                <input type="text" id="rank-username" required placeholder="bijv. Jay_V0">
-              </div>
-              <div class="form-group inline-group">
-                <label for="rank-select">Nieuwe Rang:</label>
-                <select id="rank-select" required>
-                  <option value="MEMBER">MEMBER (Standaard Speler)</option>
-                  <option value="VIP">VIP (Groen)</option>
-                  <option value="VIP_PLUS">VIP+ (Groen / Goud)</option>
-                  <option value="MVP">MVP (Aqua)</option>
-                  <option value="MVP_PLUS">MVP+ (Aqua / Rood)</option>
-                  <option value="MOD">MOD (Donkergroen Moderator)</option>
-                  <option value="ADMIN">ADMIN (Rood Administrator)</option>
-                  <option value="OWNER">OWNER (Donkerrood Eigenaar)</option>
-                </select>
-              </div>
-              <button type="submit" class="btn btn-primary">Rang Toekennen & Opslaan</button>
-            </form>
-
-            <div class="ranks-overview-list" id="ranks-overview-container">
-              <!-- Rendered dynamically -->
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. Community Parkour Studio Manager -->
-        <div class="admin-section">
-          <div class="sub-header">
-            <div>
-              <h3>🏃 Community Parkour Manager</h3>
-              <span class="subtitle">Beoordeel parcoursen gemaakt via <code>/fpixel parkour create [naam]</code> en zet ze live of haal ze uit circulatie.</span>
-            </div>
-            <button class="btn btn-sm btn-secondary" onclick="loadParkourData()">🔄 Parcoursen Verversen</button>
-          </div>
-
-          <!-- Parkour Summary Grid -->
-          <div class="stats-overview-grid">
-            <div class="stat-card">
-              <div class="stat-icon">🗺️</div>
-              <div class="stat-content">
-                <span class="stat-number" id="pk-stat-total">0</span>
-                <span class="stat-label">Totaal Aantal Maps</span>
-              </div>
-            </div>
-            <div class="stat-card stat-pending-border">
-              <div class="stat-icon">⏳</div>
-              <div class="stat-content">
-                <span class="stat-number highlight-pending" id="pk-stat-pending">0</span>
-                <span class="stat-label">In Afwachting (Review)</span>
-              </div>
-            </div>
-            <div class="stat-card stat-approved-border">
-              <div class="stat-icon">✅</div>
-              <div class="stat-content">
-                <span class="stat-number highlight-approved" id="pk-stat-approved">0</span>
-                <span class="stat-label">Goedgekeurd & Speelbaar</span>
-              </div>
-            </div>
-            <div class="stat-card stat-disabled-border">
-              <div class="stat-icon">⏸️</div>
-              <div class="stat-content">
-                <span class="stat-number highlight-disabled" id="pk-stat-disabled">0</span>
-                <span class="stat-label">Uit Circulatie (Inactief)</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Parkour Maps Grid -->
-          <div id="parkour-maps-list" class="parkour-cards-grid">
-            <!-- Rendered dynamically -->
-          </div>
-        </div>
-
       </div>
     </section>
 

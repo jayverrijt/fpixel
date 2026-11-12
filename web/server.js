@@ -232,7 +232,7 @@ app.use('/tiles', (req, res, next) => {
 function getRanks() {
   const ranks = {};
   const file = resolveFilePath('plugins/FPixelCore/ranks.yml');
-  if (fs.existsSync(file)) {
+  if (file && fs.existsSync(file)) {
     try {
       const content = fs.readFileSync(file, 'utf8');
       for (const line of content.split('\n')) {
@@ -252,19 +252,108 @@ function getRanks() {
 function getUserCache() {
   const cache = {};
   const file = resolveFilePath('usercache.json');
-  if (fs.existsSync(file)) {
+  if (file && fs.existsSync(file)) {
     try {
       const data = JSON.parse(fs.readFileSync(file, 'utf8'));
       if (Array.isArray(data)) {
         for (const entry of data) {
           if (entry.uuid && entry.name) {
-            cache[entry.uuid] = entry.name;
+            cache[entry.uuid.toLowerCase()] = entry.name;
           }
         }
       }
     } catch (e) {}
   }
   return cache;
+}
+
+// Resolved player ranks (resolves UUIDs to actual player names and avoids duplicate/broken badges)
+function getResolvedPlayerRanks() {
+  const rawRanks = getRanks();
+  const cache = getUserCache();
+  const whitelist = getWhitelist();
+
+  const uuidToName = {};
+  for (const [uuid, name] of Object.entries(cache)) {
+    uuidToName[uuid.toLowerCase()] = name;
+  }
+  for (const w of whitelist) {
+    if (w.uuid && w.name) {
+      uuidToName[w.uuid.toLowerCase()] = w.name;
+    }
+  }
+
+  const result = [];
+  const seenUsernames = new Map();
+
+  for (const [key, rank] of Object.entries(rawRanks)) {
+    let resolvedName = key;
+    let isUuid = false;
+
+    if (key.includes('-')) {
+      isUuid = true;
+      if (uuidToName[key.toLowerCase()]) {
+        resolvedName = uuidToName[key.toLowerCase()];
+      }
+    }
+
+    const cleanLower = resolvedName.toLowerCase().replace(/^\./, '');
+
+    if (seenUsernames.has(cleanLower)) {
+      const existing = seenUsernames.get(cleanLower);
+      existing.rawKeys.push(key);
+      continue;
+    }
+
+    const item = {
+      username: resolvedName,
+      cleanName: cleanLower,
+      rank: rank,
+      rawKeys: [key],
+      isUuid: isUuid && (resolvedName === key)
+    };
+    seenUsernames.set(cleanLower, item);
+    result.push(item);
+  }
+
+  // Also include whitelisted players that are not explicitly assigned a rank (they are MEMBER)
+  for (const w of whitelist) {
+    if (w.name) {
+      const cleanLower = w.name.toLowerCase().replace(/^\./, '');
+      if (!seenUsernames.has(cleanLower)) {
+        const item = {
+          username: w.name,
+          cleanName: cleanLower,
+          rank: 'MEMBER',
+          rawKeys: [w.name.toLowerCase()],
+          isUuid: false
+        };
+        seenUsernames.set(cleanLower, item);
+        result.push(item);
+      }
+    }
+  }
+
+  const rankPriority = {
+    'OWNER': 100,
+    'ADMIN': 90,
+    'MOD': 80,
+    'YOUTUBE': 70,
+    'MVP_PLUS': 60,
+    'MVP': 50,
+    'VIP_PLUS': 40,
+    'VIP': 30,
+    'MEMBER': 10
+  };
+
+  result.sort((a, b) => {
+    const pA = rankPriority[a.rank] || 0;
+    const pB = rankPriority[b.rank] || 0;
+    if (pB !== pA) return pB - pA;
+    return a.username.localeCompare(b.username);
+  });
+
+  return result;
 }
 
 // Offline UUID helper (matches Java nameUUIDFromBytes("OfflinePlayer:" + name))
@@ -845,6 +934,53 @@ app.post('/api/admin/whitelist/reject', (req, res) => {
   res.json({ success: true, message: `Aanvraag voor ${target.username} afgewezen.` });
 });
 
+// API: /api/admin/whitelist/request/delete (Admin: permanently delete request)
+app.post('/api/admin/whitelist/request/delete', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Geen admin rechten.' });
+  }
+
+  const { requestId } = req.body;
+  let requests = getWhitelistRequests();
+  const initialCount = requests.length;
+  requests = requests.filter(r => r.id !== requestId);
+
+  if (requests.length === initialCount) {
+    return res.status(404).json({ error: 'Aanvraag niet gevonden om te verwijderen.' });
+  }
+
+  saveWhitelistRequests(requests);
+  res.json({ success: true, message: 'Aanvraag definitief verwijderd.' });
+});
+
+// API: /api/admin/whitelist/requests/clear (Admin: clear all fake/stale requests or all requests)
+app.post('/api/admin/whitelist/requests/clear', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Geen admin rechten.' });
+  }
+
+  const { all } = req.body;
+  if (all) {
+    saveWhitelistRequests([]);
+    return res.json({ success: true, message: 'Alle aanvragen zijn succesvol gewist.' });
+  }
+
+  // Purge test / non-pending / fake requests
+  let requests = getWhitelistRequests();
+  const filtered = requests.filter(r => {
+    const u = (r.username || '').toLowerCase();
+    return r.status === 'PENDING' && u !== 'gaysteve' && u !== 'testfriend';
+  });
+
+  saveWhitelistRequests(filtered);
+  res.json({
+    success: true,
+    message: `Test en afgehandelde aanvragen opgeschoond. (${requests.length - filtered.length} verwijderd)`
+  });
+});
+
 // API: /api/admin/whitelist/list (Admin: get current whitelist)
 app.get('/api/admin/whitelist/list', (req, res) => {
   const user = getSessionUser(req);
@@ -1039,11 +1175,11 @@ app.post('/api/parkour/reject', async (req, res) => {
 });
 
 // ==========================================
-// RANK MANAGEMENT (OWNER ONLY)
+// RANK MANAGEMENT (CMS / OWNER CONTROLLED)
 // ==========================================
 
 function saveRanks(ranks) {
-  const file = resolveFilePath('plugins/FPixelCore/ranks.yml');
+  const file = resolveFilePath('plugins/FPixelCore/ranks.yml') || path.join(SERVER_DIR, 'plugins/FPixelCore/ranks.yml');
   if (!file) return false;
   try {
     const dir = path.dirname(file);
@@ -1060,18 +1196,24 @@ function saveRanks(ranks) {
   }
 }
 
-// API: /api/admin/ranks (Get all player ranks)
+// API: /api/admin/ranks (Get all player ranks - Admin & Owner can view)
 app.get('/api/admin/ranks', (req, res) => {
   const user = getSessionUser(req);
-  if (!user || user.rank !== 'OWNER') {
-    return res.status(403).json({ error: 'Alleen de [OWNER] kan rangen beheren.' });
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Geen toegang tot beheerderspaneel.' });
   }
-  const ranks = getRanks();
+
+  const isOwner = Boolean(user && user.rank === 'OWNER');
+  const players = getResolvedPlayerRanks();
+  const rawRanks = getRanks();
   const whitelist = getWhitelist();
+
   res.json({
     success: true,
-    ranks,
+    players,
+    ranks: rawRanks,
     whitelist,
+    isOwner,
     availableRanks: ['OWNER', 'ADMIN', 'MOD', 'YOUTUBE', 'MVP_PLUS', 'MVP', 'VIP_PLUS', 'VIP', 'MEMBER']
   });
 });
@@ -1097,6 +1239,21 @@ app.post('/api/admin/ranks/set', async (req, res) => {
   const cleanUser = username.trim();
   const ranks = getRanks();
   ranks[cleanUser.toLowerCase()] = cleanRank;
+
+  // Also sync matching UUIDs so Bukkit UUID lookup doesn't override with old rank
+  const whitelist = getWhitelist();
+  const cache = getUserCache();
+  for (const w of whitelist) {
+    if (w.name && w.name.toLowerCase() === cleanUser.toLowerCase() && w.uuid) {
+      ranks[w.uuid.toLowerCase()] = cleanRank;
+    }
+  }
+  for (const [uuid, name] of Object.entries(cache)) {
+    if (name && name.toLowerCase() === cleanUser.toLowerCase()) {
+      ranks[uuid.toLowerCase()] = cleanRank;
+    }
+  }
+
   saveRanks(ranks);
 
   // Sync to Minecraft live via RCON
@@ -1110,6 +1267,48 @@ app.post('/api/admin/ranks/set', async (req, res) => {
   res.json({
     success: true,
     message: `Rang van ${cleanUser} is succesvol gewijzigd naar [${cleanRank}].`
+  });
+});
+
+// API: /api/admin/ranks/reset (Owner resets player rank to MEMBER)
+app.post('/api/admin/ranks/reset', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen de [OWNER] kan rangen intrekken.' });
+  }
+
+  const { username } = req.body;
+  if (!username) {
+    return res.status(400).json({ error: 'Vul een gebruikersnaam in.' });
+  }
+
+  const cleanUser = username.trim().toLowerCase();
+  const ranks = getRanks();
+  delete ranks[cleanUser];
+
+  const whitelist = getWhitelist();
+  const cache = getUserCache();
+  for (const w of whitelist) {
+    if (w.name && w.name.toLowerCase() === cleanUser && w.uuid) {
+      delete ranks[w.uuid.toLowerCase()];
+    }
+  }
+  for (const [uuid, name] of Object.entries(cache)) {
+    if (name && name.toLowerCase() === cleanUser) {
+      delete ranks[uuid.toLowerCase()];
+    }
+  }
+
+  saveRanks(ranks);
+
+  try {
+    await sendRconCommand(`setrank ${username} MEMBER`);
+    await sendRconCommand(`say §6[RANG] §eRang van ${username} is ingetrokken door §c${user.username}§e (nu [MEMBER]).`);
+  } catch (err) {}
+
+  res.json({
+    success: true,
+    message: `Rang van ${username} is succesvol ingetrokken (teruggezet naar MEMBER).`
   });
 });
 
@@ -1177,6 +1376,30 @@ app.post('/api/server/backup', async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ error: 'Backup starten mislukt: ' + err.message });
+  }
+});
+
+// API: /api/server/broadcast (Admin or Owner: send announcement to in-game chat)
+app.post('/api/server/broadcast', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Alleen beheerders kunnen in-game berichten omroepen.' });
+  }
+
+  const { message } = req.body;
+  if (!message || message.trim().length === 0) {
+    return res.status(400).json({ error: 'Vul een omroepbericht in.' });
+  }
+
+  const cleanMessage = message.trim();
+  try {
+    await sendRconCommand(`say §6§l[CMS OMROEP] §e${user.username}§f: ${cleanMessage}`);
+    res.json({
+      success: true,
+      message: 'Omroep succesvol verzonden naar Minecraft chat!'
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'RCON omroep mislukt: ' + err.message });
   }
 });
 

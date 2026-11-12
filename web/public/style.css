@@ -1299,74 +1299,384 @@ body {
   gap: 32px;
 }
 
-.admin-header {
-  background: var(--bg-card);
+/* ========================================================== */
+/* UNIFIED CMS MANAGEMENT PLATFORM STYLES                    */
+/* ========================================================== */
+
+.cms-wrapper {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 1. CMS Header Card */
+.cms-header-card {
+  background: linear-gradient(135deg, rgba(20, 24, 34, 0.98), rgba(13, 16, 23, 0.98));
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 28px 32px;
+  padding: 24px 28px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
-.admin-badge {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #f87171;
-  letter-spacing: 0.5px;
+.cms-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
 }
 
-.owner-badge {
-  color: var(--gold) !important;
+.crumb-net {
+  color: var(--text-dim);
 }
 
-.admin-header h2 {
-  font-size: 1.6rem;
+.crumb-div {
+  color: var(--border);
+}
+
+.crumb-active {
+  color: var(--accent);
+}
+
+.cms-heading {
+  font-size: 1.55rem;
   font-weight: 800;
   color: #fff;
-  margin-top: 4px;
+  letter-spacing: -0.02em;
 }
 
-.admin-header p {
+.cms-subheading {
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   margin-top: 4px;
 }
 
-.admin-actions-bar {
+.cms-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.cms-role-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.role-pill-owner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.role-pill-admin {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.role-pill-mod {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.cms-header-actions {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.admin-section {
+/* 2. CMS Sub-Navigation Tab Bar */
+.cms-nav-bar {
+  display: flex;
+  gap: 6px;
+  background: rgba(13, 16, 23, 0.95);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  overflow-x: auto;
+}
+
+.cms-tab-btn {
+  background: transparent;
+  border: none;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.cms-tab-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.cms-tab-btn.active {
+  background: var(--bg-card);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.cms-tab-badge {
+  background: var(--accent);
+  color: #000;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  line-height: 1;
+}
+
+/* 3. CMS Content Panes */
+.cms-content-area {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cms-subtab-pane {
+  display: none;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cms-subtab-pane.active {
+  display: flex;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+/* 4. KPI Metrics Cards */
+.cms-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.kpi-icon {
+  font-size: 2rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kpi-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1.1;
+}
+
+.kpi-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.kpi-link {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  opacity: 0.7;
+}
+
+.kpi-card:hover .kpi-link {
+  opacity: 1;
+}
+
+.kpi-card-warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.kpi-card-warning .kpi-value {
+  color: #f59e0b;
+}
+
+.kpi-card-info {
+  border-left: 4px solid #38bdf8;
+}
+
+.kpi-card-info .kpi-value {
+  color: #38bdf8;
+}
+
+.kpi-card-purple {
+  border-left: 4px solid #a855f7;
+}
+
+.kpi-card-purple .kpi-value {
+  color: #a855f7;
+}
+
+/* 5. CMS Panel Card */
+.cms-panel-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 24px;
 }
 
-.sub-header {
+.panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
 }
 
-.sub-header h3 {
+.panel-header h3 {
   font-size: 1.15rem;
   font-weight: 800;
   color: #fff;
 }
 
-.sub-header .subtitle {
+.panel-header .subtitle {
   font-size: 0.82rem;
   color: var(--text-muted);
+  display: block;
+  margin-top: 3px;
+}
+
+.panel-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.panel-danger {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.03);
+}
+
+.text-danger {
+  color: #f87171 !important;
+}
+
+/* 6. CMS Specs Grid */
+.cms-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.spec-item {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.spec-k {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.spec-v {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* 7. Lock Notice Banner */
+.cms-lock-banner {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #fbbf24;
+  font-size: 0.88rem;
+}
+
+.lock-icon {
+  font-size: 1.4rem;
+}
+
+/* 8. Whitelist Toolbar & Search */
+.whitelist-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-box input {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  color: #fff;
+  font-size: 0.85rem;
+  min-width: 200px;
+}
+
+.search-box input:focus {
+  border-color: var(--accent);
+  outline: none;
 }
 
 .manual-add-box {
@@ -1378,12 +1688,12 @@ body {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 6px 12px;
+  padding: 8px 12px;
   color: #fff;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
 }
 
-/* Open Requests Grid */
+/* 9. Requests Cards & Meta */
 .requests-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -1407,8 +1717,8 @@ body {
 }
 
 .req-avatar {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 8px;
   background: #000;
   image-rendering: pixelated;
@@ -1417,6 +1727,13 @@ body {
 .req-meta {
   display: flex;
   flex-direction: column;
+  flex: 1;
+}
+
+.req-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .req-name {
@@ -1428,6 +1745,27 @@ body {
 .req-date {
   font-size: 0.72rem;
   color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.edition-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.edition-badge.java {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.edition-badge.bedrock {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .req-details-box {
@@ -1459,52 +1797,78 @@ body {
   display: flex;
   gap: 8px;
   margin-top: auto;
-}
-
-/* Rank Assignment Form & Cards */
-.rank-assign-card {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 20px;
-}
-
-.rank-assign-form {
-  display: flex;
-  align-items: flex-end;
-  gap: 14px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border);
 }
 
-.inline-group {
-  margin-bottom: 0;
+/* 10. Clean Ranks Data Table (Fixes UUID overlapping/overflow bug) */
+.ranks-data-table {
+  width: 100%;
+}
+
+.ranks-data-table th,
+.ranks-data-table td {
+  padding: 12px 16px;
+  vertical-align: middle;
+}
+
+.status-indicator-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.uuid-code {
+  font-size: 0.78rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-dim);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.cms-empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+  color: var(--text-dim);
+}
+
+.empty-icon {
+  font-size: 2.4rem;
+  margin-bottom: 10px;
+}
+
+.cms-empty-state h4 {
+  color: #fff;
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+/* 11. Broadcast Form */
+.broadcast-form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.broadcast-form input {
   flex: 1;
-  min-width: 180px;
-}
-
-.ranks-overview-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 10px;
-}
-
-.rank-item-pill {
-  background: rgba(255, 255, 255, 0.03);
+  min-width: 250px;
+  background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  color: #fff;
+  font-size: 0.9rem;
 }
 
-.rank-user-name {
-  font-weight: 700;
-  font-size: 0.88rem;
-  color: #fff;
+.broadcast-form input:focus {
+  border-color: var(--accent);
+  outline: none;
 }
 
 /* Stats Overview Grid (Parkour) */

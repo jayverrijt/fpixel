@@ -86,6 +86,8 @@ function previewSkin(name) {
 // ==========================================
 
 function switchTab(tabId) {
+  // Support legacy tab redirects
+  if (tabId === 'admin' || tabId === 'owner') tabId = 'cms';
   currentTab = tabId;
 
   // Update nav buttons active state
@@ -109,10 +111,30 @@ function switchTab(tabId) {
       }
       loadWaypoints();
     }, 150);
-  } else if (tabId === 'admin') {
-    loadAdminData();
-  } else if (tabId === 'owner') {
-    loadOwnerData();
+  } else if (tabId === 'cms') {
+    refreshCmsData();
+  }
+}
+
+// Subtab switching inside unified CMS
+function switchCmsSubTab(subTabId) {
+  document.querySelectorAll('.cms-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.cms-subtab-pane').forEach(p => p.classList.remove('active'));
+
+  const btn = document.getElementById(`cms-tabbtn-${subTabId}`);
+  const pane = document.getElementById(`cms-subtab-${subTabId}`);
+  if (btn) btn.classList.add('active');
+  if (pane) pane.classList.add('active');
+
+  if (subTabId === 'overview') {
+    refreshCmsData();
+  } else if (subTabId === 'whitelist') {
+    loadPendingRequests();
+    loadWhitelist();
+  } else if (subTabId === 'ranks') {
+    loadRanksData();
+  } else if (subTabId === 'parkour') {
+    loadParkourData();
   }
 }
 
@@ -137,8 +159,7 @@ function renderAuthState() {
   const loggedOutBox = document.getElementById('auth-logged-out');
   const loggedInBox = document.getElementById('auth-logged-in');
   const personalCard = document.getElementById('personal-card');
-  const adminNavBtn = document.getElementById('nav-admin-btn');
-  const ownerNavBtn = document.getElementById('nav-owner-btn');
+  const cmsNavBtn = document.getElementById('nav-cms-btn');
   const openWpBtn = document.getElementById('btn-open-waypoint-modal');
 
   if (currentUser) {
@@ -199,21 +220,55 @@ function renderAuthState() {
     const statUserRank = document.getElementById('stat-user-rank-display');
     if (statUserRank) statUserRank.textContent = currentUser.rank || 'MEMBER';
 
-    // Permissions visibility
+    // Permissions visibility for Unified CMS
     const isOwner = currentUser.rank === 'OWNER';
-    const isAdmin = currentUser.isAdmin || isOwner;
+    const isAdmin = currentUser.isAdmin || isOwner || currentUser.rank === 'ADMIN';
+    const isMod = currentUser.rank === 'MOD';
+    const canAccessCms = isAdmin || isOwner || isMod;
 
-    if (adminNavBtn) adminNavBtn.style.display = isAdmin ? 'flex' : 'none';
-    if (ownerNavBtn) ownerNavBtn.style.display = isOwner ? 'flex' : 'none';
+    if (cmsNavBtn) cmsNavBtn.style.display = canAccessCms ? 'flex' : 'none';
     if (openWpBtn) openWpBtn.style.display = 'inline-flex';
+
+    // Configure CMS view according to permissions
+    const roleBadge = document.getElementById('cms-role-badge');
+    const roleText = document.getElementById('cms-role-text');
+    const stopBtns = document.querySelectorAll('.owner-only-btn');
+    const rankNotice = document.getElementById('ranks-perm-notice');
+    const rankAssignCard = document.getElementById('rank-assign-card');
+    const rankInputs = rankAssignCard ? rankAssignCard.querySelectorAll('input, select, button') : [];
+
+    if (isOwner) {
+      if (roleBadge) {
+        roleBadge.className = 'cms-role-pill role-pill-owner';
+        if (roleText) roleText.textContent = '👑 Eigenaar Toegang (Volledig Beheer)';
+      }
+      stopBtns.forEach(b => b.style.display = 'inline-flex');
+      if (rankNotice) rankNotice.style.display = 'none';
+      rankInputs.forEach(i => i.disabled = false);
+    } else if (isAdmin) {
+      if (roleBadge) {
+        roleBadge.className = 'cms-role-pill role-pill-admin';
+        if (roleText) roleText.textContent = '🛡️ Administrator Toegang';
+      }
+      stopBtns.forEach(b => b.style.display = 'none');
+      if (rankNotice) rankNotice.style.display = 'flex';
+      rankInputs.forEach(i => i.disabled = true);
+    } else if (isMod) {
+      if (roleBadge) {
+        roleBadge.className = 'cms-role-pill role-pill-mod';
+        if (roleText) roleText.textContent = '⚔️ Moderator Toegang (Alleen-lezen)';
+      }
+      stopBtns.forEach(b => b.style.display = 'none');
+      if (rankNotice) rankNotice.style.display = 'flex';
+      rankInputs.forEach(i => i.disabled = true);
+    }
 
   } else {
     // Logged Out
     if (loggedOutBox) loggedOutBox.style.display = 'flex';
     if (loggedInBox) loggedInBox.style.display = 'none';
     if (personalCard) personalCard.style.display = 'none';
-    if (adminNavBtn) adminNavBtn.style.display = 'none';
-    if (ownerNavBtn) ownerNavBtn.style.display = 'none';
+    if (cmsNavBtn) cmsNavBtn.style.display = 'none';
   }
 }
 
@@ -346,7 +401,7 @@ async function logout() {
     currentUser = null;
     renderAuthState();
     showToast('Je bent uitgelogd.');
-    if (currentTab === 'admin' || currentTab === 'owner') {
+    if (currentTab === 'admin' || currentTab === 'owner' || currentTab === 'cms') {
       switchTab('home');
     }
   } catch (err) {
@@ -703,12 +758,43 @@ async function handleWhitelistSubmit(e) {
 }
 
 // ==========================================
-// ADMIN CONTROL PANEL (/api/admin/*)
+// UNIFIED CMS MANAGEMENT PLATFORM
 // ==========================================
 
+let allPendingRequests = [];
+let allWhitelistPlayers = [];
+let allRanksPlayers = [];
+let allParkourMaps = [];
+let currentParkourFilter = 'ALL';
+
+async function refreshCmsData() {
+  await Promise.all([
+    loadPendingRequests(),
+    loadWhitelist(),
+    loadRanksData(),
+    loadParkourData()
+  ]);
+}
+
+function updateGlobalCmsBadge() {
+  const pendingRequests = allPendingRequests.filter(r => (r.status || 'PENDING') === 'PENDING').length;
+  const pendingParkour = allParkourMaps.filter(m => (m.status || 'PENDING_REVIEW').toUpperCase() === 'PENDING_REVIEW').length;
+  const total = pendingRequests + pendingParkour;
+
+  const badge = document.getElementById('cms-badge');
+  if (badge) {
+    badge.textContent = total;
+    badge.style.display = total > 0 ? 'inline-block' : 'none';
+  }
+}
+
+// ------------------------------------------
+// 1. WHITELIST & JOIN REQUESTS
+// ------------------------------------------
+
 async function loadAdminData() {
-  loadPendingRequests();
-  loadWhitelist();
+  await loadPendingRequests();
+  await loadWhitelist();
 }
 
 async function loadPendingRequests() {
@@ -716,41 +802,60 @@ async function loadPendingRequests() {
     const res = await fetch('/api/admin/whitelist/requests');
     const data = await res.json();
     const list = data.requests || [];
+    allPendingRequests = list;
 
-    const badge = document.getElementById('admin-badge');
-    if (badge) badge.textContent = list.length;
+    const pendingList = list.filter(r => (r.status || 'PENDING') === 'PENDING');
 
     const countLabel = document.getElementById('pending-req-count');
-    if (countLabel) countLabel.textContent = list.length;
+    const tabWlBadge = document.getElementById('cms-tab-wl-badge');
+    const kpiReq = document.getElementById('cms-kpi-requests');
+
+    if (countLabel) countLabel.textContent = pendingList.length;
+    if (tabWlBadge) tabWlBadge.textContent = pendingList.length;
+    if (kpiReq) kpiReq.textContent = pendingList.length;
+
+    updateGlobalCmsBadge();
 
     const container = document.getElementById('pending-requests-list');
     if (!container) return;
 
-    if (list.length === 0) {
-      container.innerHTML = `<div style="grid-column: 1 / -1; padding: 20px; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); color: var(--text-dim); text-align: center;">Geen openstaande whitelist aanvragen.</div>`;
+    if (pendingList.length === 0) {
+      container.innerHTML = `
+        <div class="cms-empty-state">
+          <div class="empty-icon">🎉</div>
+          <h4>Geen Openstaande Aanvragen</h4>
+          <p>Alle whitelist aanvragen zijn goedgekeurd of afgehandeld.</p>
+        </div>
+      `;
       return;
     }
 
-    container.innerHTML = list.map(req => {
+    container.innerHTML = pendingList.map(req => {
       const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(req.username)}/48`;
-      const dateStr = new Date(req.createdAt).toLocaleString('nl-NL');
+      const dateStr = req.createdAt ? new Date(req.createdAt).toLocaleString('nl-NL') : 'Recent';
+      const isBedrock = (req.edition || '').toLowerCase() === 'bedrock';
 
       return `
         <div class="request-card">
           <div class="request-header">
-            <img class="req-avatar" src="${avatarUrl}" alt="${req.username}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/48'">
+            <img class="req-avatar" src="${avatarUrl}" alt="${escapeHtml(req.username)}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/48'">
             <div class="req-meta">
-              <span class="req-name">${escapeHtml(req.username)}</span>
+              <div class="req-name-row">
+                <span class="req-name">${escapeHtml(req.username)}</span>
+                <span class="edition-badge ${isBedrock ? 'bedrock' : 'java'}">${isBedrock ? '📱 Bedrock' : '☕ Java'}</span>
+              </div>
               <span class="req-date">${dateStr}</span>
             </div>
           </div>
           <div class="req-details-box">
-            <div class="req-line"><span class="req-k">Bericht / Toelichting:</span></div>
+            <div class="req-line"><span class="req-k">Motivatie:</span></div>
             <div class="req-line"><span class="req-v">"${escapeHtml(req.reason || 'Geen toelichting opgegeven')}"</span></div>
+            ${req.discord ? `<div class="req-line" style="margin-top:6px;"><span class="req-k">Discord:</span> <code style="color:var(--text-light); font-size:0.8rem;">${escapeHtml(req.discord)}</code></div>` : ''}
           </div>
           <div class="request-actions">
-            <button class="btn btn-sm btn-success" onclick="approveRequest('${req.id}')">✅ Goedkeuren</button>
-            <button class="btn btn-sm btn-outline-danger" onclick="rejectRequest('${req.id}')">❌ Afwijzen</button>
+            <button class="btn btn-sm btn-success" onclick="approveRequest('${req.id}')" title="Direct toevoegen aan Minecraft whitelist">✅ Goedkeuren</button>
+            <button class="btn btn-sm btn-outline" onclick="rejectRequest('${req.id}')" title="Aanvraag markeren als afgewezen">❌ Afwijzen</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteRequest('${req.id}')" title="Aanvraag definitief verwijderen">🗑️ Verwijder</button>
           </div>
         </div>
       `;
@@ -773,7 +878,8 @@ async function approveRequest(id) {
       return;
     }
     showToast(data.message || 'Speler goedgekeurd en toegevoegd aan whitelist!');
-    loadAdminData();
+    loadPendingRequests();
+    loadWhitelist();
   } catch (err) {
     showToast('Fout: ' + err.message, true);
   }
@@ -791,7 +897,59 @@ async function rejectRequest(id) {
       showToast(data.error || 'Afwijzen mislukt.', true);
       return;
     }
-    showToast('Aanvraag afgewezen.');
+    showToast('Aanvraag gemarkeerd als afgewezen.');
+    loadPendingRequests();
+  } catch (err) {
+    showToast('Fout: ' + err.message, true);
+  }
+}
+
+async function deleteRequest(id) {
+  if (!confirm('Weet je zeker dat je deze aanvraag definitief wilt verwijderen?')) return;
+  try {
+    const res = await fetch('/api/admin/whitelist/request/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestId: id })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Verwijderen mislukt.', true);
+      return;
+    }
+    showToast(data.message || 'Aanvraag definitief verwijderd.');
+    loadPendingRequests();
+  } catch (err) {
+    showToast('Fout bij verwijderen: ' + err.message, true);
+  }
+}
+
+async function cleanFakeRequests() {
+  if (!confirm('Wil je oude/test aanvragen (zoals gaysteve en testfriend) en reeds verwerkte aanvragen opschonen?')) return;
+  try {
+    const res = await fetch('/api/admin/whitelist/requests/clear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ all: false })
+    });
+    const data = await res.json();
+    showToast(data.message || 'Test aanvragen opgeschoond!');
+    loadPendingRequests();
+  } catch (err) {
+    showToast('Fout bij opschonen: ' + err.message, true);
+  }
+}
+
+async function clearAllRequests() {
+  if (!confirm('LET OP: Weet je zeker dat je ALLE whitelist aanvragen wilt wissen?')) return;
+  try {
+    const res = await fetch('/api/admin/whitelist/requests/clear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ all: true })
+    });
+    const data = await res.json();
+    showToast(data.message || 'Alle aanvragen gewist!');
     loadPendingRequests();
   } catch (err) {
     showToast('Fout: ' + err.message, true);
@@ -802,39 +960,58 @@ async function loadWhitelist() {
   try {
     const res = await fetch('/api/admin/whitelist/list');
     const data = await res.json();
-    const list = data.whitelist || [];
+    allWhitelistPlayers = data.whitelist || [];
 
     const countLabel = document.getElementById('active-wl-count');
-    if (countLabel) countLabel.textContent = list.length;
+    const kpiWl = document.getElementById('cms-kpi-whitelist');
+    if (countLabel) countLabel.textContent = allWhitelistPlayers.length;
+    if (kpiWl) kpiWl.textContent = allWhitelistPlayers.length;
 
-    const tbody = document.getElementById('whitelist-table-body');
-    if (!tbody) return;
-
-    if (list.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-dim); padding: 24px;">Whitelist is leeg.</td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = list.map(item => {
-      const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(item.name)}/32`;
-      return `
-        <tr>
-          <td>
-            <div class="table-player-cell">
-              <img class="table-player-avatar" src="${avatarUrl}" alt="${item.name}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/32'">
-              <span class="table-player-name">${escapeHtml(item.name)}</span>
-            </div>
-          </td>
-          <td><code style="font-size: 0.75rem; color: var(--text-dim);">${item.uuid || 'Offline/Bedrock'}</code></td>
-          <td>
-            <button class="btn btn-xs btn-outline-danger" onclick="removeWhitelist('${escapeHtml(item.name)}')">Verwijder ❌</button>
-          </td>
-        </tr>
-      `;
-    }).join('');
+    renderWhitelistTable(allWhitelistPlayers);
   } catch (err) {
     console.error('Error loading whitelist:', err);
   }
+}
+
+function renderWhitelistTable(list) {
+  const tbody = document.getElementById('whitelist-table-body');
+  if (!tbody) return;
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-dim); padding: 24px;">Whitelist is leeg.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(item => {
+    const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(item.name)}/32`;
+    return `
+      <tr>
+        <td>
+          <div class="table-player-cell">
+            <img class="table-player-avatar" src="${avatarUrl}" alt="${escapeHtml(item.name)}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/32'">
+            <span class="table-player-name">${escapeHtml(item.name)}</span>
+          </div>
+        </td>
+        <td><code class="uuid-code">${escapeHtml(item.uuid || 'Offline/Bedrock')}</code></td>
+        <td style="text-align: right;">
+          <button class="btn btn-xs btn-outline-danger" onclick="removeWhitelist('${escapeHtml(item.name)}')">Verwijder ❌</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterWhitelist(query) {
+  const q = (query || '').toLowerCase().trim();
+  if (!q) {
+    renderWhitelistTable(allWhitelistPlayers);
+    return;
+  }
+  const filtered = allWhitelistPlayers.filter(p => 
+    (p.name && p.name.toLowerCase().includes(q)) || 
+    (p.uuid && p.uuid.toLowerCase().includes(q))
+  );
+  renderWhitelistTable(filtered);
 }
 
 async function manualAddWhitelist() {
@@ -882,30 +1059,13 @@ async function removeWhitelist(username) {
   }
 }
 
-async function triggerServerBackup() {
-  if (!confirm('Wil je nu direct een volledige server backup snapshot maken?')) return;
-  showToast('Server backup wordt gestart...', false);
-
-  try {
-    const res = await fetch('/api/server/backup', { method: 'POST' });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Backup starten mislukt.', true);
-      return;
-    }
-    showToast(data.message || 'Backup succesvol gestart op de achtergrond!');
-  } catch (err) {
-    showToast('Fout bij starten backup: ' + err.message, true);
-  }
-}
-
-// ==========================================
-// OWNER CONTROL PANEL (RANKS, PARKOUR, STOP)
-// ==========================================
+// ------------------------------------------
+// 2. SPELERS & RANGEN (CMS TABLE & OWNER SET)
+// ------------------------------------------
 
 async function loadOwnerData() {
-  loadRanksData();
-  loadParkourData();
+  await loadRanksData();
+  await loadParkourData();
 }
 
 async function loadRanksData() {
@@ -914,27 +1074,100 @@ async function loadRanksData() {
     const data = await res.json();
     if (!data.success) return;
 
-    const ranks = data.ranks || {};
-    const container = document.getElementById('ranks-overview-container');
-    if (!container) return;
+    allRanksPlayers = data.players || [];
+    const isOwner = Boolean(data.isOwner);
 
-    const entries = Object.entries(ranks);
-    if (entries.length === 0) {
-      container.innerHTML = `<div style="color:var(--text-dim); font-size:0.85rem;">Geen speciale rangen ingesteld.</div>`;
-      return;
-    }
+    const kpiRanks = document.getElementById('cms-kpi-ranks');
+    const staffCount = allRanksPlayers.filter(p => p.rank !== 'MEMBER').length;
+    if (kpiRanks) kpiRanks.textContent = staffCount;
 
-    container.innerHTML = entries.map(([name, rank]) => {
-      const rankClass = `rank-${rank.toLowerCase().replace('_', '')}`;
-      return `
-        <div class="rank-item-pill">
-          <span class="rank-user-name">${escapeHtml(name)}</span>
-          <span class="rank-badge ${rankClass}">[${escapeHtml(rank)}]</span>
-        </div>
-      `;
-    }).join('');
+    renderRanksTable(allRanksPlayers, isOwner);
   } catch (err) {
     console.error('Error loading ranks:', err);
+  }
+}
+
+function renderRanksTable(players, isOwner) {
+  const tbody = document.getElementById('ranks-table-body');
+  if (!tbody) return;
+
+  if (players.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-dim); padding: 24px;">Geen spelers met speciale rangen gevonden.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = players.map(p => {
+    const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(p.username)}/32`;
+    const rankClass = `rank-${p.rank.toLowerCase().replace('_', '')}`;
+    const isBedrock = p.username.startsWith('.');
+
+    let roleDescription = 'Speler';
+    if (p.rank === 'OWNER') roleDescription = '👑 Eigenaar';
+    else if (p.rank === 'ADMIN') roleDescription = '🛡️ Administrator';
+    else if (p.rank === 'MOD') roleDescription = '⚔️ Moderator';
+    else if (p.rank === 'YOUTUBE') roleDescription = '🎬 YouTuber';
+    else if (p.rank.includes('MVP')) roleDescription = '💎 MVP Donateur';
+    else if (p.rank.includes('VIP')) roleDescription = '✨ VIP Donateur';
+
+    let actions = `<span style="color:var(--text-dim); font-size:0.8rem;">Alleen-lezen</span>`;
+    if (isOwner) {
+      actions = `
+        <div style="display:flex; gap:6px; justify-content:flex-end;">
+          <button class="btn btn-xs btn-outline-warning" onclick="quickEditRank('${escapeHtml(p.username)}', '${p.rank}')">Wijzig</button>
+          ${p.rank !== 'MEMBER' ? `<button class="btn btn-xs btn-outline-danger" onclick="resetRank('${escapeHtml(p.username)}')">Reset</button>` : ''}
+        </div>
+      `;
+    }
+
+    return `
+      <tr>
+        <td>
+          <div class="table-player-cell">
+            <img class="table-player-avatar" src="${avatarUrl}" alt="${escapeHtml(p.username)}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/32'">
+            <div>
+              <span class="table-player-name">${escapeHtml(p.username)}</span>
+              ${isBedrock ? '<span class="edition-badge bedrock" style="margin-left:6px; font-size:0.65rem;">Bedrock</span>' : ''}
+            </div>
+          </div>
+        </td>
+        <td>
+          <span class="rank-badge ${rankClass}">[${escapeHtml(p.rank)}]</span>
+        </td>
+        <td>
+          <span class="status-indicator-tag">${roleDescription}</span>
+        </td>
+        <td style="text-align: right;">
+          ${actions}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterRanksTable(query) {
+  const q = (query || '').toLowerCase().trim();
+  const isOwner = currentUser && currentUser.rank === 'OWNER';
+  if (!q) {
+    renderRanksTable(allRanksPlayers, isOwner);
+    return;
+  }
+  const filtered = allRanksPlayers.filter(p => 
+    (p.username && p.username.toLowerCase().includes(q)) || 
+    (p.rank && p.rank.toLowerCase().includes(q))
+  );
+  renderRanksTable(filtered, isOwner);
+}
+
+function quickEditRank(username, currentRank) {
+  const userInput = document.getElementById('rank-username');
+  const rankSelect = document.getElementById('rank-select');
+  if (userInput) userInput.value = username;
+  if (rankSelect) rankSelect.value = currentRank || 'MEMBER';
+
+  const card = document.getElementById('rank-assign-card');
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (userInput) userInput.focus();
   }
 }
 
@@ -968,67 +1201,115 @@ async function handleSetRankSubmit(e) {
   }
 }
 
-// Parkour Studio CMS (/api/parkour/*)
+async function resetRank(username) {
+  if (!confirm(`Weet je zeker dat je de rang van ${username} wilt intrekken en resetten naar [MEMBER]?`)) return;
+  try {
+    const res = await fetch('/api/admin/ranks/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Resetten mislukt.', true);
+      return;
+    }
+    showToast(data.message || `Rang van ${username} is gereset naar MEMBER.`);
+    loadRanksData();
+  } catch (err) {
+    showToast('Fout bij resetten: ' + err.message, true);
+  }
+}
+
+// ------------------------------------------
+// 3. COMMUNITY PARKOUR STUDIO
+// ------------------------------------------
+
 async function loadParkourData() {
   try {
     const res = await fetch('/api/parkour/maps');
     const data = await res.json();
-    const maps = data.maps || [];
+    allParkourMaps = data.maps || [];
 
-    // Update Summary Counters
-    const total = maps.length;
-    const pending = maps.filter(m => (m.status || 'PENDING_REVIEW').toUpperCase() === 'PENDING_REVIEW').length;
-    const approved = maps.filter(m => (m.status || '').toUpperCase() === 'APPROVED').length;
-    const disabled = maps.filter(m => (m.status || '').toUpperCase() === 'DISABLED').length;
+    const total = allParkourMaps.length;
+    const pending = allParkourMaps.filter(m => (m.status || 'PENDING_REVIEW').toUpperCase() === 'PENDING_REVIEW').length;
+    const approved = allParkourMaps.filter(m => (m.status || '').toUpperCase() === 'APPROVED').length;
+    const disabled = allParkourMaps.filter(m => (m.status || '').toUpperCase() === 'DISABLED').length;
 
     const elTotal = document.getElementById('pk-stat-total');
     const elPending = document.getElementById('pk-stat-pending');
     const elApproved = document.getElementById('pk-stat-approved');
     const elDisabled = document.getElementById('pk-stat-disabled');
-    const parkourBadge = document.getElementById('parkour-badge');
+    const tabPkBadge = document.getElementById('cms-tab-pk-badge');
+    const kpiParkour = document.getElementById('cms-kpi-parkour');
 
     if (elTotal) elTotal.innerText = total;
     if (elPending) elPending.innerText = pending;
     if (elApproved) elApproved.innerText = approved;
     if (elDisabled) elDisabled.innerText = disabled;
-    if (parkourBadge) parkourBadge.innerText = pending;
+    if (tabPkBadge) tabPkBadge.innerText = pending;
+    if (kpiParkour) kpiParkour.innerText = total;
 
-    const container = document.getElementById('parkour-maps-list');
-    if (!container) return;
+    updateGlobalCmsBadge();
+    renderParkourMaps(allParkourMaps);
+  } catch (err) {
+    console.error('Error loading parkour maps:', err);
+  }
+}
 
-    if (maps.length === 0) {
-      container.innerHTML = `
-        <div style="grid-column: 1 / -1; padding: 36px; background: rgba(0, 0, 0, 0.2); border-radius: var(--radius-md); text-align: center; color: var(--text-dim);">
-          <div style="font-size: 2.2rem; margin-bottom: 10px;">🏃</div>
-          <h4 style="color: #fff; margin-bottom: 6px;">Nog Geen Community Maps Gemaakt</h4>
-          <p style="font-size: 0.9rem;">Spelers met [MOD] rang of hoger kunnen een map bouwen via <code>/fpixel parkour create [naam]</code>.</p>
-        </div>
-      `;
-      return;
+function filterParkourCards(status) {
+  currentParkourFilter = status;
+  renderParkourMaps(allParkourMaps);
+}
+
+function renderParkourMaps(maps) {
+  const container = document.getElementById('parkour-maps-list');
+  if (!container) return;
+
+  let filtered = maps;
+  if (currentParkourFilter !== 'ALL') {
+    filtered = maps.filter(m => {
+      const s = (m.status || 'PENDING_REVIEW').toUpperCase();
+      return s === currentParkourFilter;
+    });
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; padding: 36px; background: rgba(0, 0, 0, 0.2); border-radius: var(--radius-md); text-align: center; color: var(--text-dim);">
+        <div style="font-size: 2.2rem; margin-bottom: 10px;">🏃</div>
+        <h4 style="color: #fff; margin-bottom: 6px;">Geen Parcoursen Gevonden</h4>
+        <p style="font-size: 0.9rem;">Er zijn geen community maps in deze categorie.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const isOwner = currentUser && currentUser.rank === 'OWNER';
+
+  container.innerHTML = filtered.map(map => {
+    const creator = map.creatorName || 'Onbekend';
+    const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(creator)}/64`;
+    const checkpointsCount = Array.isArray(map.checkpoints) ? map.checkpoints.length : 0;
+    const statusUpper = (map.status || 'PENDING_REVIEW').toUpperCase();
+    const dateStr = map.createdAt ? new Date(map.createdAt).toLocaleDateString('nl-NL') : 'Recent';
+
+    let statusLabel = '⏳ In Review';
+    let statusBadgeClass = 'status-pending';
+
+    if (statusUpper === 'APPROVED') {
+      statusLabel = '✅ Goedgekeurd';
+      statusBadgeClass = 'status-approved';
+    } else if (statusUpper === 'DISABLED') {
+      statusLabel = '⏸️ Uit Circulatie';
+      statusBadgeClass = 'status-disabled';
+    } else if (statusUpper === 'REJECTED') {
+      statusLabel = '❌ Afgewezen';
+      statusBadgeClass = 'status-rejected';
     }
 
-    container.innerHTML = maps.map(map => {
-      const creator = map.creatorName || 'Onbekend';
-      const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(creator)}/64`;
-      const checkpointsCount = Array.isArray(map.checkpoints) ? map.checkpoints.length : 0;
-      const statusUpper = (map.status || 'PENDING_REVIEW').toUpperCase();
-      const dateStr = map.createdAt ? new Date(map.createdAt).toLocaleDateString('nl-NL') : 'Recent';
-
-      let statusLabel = '⏳ In Review';
-      let statusBadgeClass = 'status-pending';
-
-      if (statusUpper === 'APPROVED') {
-        statusLabel = '✅ Goedgekeurd';
-        statusBadgeClass = 'status-approved';
-      } else if (statusUpper === 'DISABLED') {
-        statusLabel = '⏸️ Uit Circulatie';
-        statusBadgeClass = 'status-disabled';
-      } else if (statusUpper === 'REJECTED') {
-        statusLabel = '❌ Afgewezen';
-        statusBadgeClass = 'status-rejected';
-      }
-
-      let actionsHtml = '';
+    let actionsHtml = '';
+    if (isOwner) {
       if (statusUpper === 'PENDING_REVIEW') {
         actionsHtml = `
           <div class="card-actions-row">
@@ -1043,7 +1324,7 @@ async function loadParkourData() {
       } else if (statusUpper === 'APPROVED') {
         actionsHtml = `
           <div class="card-actions-row">
-            <span class="active-game-pill">🎮 Actief in Parkour Games</span>
+            <span class="active-game-pill">🎮 Actief in Games</span>
             <button class="btn btn-sm btn-outline-warning" onclick="disableParkourMap('${map.id}')">
               ⏸️ Uit Circulatie
             </button>
@@ -1054,64 +1335,68 @@ async function loadParkourData() {
           <div class="card-actions-row">
             <span class="disabled-game-pill">⏸️ Inactief</span>
             <button class="btn btn-sm btn-primary" onclick="approveParkourMap('${map.id}')">
-              ▶️ Opnieuw Activeren
+              ▶️ Weer Activeren
             </button>
           </div>
         `;
       } else {
         actionsHtml = `
           <div class="card-actions-row">
-            <span class="rejected-game-pill">Afgewezen: ${escapeHtml(map.rejectReason || 'Niet passend')}</span>
+            <span class="rejected-game-pill">Afgewezen</span>
             <button class="btn btn-xs btn-outline-success" onclick="approveParkourMap('${map.id}')">
               Alsnog Goedkeuren
             </button>
           </div>
         `;
       }
-
-      return `
-        <div class="parkour-card ${statusUpper === 'PENDING_REVIEW' ? 'pending-highlight' : ''}">
-          <div class="parkour-card-header">
-            <div class="header-left">
-              <span class="parkour-id-pill">${map.id}</span>
-              <span class="parkour-status-badge ${statusBadgeClass}">${statusLabel}</span>
-            </div>
-            <span class="map-date-text">${dateStr}</span>
-          </div>
-
-          <div class="parkour-card-body">
-            <div class="creator-row">
-              <img class="creator-avatar" src="${avatarUrl}" alt="${creator}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/64'">
-              <div class="creator-meta">
-                <h3 class="parkour-title">${escapeHtml(map.name || map.id)}</h3>
-                <span class="creator-name">Maker: <strong>${escapeHtml(creator)}</strong></span>
-              </div>
-            </div>
-
-            <div class="parkour-metrics-grid">
-              <div class="metric-item">
-                <span class="metric-k">🏁 Checkpoints:</span>
-                <span class="metric-v"><strong>${checkpointsCount}</strong> punten</span>
-              </div>
-              <div class="metric-item">
-                <span class="metric-k">📍 Start:</span>
-                <span class="metric-v"><code>X: ${Math.round(map.startX || 0)}, Y: ${Math.round(map.startY || 100)}, Z: ${Math.round(map.startZ || 0)}</code></span>
-              </div>
-            </div>
-
-            <div class="test-command-widget" onclick="copyIp('/fpixel test ${map.id}', 'Test Commando')" title="Klik om in-game test commando te kopiëren">
-              <div class="test-cmd-code">/fpixel test ${map.id}</div>
-              <button class="btn-copy-cmd">Kopieer 📋</button>
-            </div>
-
-            ${actionsHtml}
-          </div>
+    } else {
+      actionsHtml = `
+        <div class="card-actions-row">
+          <span style="color:var(--text-dim); font-size:0.8rem;">👁️ Alleen Eigenaar kan maps goedkeuren</span>
         </div>
       `;
-    }).join('');
-  } catch (err) {
-    console.error('Error loading parkour maps:', err);
-  }
+    }
+
+    return `
+      <div class="parkour-card ${statusUpper === 'PENDING_REVIEW' ? 'pending-highlight' : ''}">
+        <div class="parkour-card-header">
+          <div class="header-left">
+            <span class="parkour-id-pill">${map.id}</span>
+            <span class="parkour-status-badge ${statusBadgeClass}">${statusLabel}</span>
+          </div>
+          <span class="map-date-text">${dateStr}</span>
+        </div>
+
+        <div class="parkour-card-body">
+          <div class="creator-row">
+            <img class="creator-avatar" src="${avatarUrl}" alt="${creator}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/64'">
+            <div class="creator-meta">
+              <h3 class="parkour-title">${escapeHtml(map.name || map.id)}</h3>
+              <span class="creator-name">Maker: <strong>${escapeHtml(creator)}</strong></span>
+            </div>
+          </div>
+
+          <div class="parkour-metrics-grid">
+            <div class="metric-item">
+              <span class="metric-k">🏁 Checkpoints:</span>
+              <span class="metric-v"><strong>${checkpointsCount}</strong> punten</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-k">📍 Start:</span>
+              <span class="metric-v"><code>X: ${Math.round(map.startX || 0)}, Y: ${Math.round(map.startY || 100)}, Z: ${Math.round(map.startZ || 0)}</code></span>
+            </div>
+          </div>
+
+          <div class="test-command-widget" onclick="copyIp('/fpixel test ${map.id}', 'Test Commando')" title="Klik om in-game test commando te kopiëren">
+            <div class="test-cmd-code">/fpixel test ${map.id}</div>
+            <button class="btn-copy-cmd">Kopieer 📋</button>
+          </div>
+
+          ${actionsHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 async function approveParkourMap(mapId) {
@@ -1174,7 +1459,52 @@ async function rejectParkourMap(mapId) {
   }
 }
 
-// Stop Server Modal
+// ------------------------------------------
+// 4. SERVER & SYSTEEM CONTROLES
+// ------------------------------------------
+
+async function handleBroadcastSubmit(e) {
+  e.preventDefault();
+  const input = document.getElementById('broadcast-message-input');
+  if (!input) return;
+  const message = input.value.trim();
+  if (!message) return;
+
+  try {
+    const res = await fetch('/api/server/broadcast', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Omroep verzenden mislukt.', true);
+      return;
+    }
+    showToast(data.message || 'Omroep verzonden naar Minecraft chat!');
+    input.value = '';
+  } catch (err) {
+    showToast('Fout bij omroep: ' + err.message, true);
+  }
+}
+
+async function triggerServerBackup() {
+  if (!confirm('Wil je nu direct een volledige server backup snapshot maken?')) return;
+  showToast('Server backup wordt gestart...', false);
+
+  try {
+    const res = await fetch('/api/server/backup', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Backup starten mislukt.', true);
+      return;
+    }
+    showToast(data.message || 'Backup succesvol gestart op de achtergrond!');
+  } catch (err) {
+    showToast('Fout bij starten backup: ' + err.message, true);
+  }
+}
+
 function openStopServerModal() {
   const modal = document.getElementById('stop-server-modal');
   if (modal) {
