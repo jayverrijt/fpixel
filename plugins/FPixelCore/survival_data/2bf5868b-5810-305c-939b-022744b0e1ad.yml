@@ -1,12 +1,12 @@
 location:
   world: survival
-  x: -1561.8526325175612
-  y: 64.0
-  z: 302.110859702528
-  yaw: -26.69986
-  pitch: 18.149992
+  x: -1611.089912009617
+  y: 76.9375
+  z: 252.16218112501488
+  yaw: -17.847717
+  pitch: 29.099976
 level: 26
-exp: 0.27593052
+exp: 0.3411479
 health: 20.0
 food: 20
 inventory:
@@ -17,7 +17,7 @@ inventory:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:fire_aspect":2,"minecraft:looting":3,"minecraft:sharpness":3,"minecraft:unbreaking":3}'
-    minecraft:damage: '372'
+    minecraft:damage: '374'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -26,7 +26,7 @@ inventory:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:efficiency":5,"minecraft:fortune":3,"minecraft:unbreaking":3}'
-    minecraft:damage: '324'
+    minecraft:damage: '325'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -183,7 +183,7 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:emerald
-  count: 16
+  count: 18
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -198,7 +198,11 @@ inventory:
   id: minecraft:cobblestone
   count: 64
   schema_version: 1
-- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:glowstone_dust
+  count: 19
+  schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:cooked_beef
@@ -222,7 +226,7 @@ inventory:
   count: 1
   components:
     minecraft:enchantments: '{"minecraft:blast_protection":4,"minecraft:unbreaking":3}'
-    minecraft:damage: '180'
+    minecraft:damage: '185'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -231,7 +235,7 @@ inventory:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:protection":3,"minecraft:swift_sneak":2}'
-    minecraft:damage: '244'
+    minecraft:damage: '250'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -239,7 +243,7 @@ inventory:
   count: 1
   components:
     minecraft:enchantments: '{"minecraft:protection":3,"minecraft:thorns":1,"minecraft:unbreaking":3}'
-    minecraft:damage: '214'
+    minecraft:damage: '219'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -247,7 +251,7 @@ inventory:
   count: 1
   components:
     minecraft:enchantments: '{"minecraft:protection":4,"minecraft:respiration":3}'
-    minecraft:damage: '244'
+    minecraft:damage: '250'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -267,7 +271,7 @@ armor:
   count: 1
   components:
     minecraft:enchantments: '{"minecraft:blast_protection":4,"minecraft:unbreaking":3}'
-    minecraft:damage: '180'
+    minecraft:damage: '185'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -276,7 +280,7 @@ armor:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:protection":3,"minecraft:swift_sneak":2}'
-    minecraft:damage: '244'
+    minecraft:damage: '250'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -284,7 +288,7 @@ armor:
   count: 1
   components:
     minecraft:enchantments: '{"minecraft:protection":3,"minecraft:thorns":1,"minecraft:unbreaking":3}'
-    minecraft:damage: '214'
+    minecraft:damage: '219'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -292,7 +296,7 @@ armor:
   count: 1
   components:
     minecraft:enchantments: '{"minecraft:protection":4,"minecraft:respiration":3}'
-    minecraft:damage: '244'
+    minecraft:damage: '250'
   schema_version: 1
 offhand:
   ==: org.bukkit.inventory.ItemStack
