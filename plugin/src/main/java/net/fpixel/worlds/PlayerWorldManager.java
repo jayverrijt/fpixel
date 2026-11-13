@@ -16,6 +16,7 @@ import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -54,6 +55,7 @@ public class PlayerWorldManager implements Listener {
         initGitRepo();
         loadWorlds();
         initDefaultSmp();
+        startAutoSaveTask();
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
@@ -312,6 +314,12 @@ public class PlayerWorldManager implements Listener {
             return false;
         }
 
+        // Check if this is the primary SMP world (ORIGIN1)
+        if (pw.isPrimarySmp() || "ORIGIN1".equalsIgnoreCase(pw.getUid())) {
+            plugin.getSurvivalManager().sendToSurvival(player);
+            return true;
+        }
+
         // Save previous world state if needed
         String oldUid = currentWorldSession.get(player.getUniqueId());
         if (oldUid != null && !oldUid.equalsIgnoreCase(uid)) {
@@ -349,15 +357,41 @@ public class PlayerWorldManager implements Listener {
     // -------------------------------------------------------------
     public void savePlayerState(Player player, String worldUid) {
         if (player == null || worldUid == null) return;
+        PlayerWorld pw = getWorld(worldUid);
+        if (pw != null && (pw.isPrimarySmp() || "ORIGIN1".equalsIgnoreCase(worldUid))) {
+            plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+            return;
+        }
+
         try {
             File dir = new File(dataDir, worldUid.toUpperCase());
             dir.mkdirs();
             File file = new File(dir, player.getUniqueId() + ".yml");
             YamlConfiguration cfg = new YamlConfiguration();
 
-            cfg.set("inventory", player.getInventory().getContents());
-            cfg.set("armor", player.getInventory().getArmorContents());
-            cfg.set("offhand", player.getInventory().getItemInOffHand());
+            // Strip lobby items before saving to prevent corruption
+            ItemStack[] inv = player.getInventory().getContents();
+            for (int i = 0; i < inv.length; i++) {
+                if (net.fpixel.survival.SurvivalProfileManager.isLobbyItem(inv[i])) {
+                    inv[i] = null;
+                }
+            }
+            cfg.set("inventory", inv);
+
+            ItemStack[] armor = player.getInventory().getArmorContents();
+            for (int i = 0; i < armor.length; i++) {
+                if (net.fpixel.survival.SurvivalProfileManager.isLobbyItem(armor[i])) {
+                    armor[i] = null;
+                }
+            }
+            cfg.set("armor", armor);
+
+            ItemStack offhand = player.getInventory().getItemInOffHand();
+            if (net.fpixel.survival.SurvivalProfileManager.isLobbyItem(offhand)) {
+                offhand = null;
+            }
+            cfg.set("offhand", offhand);
+
             cfg.set("enderchest", player.getEnderChest().getContents());
             cfg.set("exp", player.getExp());
             cfg.set("level", player.getLevel());
@@ -374,6 +408,13 @@ public class PlayerWorldManager implements Listener {
 
     public void loadPlayerState(Player player, String worldUid) {
         if (player == null || worldUid == null) return;
+        PlayerWorld pw = getWorld(worldUid);
+        if (pw != null && (pw.isPrimarySmp() || "ORIGIN1".equalsIgnoreCase(worldUid))) {
+            World ow = getOverworld(pw);
+            plugin.getSurvivalManager().getProfileManager().loadProfile(player, ow != null ? ow : player.getWorld());
+            return;
+        }
+
         File file = new File(new File(dataDir, worldUid.toUpperCase()), player.getUniqueId() + ".yml");
         if (!file.exists()) {
             // First time in this world: clear inventory to prevent cheat leaks from other worlds/lobby
@@ -393,14 +434,26 @@ public class PlayerWorldManager implements Listener {
             YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
             List<?> inv = cfg.getList("inventory");
             if (inv != null) {
-                player.getInventory().setContents(inv.toArray(new ItemStack[0]));
+                ItemStack[] items = inv.toArray(new ItemStack[0]);
+                for (int i = 0; i < items.length; i++) {
+                    if (net.fpixel.survival.SurvivalProfileManager.isLobbyItem(items[i])) {
+                        items[i] = null;
+                    }
+                }
+                player.getInventory().setContents(items);
             }
             List<?> armor = cfg.getList("armor");
             if (armor != null) {
-                player.getInventory().setArmorContents(armor.toArray(new ItemStack[0]));
+                ItemStack[] aItems = armor.toArray(new ItemStack[0]);
+                for (int i = 0; i < aItems.length; i++) {
+                    if (net.fpixel.survival.SurvivalProfileManager.isLobbyItem(aItems[i])) {
+                        aItems[i] = null;
+                    }
+                }
+                player.getInventory().setArmorContents(aItems);
             }
             ItemStack offhand = cfg.getItemStack("offhand");
-            if (offhand != null) {
+            if (offhand != null && !net.fpixel.survival.SurvivalProfileManager.isLobbyItem(offhand)) {
                 player.getInventory().setItemInOffHand(offhand);
             }
             List<?> ec = cfg.getList("enderchest");
@@ -457,16 +510,18 @@ public class PlayerWorldManager implements Listener {
         String fromWorldName = event.getFrom().getName();
         String toWorldName = player.getWorld().getName();
 
+        // If leaving a custom realm (not primary SMP), save that player's realm state
         PlayerWorld fromPw = getWorldFromWorldName(fromWorldName);
-        if (fromPw != null) {
+        if (fromPw != null && !fromPw.isPrimarySmp()) {
             savePlayerState(player, fromPw.getUid());
         }
 
+        // If entering a custom realm (not primary SMP), load that player's realm state
         PlayerWorld toPw = getWorldFromWorldName(toWorldName);
-        if (toPw != null) {
+        if (toPw != null && !toPw.isPrimarySmp()) {
             currentWorldSession.put(player.getUniqueId(), toPw.getUid());
             loadPlayerState(player, toPw.getUid());
-        } else {
+        } else if (toPw == null) {
             // Player returned to Hub or Minigames
             currentWorldSession.remove(player.getUniqueId());
             player.setGameMode(GameMode.SURVIVAL);
@@ -478,10 +533,47 @@ public class PlayerWorldManager implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        String currentUid = currentWorldSession.remove(player.getUniqueId());
+        if (currentUid != null) {
+            PlayerWorld pw = getWorld(currentUid);
+            if (pw != null && !pw.isPrimarySmp()) {
+                savePlayerState(player, currentUid);
+            }
+        } else {
+            PlayerWorld pw = getWorldForLocation(player.getLocation());
+            if (pw != null && !pw.isPrimarySmp()) {
+                savePlayerState(player, pw.getUid());
+            }
+        }
+    }
+
+    private void startAutoSaveTask() {
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                PlayerWorld pw = getWorldForLocation(player.getLocation());
+                if (pw != null && !pw.isPrimarySmp()) {
+                    savePlayerState(player, pw.getUid());
+                }
+            }
+        }, 1200L, 1200L); // every 60s
+    }
+
+    public void saveAllActiveStates() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            PlayerWorld pw = getWorldForLocation(player.getLocation());
+            if (pw != null && !pw.isPrimarySmp()) {
+                savePlayerState(player, pw.getUid());
+            }
+        }
+    }
+
     @EventHandler(priority = EventPriority.HIGH)
     public void onPortal(PlayerPortalEvent event) {
         PlayerWorld pw = getWorldForLocation(event.getFrom());
-        if (pw == null) return;
+        if (pw == null || pw.isPrimarySmp()) return;
 
         World currentWorld = event.getFrom().getWorld();
         if (event.getCause() == PlayerTeleportEvent.TeleportCause.NETHER_PORTAL) {
@@ -512,7 +604,15 @@ public class PlayerWorldManager implements Listener {
 
     public PlayerWorld getWorldFromWorldName(String worldName) {
         if (worldName == null) return null;
-        if (worldName.equalsIgnoreCase("survival") || worldName.equalsIgnoreCase("world") || worldName.equalsIgnoreCase("world_nether") || worldName.equalsIgnoreCase("world_the_end") || worldName.equalsIgnoreCase("the_nether") || worldName.equalsIgnoreCase("the_end")) {
+        if (worldName.equalsIgnoreCase("world")) {
+            return null; // The default world 'world' is the Lobby Hub!
+        }
+        if (worldName.equalsIgnoreCase("survival")) {
+            return worlds.get("ORIGIN1");
+        }
+        if (worldName.equalsIgnoreCase("world_nether") || worldName.equalsIgnoreCase("the_nether")
+                || worldName.equalsIgnoreCase("world_the_end") || worldName.equalsIgnoreCase("the_end")
+                || worldName.equalsIgnoreCase("survival_nether") || worldName.equalsIgnoreCase("survival_the_end")) {
             return worlds.get("ORIGIN1");
         }
         if (worldName.startsWith("player_worlds/")) {

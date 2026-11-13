@@ -204,6 +204,7 @@ public class FPixelPlugin extends JavaPlugin {
             survivalManager.saveAllActiveProfiles();
         }
         if (playerWorldManager != null) {
+            playerWorldManager.saveAllActiveStates();
             playerWorldManager.saveWorlds();
         }
         if (mapMakerManager != null) {
