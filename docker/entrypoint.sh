@@ -18,10 +18,10 @@ if [ ! -f paper.jar ] || [ $(stat -c%s paper.jar 2>/dev/null || echo 0) -lt 4000
 fi
 
 # Clean up stale session.locks if container previously stopped unexpectedly
-rm -f /data/world/session.lock /data/Urban/session.lock /data/Galaxy/session.lock /data/arenas/session.lock /data/survival/session.lock 2>/dev/null || true
+rm -f /data/world/session.lock /data/Urban/session.lock /data/Galaxy/session.lock /data/arenas/session.lock /data/survival/session.lock /data/world/dimensions/minecraft/survival/session.lock 2>/dev/null || true
 
 JAVA_MEMORY="${JAVA_MEMORY:-12G}"
-JAVA_INIT_MEMORY="${JAVA_INIT_MEMORY:-12G}"
+JAVA_INIT_MEMORY="${JAVA_INIT_MEMORY:-4G}"
 
 echo "=========================================="
 echo " Starting FPixel Minecraft Server (Docker)"
@@ -38,5 +38,4 @@ exec java -Dterminal.jline=false -Dterminal.ansi=true \
   -XX:MaxGCPauseMillis=200 \
   -XX:+UnlockExperimentalVMOptions \
   -XX:+DisableExplicitGC \
-  -XX:+AlwaysPreTouch \
   -jar paper.jar --nogui

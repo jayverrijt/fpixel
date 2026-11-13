@@ -8,11 +8,10 @@ elif [ -d "/opt/homebrew/opt/openjdk" ]; then
 fi
 
 java -Dterminal.jline=false -Dterminal.ansi=true \
-  -Xms12G -Xmx12G \
+  -Xms4G -Xmx12G \
   -XX:+UseG1GC \
   -XX:+ParallelRefProcEnabled \
   -XX:MaxGCPauseMillis=200 \
   -XX:+UnlockExperimentalVMOptions \
   -XX:+DisableExplicitGC \
-  -XX:+AlwaysPreTouch \
   -jar paper.jar --nogui

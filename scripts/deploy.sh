@@ -64,17 +64,22 @@ if [ ! -f "${SERVER_DIR}/plugins/floodgate-spigot.jar" ]; then
 fi
 
 # Ensure latest Survival World dimension is present from backups_survival
-if [ ! -d "${SERVER_DIR}/world/dimensions/minecraft/survival/region" ]; then
+if [ ! -d "${SERVER_DIR}/survival/region" ] && [ ! -d "${SERVER_DIR}/world/dimensions/minecraft/survival/region" ]; then
   echo ">>> Restoring latest survival world dimension from backups_survival..."
   git fetch origin backups_survival 2>/dev/null || true
   mkdir -p /tmp/survival_restore_deploy
   git archive origin/backups_survival | tar -x -C /tmp/survival_restore_deploy 2>/dev/null || true
   if [ -d /tmp/survival_restore_deploy/dimensions/minecraft/survival ]; then
+    mkdir -p "${SERVER_DIR}/survival"
+    cp -a /tmp/survival_restore_deploy/dimensions/minecraft/survival/* "${SERVER_DIR}/survival/"
+    if [ -f /tmp/survival_restore_deploy/world/level.dat ]; then
+      cp -a /tmp/survival_restore_deploy/world/level.dat "${SERVER_DIR}/survival/"
+    fi
     mkdir -p "${SERVER_DIR}/world/dimensions/minecraft/survival"
     cp -a /tmp/survival_restore_deploy/dimensions/minecraft/survival/* "${SERVER_DIR}/world/dimensions/minecraft/survival/"
-    cp -a /tmp/survival_restore_deploy/world/* "${SERVER_DIR}/world/" 2>/dev/null || true
+    mkdir -p "${SERVER_DIR}/plugins/FPixelCore/survival_data"
     cp -a /tmp/survival_restore_deploy/plugins/FPixelCore/survival_data/* "${SERVER_DIR}/plugins/FPixelCore/survival_data/" 2>/dev/null || true
-    echo "  -> Latest survival backup successfully deployed."
+    echo "  -> Latest survival backup successfully deployed to server/survival."
   fi
   rm -rf /tmp/survival_restore_deploy
 fi
@@ -94,12 +99,25 @@ if screen -list | grep -q "\.fpixel[[:space:]]"; then
 fi
 
 # Clean up stale session.locks
-rm -f "${SERVER_DIR}"/world/session.lock "${SERVER_DIR}"/Urban/session.lock "${SERVER_DIR}"/Galaxy/session.lock 2>/dev/null || true
+rm -f "${SERVER_DIR}"/world/session.lock "${SERVER_DIR}"/survival/session.lock "${SERVER_DIR}"/arenas/session.lock "${SERVER_DIR}"/world/dimensions/minecraft/survival/session.lock "${SERVER_DIR}"/Urban/session.lock "${SERVER_DIR}"/Galaxy/session.lock 2>/dev/null || true
 
 cd "${BASE_DIR}"
 docker compose build
-docker compose up -d
-docker compose restart
+docker compose up -d --remove-orphans
+
+echo ">>> [6/6] Verifying service initialization..."
+sleep 8
+docker compose ps
+echo "--- Recent Minecraft Container Logs ---"
+docker compose logs --tail=100 minecraft || true
+echo "--- Recent Web Container Logs ---"
+docker compose logs --tail=30 fpixel-web || true
+
+if command -v nc >/dev/null 2>&1 && nc -z -w 3 127.0.0.1 25565 2>/dev/null; then
+  echo ">>> [SUCCESS] Minecraft server is live and listening on port 25565!"
+else
+  echo ">>> [INFO] Minecraft server container is running; PaperMC is completing initialization."
+fi
 
 # 6. Run post-deploy backup confirmation
 if [ -f "${SCRIPTS_DIR}/backup.sh" ]; then

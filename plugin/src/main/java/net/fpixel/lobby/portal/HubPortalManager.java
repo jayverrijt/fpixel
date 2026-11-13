@@ -114,6 +114,9 @@ public class HubPortalManager {
     private void spawnHolograms(World world, int cy) {
         for (PortalData portal : portals) {
             Location holoLoc = portal.center.clone().add(0, 3.8, 0);
+            if (!holoLoc.isChunkLoaded()) {
+                holoLoc.getChunk().load();
+            }
             TextDisplay display = (TextDisplay) world.spawnEntity(holoLoc, EntityType.TEXT_DISPLAY);
             display.addScoreboardTag("fpixel_portal_holo");
             display.setBillboard(Display.Billboard.CENTER);

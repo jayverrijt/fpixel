@@ -222,6 +222,11 @@ public class PlayerWorldManager implements Listener {
     public World getOverworld(PlayerWorld pw) {
         if (pw.isPrimarySmp()) {
             World w = Bukkit.getWorld("survival");
+            if (w == null) {
+                try {
+                    w = new WorldCreator("survival").createWorld();
+                } catch (Exception ignored) {}
+            }
             if (w != null) return w;
             return Bukkit.getWorld("world");
         }

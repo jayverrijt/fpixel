@@ -17,7 +17,7 @@ services:
       - /home/jayv/fpixel-af2727b702412a9bbd1b5ac3af6817f9107ac91b:/home/jayv/fpixel-af2727b702412a9bbd1b5ac3af6817f9107ac91b:ro
     environment:
       - JAVA_MEMORY=12G
-      - JAVA_INIT_MEMORY=12G
+      - JAVA_INIT_MEMORY=4G
     networks:
       - fpixel-net
       - docker_web-network
