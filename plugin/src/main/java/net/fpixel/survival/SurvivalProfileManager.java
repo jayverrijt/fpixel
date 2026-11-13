@@ -127,7 +127,23 @@ public class SurvivalProfileManager {
                     }
                 }
 
-                // If no .bak with items, check imported JSON file
+                // If no .bak with items, check seed file
+                File seedFile = new File(new File(plugin.getDataFolder().getParentFile().getParentFile(), "survival_data_seed"), player.getUniqueId().toString() + ".yml");
+                if (seedFile.exists()) {
+                    try {
+                        YamlConfiguration seedConfig = YamlConfiguration.loadConfiguration(seedFile);
+                        if (hasSurvivalItems(seedConfig)) {
+                            plugin.getLogger().info("YAML profile for " + player.getName() + " had no items; restoring from seed profile: " + seedFile.getName());
+                            loadFromYaml(player, seedConfig, survivalWorld);
+                            java.nio.file.Files.copy(seedFile.toPath(), ymlFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                            return;
+                        }
+                    } catch (Exception e) {
+                        plugin.getLogger().warning("Failed to restore from seed profile for " + player.getName() + ": " + e.getMessage());
+                    }
+                }
+
+                // If no seed file with items, check imported JSON file
                 if (importedFile != null && importedFile.exists()) {
                     plugin.getLogger().info("YAML profile for " + player.getName() + " had no items; restoring from imported profile: " + importedFile.getName());
                     ymlFile.delete();
@@ -149,6 +165,20 @@ public class SurvivalProfileManager {
                     plugin.getLogger().info("No YAML profile for " + player.getName() + "; restoring from backup profile: " + bakFile.getName());
                     loadFromYaml(player, bakConfig, survivalWorld);
                     java.nio.file.Files.copy(bakFile.toPath(), ymlFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    return;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // Check seed file
+        File seedFile = new File(new File(plugin.getDataFolder().getParentFile().getParentFile(), "survival_data_seed"), player.getUniqueId().toString() + ".yml");
+        if (seedFile.exists()) {
+            try {
+                YamlConfiguration seedConfig = YamlConfiguration.loadConfiguration(seedFile);
+                if (hasSurvivalItems(seedConfig)) {
+                    plugin.getLogger().info("No YAML profile for " + player.getName() + "; restoring from seed profile: " + seedFile.getName());
+                    loadFromYaml(player, seedConfig, survivalWorld);
+                    java.nio.file.Files.copy(seedFile.toPath(), ymlFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                     return;
                 }
             } catch (Exception ignored) {}

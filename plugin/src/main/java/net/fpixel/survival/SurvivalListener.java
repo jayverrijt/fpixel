@@ -105,8 +105,10 @@ public class SurvivalListener implements Listener {
         } else if (!fromSurvival && currentSurvival) {
             // Entering survival: remove lobby scoreboard, load survival profile
             plugin.getScoreboardManager().remove(player);
-            plugin.getSurvivalManager().addSurvivalPlayer(player);
-            plugin.getSurvivalManager().getProfileManager().loadProfile(player, player.getWorld());
+            if (!plugin.getSurvivalManager().isPlayerInSurvival(player)) {
+                plugin.getSurvivalManager().addSurvivalPlayer(player);
+                plugin.getSurvivalManager().getProfileManager().loadProfile(player, player.getWorld());
+            }
         }
     }
 

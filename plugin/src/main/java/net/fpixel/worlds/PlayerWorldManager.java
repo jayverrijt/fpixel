@@ -17,6 +17,7 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -316,7 +317,9 @@ public class PlayerWorldManager implements Listener {
 
         // Check if this is the primary SMP world (ORIGIN1)
         if (pw.isPrimarySmp() || "ORIGIN1".equalsIgnoreCase(pw.getUid())) {
+            currentWorldSession.put(player.getUniqueId(), pw.getUid());
             plugin.getSurvivalManager().sendToSurvival(player);
+            plugin.getScoreboardManager().remove(player);
             return true;
         }
 
@@ -337,6 +340,7 @@ public class PlayerWorldManager implements Listener {
 
         currentWorldSession.put(player.getUniqueId(), pw.getUid());
         loadPlayerState(player, pw.getUid());
+        plugin.getScoreboardManager().remove(player);
 
         ChatUtil.sendMessage(player, "§a§l[Wereld] §eWelkom in §f" + pw.getName() + "§e! (Eigenaar: §b" + pw.getCreatorName() + "§e)");
         if (pw.isCheatsEnabled()) {
@@ -426,7 +430,13 @@ public class PlayerWorldManager implements Listener {
             player.setLevel(0);
             player.setHealth(20.0);
             player.setFoodLevel(20);
-            player.setGameMode(GameMode.SURVIVAL);
+            GameMode initialGm = GameMode.SURVIVAL;
+            if (pw != null && pw.canCheat(player) &&
+                    (pw.getName().toLowerCase().contains("creative") || "CREATIVE".equalsIgnoreCase(pw.getDefaultGameMode()))) {
+                initialGm = GameMode.CREATIVE;
+            }
+            player.setGameMode(initialGm);
+            plugin.getScoreboardManager().remove(player);
             return;
         }
 
@@ -467,12 +477,18 @@ public class PlayerWorldManager implements Listener {
             player.setFoodLevel(cfg.getInt("food", 20));
             player.setSaturation((float) cfg.getDouble("saturation", 5.0));
 
-            String gmStr = cfg.getString("gamemode", "SURVIVAL");
-            try {
-                player.setGameMode(GameMode.valueOf(gmStr));
-            } catch (Exception ignored) {
-                player.setGameMode(GameMode.SURVIVAL);
+            String gmStr = cfg.getString("gamemode", null);
+            GameMode targetGm = GameMode.SURVIVAL;
+            if (gmStr != null) {
+                try {
+                    targetGm = GameMode.valueOf(gmStr);
+                } catch (Exception ignored) {}
+            } else if (pw != null && pw.canCheat(player) &&
+                    (pw.getName().toLowerCase().contains("creative") || "CREATIVE".equalsIgnoreCase(pw.getDefaultGameMode()))) {
+                targetGm = GameMode.CREATIVE;
             }
+            player.setGameMode(targetGm);
+            plugin.getScoreboardManager().remove(player);
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to load player state for " + player.getName() + " in " + worldUid + ": " + e.getMessage());
         }
@@ -510,17 +526,25 @@ public class PlayerWorldManager implements Listener {
         String fromWorldName = event.getFrom().getName();
         String toWorldName = player.getWorld().getName();
 
-        // If leaving a custom realm (not primary SMP), save that player's realm state
         PlayerWorld fromPw = getWorldFromWorldName(fromWorldName);
+        PlayerWorld toPw = getWorldFromWorldName(toWorldName);
+
+        // If intra-world dimension change (e.g. overworld <-> nether in same realm), keep state intact
+        if (fromPw != null && toPw != null && fromPw.getUid().equalsIgnoreCase(toPw.getUid())) {
+            plugin.getScoreboardManager().remove(player);
+            return;
+        }
+
+        // If leaving a custom realm (not primary SMP), save that player's realm state
         if (fromPw != null && !fromPw.isPrimarySmp()) {
             savePlayerState(player, fromPw.getUid());
         }
 
         // If entering a custom realm (not primary SMP), load that player's realm state
-        PlayerWorld toPw = getWorldFromWorldName(toWorldName);
         if (toPw != null && !toPw.isPrimarySmp()) {
             currentWorldSession.put(player.getUniqueId(), toPw.getUid());
             loadPlayerState(player, toPw.getUid());
+            plugin.getScoreboardManager().remove(player);
         } else if (toPw == null) {
             // Player returned to Hub or Minigames
             currentWorldSession.remove(player.getUniqueId());
@@ -530,6 +554,28 @@ public class PlayerWorldManager implements Listener {
             if (plugin.getLobbyManager().isLobbyWorld(player.getWorld())) {
                 plugin.getLobbyManager().giveLobbyItems(player);
             }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onRespawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        PlayerWorld pw = getWorldForLocation(player.getLocation());
+        if (pw == null) {
+            String uid = currentWorldSession.get(player.getUniqueId());
+            if (uid != null) pw = getWorld(uid);
+        }
+        if (pw != null && !pw.isPrimarySmp()) {
+            World ow = getOverworld(pw);
+            if (ow != null) {
+                Location bed = player.getRespawnLocation();
+                if (bed != null && bed.getWorld() != null && bed.getWorld().getName().startsWith("player_worlds/" + pw.getUid())) {
+                    event.setRespawnLocation(bed);
+                } else {
+                    event.setRespawnLocation(ow.getSpawnLocation().clone().add(0.5, 0.5, 0.5));
+                }
+            }
+            plugin.getScoreboardManager().remove(player);
         }
     }
 

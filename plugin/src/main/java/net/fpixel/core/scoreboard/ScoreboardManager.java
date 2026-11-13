@@ -37,8 +37,13 @@ public class ScoreboardManager {
             String title = animatedTitles[titleStep];
 
             for (Player player : Bukkit.getOnlinePlayers()) {
-                if (player.getWorld().getName().equalsIgnoreCase("survival") ||
-                        (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().isPlayerInSurvival(player))) {
+                org.bukkit.World w = player.getWorld();
+                if (w == null) continue;
+                String wName = w.getName().toLowerCase();
+                if (wName.equalsIgnoreCase("survival") ||
+                        wName.startsWith("player_worlds/") ||
+                        (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().isPlayerInSurvival(player)) ||
+                        (plugin.getPlayerWorldManager() != null && plugin.getPlayerWorldManager().getWorldForLocation(player.getLocation()) != null)) {
                     remove(player);
                     continue;
                 }

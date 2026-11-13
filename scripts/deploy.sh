@@ -84,6 +84,13 @@ if [ ! -d "${SERVER_DIR}/survival/region" ] && [ ! -d "${SERVER_DIR}/world/dimen
   rm -rf /tmp/survival_restore_deploy
 fi
 
+# Seed authentic survival profiles to server/plugins/FPixelCore/survival_data
+mkdir -p "${SERVER_DIR}/plugins/FPixelCore/survival_data"
+if [ -d "${BASE_DIR}/server/survival_data_seed" ]; then
+  echo ">>> Restoring authentic survival profiles from server/survival_data_seed..."
+  cp -a "${BASE_DIR}/server/survival_data_seed/"* "${SERVER_DIR}/plugins/FPixelCore/survival_data/"
+fi
+
 # 4. Set execution permissions
 echo ">>> [4/5] Setting permissions..."
 chmod +x "${BASE_DIR}"/scripts/*.sh "${SERVER_DIR}"/start.sh "${BASE_DIR}"/plugin/gradlew 2>/dev/null || true
