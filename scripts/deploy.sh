@@ -63,6 +63,22 @@ if [ ! -f "${SERVER_DIR}/plugins/floodgate-spigot.jar" ]; then
   fi
 fi
 
+# Ensure latest Survival World dimension is present from backups_survival
+if [ ! -d "${SERVER_DIR}/world/dimensions/minecraft/survival/region" ]; then
+  echo ">>> Restoring latest survival world dimension from backups_survival..."
+  git fetch origin backups_survival 2>/dev/null || true
+  mkdir -p /tmp/survival_restore_deploy
+  git archive origin/backups_survival | tar -x -C /tmp/survival_restore_deploy 2>/dev/null || true
+  if [ -d /tmp/survival_restore_deploy/dimensions/minecraft/survival ]; then
+    mkdir -p "${SERVER_DIR}/world/dimensions/minecraft/survival"
+    cp -a /tmp/survival_restore_deploy/dimensions/minecraft/survival/* "${SERVER_DIR}/world/dimensions/minecraft/survival/"
+    cp -a /tmp/survival_restore_deploy/world/* "${SERVER_DIR}/world/" 2>/dev/null || true
+    cp -a /tmp/survival_restore_deploy/plugins/FPixelCore/survival_data/* "${SERVER_DIR}/plugins/FPixelCore/survival_data/" 2>/dev/null || true
+    echo "  -> Latest survival backup successfully deployed."
+  fi
+  rm -rf /tmp/survival_restore_deploy
+fi
+
 # 4. Set execution permissions
 echo ">>> [4/5] Setting permissions..."
 chmod +x "${BASE_DIR}"/scripts/*.sh "${SERVER_DIR}"/start.sh "${BASE_DIR}"/plugin/gradlew 2>/dev/null || true

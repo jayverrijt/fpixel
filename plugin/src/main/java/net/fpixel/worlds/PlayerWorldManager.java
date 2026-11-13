@@ -221,6 +221,8 @@ public class PlayerWorldManager implements Listener {
 
     public World getOverworld(PlayerWorld pw) {
         if (pw.isPrimarySmp()) {
+            World w = Bukkit.getWorld("survival");
+            if (w != null) return w;
             return Bukkit.getWorld("world");
         }
         String path = "player_worlds/" + pw.getUid();
@@ -505,7 +507,7 @@ public class PlayerWorldManager implements Listener {
 
     public PlayerWorld getWorldFromWorldName(String worldName) {
         if (worldName == null) return null;
-        if (worldName.equalsIgnoreCase("world") || worldName.equalsIgnoreCase("world_nether") || worldName.equalsIgnoreCase("world_the_end")) {
+        if (worldName.equalsIgnoreCase("survival") || worldName.equalsIgnoreCase("world") || worldName.equalsIgnoreCase("world_nether") || worldName.equalsIgnoreCase("world_the_end") || worldName.equalsIgnoreCase("the_nether") || worldName.equalsIgnoreCase("the_end")) {
             return worlds.get("ORIGIN1");
         }
         if (worldName.startsWith("player_worlds/")) {

@@ -1,0 +1,15 @@
+{
+  "ORIGIN1": {
+    "uid": "ORIGIN1",
+    "name": "Survival SMP (Origineel)",
+    "creatorName": "Jay_V0",
+    "createdAt": 1731522000000,
+    "cheatsEnabled": false,
+    "seed": 0,
+    "difficulty": "NORMAL",
+    "defaultGameMode": "SURVIVAL",
+    "isPrimarySmp": true,
+    "sharedPlayers": {},
+    "locked": false
+  }
+}

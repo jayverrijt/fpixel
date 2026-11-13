@@ -1497,14 +1497,33 @@ app.post('/api/auth/reset-confirm', async (req, res) => {
 
 function getPlayerWorlds() {
   const file = resolveFilePath('plugins/FPixelCore/player_worlds.json');
+  let worlds = {};
   if (file && fs.existsSync(file)) {
     try {
-      return JSON.parse(fs.readFileSync(file, 'utf8')) || {};
+      worlds = JSON.parse(fs.readFileSync(file, 'utf8')) || {};
     } catch (e) {
-      return {};
+      worlds = {};
     }
   }
-  return {};
+
+  // Ensure ORIGIN1 is always present as the primary survival world
+  if (!worlds['ORIGIN1']) {
+    worlds['ORIGIN1'] = {
+      uid: 'ORIGIN1',
+      name: 'Survival SMP (Origineel)',
+      creatorName: 'Jay_V0',
+      createdAt: 1731522000000,
+      cheatsEnabled: false,
+      seed: 0,
+      difficulty: 'NORMAL',
+      defaultGameMode: 'SURVIVAL',
+      isPrimarySmp: true,
+      sharedPlayers: {},
+      locked: false
+    };
+  }
+
+  return worlds;
 }
 
 function getWorldLimit(rank) {
@@ -1741,21 +1760,46 @@ app.get('/api/worlds/backups/:uid', (req, res) => {
   const w = worldsObj[uid];
   if (!w) return res.status(404).json({ error: 'Wereld niet gevonden.' });
 
-  const targetDir = w.isPrimarySmp ? SERVER_DIR : path.join(SERVER_DIR, 'player_worlds');
-  const targetPath = w.isPrimarySmp ? 'world' : uid;
-
   const { exec } = require('child_process');
-  exec(`git log --oneline --format="%h|%an|%ad|%s" --date=short -n 25 -- ${targetPath}`, { cwd: targetDir }, (err, stdout) => {
-    if (err) {
-      return res.json({ success: true, backups: [] });
-    }
-    const lines = (stdout || '').trim().split('\n').filter(Boolean);
-    const backups = lines.map(line => {
-      const [hash, author, date, message] = line.split('|');
-      return { hash, author, date, message };
+
+  if (w.isPrimarySmp || uid === 'ORIGIN1') {
+    // Read commits from daily backups branch
+    exec('git log origin/backups_survival --format="%h|%an|%ad|%s" --date=short -n 25', { cwd: path.join(__dirname, '..') }, (err, stdout) => {
+      if (err) {
+        exec('git log backups_survival --format="%h|%an|%ad|%s" --date=short -n 25', { cwd: path.join(__dirname, '..') }, (err2, stdout2) => {
+          if (err2) return res.json({ success: true, backups: [] });
+          const lines = (stdout2 || '').trim().split('\n').filter(Boolean);
+          const backups = lines.map(line => {
+            const [hash, author, date, message] = line.split('|');
+            return { hash, author, date, message };
+          });
+          res.json({ success: true, backups });
+        });
+        return;
+      }
+      const lines = (stdout || '').trim().split('\n').filter(Boolean);
+      const backups = lines.map(line => {
+        const [hash, author, date, message] = line.split('|');
+        return { hash, author, date, message };
+      });
+      res.json({ success: true, backups });
     });
-    res.json({ success: true, backups });
-  });
+  } else {
+    const targetDir = path.join(SERVER_DIR, 'player_worlds');
+    const targetPath = uid;
+
+    exec(`git log --oneline --format="%h|%an|%ad|%s" --date=short -n 25 -- ${targetPath}`, { cwd: targetDir }, (err, stdout) => {
+      if (err) {
+        return res.json({ success: true, backups: [] });
+      }
+      const lines = (stdout || '').trim().split('\n').filter(Boolean);
+      const backups = lines.map(line => {
+        const [hash, author, date, message] = line.split('|');
+        return { hash, author, date, message };
+      });
+      res.json({ success: true, backups });
+    });
+  }
 });
 
 // API: /api/worlds/restore (Hot restore commit without server restart)
@@ -1773,6 +1817,21 @@ app.post('/api/worlds/restore', async (req, res) => {
   const isCreator = (w.creatorName || '').toLowerCase().replace(/^\./, '') === user.username.toLowerCase().replace(/^\./, '');
   if (!isCreator && !user.isAdmin) {
     return res.status(403).json({ error: 'Alleen de maker kan een restore uitvoeren.' });
+  }
+
+  if (w.isPrimarySmp || uid === 'ORIGIN1') {
+    const { exec } = require('child_process');
+    const restoreScript = path.join(__dirname, '../scripts/restore_survival_backup.sh');
+    if (fs.existsSync(restoreScript)) {
+      exec(`bash "${restoreScript}" ${commitHash}`, (err, stdout, stderr) => {
+        if (err) {
+          console.error('Survival restore script error:', err);
+          return res.status(500).json({ error: 'Fout bij herstellen: ' + err.message });
+        }
+        res.json({ success: true, message: `Survival wereld succesvol hersteld naar backup ${commitHash}!` });
+      });
+      return;
+    }
   }
 
   try {
