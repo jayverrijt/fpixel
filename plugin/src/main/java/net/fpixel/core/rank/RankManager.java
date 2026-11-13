@@ -38,15 +38,25 @@ public class RankManager {
             }
         }
         ranksConfig = YamlConfiguration.loadConfiguration(ranksFile);
+        boolean migrated = false;
         for (String key : ranksConfig.getKeys(false)) {
             try {
-                Rank rank = Rank.valueOf(ranksConfig.getString(key, "MEMBER"));
+                String raw = ranksConfig.getString(key, "MEMBER");
+                Rank rank = Rank.fromString(raw);
+                // Detect migration
+                if (!raw.equalsIgnoreCase(rank.name())) {
+                    ranksConfig.set(key, rank.name());
+                    migrated = true;
+                }
                 if (key.contains("-")) {
                     playerRanks.put(UUID.fromString(key), rank);
                 } else {
                     nameRanks.put(key.toLowerCase(), rank);
                 }
             } catch (Exception ignored) {}
+        }
+        if (migrated) {
+            saveRanks();
         }
     }
 
@@ -203,7 +213,6 @@ public class RankManager {
                 attachment.setPermission("fpixel.buildmaps", true);
                 attachment.setPermission("fpixel.import", true);
                 attachment.setPermission("fpixel.coins", true);
-                attachment.setPermission("fpixel.waypoint.admin", true);
 
                 // Vanilla/Paper commands for Admins
                 attachment.setPermission("minecraft.command.gamemode", true);
@@ -261,11 +270,14 @@ public class RankManager {
                 attachment.setPermission("skinsrestorer.command.set.other", true);
                 attachment.setPermission("skinsrestorer.command.clear", true);
                 attachment.setPermission("skinsrestorer.command.clear.other", true);
-            } else if (rank == Rank.MOD) {
-                // Mod gets moderation, teleportation and minigame force start
+            } else if (rank == Rank.MODERATOR) {
+                // Moderator gets moderation, supervision, map testing/reviewing, teleportation and minigame force start
                 attachment.setPermission("fpixel.mod", true);
+                attachment.setPermission("fpixel.moderator", true);
                 attachment.setPermission("fpixel.parkour", true);
                 attachment.setPermission("fpixel.test", true);
+                attachment.setPermission("fpixel.map.test", true);
+                attachment.setPermission("fpixel.map.review", true);
                 attachment.setPermission("fpixel.fly", true);
                 attachment.setPermission("fpixel.forcestart", true);
                 attachment.setPermission("minecraft.command.kick", true);
@@ -275,8 +287,9 @@ public class RankManager {
                 attachment.setPermission("minecraft.command.tell", true);
                 attachment.setPermission("skinsrestorer.command", true);
                 attachment.setPermission("skinsrestorer.command.set", true);
-            } else if (rank.getWeight() >= 40) {
-                // VIP, VIP+, MVP, MVP+, YOUTUBE
+            } else if (rank == Rank.DONOR) {
+                // Donor gets lobby flying, world perks (max 3 worlds) and cosmetic skins
+                attachment.setPermission("fpixel.donor", true);
                 attachment.setPermission("fpixel.fly", true);
                 attachment.setPermission("skinsrestorer.command", true);
                 attachment.setPermission("skinsrestorer.command.set", true);

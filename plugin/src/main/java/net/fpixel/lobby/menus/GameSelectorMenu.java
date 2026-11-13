@@ -79,18 +79,17 @@ public class GameSelectorMenu {
                 .build();
         inv.setItem(15, tntrun);
 
-        // 4. Survival SMP (Slot 22 - Centerpiece)
+        // 4. Player Worlds & Survival SMP (Slot 22 - Centerpiece)
         ItemStack survival = new ItemBuilder(Material.GRASS_BLOCK)
-                .name("§a§lSurvival SMP")
+                .name("§a§lPlayer Worlds & Survival")
                 .lore(
-                        "§7Normal Vanilla Survival World!",
-                        "§7Build your base, mine ores, trade & survive.",
+                        "§7Vanilla Survival & Persoonlijke Werelden!",
+                        "§7Bouw samen met vrienden of start je eigen Realm.",
                         "",
-                        "§a✓ Mobs & Animals enabled",
-                        "§a✓ Free Building & Mining",
-                        "§a✓ Vanilla Mechanics",
+                        "§a✓ Volledig geïsoleerde werelden & inventaris",
+                        "§a✓ Beheer & cheats instellen via mc.fpixel.nl",
                         "",
-                        "§e▶ Click to Play Survival SMP!"
+                        "§e▶ Klik om jouw werelden te bekijken!"
                 )
                 .build();
         inv.setItem(22, survival);
@@ -185,7 +184,7 @@ public class GameSelectorMenu {
             SimpleForm form = SimpleForm.builder()
                     .title("§6§lFPixel Minigames")
                     .content("Select a minigame or world to play:")
-                    .button("§a§lSurvival SMP\n§7Vanilla survival world", FormImage.Type.PATH, "textures/blocks/grass_carried")
+                    .button("§a§lPlayer Worlds & Survival\n§7Kies of open jouw werelden", FormImage.Type.PATH, "textures/blocks/grass_carried")
                     .button("§c§lBedWars (Quick Join)\n§7Join open match", FormImage.Type.PATH, "textures/items/bed_red")
                     .button("§c§lBedWars (Pick Map)\n§7Choose from 10 maps", FormImage.Type.PATH, "textures/items/bed_red")
                     .button("§b§lSkyWars (Quick Join)\n§7Join open match", FormImage.Type.PATH, "textures/items/ender_eye")
@@ -206,7 +205,13 @@ public class GameSelectorMenu {
                         int id = response.clickedButtonId();
                         Bukkit.getScheduler().runTask(plugin, () -> {
                             switch (id) {
-                                case 0 -> plugin.getSurvivalManager().sendToSurvival(player);
+                                case 0 -> {
+                                    if (plugin.getPlayerWorldManager() != null) {
+                                        plugin.getPlayerWorldManager().openPlayerWorldsMenu(player);
+                                    } else {
+                                        plugin.getSurvivalManager().sendToSurvival(player);
+                                    }
+                                }
                                 case 1 -> plugin.getGameManager().joinQueue(player, "BEDWARS");
                                 case 2 -> MapSelectMenu.open(plugin, player, "BEDWARS");
                                 case 3 -> plugin.getGameManager().joinQueue(player, "SKYWARS");
@@ -237,7 +242,11 @@ public class GameSelectorMenu {
     public static void handleClick(FPixelPlugin plugin, Player player, int slot, ClickType clickType) {
         if (slot == 22) {
             player.closeInventory();
-            plugin.getSurvivalManager().sendToSurvival(player);
+            if (plugin.getPlayerWorldManager() != null) {
+                plugin.getPlayerWorldManager().openPlayerWorldsMenu(player);
+            } else {
+                plugin.getSurvivalManager().sendToSurvival(player);
+            }
         } else if (slot == 11) {
             handleOption(plugin, player, "BEDWARS", clickType);
         } else if (slot == 13) {

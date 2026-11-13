@@ -47,10 +47,10 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean checkModPermission(CommandSender sender) {
-        if (sender.hasPermission("fpixel.admin") || sender.hasPermission("fpixel.mod") || sender.isOp()) return true;
+        if (sender.hasPermission("fpixel.admin") || sender.hasPermission("fpixel.mod") || sender.hasPermission("fpixel.moderator") || sender.isOp()) return true;
         if (sender instanceof Player player) {
             Rank rank = plugin.getRankManager().getRank(player);
-            return rank != null && rank.getWeight() >= Rank.MOD.getWeight();
+            return rank != null && rank.getWeight() >= Rank.MODERATOR.getWeight();
         }
         return false;
     }
@@ -143,6 +143,38 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             }
             plugin.getParkourManager().disableMap(sender, args[1]);
             return true;
+        }
+
+        if (sub.equals("hub")) {
+            if (args.length > 1 && args[1].equalsIgnoreCase("rebuild")) {
+                if (!checkOwnerPermission(sender)) {
+                    sender.sendMessage(ChatUtil.colorize("§cAlleen [OWNER] rang kan de hub herbouwen."));
+                    return true;
+                }
+                World world = (sender instanceof Player p) ? p.getWorld() : Bukkit.getWorlds().get(0);
+                plugin.getHubGenerator().generateCourtyardHub(world);
+                plugin.getHubPortalManager().setupPortals(world, 64);
+                sender.sendMessage(ChatUtil.colorize("§a§l[Hub] §eDe Courtyard Hub en portalen zijn succesvol herbouwd!"));
+                return true;
+            }
+        }
+
+        if (sub.equals("wand")) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage("Alleen spelers kunnen /fpixel wand gebruiken.");
+                return true;
+            }
+            plugin.getMapMakerManager().giveSetupWand(player);
+            ChatUtil.sendMessage(player, "§a§l[Map Maker] §eJe hebt de Setup Wand ontvangen!");
+            return true;
+        }
+
+        if (sub.equals("map")) {
+            return handleMapCommand(sender, args);
+        }
+
+        if (sub.equals("world")) {
+            return handleWorldCommand(sender, args);
         }
 
         // All other administrative commands require Admin permission (weight >= 90 or OP)
@@ -645,6 +677,217 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
         if (arg.equals("~")) return playerY;
         if (arg.startsWith("~")) return playerY + Integer.parseInt(arg.substring(1));
         return Integer.parseInt(arg);
+    }
+
+    private boolean handleMapCommand(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel map <create|test|approve|reject|disable|list>"));
+            return true;
+        }
+
+        String action = args[1].toLowerCase();
+        Player staff = (sender instanceof Player p) ? p : null;
+
+        if (action.equals("create")) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage("Alleen spelers kunnen /fpixel map create uitvoeren.");
+                return true;
+            }
+            if (args.length < 4) {
+                ChatUtil.sendMessage(player, "§cGebruik: /fpixel map create <naam> <BEDWARS|SKYWARS|PARKOUR|...> [teams]");
+                return true;
+            }
+            String name = args[2];
+            net.fpixel.games.maker.CustomMinigameMap.GameType type = net.fpixel.games.maker.CustomMinigameMap.GameType.fromString(args[3]);
+            int teams = 2;
+            if (args.length > 4) {
+                try { teams = Integer.parseInt(args[4]); } catch (Exception ignored) {}
+            }
+            plugin.getMapMakerManager().createMap(null, name, type, teams, player);
+            return true;
+        }
+
+        if (action.equals("test")) {
+            if (staff == null) {
+                sender.sendMessage("Alleen spelers kunnen een map testen.");
+                return true;
+            }
+            if (!checkModPermission(sender)) {
+                sender.sendMessage(ChatUtil.colorize("§cJe hebt minstens de [MODERATOR] rang nodig om maps te testen."));
+                return true;
+            }
+            if (args.length < 3) {
+                sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel map test <id>"));
+                return true;
+            }
+            plugin.getMapMakerManager().testMap(args[2], staff);
+            return true;
+        }
+
+        if (action.equals("approve")) {
+            if (!checkModPermission(sender)) {
+                sender.sendMessage(ChatUtil.colorize("§cJe hebt minstens de [MODERATOR] rang nodig."));
+                return true;
+            }
+            if (args.length < 3) {
+                sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel map approve <id>"));
+                return true;
+            }
+            plugin.getMapMakerManager().approveMap(args[2], staff);
+            sender.sendMessage(ChatUtil.colorize("§aMap " + args[2] + " goedgekeurd!"));
+            return true;
+        }
+
+        if (action.equals("reject")) {
+            if (!checkModPermission(sender)) {
+                sender.sendMessage(ChatUtil.colorize("§cJe hebt minstens de [MODERATOR] rang nodig."));
+                return true;
+            }
+            if (args.length < 3) {
+                sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel map reject <id> [reden]"));
+                return true;
+            }
+            String reason = args.length > 3 ? String.join(" ", Arrays.copyOfRange(args, 3, args.length)) : "Niet goedgekeurd door staff";
+            plugin.getMapMakerManager().rejectMap(args[2], reason, staff);
+            sender.sendMessage(ChatUtil.colorize("§cMap " + args[2] + " afgekeurd met reden: " + reason));
+            return true;
+        }
+
+        if (action.equals("disable") || action.equals("archive")) {
+            if (!checkModPermission(sender)) {
+                sender.sendMessage(ChatUtil.colorize("§cJe hebt minstens de [MODERATOR] rang nodig."));
+                return true;
+            }
+            if (args.length < 3) {
+                sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel map disable <id>"));
+                return true;
+            }
+            plugin.getMapMakerManager().disableMap(args[2], staff);
+            return true;
+        }
+
+        sender.sendMessage(ChatUtil.colorize("§cOnbekend map subcommando: " + action));
+        return true;
+    }
+
+    private boolean handleWorldCommand(CommandSender sender, String[] args) {
+        if (!checkAdminPermission(sender)) {
+            sender.sendMessage(ChatUtil.colorize("§cAlleen administrators en RCON hebben toegang tot /fpixel world."));
+            return true;
+        }
+
+        if (args.length < 2) {
+            sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel world <create|delete|edit|share|unshare|backup|restore>"));
+            return true;
+        }
+
+        String action = args[1].toLowerCase();
+        var wm = plugin.getPlayerWorldManager();
+        if (wm == null) {
+            sender.sendMessage("PlayerWorldManager is niet beschikbaar.");
+            return true;
+        }
+
+        if (action.equals("create")) {
+            if (args.length < 5) {
+                sender.sendMessage("Gebruik: /fpixel world create <uid> <name> <creator> [seed] [cheats]");
+                return true;
+            }
+            String uid = args[2];
+            String name = args[3].replace("_", " ");
+            String creator = args[4];
+            long seed = args.length > 5 ? Long.parseLong(args[5]) : 0L;
+            boolean cheats = args.length > 6 && Boolean.parseBoolean(args[6]);
+
+            wm.createWorld(uid, name, creator, null, seed, cheats);
+            sender.sendMessage("OK: World " + uid + " created successfully.");
+            return true;
+        }
+
+        if (action.equals("delete")) {
+            if (args.length < 3) {
+                sender.sendMessage("Gebruik: /fpixel world delete <uid>");
+                return true;
+            }
+            boolean ok = wm.deleteWorld(args[2]);
+            sender.sendMessage(ok ? "OK: World " + args[2] + " deleted." : "ERROR: World could not be deleted.");
+            return true;
+        }
+
+        if (action.equals("edit")) {
+            if (args.length < 5) {
+                sender.sendMessage("Gebruik: /fpixel world edit <uid> <name> <cheatsEnabled>");
+                return true;
+            }
+            var pw = wm.getWorld(args[2]);
+            if (pw == null) {
+                sender.sendMessage("ERROR: World not found.");
+                return true;
+            }
+            pw.setName(args[3].replace("_", " "));
+            pw.setCheatsEnabled(Boolean.parseBoolean(args[4]));
+            wm.saveWorlds();
+            sender.sendMessage("OK: World " + args[2] + " updated.");
+            return true;
+        }
+
+        if (action.equals("share")) {
+            if (args.length < 5) {
+                sender.sendMessage("Gebruik: /fpixel world share <uid> <player> <allowCheats>");
+                return true;
+            }
+            var pw = wm.getWorld(args[2]);
+            if (pw == null) {
+                sender.sendMessage("ERROR: World not found.");
+                return true;
+            }
+            pw.getSharedPlayers().put(args[3].toLowerCase(), Boolean.parseBoolean(args[4]));
+            wm.saveWorlds();
+            sender.sendMessage("OK: Shared world " + args[2] + " with " + args[3]);
+            return true;
+        }
+
+        if (action.equals("unshare")) {
+            if (args.length < 4) {
+                sender.sendMessage("Gebruik: /fpixel world unshare <uid> <player>");
+                return true;
+            }
+            var pw = wm.getWorld(args[2]);
+            if (pw == null) {
+                sender.sendMessage("ERROR: World not found.");
+                return true;
+            }
+            pw.getSharedPlayers().remove(args[3].toLowerCase());
+            wm.saveWorlds();
+            sender.sendMessage("OK: Unshared " + args[3] + " from world " + args[2]);
+            return true;
+        }
+
+        if (action.equals("backup")) {
+            if (args.length < 3) {
+                sender.sendMessage("Gebruik: /fpixel world backup <uid> [requester]");
+                return true;
+            }
+            String uid = args[2];
+            String req = args.length > 3 ? args[3] : "Console";
+            wm.createGitBackup(uid, req,
+                    () -> sender.sendMessage("OK: Backup created for world " + uid),
+                    err -> sender.sendMessage("ERROR: " + err));
+            return true;
+        }
+
+        if (action.equals("restore")) {
+            if (args.length < 4) {
+                sender.sendMessage("Gebruik: /fpixel world restore <uid> <commitHash>");
+                return true;
+            }
+            wm.restoreGitBackup(args[2], args[3],
+                    () -> sender.sendMessage("OK: World " + args[2] + " successfully restored to " + args[3]),
+                    err -> sender.sendMessage("ERROR: " + err));
+            return true;
+        }
+
+        return true;
     }
 
     private void sendHelp(CommandSender sender) {

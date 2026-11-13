@@ -1,316 +1,252 @@
-/**
- * FPixel Network - Official Web Portal & Community Hub
- * Modern, High-Performance ES6 Client Logic
- */
+// ==========================================================================
+// FPIXEL NETWORK - ENTERPRISE CLIENT APPLICATION (app.js)
+// Real-time Web CMS, Player Worlds, Map Maker & Staff Console
+// ==========================================================================
 
-// Global State
 let currentUser = null;
 let currentTab = 'home';
-let currentMapWorld = 'survival';
-let leafletMap = null;
-let currentTileLayer = null;
-let waypointMarkers = [];
-let cachedWaypoints = [];
-let pendingClickCoords = null;
+let currentStaffSubtab = 'reviews';
 
-// ==========================================
-// INITIALIZATION
-// ==========================================
-
+// Initialization
 document.addEventListener('DOMContentLoaded', () => {
-  initAuth();
-  loadStats();
-  initMap();
-
-  // Refresh server stats every 30 seconds
-  setInterval(loadStats, 30000);
+  initApp();
 });
 
-// ==========================================
-// NOTIFICATIONS & TOASTS
-// ==========================================
+async function initApp() {
+  await checkAuth();
+  fetchServerStats();
+  setInterval(fetchServerStats, 10000); // Poll status every 10s
+}
 
-function showToast(message, isError = false) {
+// -------------------------------------------------------------
+// TOAST NOTIFICATIONS & CLIPBOARD
+// -------------------------------------------------------------
+function showToast(message, type = 'info') {
   const toast = document.getElementById('toast');
   if (!toast) return;
 
   toast.textContent = message;
-  toast.className = 'toast ' + (isError ? 'toast-error' : 'toast-success');
-  toast.style.display = 'block';
+  toast.className = `toast show ${type}`;
 
   setTimeout(() => {
-    toast.style.display = 'none';
+    toast.className = 'toast';
   }, 4000);
 }
 
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-// Copy to clipboard with toast
-function copyIp(text, label = 'Tekst') {
+function copyIp(text, label = 'Server IP') {
   navigator.clipboard.writeText(text).then(() => {
-    showToast(`📋 ${label} gekopieerd: ${text}`);
+    showToast(`Gekopieerd: ${text} (${label})`, 'success');
   }).catch(() => {
-    // Fallback
-    const input = document.createElement('input');
-    input.value = text;
-    document.body.appendChild(input);
-    input.select();
-    document.execCommand('copy');
-    document.body.removeChild(input);
-    showToast(`📋 ${label} gekopieerd: ${text}`);
+    showToast(`Adres: ${text}`, 'info');
   });
 }
 
-// Skin preview for whitelist form
-function previewSkin(name) {
-  const head = document.getElementById('skin-preview-head');
-  if (!head) return;
-  const clean = (name || '').trim();
-  if (clean.length >= 2) {
-    head.src = `https://mc-heads.net/avatar/${encodeURIComponent(clean)}/64`;
-  } else {
-    head.src = 'https://mc-heads.net/avatar/MHF_Steve/64';
-  }
+function copyText(text, label = 'Tekst') {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(`Gekopieerd: ${text}`, 'success');
+  });
 }
 
-// ==========================================
-// NAVIGATION & TABS
-// ==========================================
-
+// -------------------------------------------------------------
+// NAVIGATION & TAB SWITCHING
+// -------------------------------------------------------------
 function switchTab(tabId) {
-  // Support legacy tab redirects
-  if (tabId === 'admin' || tabId === 'owner') tabId = 'cms';
   currentTab = tabId;
 
-  // Update nav buttons active state
+  // Update navbar button states
   document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
-
-  const activeBtn = document.querySelector(`.nav-link[onclick*="'${tabId}'"]`);
+  const activeBtn = document.getElementById(`nav-btn-${tabId}`);
   if (activeBtn) activeBtn.classList.add('active');
 
-  // Toggle tab panes
+  // Update tab pane visibility
   document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
-  const targetPane = document.getElementById(`tab-${tabId}`);
-  if (targetPane) targetPane.classList.add('active');
+  const activePane = document.getElementById(`tab-${tabId}`);
+  if (activePane) activePane.classList.add('active');
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  // Tab-specific triggers
-  if (tabId === 'map') {
-    setTimeout(() => {
-      if (leafletMap) {
-        leafletMap.invalidateSize();
-      }
-      loadWaypoints();
-    }, 150);
-  } else if (tabId === 'cms') {
-    refreshCmsData();
+  // Trigger tab-specific data load
+  if (tabId === 'worlds') {
+    loadWorlds();
+  } else if (tabId === 'maker') {
+    loadMakerMaps();
+  } else if (tabId === 'staff') {
+    loadStaffData();
   }
 }
 
-// Subtab switching inside unified CMS
-function switchCmsSubTab(subTabId) {
-  document.querySelectorAll('.cms-tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.cms-subtab-pane').forEach(p => p.classList.remove('active'));
+function switchStaffTab(subtabId) {
+  currentStaffSubtab = subtabId;
 
-  const btn = document.getElementById(`cms-tabbtn-${subTabId}`);
-  const pane = document.getElementById(`cms-subtab-${subTabId}`);
-  if (btn) btn.classList.add('active');
-  if (pane) pane.classList.add('active');
+  document.querySelectorAll('.subnav-pill').forEach(btn => btn.classList.remove('active'));
+  event.currentTarget.classList.add('active');
 
-  if (subTabId === 'overview') {
-    refreshCmsData();
-  } else if (subTabId === 'whitelist') {
-    loadPendingRequests();
-    loadWhitelist();
-  } else if (subTabId === 'ranks') {
-    loadRanksData();
-  } else if (subTabId === 'parkour') {
-    loadParkourData();
+  document.querySelectorAll('.staff-subpane').forEach(p => p.style.display = 'none');
+  const target = document.getElementById(`staff-section-${subtabId}`);
+  if (target) target.style.display = 'block';
+
+  if (subtabId === 'ranks') {
+    loadRanks();
   }
 }
 
-// ==========================================
-// AUTHENTICATION (/api/me, login, logout, reset)
-// ==========================================
+function handleCtaWorlds() {
+  if (currentUser && currentUser.loggedIn) {
+    switchTab('worlds');
+  } else {
+    openLoginModal('login');
+  }
+}
 
-async function initAuth() {
+function handleCtaMaker() {
+  if (currentUser && currentUser.loggedIn) {
+    switchTab('maker');
+  } else {
+    openLoginModal('login');
+  }
+}
+
+// -------------------------------------------------------------
+// MODALS
+// -------------------------------------------------------------
+function openModal(modalId) {
+  const m = document.getElementById(modalId);
+  if (m) m.style.display = 'flex';
+}
+
+function closeModal(modalId) {
+  const m = document.getElementById(modalId);
+  if (m) m.style.display = 'none';
+}
+
+function openLoginModal(mode = 'login') {
+  switchAuthModalTab(mode);
+  openModal('modal-auth');
+}
+
+function switchAuthModalTab(mode) {
+  const loginBtn = document.getElementById('modal-tab-login-btn');
+  const resetBtn = document.getElementById('modal-tab-reset-btn');
+  const loginPane = document.getElementById('modal-pane-login');
+  const resetPane = document.getElementById('modal-pane-reset');
+
+  if (mode === 'login') {
+    loginBtn.classList.add('active');
+    resetBtn.classList.remove('active');
+    loginPane.style.display = 'block';
+    resetPane.style.display = 'none';
+  } else {
+    resetBtn.classList.add('active');
+    loginBtn.classList.remove('active');
+    loginPane.style.display = 'none';
+    resetPane.style.display = 'block';
+    document.getElementById('reset-step-1').style.display = 'block';
+    document.getElementById('reset-step-2').style.display = 'none';
+  }
+}
+
+// -------------------------------------------------------------
+// SERVER STATS & LIVE COUNTER
+// -------------------------------------------------------------
+async function fetchServerStats() {
+  try {
+    const res = await fetch('/api/stats');
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const heroCount = document.getElementById('hero-player-count');
+    if (heroCount) heroCount.textContent = data.players?.online || 0;
+
+    const statusPill = document.getElementById('server-status-pill');
+    const statusText = document.getElementById('status-text');
+    if (data.online) {
+      statusPill.className = 'status-indicator online';
+      statusText.textContent = 'ONLINE';
+    } else {
+      statusPill.className = 'status-indicator offline';
+      statusText.textContent = 'OFFLINE';
+    }
+  } catch (e) {
+    console.warn('Failed to fetch server stats:', e);
+  }
+}
+
+// -------------------------------------------------------------
+// AUTHENTICATION & PROFILE
+// -------------------------------------------------------------
+async function checkAuth() {
   try {
     const res = await fetch('/api/me');
     const data = await res.json();
-    currentUser = data.user || null;
-    renderAuthState();
-  } catch (err) {
-    console.error('Failed to check session:', err);
-    currentUser = null;
-    renderAuthState();
+
+    if (data.loggedIn && data.user) {
+      currentUser = { loggedIn: true, ...data.user };
+      renderAuthUser(currentUser);
+    } else {
+      currentUser = { loggedIn: false };
+      renderLoggedOut();
+    }
+  } catch (e) {
+    currentUser = { loggedIn: false };
+    renderLoggedOut();
   }
 }
 
-function renderAuthState() {
-  const loggedOutBox = document.getElementById('auth-logged-out');
-  const loggedInBox = document.getElementById('auth-logged-in');
-  const personalCard = document.getElementById('personal-card');
-  const cmsNavBtn = document.getElementById('nav-cms-btn');
-  const openWpBtn = document.getElementById('btn-open-waypoint-modal');
+function renderAuthUser(user) {
+  document.getElementById('auth-logged-out').style.display = 'none';
+  document.getElementById('auth-logged-in').style.display = 'flex';
 
-  if (currentUser) {
-    // Logged In
-    if (loggedOutBox) loggedOutBox.style.display = 'none';
-    if (loggedInBox) loggedInBox.style.display = 'flex';
-    if (personalCard) personalCard.style.display = 'block';
+  document.querySelectorAll('.auth-required-tab').forEach(el => el.style.display = 'inline-flex');
 
-    const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(currentUser.username)}/64`;
-    const bustUrl = `https://mc-heads.net/body/${encodeURIComponent(currentUser.username)}/120`;
-
-    const navAvatar = document.getElementById('nav-user-avatar');
-    if (navAvatar) navAvatar.src = avatarUrl;
-
-    const navUsername = document.getElementById('nav-username');
-    if (navUsername) navUsername.textContent = currentUser.username;
-
-    const navCoins = document.getElementById('nav-user-coins');
-    if (navCoins) navCoins.textContent = `🪙 ${(currentUser.coins || 0).toLocaleString()}`;
-
-    const navRank = document.getElementById('nav-user-rank');
-    if (navRank) {
-      navRank.textContent = currentUser.rank || 'MEMBER';
-      navRank.className = `rank-badge rank-${(currentUser.rank || 'default').toLowerCase().replace('_', '')}`;
-    }
-
-    // Personal Card info
-    const profileBust = document.getElementById('profile-bust');
-    if (profileBust) profileBust.src = bustUrl;
-
-    const profileName = document.getElementById('profile-name');
-    if (profileName) profileName.textContent = currentUser.username;
-
-    const profileRank = document.getElementById('profile-rank');
-    if (profileRank) {
-      profileRank.textContent = currentUser.rank || 'MEMBER';
-      profileRank.className = `rank-badge rank-${(currentUser.rank || 'default').toLowerCase().replace('_', '')}`;
-    }
-
-    const profileCoins = document.getElementById('profile-coins');
-    if (profileCoins) profileCoins.textContent = (currentUser.coins || 0).toLocaleString();
-
-    const profileUuid = document.getElementById('profile-uuid');
-    if (profileUuid) profileUuid.textContent = `UUID: ${currentUser.uuid || 'N/A'}`;
-
-    const urbanCoords = document.getElementById('urban-coords');
-    if (urbanCoords) {
-      if (currentUser.urbanCoords) {
-        urbanCoords.textContent = `X: ${currentUser.urbanCoords.x}, Y: ${currentUser.urbanCoords.y}, Z: ${currentUser.urbanCoords.z}`;
-      } else {
-        urbanCoords.textContent = 'Survival Wereld (Spawn)';
-      }
-    }
-
-    const urbanLevel = document.getElementById('urban-level');
-    if (urbanLevel) urbanLevel.textContent = `Lvl ${currentUser.urbanLevel ?? 0}`;
-
-    const statUserRank = document.getElementById('stat-user-rank-display');
-    if (statUserRank) statUserRank.textContent = currentUser.rank || 'MEMBER';
-
-    // Permissions visibility for Unified CMS
-    const isOwner = currentUser.rank === 'OWNER';
-    const isAdmin = currentUser.isAdmin || isOwner || currentUser.rank === 'ADMIN';
-    const isMod = currentUser.rank === 'MOD';
-    const canAccessCms = isAdmin || isOwner || isMod;
-
-    if (cmsNavBtn) cmsNavBtn.style.display = canAccessCms ? 'flex' : 'none';
-    if (openWpBtn) openWpBtn.style.display = 'inline-flex';
-
-    // Configure CMS view according to permissions
-    const roleBadge = document.getElementById('cms-role-badge');
-    const roleText = document.getElementById('cms-role-text');
-    const stopBtns = document.querySelectorAll('.owner-only-btn');
-    const rankNotice = document.getElementById('ranks-perm-notice');
-    const rankAssignCard = document.getElementById('rank-assign-card');
-    const rankInputs = rankAssignCard ? rankAssignCard.querySelectorAll('input, select, button') : [];
-
-    if (isOwner) {
-      if (roleBadge) {
-        roleBadge.className = 'cms-role-pill role-pill-owner';
-        if (roleText) roleText.textContent = '👑 Eigenaar Toegang (Volledig Beheer)';
-      }
-      stopBtns.forEach(b => b.style.display = 'inline-flex');
-      if (rankNotice) rankNotice.style.display = 'none';
-      rankInputs.forEach(i => i.disabled = false);
-    } else if (isAdmin) {
-      if (roleBadge) {
-        roleBadge.className = 'cms-role-pill role-pill-admin';
-        if (roleText) roleText.textContent = '🛡️ Administrator Toegang';
-      }
-      stopBtns.forEach(b => b.style.display = 'none');
-      if (rankNotice) rankNotice.style.display = 'flex';
-      rankInputs.forEach(i => i.disabled = true);
-    } else if (isMod) {
-      if (roleBadge) {
-        roleBadge.className = 'cms-role-pill role-pill-mod';
-        if (roleText) roleText.textContent = '⚔️ Moderator Toegang (Alleen-lezen)';
-      }
-      stopBtns.forEach(b => b.style.display = 'none');
-      if (rankNotice) rankNotice.style.display = 'flex';
-      rankInputs.forEach(i => i.disabled = true);
-    }
-
+  // Staff Console link
+  const staffBtn = document.getElementById('nav-btn-staff');
+  if (user.isStaff) {
+    staffBtn.style.display = 'inline-flex';
   } else {
-    // Logged Out
-    if (loggedOutBox) loggedOutBox.style.display = 'flex';
-    if (loggedInBox) loggedInBox.style.display = 'none';
-    if (personalCard) personalCard.style.display = 'none';
-    if (cmsNavBtn) cmsNavBtn.style.display = 'none';
+    staffBtn.style.display = 'none';
+  }
+
+  // Update Navbar info
+  document.getElementById('nav-username').textContent = user.username;
+  document.getElementById('nav-user-coins').textContent = `🪙 ${user.coins || 0}`;
+
+  const cleanName = user.username.replace(/^\./, '');
+  document.getElementById('nav-user-avatar').src = `https://mc-heads.net/avatar/${cleanName}/64`;
+
+  const rankBadge = document.getElementById('nav-user-rank');
+  rankBadge.textContent = user.rank;
+  rankBadge.className = `rank-badge rank-${(user.rank || 'member').toLowerCase()}`;
+
+  // Server Stop button strictly for OWNER
+  const stopBtn = document.getElementById('btn-server-stop');
+  if (stopBtn) {
+    stopBtn.disabled = (user.rank !== 'OWNER');
+  }
+
+  // Owner rank form card
+  const ownerCard = document.getElementById('owner-rank-form-card');
+  if (ownerCard) {
+    ownerCard.style.display = (user.rank === 'OWNER') ? 'block' : 'none';
   }
 }
 
-// Modal open/close
-function openLoginModal(mode = 'login') {
-  const modal = document.getElementById('login-modal');
-  if (modal) modal.classList.add('active');
-  switchLoginMode(mode);
-}
+function renderLoggedOut() {
+  document.getElementById('auth-logged-out').style.display = 'flex';
+  document.getElementById('auth-logged-in').style.display = 'none';
+  document.querySelectorAll('.auth-required-tab').forEach(el => el.style.display = 'none');
+  document.getElementById('nav-btn-staff').style.display = 'none';
 
-function closeLoginModal() {
-  const modal = document.getElementById('login-modal');
-  if (modal) modal.classList.remove('active');
-}
-
-function switchLoginMode(mode) {
-  const tabLogin = document.getElementById('modal-tab-login');
-  const tabCode = document.getElementById('modal-tab-code');
-  const formLogin = document.getElementById('form-login');
-  const formCodeSection = document.getElementById('form-code-section');
-  const modalTitle = document.getElementById('modal-title');
-
-  if (mode === 'login') {
-    if (tabLogin) tabLogin.classList.add('active');
-    if (tabCode) tabCode.classList.remove('active');
-    if (formLogin) formLogin.style.display = 'block';
-    if (formCodeSection) formCodeSection.style.display = 'none';
-    if (modalTitle) modalTitle.textContent = '🔑 Inloggen op FPixel';
-  } else {
-    if (tabLogin) tabLogin.classList.remove('active');
-    if (tabCode) tabCode.classList.add('active');
-    if (formLogin) formLogin.style.display = 'none';
-    if (formCodeSection) formCodeSection.style.display = 'block';
-    if (modalTitle) modalTitle.textContent = '✉️ Wachtwoord Resetten via Minecraft Chat';
+  if (currentTab !== 'home') {
+    switchTab('home');
   }
 }
 
-// Standard Password Login
-async function handlePasswordLogin(e) {
-  e.preventDefault();
+async function submitLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
+
+  if (!username || !password) {
+    showToast('Vul je gebruikersnaam en wachtwoord in.', 'error');
+    return;
+  }
 
   try {
     const res = await fetch('/api/login', {
@@ -319,1156 +255,784 @@ async function handlePasswordLogin(e) {
       body: JSON.stringify({ username, password })
     });
     const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Inloggen mislukt.', true);
-      return;
-    }
 
-    currentUser = data.user;
-    renderAuthState();
-    closeLoginModal();
-    showToast(`Welkom terug, ${currentUser.username}!`);
-  } catch (err) {
-    showToast('Fout bij inloggen: ' + err.message, true);
+    if (res.ok && data.success) {
+      showToast(`Welkom terug, ${data.user.username}!`, 'success');
+      closeModal('modal-auth');
+      await checkAuth();
+      switchTab('worlds');
+    } else {
+      showToast(data.error || 'Inloggen mislukt.', 'error');
+    }
+  } catch (e) {
+    showToast('Netwerkfout bij inloggen.', 'error');
   }
 }
 
-// Request In-Game Code via RCON tellraw
-async function requestInGameCode() {
-  const username = document.getElementById('setup-username').value.trim();
-  if (!username) {
-    showToast('Vul eerst je Minecraft gebruikersnaam in.', true);
-    return;
-  }
-
-  showToast('Code versturen naar in-game chat...', false);
-
-  try {
-    const res = await fetch('/api/auth/send-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Kon code niet verzenden.', true);
-      return;
-    }
-
-    showToast(data.message || 'Verificatiecode verzonden naar je Minecraft chat!');
-  } catch (err) {
-    showToast('Netwerkfout bij aanvragen code: ' + err.message, true);
-  }
-}
-
-// Verify Code & Set Password
-async function handleVerifyCodeAndSetPassword(e) {
-  e.preventDefault();
-  const username = document.getElementById('setup-username').value.trim();
-  const code = document.getElementById('verify-code').value.trim();
-  const password = document.getElementById('setup-new-password').value;
-
-  if (!username || !code || !password) {
-    showToast('Vul alle velden in.', true);
-    return;
-  }
-
-  try {
-    const res = await fetch('/api/auth/verify-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, code, password })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Ongeldige code.', true);
-      return;
-    }
-
-    currentUser = data.user;
-    renderAuthState();
-    closeLoginModal();
-    showToast(data.message || 'Wachtwoord succesvol opgeslagen! Je bent nu ingelogd.');
-  } catch (err) {
-    showToast('Fout bij verifiëren: ' + err.message, true);
-  }
-}
-
-// Logout
 async function logout() {
   try {
     await fetch('/api/logout', { method: 'POST' });
-    currentUser = null;
-    renderAuthState();
-    showToast('Je bent uitgelogd.');
-    if (currentTab === 'admin' || currentTab === 'owner' || currentTab === 'cms') {
-      switchTab('home');
-    }
-  } catch (err) {
-    showToast('Fout bij uitloggen: ' + err.message, true);
+    showToast('Je bent uitgelogd.', 'info');
+    await checkAuth();
+  } catch (e) {
+    location.reload();
   }
 }
 
-// ==========================================
-// SERVER STATS & LEADERBOARD (/api/stats)
-// ==========================================
-
-async function loadStats() {
-  try {
-    const res = await fetch('/api/stats');
-    const data = await res.json();
-
-    const statusPill = document.getElementById('server-status-pill');
-    const statusText = document.getElementById('status-text');
-    const heroPlayerCount = document.getElementById('hero-player-count');
-
-    if (data.server && data.server.online) {
-      if (statusPill) statusPill.className = 'status-indicator online';
-      if (statusText) statusText.textContent = 'ONLINE';
-      if (heroPlayerCount) heroPlayerCount.textContent = `${data.server.playersOnline || 0} / ${data.server.playersMax || 100}`;
-    } else {
-      if (statusPill) statusPill.className = 'status-indicator offline';
-      if (statusText) statusText.textContent = 'OFFLINE';
-      if (heroPlayerCount) heroPlayerCount.textContent = '0';
-    }
-
-    renderFriendsLeaderboard(data.leaderboard || []);
-  } catch (err) {
-    console.warn('Could not load server stats:', err.message);
-  }
-}
-
-function renderFriendsLeaderboard(players) {
-  const tbody = document.getElementById('friends-tbody');
-  if (!tbody) return;
-
-  if (!players || players.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-dim); padding: 24px;">Nog geen spelerdata beschikbaar.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = players.map(p => {
-    const rank = p.rank || 'MEMBER';
-    const rankClass = `rank-${rank.toLowerCase().replace('_', '')}`;
-    const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(p.username)}/32`;
-
-    let coordsStr = 'Spawn';
-    if (p.urbanCoords) {
-      coordsStr = `X: ${p.urbanCoords.x}, Z: ${p.urbanCoords.z}`;
-    }
-
-    return `
-      <tr>
-        <td>
-          <div class="table-player-cell">
-            <img class="table-player-avatar" src="${avatarUrl}" alt="${p.username}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/32'">
-            <span class="table-player-name">${escapeHtml(p.username)}</span>
-          </div>
-        </td>
-        <td><span class="rank-badge ${rankClass}">${escapeHtml(rank)}</span></td>
-        <td><strong style="color: var(--gold);">🪙 ${(p.coins || 0).toLocaleString()}</strong></td>
-        <td><span class="stat-v highlight">Lvl ${p.urbanLevel ?? 0}</span></td>
-        <td><code>${coordsStr}</code></td>
-        <td><span class="text-green font-bold">Actief</span></td>
-      </tr>
-    `;
-  }).join('');
-}
-
-// ==========================================
-// INTERACTIVE SURVIVAL MAP & WAYPOINTS
-// ==========================================
-
-function initMap() {
-  const container = document.getElementById('survival-map-container');
-  if (!container || leafletMap) return;
-
-  // Standard flat CRS for Minecraft maps
-  leafletMap = L.map('survival-map-container', {
-    crs: L.CRS.Simple,
-    minZoom: 0,
-    maxZoom: 4,
-    zoomControl: true,
-    attributionControl: false
-  });
-
-  leafletMap.setView([-128, 128], 1);
-
-  // Set default tile layer
-  updateMapLayer('survival');
-
-  // Mouse move updates coordinates
-  leafletMap.on('mousemove', (e) => {
-    const coordsEl = document.getElementById('map-coords');
-    if (!coordsEl) return;
-    const x = Math.round(e.latlng.lng * 4);
-    const z = Math.round(-e.latlng.lat * 4);
-    coordsEl.textContent = `X: ${x}, Z: ${z}`;
-  });
-
-  // Map click triggers waypoint add
-  leafletMap.on('click', (e) => {
-    const x = Math.round(e.latlng.lng * 4);
-    const z = Math.round(-e.latlng.lat * 4);
-    pendingClickCoords = { x, z, world: currentMapWorld };
-
-    if (currentUser) {
-      openAddWaypointModal(x, z, currentMapWorld);
-    } else {
-      showToast(`Coördinaten X: ${x}, Z: ${z}. Log in om een waypoint toe te voegen!`);
-    }
-  });
-}
-
-function updateMapLayer(worldId) {
-  if (!leafletMap) return;
-
-  if (currentTileLayer) {
-    leafletMap.removeLayer(currentTileLayer);
-  }
-
-  currentMapWorld = worldId;
-
-  // Update dimension label in footer
-  const dimLabel = document.getElementById('map-dim-label');
-  if (dimLabel) {
-    if (worldId === 'nether') dimLabel.textContent = '🔥 Dimensie: The Nether';
-    else if (worldId === 'end') dimLabel.textContent = '🌌 Dimensie: The End';
-    else dimLabel.textContent = '🌍 Dimensie: Overworld (Survival)';
-  }
-
-  // Use internal tile router
-  const tilePath = worldId === 'nether' ? 'minecraft_the_nether' : (worldId === 'end' ? 'minecraft_the_end' : 'minecraft_survival');
-  currentTileLayer = L.tileLayer(`/tiles/${tilePath}/0/0/{z}_{x}_{y}.png`, {
-    tileSize: 512,
-    noWrap: true,
-    errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
-  }).addTo(leafletMap);
-
-  renderWaypointMarkers();
-}
-
-function changeMapWorld(worldId) {
-  document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById(`btn-world-${worldId}`);
-  if (btn) btn.classList.add('active');
-
-  updateMapLayer(worldId);
-}
-
-function resetMapView() {
-  if (leafletMap) {
-    leafletMap.setView([-128, 128], 1);
-  }
-}
-
-// Load and Render Waypoints (/api/waypoints)
-async function loadWaypoints() {
-  try {
-    const res = await fetch('/api/waypoints');
-    const data = await res.json();
-    cachedWaypoints = data.waypoints || [];
-
-    const countBadge = document.getElementById('waypoint-count');
-    if (countBadge) countBadge.textContent = `${cachedWaypoints.length} punten`;
-
-    renderWaypointsDrawer();
-    renderWaypointMarkers();
-  } catch (err) {
-    console.error('Failed to load waypoints:', err);
-  }
-}
-
-function renderWaypointMarkers() {
-  if (!leafletMap) return;
-
-  // Clear existing markers
-  waypointMarkers.forEach(m => leafletMap.removeLayer(m));
-  waypointMarkers = [];
-
-  const worldWaypoints = cachedWaypoints.filter(w => (w.world || 'survival') === currentMapWorld);
-
-  worldWaypoints.forEach(wp => {
-    // Transform Minecraft coords to leaflet LatLng (lng = x/4, lat = -z/4)
-    const lat = -wp.z / 4;
-    const lng = wp.x / 4;
-
-    const iconHtml = `<div style="font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); text-align: center;">${wp.icon || '📍'}</div>`;
-    const customIcon = L.divIcon({
-      className: 'custom-wp-icon',
-      html: iconHtml,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
-    });
-
-    const marker = L.marker([lat, lng], { icon: customIcon }).addTo(leafletMap);
-
-    const deleteBtn = (currentUser && (wp.createdBy === currentUser.username || currentUser.rank === 'OWNER' || currentUser.rank === 'ADMIN'))
-      ? `<br><button onclick="deleteWaypoint('${wp.id}')" style="background:#ef4444; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-weight:700; margin-top:6px; cursor:pointer;">Verwijder 🗑️</button>`
-      : '';
-
-    marker.bindPopup(`
-      <div style="font-family:'Plus Jakarta Sans',sans-serif; min-width:140px;">
-        <strong style="font-size:14px; color:#fff;">${escapeHtml(wp.name)}</strong><br>
-        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#38bdf8;">X: ${wp.x}, Y: ${wp.y || 64}, Z: ${wp.z}</span><br>
-        <span style="font-size:11px; color:#94a3b8;">Door: ${escapeHtml(wp.createdBy || 'Server')}</span>
-        ${deleteBtn}
-      </div>
-    `);
-
-    waypointMarkers.push(marker);
-  });
-}
-
-function renderWaypointsDrawer() {
-  const container = document.getElementById('waypoints-list');
-  if (!container) return;
-
-  if (cachedWaypoints.length === 0) {
-    container.innerHTML = `<div style="color:var(--text-dim); font-size:0.85rem;">Nog geen waypoints geplaatst. Klik op de kaart om er één toe te voegen!</div>`;
-    return;
-  }
-
-  container.innerHTML = cachedWaypoints.map(wp => {
-    const isOwnerOfWp = currentUser && (wp.createdBy === currentUser.username || currentUser.rank === 'OWNER' || currentUser.rank === 'ADMIN');
-    return `
-      <div class="waypoint-item">
-        <div class="wp-meta">
-          <span class="wp-name">${wp.icon || '📍'} ${escapeHtml(wp.name)}</span>
-          <span class="wp-coords">X: ${wp.x}, Y: ${wp.y || 64}, Z: ${wp.z} (${escapeHtml(wp.world || 'survival')})</span>
-          <span class="wp-by">Geplaatst door <strong>${escapeHtml(wp.createdBy || 'Server')}</strong></span>
-        </div>
-        ${isOwnerOfWp ? `<button class="btn btn-xs btn-outline-danger" onclick="deleteWaypoint('${wp.id}')">Verwijder</button>` : ''}
-      </div>
-    `;
-  }).join('');
-}
-
-function openAddWaypointModal(x = 0, z = 0, world = 'survival') {
-  if (!currentUser) {
-    openLoginModal('login');
-    showToast('Log eerst in om waypoints op te slaan.', true);
-    return;
-  }
-
-  const modal = document.getElementById('waypoint-modal');
-  if (modal) modal.classList.add('active');
-
-  const xInput = document.getElementById('wp-x');
-  const zInput = document.getElementById('wp-z');
-  const worldSelect = document.getElementById('wp-world');
-
-  if (xInput) xInput.value = x;
-  if (zInput) zInput.value = z;
-  if (worldSelect) worldSelect.value = world;
-}
-
-function closeAddWaypointModal() {
-  const modal = document.getElementById('waypoint-modal');
-  if (modal) modal.classList.remove('active');
-}
-
-async function handleWaypointSubmit(e) {
-  e.preventDefault();
-  const name = document.getElementById('wp-name').value.trim();
-  const x = document.getElementById('wp-x').value;
-  const y = document.getElementById('wp-y').value;
-  const z = document.getElementById('wp-z').value;
-  const world = document.getElementById('wp-world').value;
-  const icon = document.getElementById('wp-icon').value;
-
-  try {
-    const res = await fetch('/api/waypoints/add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, x, y, z, world, icon })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Kon waypoint niet toevoegen.', true);
-      return;
-    }
-
-    closeAddWaypointModal();
-    showToast(data.message || 'Waypoint succesvol geplaatst!');
-    loadWaypoints();
-  } catch (err) {
-    showToast('Fout bij toevoegen: ' + err.message, true);
-  }
-}
-
-async function deleteWaypoint(id) {
-  if (!confirm('Weet je zeker dat je dit waypoint wilt verwijderen?')) return;
-
-  try {
-    const res = await fetch('/api/waypoints/delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Kon niet verwijderen.', true);
-      return;
-    }
-    showToast('Waypoint verwijderd.');
-    loadWaypoints();
-  } catch (err) {
-    showToast('Fout: ' + err.message, true);
-  }
-}
-
-// ==========================================
-// WHITELIST REQUEST FORM (PUBLIC)
-// ==========================================
-
-async function handleWhitelistSubmit(e) {
-  e.preventDefault();
-  const username = document.getElementById('wl-username').value.trim();
-  const reason = document.getElementById('wl-reason').value.trim();
-  const discord = document.getElementById('wl-discord').value.trim();
-  const edition = document.querySelector('input[name="wl-edition"]:checked')?.value || 'Java';
-
+// In-Game Chat Password Reset
+async function requestResetCode() {
+  const username = document.getElementById('reset-username').value.trim();
   if (!username) {
-    showToast('Vul een Minecraft gebruikersnaam in.', true);
+    showToast('Vul je gebruikersnaam in.', 'error');
     return;
   }
 
   try {
-    const res = await fetch('/api/whitelist/request', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username,
-        reason: `${reason}${discord ? ` (Discord: ${discord})` : ''} [${edition}]`
-      })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Aanvraag mislukt.', true);
-      return;
-    }
-
-    showToast('✅ Aanvraag succesvol verstuurd! Een admin zal deze spoedig beoordelen.');
-    document.getElementById('whitelist-form').reset();
-    previewSkin('');
-  } catch (err) {
-    showToast('Fout bij versturen: ' + err.message, true);
-  }
-}
-
-// ==========================================
-// UNIFIED CMS MANAGEMENT PLATFORM
-// ==========================================
-
-let allPendingRequests = [];
-let allWhitelistPlayers = [];
-let allRanksPlayers = [];
-let allParkourMaps = [];
-let currentParkourFilter = 'ALL';
-
-async function refreshCmsData() {
-  await Promise.all([
-    loadPendingRequests(),
-    loadWhitelist(),
-    loadRanksData(),
-    loadParkourData()
-  ]);
-}
-
-function updateGlobalCmsBadge() {
-  const pendingRequests = allPendingRequests.filter(r => (r.status || 'PENDING') === 'PENDING').length;
-  const pendingParkour = allParkourMaps.filter(m => (m.status || 'PENDING_REVIEW').toUpperCase() === 'PENDING_REVIEW').length;
-  const total = pendingRequests + pendingParkour;
-
-  const badge = document.getElementById('cms-badge');
-  if (badge) {
-    badge.textContent = total;
-    badge.style.display = total > 0 ? 'inline-block' : 'none';
-  }
-}
-
-// ------------------------------------------
-// 1. WHITELIST & JOIN REQUESTS
-// ------------------------------------------
-
-async function loadAdminData() {
-  await loadPendingRequests();
-  await loadWhitelist();
-}
-
-async function loadPendingRequests() {
-  try {
-    const res = await fetch('/api/admin/whitelist/requests');
-    const data = await res.json();
-    const list = data.requests || [];
-    allPendingRequests = list;
-
-    const pendingList = list.filter(r => (r.status || 'PENDING') === 'PENDING');
-
-    const countLabel = document.getElementById('pending-req-count');
-    const tabWlBadge = document.getElementById('cms-tab-wl-badge');
-    const kpiReq = document.getElementById('cms-kpi-requests');
-
-    if (countLabel) countLabel.textContent = pendingList.length;
-    if (tabWlBadge) tabWlBadge.textContent = pendingList.length;
-    if (kpiReq) kpiReq.textContent = pendingList.length;
-
-    updateGlobalCmsBadge();
-
-    const container = document.getElementById('pending-requests-list');
-    if (!container) return;
-
-    if (pendingList.length === 0) {
-      container.innerHTML = `
-        <div class="cms-empty-state">
-          <div class="empty-icon">🎉</div>
-          <h4>Geen Openstaande Aanvragen</h4>
-          <p>Alle whitelist aanvragen zijn goedgekeurd of afgehandeld.</p>
-        </div>
-      `;
-      return;
-    }
-
-    container.innerHTML = pendingList.map(req => {
-      const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(req.username)}/48`;
-      const dateStr = req.createdAt ? new Date(req.createdAt).toLocaleString('nl-NL') : 'Recent';
-      const isBedrock = (req.edition || '').toLowerCase() === 'bedrock';
-
-      return `
-        <div class="request-card">
-          <div class="request-header">
-            <img class="req-avatar" src="${avatarUrl}" alt="${escapeHtml(req.username)}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/48'">
-            <div class="req-meta">
-              <div class="req-name-row">
-                <span class="req-name">${escapeHtml(req.username)}</span>
-                <span class="edition-badge ${isBedrock ? 'bedrock' : 'java'}">${isBedrock ? '📱 Bedrock' : '☕ Java'}</span>
-              </div>
-              <span class="req-date">${dateStr}</span>
-            </div>
-          </div>
-          <div class="req-details-box">
-            <div class="req-line"><span class="req-k">Motivatie:</span></div>
-            <div class="req-line"><span class="req-v">"${escapeHtml(req.reason || 'Geen toelichting opgegeven')}"</span></div>
-            ${req.discord ? `<div class="req-line" style="margin-top:6px;"><span class="req-k">Discord:</span> <code style="color:var(--text-light); font-size:0.8rem;">${escapeHtml(req.discord)}</code></div>` : ''}
-          </div>
-          <div class="request-actions">
-            <button class="btn btn-sm btn-success" onclick="approveRequest('${req.id}')" title="Direct toevoegen aan Minecraft whitelist">✅ Goedkeuren</button>
-            <button class="btn btn-sm btn-outline" onclick="rejectRequest('${req.id}')" title="Aanvraag markeren als afgewezen">❌ Afwijzen</button>
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteRequest('${req.id}')" title="Aanvraag definitief verwijderen">🗑️ Verwijder</button>
-          </div>
-        </div>
-      `;
-    }).join('');
-  } catch (err) {
-    console.error('Error loading pending requests:', err);
-  }
-}
-
-async function approveRequest(id) {
-  try {
-    const res = await fetch('/api/admin/whitelist/approve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Goedkeuren mislukt.', true);
-      return;
-    }
-    showToast(data.message || 'Speler goedgekeurd en toegevoegd aan whitelist!');
-    loadPendingRequests();
-    loadWhitelist();
-  } catch (err) {
-    showToast('Fout: ' + err.message, true);
-  }
-}
-
-async function rejectRequest(id) {
-  try {
-    const res = await fetch('/api/admin/whitelist/reject', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Afwijzen mislukt.', true);
-      return;
-    }
-    showToast('Aanvraag gemarkeerd als afgewezen.');
-    loadPendingRequests();
-  } catch (err) {
-    showToast('Fout: ' + err.message, true);
-  }
-}
-
-async function deleteRequest(id) {
-  if (!confirm('Weet je zeker dat je deze aanvraag definitief wilt verwijderen?')) return;
-  try {
-    const res = await fetch('/api/admin/whitelist/request/delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requestId: id })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Verwijderen mislukt.', true);
-      return;
-    }
-    showToast(data.message || 'Aanvraag definitief verwijderd.');
-    loadPendingRequests();
-  } catch (err) {
-    showToast('Fout bij verwijderen: ' + err.message, true);
-  }
-}
-
-async function cleanFakeRequests() {
-  if (!confirm('Wil je oude/test aanvragen (zoals gaysteve en testfriend) en reeds verwerkte aanvragen opschonen?')) return;
-  try {
-    const res = await fetch('/api/admin/whitelist/requests/clear', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ all: false })
-    });
-    const data = await res.json();
-    showToast(data.message || 'Test aanvragen opgeschoond!');
-    loadPendingRequests();
-  } catch (err) {
-    showToast('Fout bij opschonen: ' + err.message, true);
-  }
-}
-
-async function clearAllRequests() {
-  if (!confirm('LET OP: Weet je zeker dat je ALLE whitelist aanvragen wilt wissen?')) return;
-  try {
-    const res = await fetch('/api/admin/whitelist/requests/clear', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ all: true })
-    });
-    const data = await res.json();
-    showToast(data.message || 'Alle aanvragen gewist!');
-    loadPendingRequests();
-  } catch (err) {
-    showToast('Fout: ' + err.message, true);
-  }
-}
-
-async function loadWhitelist() {
-  try {
-    const res = await fetch('/api/admin/whitelist/list');
-    const data = await res.json();
-    allWhitelistPlayers = data.whitelist || [];
-
-    const countLabel = document.getElementById('active-wl-count');
-    const kpiWl = document.getElementById('cms-kpi-whitelist');
-    if (countLabel) countLabel.textContent = allWhitelistPlayers.length;
-    if (kpiWl) kpiWl.textContent = allWhitelistPlayers.length;
-
-    renderWhitelistTable(allWhitelistPlayers);
-  } catch (err) {
-    console.error('Error loading whitelist:', err);
-  }
-}
-
-function renderWhitelistTable(list) {
-  const tbody = document.getElementById('whitelist-table-body');
-  if (!tbody) return;
-
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-dim); padding: 24px;">Whitelist is leeg.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = list.map(item => {
-    const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(item.name)}/32`;
-    return `
-      <tr>
-        <td>
-          <div class="table-player-cell">
-            <img class="table-player-avatar" src="${avatarUrl}" alt="${escapeHtml(item.name)}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/32'">
-            <span class="table-player-name">${escapeHtml(item.name)}</span>
-          </div>
-        </td>
-        <td><code class="uuid-code">${escapeHtml(item.uuid || 'Offline/Bedrock')}</code></td>
-        <td style="text-align: right;">
-          <button class="btn btn-xs btn-outline-danger" onclick="removeWhitelist('${escapeHtml(item.name)}')">Verwijder ❌</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-function filterWhitelist(query) {
-  const q = (query || '').toLowerCase().trim();
-  if (!q) {
-    renderWhitelistTable(allWhitelistPlayers);
-    return;
-  }
-  const filtered = allWhitelistPlayers.filter(p => 
-    (p.name && p.name.toLowerCase().includes(q)) || 
-    (p.uuid && p.uuid.toLowerCase().includes(q))
-  );
-  renderWhitelistTable(filtered);
-}
-
-async function manualAddWhitelist() {
-  const input = document.getElementById('manual-wl-input');
-  const username = input.value.trim();
-  if (!username) return;
-
-  try {
-    const res = await fetch('/api/admin/whitelist/add', {
+    const res = await fetch('/api/auth/reset-request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username })
     });
     const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Toevoegen mislukt.', true);
-      return;
+
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      document.getElementById('reset-step-1').style.display = 'none';
+      document.getElementById('reset-step-2').style.display = 'block';
+    } else {
+      showToast(data.error || 'Kon reset code niet verzenden.', 'error');
     }
-    showToast(data.message || `${username} toegevoegd aan whitelist.`);
-    input.value = '';
-    loadWhitelist();
-  } catch (err) {
-    showToast('Fout: ' + err.message, true);
+  } catch (e) {
+    showToast('Netwerkfout bij aanvragen van code.', 'error');
   }
 }
 
-async function removeWhitelist(username) {
-  if (!confirm(`Weet je zeker dat je ${username} wilt verwijderen van de whitelist?`)) return;
+async function confirmResetCode() {
+  const username = document.getElementById('reset-username').value.trim();
+  const code = document.getElementById('reset-code').value.trim();
+  const newPassword = document.getElementById('reset-new-password').value;
+
+  if (!username || !code || !newPassword) {
+    showToast('Vul alle velden in.', 'error');
+    return;
+  }
 
   try {
-    const res = await fetch('/api/admin/whitelist/remove', {
+    const res = await fetch('/api/auth/reset-confirm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({ username, code, newPassword })
     });
     const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Verwijderen mislukt.', true);
-      return;
+
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      closeModal('modal-auth');
+      await checkAuth();
+    } else {
+      showToast(data.error || 'Ongeldige code of fout bij resetten.', 'error');
     }
-    showToast(data.message || `${username} verwijderd.`);
-    loadWhitelist();
-  } catch (err) {
-    showToast('Fout: ' + err.message, true);
+  } catch (e) {
+    showToast('Netwerkfout bij bevestigen.', 'error');
   }
 }
 
-// ------------------------------------------
-// 2. SPELERS & RANGEN (CMS TABLE & OWNER SET)
-// ------------------------------------------
+// -------------------------------------------------------------
+// CUSTOM PLAYER WORLDS ("REALMS")
+// -------------------------------------------------------------
+async function loadWorlds() {
+  const loading = document.getElementById('worlds-loading');
+  const empty = document.getElementById('worlds-empty');
+  const grid = document.getElementById('worlds-grid');
 
-async function loadOwnerData() {
-  await loadRanksData();
-  await loadParkourData();
+  loading.style.display = 'block';
+  empty.style.display = 'none';
+  grid.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/worlds');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+
+    loading.style.display = 'none';
+
+    // Update limit indicator
+    const limitCount = document.getElementById('world-limit-count');
+    if (limitCount && data.limits) {
+      limitCount.textContent = `${data.limits.owned} / ${data.limits.max}`;
+    }
+
+    const worlds = data.worlds || [];
+    if (worlds.length === 0) {
+      empty.style.display = 'block';
+      return;
+    }
+
+    grid.innerHTML = '';
+    worlds.forEach(w => {
+      grid.appendChild(createWorldCard(w));
+    });
+    grid.style.display = 'grid';
+  } catch (e) {
+    loading.style.display = 'none';
+    showToast('Kon werelden niet inladen.', 'error');
+  }
 }
 
-async function loadRanksData() {
+function createWorldCard(w) {
+  const card = document.createElement('div');
+  card.className = 'world-item-card';
+
+  const isOwner = w.isCreator || (currentUser && currentUser.isOwner);
+
+  card.innerHTML = `
+    <div class="item-card-header">
+      <div>
+        <span class="item-uid-tag">${w.uid}</span>
+        <h3 class="item-card-title">${escapeHtml(w.name)}</h3>
+      </div>
+      <span class="rank-badge ${w.isPrimarySmp ? 'rank-owner' : 'rank-member'}">
+        ${w.isPrimarySmp ? 'SMP HOOFDWERELD' : 'REALM'}
+      </span>
+    </div>
+
+    <div class="item-meta-row">
+      <span class="meta-pill">👑 Maker: <strong>${escapeHtml(w.creatorName || 'Server')}</strong></span>
+      <span class="meta-pill ${w.cheatsEnabled ? 'meta-cheats-on' : 'meta-cheats-off'}">
+        ⚡ Cheats: ${w.cheatsEnabled ? 'AAN' : 'UIT'}
+      </span>
+      <span class="meta-pill">🌍 Overworld, Nether & End</span>
+    </div>
+
+    <div class="item-join-box" onclick="copyText('/joinworld ${w.uid}', 'In-game commando')">
+      <span class="join-cmd-text">/joinworld ${w.uid}</span>
+      <button class="btn-copy-tag">Kopieer 📋</button>
+    </div>
+
+    <div class="item-actions-row">
+      ${isOwner ? `
+        <button class="btn btn-sm btn-secondary" onclick="openShareModal('${w.uid}', '${escapeHtml(w.name)}')">
+          👥 Vrienden Delen
+        </button>
+        <button class="btn btn-sm btn-purple" onclick="openBackupsModal('${w.uid}', '${escapeHtml(w.name)}')">
+          💾 Git Backups & Restore
+        </button>
+        ${!w.isPrimarySmp ? `
+          <button class="btn btn-sm btn-danger" onclick="deleteWorld('${w.uid}')">
+            🗑️
+          </button>
+        ` : ''}
+      ` : `
+        <span style="font-size: 0.8rem; color: #94a3b8;">Gedeeld met jou</span>
+      `}
+    </div>
+  `;
+
+  return card;
+}
+
+function openCreateWorldModal() {
+  document.getElementById('create-world-name').value = '';
+  document.getElementById('create-world-seed').value = '';
+  document.getElementById('create-world-cheats').checked = false;
+  openModal('modal-create-world');
+}
+
+async function submitCreateWorld() {
+  const name = document.getElementById('create-world-name').value.trim();
+  const seed = document.getElementById('create-world-seed').value.trim();
+  const cheats = document.getElementById('create-world-cheats').checked;
+
+  if (!name) {
+    showToast('Vul een wereldnaam in.', 'error');
+    return;
+  }
+
+  showToast('Wereld wordt aangemaakt en geladen...', 'info');
+  try {
+    const res = await fetch('/api/worlds/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, seed, cheats })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      closeModal('modal-create-world');
+      loadWorlds();
+    } else {
+      showToast(data.error || 'Kon wereld niet aanmaken.', 'error');
+    }
+  } catch (e) {
+    showToast('Netwerkfout bij wereld creatie.', 'error');
+  }
+}
+
+// Sharing & Permissions
+function openShareModal(uid, name) {
+  document.getElementById('share-world-uid').value = uid;
+  document.getElementById('share-modal-title').textContent = `Vrienden Delen: ${name}`;
+  document.getElementById('share-target-player').value = '';
+  document.getElementById('share-allow-cheats').checked = false;
+
+  loadShareList(uid);
+  openModal('modal-share-world');
+}
+
+async function loadShareList(uid) {
+  const container = document.getElementById('share-list');
+  container.innerHTML = '<span style="font-size:0.85rem; color:#94a3b8;">Laden...</span>';
+
+  try {
+    const res = await fetch('/api/worlds');
+    const data = await res.json();
+    const w = (data.worlds || []).find(item => item.uid === uid);
+
+    if (!w || !w.sharedPlayers || Object.keys(w.sharedPlayers).length === 0) {
+      container.innerHTML = '<span style="font-size:0.85rem; color:#64748b;">Nog geen vrienden uitgenodigd.</span>';
+      return;
+    }
+
+    container.innerHTML = '';
+    for (const [pName, canCheat] of Object.entries(w.sharedPlayers)) {
+      const row = document.createElement('div');
+      row.className = 'share-item-row';
+      row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);';
+      row.innerHTML = `
+        <span style="font-weight:600;">${escapeHtml(pName)} ${canCheat ? '<span style="color:#10b981; font-size:0.75rem;">(Cheats AAN)</span>' : ''}</span>
+        <button class="btn btn-sm btn-danger" onclick="unsharePlayer('${uid}', '${pName}')">Verwijder</button>
+      `;
+      container.appendChild(row);
+    }
+  } catch (e) {
+    container.innerHTML = '<span style="color:#ef4444;">Fout bij ophalen.</span>';
+  }
+}
+
+async function submitShareWorld() {
+  const uid = document.getElementById('share-world-uid').value;
+  const targetPlayer = document.getElementById('share-target-player').value.trim();
+  const allowCheats = document.getElementById('share-allow-cheats').checked;
+
+  if (!targetPlayer) {
+    showToast('Vul een spelernaam in.', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/worlds/share', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid, targetPlayer, allowCheats })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      document.getElementById('share-target-player').value = '';
+      loadShareList(uid);
+    } else {
+      showToast(data.error || 'Kon speler niet toevoegen.', 'error');
+    }
+  } catch (e) {
+    showToast('Netwerkfout.', 'error');
+  }
+}
+
+async function unsharePlayer(uid, targetPlayer) {
+  try {
+    const res = await fetch('/api/worlds/unshare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid, targetPlayer })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      loadShareList(uid);
+    } else {
+      showToast(data.error, 'error');
+    }
+  } catch (e) {
+    showToast('Netwerkfout.', 'error');
+  }
+}
+
+// Git Backups & Hot Restore
+function openBackupsModal(uid, name) {
+  document.getElementById('backups-world-uid').value = uid;
+  document.getElementById('backups-modal-title').textContent = `Zero-Downtime Backups: ${name}`;
+  loadBackups(uid);
+  openModal('modal-world-backups');
+}
+
+async function loadBackups(uid) {
+  const loading = document.getElementById('backups-loading');
+  const tableWrap = document.getElementById('backups-list');
+  const tbody = document.getElementById('backups-table-body');
+
+  loading.style.display = 'block';
+  tableWrap.style.display = 'none';
+
+  try {
+    const res = await fetch(`/api/worlds/backups/${uid}`);
+    const data = await res.json();
+
+    loading.style.display = 'none';
+    tbody.innerHTML = '';
+
+    const backups = data.backups || [];
+    if (backups.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">Nog geen eerdere git snapshots vastgelegd.</td></tr>';
+    } else {
+      backups.forEach(b => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><code style="color:#38bdf8;">${b.hash}</code></td>
+          <td>${b.date || '-'}</td>
+          <td>${escapeHtml(b.message || '')}</td>
+          <td>
+            <button class="btn btn-sm btn-purple" onclick="restoreBackup('${uid}', '${b.hash}')">
+              ⚡ Hot Restore
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    tableWrap.style.display = 'block';
+  } catch (e) {
+    loading.style.display = 'none';
+    showToast('Kon backups niet laden.', 'error');
+  }
+}
+
+async function triggerWorldBackupFromModal() {
+  const uid = document.getElementById('backups-world-uid').value;
+  showToast('Git backup snapshot wordt aangemaakt...', 'info');
+
+  try {
+    const res = await fetch('/api/worlds/backup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      setTimeout(() => loadBackups(uid), 1500);
+    } else {
+      showToast(data.error || 'Backup mislukt.', 'error');
+    }
+  } catch (e) {
+    showToast('Netwerkfout bij maken backup.', 'error');
+  }
+}
+
+async function restoreBackup(uid, commitHash) {
+  if (!confirm(`Weet je zeker dat je deze wereld wilt herstellen naar commit ${commitHash}? Actieve spelers worden veilig naar de Hub geteleporteerd en de wereld herlaadt zonder server downtime.`)) {
+    return;
+  }
+
+  showToast('Hot-restore gestart... Wereld wordt hersteld.', 'info');
+  try {
+    const res = await fetch('/api/worlds/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid, commitHash })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      closeModal('modal-world-backups');
+    } else {
+      showToast(data.error || 'Restore mislukt.', 'error');
+    }
+  } catch (e) {
+    showToast('Netwerkfout bij restore.', 'error');
+  }
+}
+
+async function deleteWorld(uid) {
+  if (!confirm(`Weet je zeker dat je wereld ${uid} wilt verwijderen? Deze actie is onomkeerbaar!`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/worlds/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      loadWorlds();
+    } else {
+      showToast(data.error || 'Kon wereld niet verwijderen.', 'error');
+    }
+  } catch (e) {
+    showToast('Netwerkfout.', 'error');
+  }
+}
+
+// -------------------------------------------------------------
+// MAP MAKER
+// -------------------------------------------------------------
+async function loadMakerMaps() {
+  const loading = document.getElementById('maker-loading');
+  const empty = document.getElementById('maker-empty');
+  const grid = document.getElementById('maker-grid');
+
+  loading.style.display = 'block';
+  empty.style.display = 'none';
+  grid.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/maker/maps');
+    const data = await res.json();
+
+    loading.style.display = 'none';
+
+    const maps = data.maps || [];
+    if (maps.length === 0) {
+      empty.style.display = 'block';
+      return;
+    }
+
+    grid.innerHTML = '';
+    maps.forEach(m => {
+      grid.appendChild(createMapCard(m));
+    });
+    grid.style.display = 'grid';
+  } catch (e) {
+    loading.style.display = 'none';
+    showToast('Kon maps niet laden.', 'error');
+  }
+}
+
+function createMapCard(m) {
+  const card = document.createElement('div');
+  card.className = 'maker-item-card';
+
+  const statusColors = {
+    'DRAFT': 'rank-default',
+    'PENDING_REVIEW': 'rank-donor',
+    'APPROVED': 'rank-moderator',
+    'REJECTED': 'rank-admin',
+    'ARCHIVED': 'rank-member'
+  };
+
+  card.innerHTML = `
+    <div class="item-card-header">
+      <div>
+        <span class="item-uid-tag">${m.id ? m.id.toUpperCase() : 'MAP'}</span>
+        <h3 class="item-card-title">${escapeHtml(m.name)}</h3>
+      </div>
+      <span class="rank-badge ${statusColors[m.status] || 'rank-default'}">
+        ${m.status}
+      </span>
+    </div>
+
+    <div class="item-meta-row">
+      <span class="meta-pill">🎮 Modus: <strong>${m.gameType || 'PARKOUR'}</strong></span>
+      <span class="meta-pill">👥 Teams: <strong>${m.teamCount || 2}</strong></span>
+    </div>
+
+    ${m.rejectionReason ? `
+      <div class="alert alert-info" style="margin-bottom: 12px; font-size: 0.8rem; background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #fca5a5;">
+        Reden afkeuring: ${escapeHtml(m.rejectionReason)}
+      </div>
+    ` : ''}
+
+    <div class="item-join-box" onclick="copyText('/join ${m.worldName}', 'Bouwwereld commando')">
+      <span class="join-cmd-text">/join ${m.worldName}</span>
+      <button class="btn-copy-tag">Bouwen 🔨</button>
+    </div>
+
+    <div class="item-actions-row">
+      ${m.status === 'DRAFT' || m.status === 'REJECTED' ? `
+        <button class="btn btn-sm btn-purple" onclick="submitMapForReview('${m.id}')">
+          🚀 Indienen voor Staff Review
+        </button>
+      ` : `
+        <span style="font-size:0.8rem; color:#94a3b8;">
+          ${m.status === 'APPROVED' ? '✅ Goedgekeurd & Actief in minigames' : '⏳ In beoordeling bij staff'}
+        </span>
+      `}
+    </div>
+  `;
+
+  return card;
+}
+
+function openCreateMapModal() {
+  document.getElementById('create-map-name').value = '';
+  document.getElementById('create-map-type').value = 'BEDWARS';
+  document.getElementById('create-map-teams').value = '4';
+  openModal('modal-create-map');
+}
+
+async function submitCreateMap() {
+  const name = document.getElementById('create-map-name').value.trim();
+  const gameType = document.getElementById('create-map-type').value;
+  const teamCount = document.getElementById('create-map-teams').value;
+
+  if (!name) {
+    showToast('Vul een mapnaam in.', 'error');
+    return;
+  }
+
+  showToast('Bouwwereld en eilanden worden gegenereerd...', 'info');
+  try {
+    const res = await fetch('/api/maker/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, gameType, teamCount })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      closeModal('modal-create-map');
+      loadMakerMaps();
+    } else {
+      showToast(data.error || 'Kon map niet starten.', 'error');
+    }
+  } catch (e) {
+    showToast('Netwerkfout bij aanmaken map.', 'error');
+  }
+}
+
+async function submitMapForReview(id) {
+  try {
+    const res = await fetch('/api/maker/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      loadMakerMaps();
+    } else {
+      showToast(data.error || 'Fout bij indienen.', 'error');
+    }
+  } catch (e) {
+    showToast('Netwerkfout.', 'error');
+  }
+}
+
+// -------------------------------------------------------------
+// UNIFIED STAFF CONSOLE
+// -------------------------------------------------------------
+async function loadStaffData() {
+  loadReviewQueue();
+}
+
+async function loadReviewQueue() {
+  const empty = document.getElementById('staff-review-empty');
+  const grid = document.getElementById('staff-review-grid');
+  const badge = document.getElementById('staff-review-badge');
+  const subnavBadge = document.getElementById('staff-subnav-review-count');
+
+  try {
+    const res = await fetch('/api/maker/maps');
+    const data = await res.json();
+    const queue = data.reviewQueue || [];
+
+    if (badge) {
+      badge.textContent = queue.length;
+      badge.style.display = queue.length > 0 ? 'inline-block' : 'none';
+    }
+    if (subnavBadge) subnavBadge.textContent = queue.length;
+
+    if (queue.length === 0) {
+      empty.style.display = 'block';
+      grid.innerHTML = '';
+      return;
+    }
+
+    empty.style.display = 'none';
+    grid.innerHTML = '';
+
+    queue.forEach(m => {
+      const card = document.createElement('div');
+      card.className = 'review-item-card';
+
+      card.innerHTML = `
+        <div class="item-card-header">
+          <div>
+            <span class="item-uid-tag">${m.id ? m.id.toUpperCase() : 'MAP'}</span>
+            <h3 class="item-card-title">${escapeHtml(m.name)}</h3>
+          </div>
+          <span class="rank-badge rank-donor">IN AFWACHTING</span>
+        </div>
+
+        <div class="item-meta-row">
+          <span class="meta-pill">👑 Maker: <strong>${escapeHtml(m.creatorName || 'Speler')}</strong></span>
+          <span class="meta-pill">🎮 Spelmodus: <strong>${m.gameType || 'PARKOUR'}</strong></span>
+        </div>
+
+        <div class="item-join-box" onclick="copyText('/fpixel map test ${m.id}', 'Staff inspectie commando')">
+          <span class="join-cmd-text">/fpixel map test ${m.id}</span>
+          <button class="btn-copy-tag">Testen 🔍</button>
+        </div>
+
+        <div class="item-actions-row">
+          <button class="btn btn-sm btn-purple" onclick="staffReviewMap('${m.id}', 'approve')">
+            ✅ Goedkeuren & Live Zetten
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="openRejectModal('${m.id}')">
+            ❌ Afkeuren
+          </button>
+        </div>
+      `;
+
+      grid.appendChild(card);
+    });
+  } catch (e) {
+    showToast('Kon review wachtrij niet laden.', 'error');
+  }
+}
+
+async function staffReviewMap(id, action, reason = '') {
+  try {
+    const res = await fetch('/api/maker/review', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, action, reason })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      loadReviewQueue();
+    } else {
+      showToast(data.error || 'Kon actie niet uitvoeren.', 'error');
+    }
+  } catch (e) {
+    showToast('Netwerkfout bij review actie.', 'error');
+  }
+}
+
+function openRejectModal(id) {
+  document.getElementById('reject-map-id').value = id;
+  document.getElementById('reject-map-reason').value = '';
+  openModal('modal-reject-map');
+}
+
+function submitRejectMap() {
+  const id = document.getElementById('reject-map-id').value;
+  const reason = document.getElementById('reject-map-reason').value.trim();
+  closeModal('modal-reject-map');
+  staffReviewMap(id, 'reject', reason);
+}
+
+// Ranks Management
+async function loadRanks() {
+  const tbody = document.getElementById('ranks-table-body');
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">Spelers ophalen...</td></tr>';
+
   try {
     const res = await fetch('/api/admin/ranks');
     const data = await res.json();
-    if (!data.success) return;
 
-    allRanksPlayers = data.players || [];
-    const isOwner = Boolean(data.isOwner);
+    const isOwner = currentUser && currentUser.rank === 'OWNER';
+    tbody.innerHTML = '';
 
-    const kpiRanks = document.getElementById('cms-kpi-ranks');
-    const staffCount = allRanksPlayers.filter(p => p.rank !== 'MEMBER').length;
-    if (kpiRanks) kpiRanks.textContent = staffCount;
-
-    renderRanksTable(allRanksPlayers, isOwner);
-  } catch (err) {
-    console.error('Error loading ranks:', err);
-  }
-}
-
-function renderRanksTable(players, isOwner) {
-  const tbody = document.getElementById('ranks-table-body');
-  if (!tbody) return;
-
-  if (players.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-dim); padding: 24px;">Geen spelers met speciale rangen gevonden.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = players.map(p => {
-    const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(p.username)}/32`;
-    const rankClass = `rank-${p.rank.toLowerCase().replace('_', '')}`;
-    const isBedrock = p.username.startsWith('.');
-
-    let roleDescription = 'Speler';
-    if (p.rank === 'OWNER') roleDescription = '👑 Eigenaar';
-    else if (p.rank === 'ADMIN') roleDescription = '🛡️ Administrator';
-    else if (p.rank === 'MOD') roleDescription = '⚔️ Moderator';
-    else if (p.rank === 'YOUTUBE') roleDescription = '🎬 YouTuber';
-    else if (p.rank.includes('MVP')) roleDescription = '💎 MVP Donateur';
-    else if (p.rank.includes('VIP')) roleDescription = '✨ VIP Donateur';
-
-    let actions = `<span style="color:var(--text-dim); font-size:0.8rem;">Alleen-lezen</span>`;
-    if (isOwner) {
-      actions = `
-        <div style="display:flex; gap:6px; justify-content:flex-end;">
-          <button class="btn btn-xs btn-outline-warning" onclick="quickEditRank('${escapeHtml(p.username)}', '${p.rank}')">Wijzig</button>
-          ${p.rank !== 'MEMBER' ? `<button class="btn btn-xs btn-outline-danger" onclick="resetRank('${escapeHtml(p.username)}')">Reset</button>` : ''}
-        </div>
-      `;
-    }
-
-    return `
-      <tr>
+    const players = data.players || [];
+    players.forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
         <td>
-          <div class="table-player-cell">
-            <img class="table-player-avatar" src="${avatarUrl}" alt="${escapeHtml(p.username)}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/32'">
-            <div>
-              <span class="table-player-name">${escapeHtml(p.username)}</span>
-              ${isBedrock ? '<span class="edition-badge bedrock" style="margin-left:6px; font-size:0.65rem;">Bedrock</span>' : ''}
-            </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <img src="https://mc-heads.net/avatar/${p.cleanName}/24" style="width:24px; height:24px; border-radius:4px;">
+            <strong>${escapeHtml(p.username)}</strong>
           </div>
         </td>
         <td>
-          <span class="rank-badge ${rankClass}">[${escapeHtml(p.rank)}]</span>
+          <span class="rank-badge rank-${p.rank.toLowerCase()}">${p.rank}</span>
         </td>
+        <td>${getRankWeight(p.rank)}</td>
         <td>
-          <span class="status-indicator-tag">${roleDescription}</span>
+          ${isOwner ? `
+            <select onchange="updatePlayerRank('${p.username}', this.value)" style="padding:4px 8px; border-radius:4px; background:#0c0f14; color:#fff; border:1px solid rgba(255,255,255,0.1);">
+              <option value="MEMBER" ${p.rank === 'MEMBER' ? 'selected' : ''}>MEMBER</option>
+              <option value="DONOR" ${p.rank === 'DONOR' ? 'selected' : ''}>DONOR [❤]</option>
+              <option value="MODERATOR" ${p.rank === 'MODERATOR' ? 'selected' : ''}>MODERATOR [🎩]</option>
+              <option value="ADMIN" ${p.rank === 'ADMIN' ? 'selected' : ''}>ADMIN [⚔]</option>
+              <option value="OWNER" ${p.rank === 'OWNER' ? 'selected' : ''}>OWNER [👑]</option>
+            </select>
+          ` : `
+            <span style="color:#64748b; font-size:0.8rem;">Alleen [OWNER] kan wijzigen</span>
+          `}
         </td>
-        <td style="text-align: right;">
-          ${actions}
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-function filterRanksTable(query) {
-  const q = (query || '').toLowerCase().trim();
-  const isOwner = currentUser && currentUser.rank === 'OWNER';
-  if (!q) {
-    renderRanksTable(allRanksPlayers, isOwner);
-    return;
-  }
-  const filtered = allRanksPlayers.filter(p => 
-    (p.username && p.username.toLowerCase().includes(q)) || 
-    (p.rank && p.rank.toLowerCase().includes(q))
-  );
-  renderRanksTable(filtered, isOwner);
-}
-
-function quickEditRank(username, currentRank) {
-  const userInput = document.getElementById('rank-username');
-  const rankSelect = document.getElementById('rank-select');
-  if (userInput) userInput.value = username;
-  if (rankSelect) rankSelect.value = currentRank || 'MEMBER';
-
-  const card = document.getElementById('rank-assign-card');
-  if (card) {
-    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    if (userInput) userInput.focus();
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="4" style="color:#ef4444; text-align:center;">Kon rangen niet ophalen.</td></tr>';
   }
 }
 
-async function handleSetRankSubmit(e) {
-  e.preventDefault();
-  const username = document.getElementById('rank-username').value.trim();
-  const rank = document.getElementById('rank-select').value;
-
-  if (!username) {
-    showToast('Vul een gebruikersnaam in.', true);
-    return;
+function getRankWeight(r) {
+  switch (r) {
+    case 'OWNER': return 100;
+    case 'ADMIN': return 90;
+    case 'MODERATOR': return 80;
+    case 'DONOR': return 50;
+    case 'MEMBER': default: return 10;
   }
+}
 
+async function updatePlayerRank(username, newRank) {
   try {
     const res = await fetch('/api/admin/ranks/set', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, rank })
+      body: JSON.stringify({ username, rank: newRank })
     });
     const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Rang toekennen mislukt.', true);
-      return;
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      loadRanks();
+    } else {
+      showToast(data.error || 'Kon rang niet aanpassen.', 'error');
     }
-
-    showToast(data.message || `Rang succesvol gewijzigd naar [${rank}]!`);
-    document.getElementById('rank-username').value = '';
-    loadRanksData();
-  } catch (err) {
-    showToast('Fout bij toekennen rang: ' + err.message, true);
+  } catch (e) {
+    showToast('Netwerkfout.', 'error');
   }
 }
 
-async function resetRank(username) {
-  if (!confirm(`Weet je zeker dat je de rang van ${username} wilt intrekken en resetten naar [MEMBER]?`)) return;
-  try {
-    const res = await fetch('/api/admin/ranks/reset', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Resetten mislukt.', true);
-      return;
-    }
-    showToast(data.message || `Rang van ${username} is gereset naar MEMBER.`);
-    loadRanksData();
-  } catch (err) {
-    showToast('Fout bij resetten: ' + err.message, true);
-  }
-}
+async function assignRank() {
+  const username = document.getElementById('assign-rank-username').value.trim();
+  const rank = document.getElementById('assign-rank-select').value;
 
-// ------------------------------------------
-// 3. COMMUNITY PARKOUR STUDIO
-// ------------------------------------------
-
-async function loadParkourData() {
-  try {
-    const res = await fetch('/api/parkour/maps');
-    const data = await res.json();
-    allParkourMaps = data.maps || [];
-
-    const total = allParkourMaps.length;
-    const pending = allParkourMaps.filter(m => (m.status || 'PENDING_REVIEW').toUpperCase() === 'PENDING_REVIEW').length;
-    const approved = allParkourMaps.filter(m => (m.status || '').toUpperCase() === 'APPROVED').length;
-    const disabled = allParkourMaps.filter(m => (m.status || '').toUpperCase() === 'DISABLED').length;
-
-    const elTotal = document.getElementById('pk-stat-total');
-    const elPending = document.getElementById('pk-stat-pending');
-    const elApproved = document.getElementById('pk-stat-approved');
-    const elDisabled = document.getElementById('pk-stat-disabled');
-    const tabPkBadge = document.getElementById('cms-tab-pk-badge');
-    const kpiParkour = document.getElementById('cms-kpi-parkour');
-
-    if (elTotal) elTotal.innerText = total;
-    if (elPending) elPending.innerText = pending;
-    if (elApproved) elApproved.innerText = approved;
-    if (elDisabled) elDisabled.innerText = disabled;
-    if (tabPkBadge) tabPkBadge.innerText = pending;
-    if (kpiParkour) kpiParkour.innerText = total;
-
-    updateGlobalCmsBadge();
-    renderParkourMaps(allParkourMaps);
-  } catch (err) {
-    console.error('Error loading parkour maps:', err);
-  }
-}
-
-function filterParkourCards(status) {
-  currentParkourFilter = status;
-  renderParkourMaps(allParkourMaps);
-}
-
-function renderParkourMaps(maps) {
-  const container = document.getElementById('parkour-maps-list');
-  if (!container) return;
-
-  let filtered = maps;
-  if (currentParkourFilter !== 'ALL') {
-    filtered = maps.filter(m => {
-      const s = (m.status || 'PENDING_REVIEW').toUpperCase();
-      return s === currentParkourFilter;
-    });
-  }
-
-  if (filtered.length === 0) {
-    container.innerHTML = `
-      <div style="grid-column: 1 / -1; padding: 36px; background: rgba(0, 0, 0, 0.2); border-radius: var(--radius-md); text-align: center; color: var(--text-dim);">
-        <div style="font-size: 2.2rem; margin-bottom: 10px;">🏃</div>
-        <h4 style="color: #fff; margin-bottom: 6px;">Geen Parcoursen Gevonden</h4>
-        <p style="font-size: 0.9rem;">Er zijn geen community maps in deze categorie.</p>
-      </div>
-    `;
+  if (!username) {
+    showToast('Vul een gebruikersnaam in.', 'error');
     return;
   }
 
-  const isOwner = currentUser && currentUser.rank === 'OWNER';
-
-  container.innerHTML = filtered.map(map => {
-    const creator = map.creatorName || 'Onbekend';
-    const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(creator)}/64`;
-    const checkpointsCount = Array.isArray(map.checkpoints) ? map.checkpoints.length : 0;
-    const statusUpper = (map.status || 'PENDING_REVIEW').toUpperCase();
-    const dateStr = map.createdAt ? new Date(map.createdAt).toLocaleDateString('nl-NL') : 'Recent';
-
-    let statusLabel = '⏳ In Review';
-    let statusBadgeClass = 'status-pending';
-
-    if (statusUpper === 'APPROVED') {
-      statusLabel = '✅ Goedgekeurd';
-      statusBadgeClass = 'status-approved';
-    } else if (statusUpper === 'DISABLED') {
-      statusLabel = '⏸️ Uit Circulatie';
-      statusBadgeClass = 'status-disabled';
-    } else if (statusUpper === 'REJECTED') {
-      statusLabel = '❌ Afgewezen';
-      statusBadgeClass = 'status-rejected';
-    }
-
-    let actionsHtml = '';
-    if (isOwner) {
-      if (statusUpper === 'PENDING_REVIEW') {
-        actionsHtml = `
-          <div class="card-actions-row">
-            <button class="btn btn-sm btn-success" onclick="approveParkourMap('${map.id}')">
-              ✅ Goedkeuren & Live
-            </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="rejectParkourMap('${map.id}')">
-              ❌ Afwijzen
-            </button>
-          </div>
-        `;
-      } else if (statusUpper === 'APPROVED') {
-        actionsHtml = `
-          <div class="card-actions-row">
-            <span class="active-game-pill">🎮 Actief in Games</span>
-            <button class="btn btn-sm btn-outline-warning" onclick="disableParkourMap('${map.id}')">
-              ⏸️ Uit Circulatie
-            </button>
-          </div>
-        `;
-      } else if (statusUpper === 'DISABLED') {
-        actionsHtml = `
-          <div class="card-actions-row">
-            <span class="disabled-game-pill">⏸️ Inactief</span>
-            <button class="btn btn-sm btn-primary" onclick="approveParkourMap('${map.id}')">
-              ▶️ Weer Activeren
-            </button>
-          </div>
-        `;
-      } else {
-        actionsHtml = `
-          <div class="card-actions-row">
-            <span class="rejected-game-pill">Afgewezen</span>
-            <button class="btn btn-xs btn-outline-success" onclick="approveParkourMap('${map.id}')">
-              Alsnog Goedkeuren
-            </button>
-          </div>
-        `;
-      }
-    } else {
-      actionsHtml = `
-        <div class="card-actions-row">
-          <span style="color:var(--text-dim); font-size:0.8rem;">👁️ Alleen Eigenaar kan maps goedkeuren</span>
-        </div>
-      `;
-    }
-
-    return `
-      <div class="parkour-card ${statusUpper === 'PENDING_REVIEW' ? 'pending-highlight' : ''}">
-        <div class="parkour-card-header">
-          <div class="header-left">
-            <span class="parkour-id-pill">${map.id}</span>
-            <span class="parkour-status-badge ${statusBadgeClass}">${statusLabel}</span>
-          </div>
-          <span class="map-date-text">${dateStr}</span>
-        </div>
-
-        <div class="parkour-card-body">
-          <div class="creator-row">
-            <img class="creator-avatar" src="${avatarUrl}" alt="${creator}" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/64'">
-            <div class="creator-meta">
-              <h3 class="parkour-title">${escapeHtml(map.name || map.id)}</h3>
-              <span class="creator-name">Maker: <strong>${escapeHtml(creator)}</strong></span>
-            </div>
-          </div>
-
-          <div class="parkour-metrics-grid">
-            <div class="metric-item">
-              <span class="metric-k">🏁 Checkpoints:</span>
-              <span class="metric-v"><strong>${checkpointsCount}</strong> punten</span>
-            </div>
-            <div class="metric-item">
-              <span class="metric-k">📍 Start:</span>
-              <span class="metric-v"><code>X: ${Math.round(map.startX || 0)}, Y: ${Math.round(map.startY || 100)}, Z: ${Math.round(map.startZ || 0)}</code></span>
-            </div>
-          </div>
-
-          <div class="test-command-widget" onclick="copyIp('/fpixel test ${map.id}', 'Test Commando')" title="Klik om in-game test commando te kopiëren">
-            <div class="test-cmd-code">/fpixel test ${map.id}</div>
-            <button class="btn-copy-cmd">Kopieer 📋</button>
-          </div>
-
-          ${actionsHtml}
-        </div>
-      </div>
-    `;
-  }).join('');
+  await updatePlayerRank(username, rank);
+  document.getElementById('assign-rank-username').value = '';
 }
 
-async function approveParkourMap(mapId) {
-  try {
-    const res = await fetch('/api/parkour/approve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: mapId })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Kon map niet goedkeuren.', true);
-      return;
-    }
-    showToast(data.message || 'Map succesvol goedgekeurd!');
-    loadParkourData();
-  } catch (err) {
-    showToast('Fout bij goedkeuren: ' + err.message, true);
-  }
-}
-
-async function disableParkourMap(mapId) {
-  try {
-    const res = await fetch('/api/parkour/disable', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: mapId })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Kon map niet uitschakelen.', true);
-      return;
-    }
-    showToast(data.message || 'Map uit circulatie gehaald.');
-    loadParkourData();
-  } catch (err) {
-    showToast('Fout: ' + err.message, true);
-  }
-}
-
-async function rejectParkourMap(mapId) {
-  const reason = prompt('Wat is de reden voor afwijzing? (optioneel):', 'Voldoet nog niet aan de kwaliteitsnormen');
-  if (reason === null) return;
-
-  try {
-    const res = await fetch('/api/parkour/reject', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: mapId, reason })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Kon map niet afwijzen.', true);
-      return;
-    }
-    showToast(data.message || 'Map afgewezen.');
-    loadParkourData();
-  } catch (err) {
-    showToast('Fout bij afwijzen: ' + err.message, true);
-  }
-}
-
-// ------------------------------------------
-// 4. SERVER & SYSTEEM CONTROLES
-// ------------------------------------------
-
-async function handleBroadcastSubmit(e) {
-  e.preventDefault();
+// Server Operations
+async function sendBroadcast() {
   const input = document.getElementById('broadcast-message-input');
-  if (!input) return;
   const message = input.value.trim();
-  if (!message) return;
+
+  if (!message) {
+    showToast('Vul een bericht in.', 'error');
+    return;
+  }
 
   try {
     const res = await fetch('/api/server/broadcast', {
@@ -1477,66 +1041,60 @@ async function handleBroadcastSubmit(e) {
       body: JSON.stringify({ message })
     });
     const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Omroep verzenden mislukt.', true);
-      return;
+
+    if (res.ok && data.success) {
+      showToast('Omroepbericht verzonden in-game!', 'success');
+      input.value = '';
+    } else {
+      showToast(data.error || 'Kon bericht niet verzenden.', 'error');
     }
-    showToast(data.message || 'Omroep verzonden naar Minecraft chat!');
-    input.value = '';
-  } catch (err) {
-    showToast('Fout bij omroep: ' + err.message, true);
+  } catch (e) {
+    showToast('Netwerkfout.', 'error');
   }
 }
 
 async function triggerServerBackup() {
-  if (!confirm('Wil je nu direct een volledige server backup snapshot maken?')) return;
-  showToast('Server backup wordt gestart...', false);
+  if (!confirm('Weet je zeker dat je een volledige server backup wilt starten?')) return;
 
+  showToast('Server backup wordt gestart...', 'info');
   try {
     const res = await fetch('/api/server/backup', { method: 'POST' });
     const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Backup starten mislukt.', true);
-      return;
+
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+    } else {
+      showToast(data.error || 'Backup mislukt.', 'error');
     }
-    showToast(data.message || 'Backup succesvol gestart op de achtergrond!');
-  } catch (err) {
-    showToast('Fout bij starten backup: ' + err.message, true);
+  } catch (e) {
+    showToast('Netwerkfout.', 'error');
   }
 }
 
-function openStopServerModal() {
-  const modal = document.getElementById('stop-server-modal');
-  if (modal) {
-    document.getElementById('stop-confirm-input').value = '';
-    modal.classList.add('active');
-  }
-}
-
-function closeStopServerModal() {
-  const modal = document.getElementById('stop-server-modal');
-  if (modal) modal.classList.remove('active');
-}
-
-async function confirmStopServer() {
-  const input = document.getElementById('stop-confirm-input');
-  if (!input || input.value.trim().toUpperCase() !== 'STOP') {
-    showToast('Typ exact "STOP" om te bevestigen.', true);
-    return;
-  }
-
-  closeStopServerModal();
-  showToast('Server stop signaal wordt verstuurd...', false);
+async function triggerServerStop() {
+  if (!confirm('LET OP: Weet je 100% zeker dat je de Minecraft server veilig wilt stoppen?')) return;
 
   try {
     const res = await fetch('/api/server/stop', { method: 'POST' });
     const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || 'Kon server niet stoppen.', true);
-      return;
+
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+    } else {
+      showToast(data.error || 'Kon server niet stoppen.', 'error');
     }
-    showToast(data.message || 'Server sluit over enkele seconden af.');
-  } catch (err) {
-    showToast('Fout bij stoppen: ' + err.message, true);
+  } catch (e) {
+    showToast('Netwerkfout.', 'error');
   }
+}
+
+// Utility: HTML escape
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

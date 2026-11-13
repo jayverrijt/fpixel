@@ -31,12 +31,9 @@ commands:
   maps:
     description: Browse and select a minigame map
     aliases: [arenas]
-  waypoint:
-    description: Survival waypoints and minimap navigation
-    aliases: [wp, waypoints]
-  worldmap:
-    description: Survival interactive map and on-screen minimap HUD
-    aliases: [map, minimap]
+  joinworld:
+    description: Join a personal or shared custom player world
+    aliases: [jw, worldjoin]
   serverupdate:
     description: Full server update with pre-update backup, git pull, and restart
     permission: fpixel.owner

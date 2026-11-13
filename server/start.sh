@@ -8,7 +8,7 @@ elif [ -d "/opt/homebrew/opt/openjdk" ]; then
 fi
 
 java -Dterminal.jline=false -Dterminal.ansi=true \
-  -Xms2G -Xmx4G \
+  -Xms12G -Xmx12G \
   -XX:+UseG1GC \
   -XX:+ParallelRefProcEnabled \
   -XX:MaxGCPauseMillis=200 \

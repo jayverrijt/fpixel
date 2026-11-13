@@ -20,8 +20,8 @@ fi
 # Clean up stale session.locks if container previously stopped unexpectedly
 rm -f /data/world/session.lock /data/Urban/session.lock /data/Galaxy/session.lock /data/arenas/session.lock /data/survival/session.lock 2>/dev/null || true
 
-JAVA_MEMORY="${JAVA_MEMORY:-4G}"
-JAVA_INIT_MEMORY="${JAVA_INIT_MEMORY:-2G}"
+JAVA_MEMORY="${JAVA_MEMORY:-12G}"
+JAVA_INIT_MEMORY="${JAVA_INIT_MEMORY:-12G}"
 
 echo "=========================================="
 echo " Starting FPixel Minecraft Server (Docker)"

@@ -3,14 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FPixel Network | Minecraft Server & Community Portal</title>
+  <title>FPixel Network | Minecraft Server & Community CMS</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <!-- Leaflet for Interactive Survival Map -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -26,34 +23,32 @@
       </div>
 
       <nav class="nav-links">
-        <button class="nav-link active" onclick="switchTab('home')">
+        <button id="nav-btn-home" class="nav-link active" onclick="switchTab('home')">
           <span class="nav-icon">🎮</span> Server & Gamemodes
         </button>
-        <button class="nav-link" onclick="switchTab('map')">
-          <span class="nav-icon">🗺️</span> Survival Kaart
+        <button id="nav-btn-worlds" class="nav-link auth-required-tab" style="display: none;" onclick="switchTab('worlds')">
+          <span class="nav-icon">🌍</span> Mijn Werelden
         </button>
-        <button class="nav-link" onclick="switchTab('join-request')">
-          <span class="nav-icon">📝</span> Whitelist Aanvragen
+        <button id="nav-btn-maker" class="nav-link auth-required-tab" style="display: none;" onclick="switchTab('maker')">
+          <span class="nav-icon">🏗️</span> Map Maker
         </button>
-
-        <!-- Authenticated Unified CMS Tab (Admins, Owners & Staff) -->
-        <button id="nav-cms-btn" class="nav-link cms-pill-link" style="display: none;" onclick="switchTab('cms')">
-          <span class="nav-icon">🛠️</span> CMS Beheer
-          <span id="cms-badge" class="counter-pill">0</span>
+        <button id="nav-btn-staff" class="nav-link staff-pill-link" style="display: none;" onclick="switchTab('staff')">
+          <span class="nav-icon">🛡️</span> Staff Console
+          <span id="staff-review-badge" class="counter-pill" style="display: none;">0</span>
         </button>
       </nav>
 
       <div class="nav-auth">
         <!-- Logged Out Button -->
         <div id="auth-logged-out" class="auth-box">
-          <button class="btn btn-sm btn-login" onclick="openLoginModal('login')">
+          <button class="btn btn-sm btn-purple" onclick="openLoginModal('login')">
             <span class="btn-icon">🔑</span> Inloggen
           </button>
         </div>
 
         <!-- Logged In User Pill -->
         <div id="auth-logged-in" class="auth-box" style="display: none;">
-          <div class="user-pill" onclick="switchTab('home')">
+          <div class="user-pill" onclick="switchTab('worlds')">
             <img id="nav-user-avatar" class="user-avatar" src="https://mc-heads.net/avatar/MHF_Steve/64" alt="avatar">
             <div class="user-meta">
               <span id="nav-username" class="user-name">...</span>
@@ -90,10 +85,11 @@
               <span id="status-text">ONLINE</span>
               <span class="status-count">(<strong id="hero-player-count">0</strong> online)</span>
             </div>
+            <span class="whitelist-off-badge">🔓 WHITELIST UIT: IEDEREEN WELKOM</span>
           </div>
           <h1 class="hero-title">Welkom op <span class="glow-accent">FPixel Network</span></h1>
           <p class="hero-description">
-            Het ultieme Nederlandse Minecraft netwerk. Bouw en overleef in de besloten <strong>Survival SMP</strong>, vecht in tactische <strong>BedWars</strong> & <strong>SkyWars</strong> arena's, ontwerp en spring door community <strong>Parkour</strong> parcoursen, of daag je vrienden uit in snelle 1v1 duels!
+            Het schaalbare Nederlandse crossplay-netwerk. Speel in de originele <strong>Survival SMP</strong>, maak je eigen persoonlijke <strong>Spelerwereld (Realm)</strong> met zero-downtime backups, ontwerp minigame arena's in de <strong>Map Maker</strong> of strijd in BedWars, SkyWars en Duels!
           </p>
 
           <!-- IP & Port Copy Cards -->
@@ -120,11 +116,11 @@
           </div>
 
           <div class="hero-cta-row">
-            <button class="btn btn-primary" onclick="switchTab('join-request')">
-              📝 Vraag Toegang Tot De Server
+            <button class="btn btn-purple" onclick="handleCtaWorlds()">
+              🌍 Beheer Jouw Spelerwerelden
             </button>
-            <button class="btn btn-secondary" onclick="switchTab('map')">
-              🗺️ Bekijk Survival Kaart
+            <button class="btn btn-secondary" onclick="handleCtaMaker()">
+              🏗️ Minigame Map Maker
             </button>
             <button class="btn btn-outline" onclick="openLoginModal('reset')">
               🔑 Wachtwoord Resetten (In-Game Code)
@@ -133,100 +129,35 @@
         </div>
       </div>
 
-      <!-- Logged-in Personal Player Stats Header (If Logged In) -->
-      <div id="personal-card" class="personal-card" style="display: none;">
-        <div class="personal-header">
-          <div class="personal-identity">
-            <img id="profile-bust" class="player-bust" src="https://mc-heads.net/avatar/MHF_Steve/64" alt="avatar">
-            <div>
-              <div class="name-row">
-                <h2 id="profile-name">Speler</h2>
-                <span id="profile-rank" class="rank-badge rank-default">MEMBER</span>
-              </div>
-              <p class="uuid-text" id="profile-uuid">UUID: ...</p>
-            </div>
-          </div>
-          <div class="coins-hero">
-            <span class="coins-title">JOUW COINS</span>
-            <div class="coins-val"><span class="coin-icon">🪙</span> <span id="profile-coins">0</span></div>
-            <span class="coins-sub">Verdien coins met minigames en handel in /shop</span>
-          </div>
-        </div>
-
-        <div class="world-stats-grid">
-          <div class="world-card urban-theme">
-            <div class="world-card-header">
-              <span class="world-badge">🌍 SURVIVAL SMP</span>
-              <h3>Jouw Survival Status</h3>
-            </div>
-            <div class="world-card-body">
-              <div class="stat-line">
-                <span class="stat-k">Locatie / Basis:</span>
-                <span class="stat-v" id="urban-coords">Laden...</span>
-              </div>
-              <div class="stat-line">
-                <span class="stat-k">Level:</span>
-                <span class="stat-v highlight" id="urban-level">0</span>
-              </div>
-              <div class="stat-line">
-                <span class="stat-k">Gezondheid:</span>
-                <span class="stat-v" id="urban-health">20 HP</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="world-card galaxy-theme">
-            <div class="world-card-header">
-              <span class="world-badge">🛡️ NETWERK STATUS</span>
-              <h3>Rang & Permissies</h3>
-            </div>
-            <div class="world-card-body">
-              <div class="stat-line">
-                <span class="stat-k">Server Rang:</span>
-                <span class="stat-v highlight" id="stat-user-rank-display">MEMBER</span>
-              </div>
-              <div class="stat-line">
-                <span class="stat-k">Whitelist Status:</span>
-                <span class="stat-v text-green">Actief & Toegelaten</span>
-              </div>
-              <div class="stat-line">
-                <span class="stat-k">Web Beveiliging:</span>
-                <span class="stat-v">SHA-256 Auth</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gamemodes Showcase (Public) -->
+      <!-- Gamemodes Showcase (Public Bento Grid) -->
       <div class="gamemodes-section">
         <div class="section-title-wrap">
-          <span class="section-tag">🎮 VOLLEDIG AANBOD</span>
-          <h2>Beschikbare Minigames & Werelden</h2>
-          <p>Kies je favoriete spelmodus in-game via het <strong>Kompas</strong> in de lobby of typ direct <code>/join &lt;game&gt;</code>.</p>
+          <span class="section-tag">🎮 8 SPELMODI & WERELDEN</span>
+          <h2>Ontdek De FPixel Spelervaring</h2>
+          <p>Kies een modus in-game via het <strong>Lobby Kompas</strong> of loop door de 8 gloeiende bogen op het <strong>Paleisplein</strong> rondom (0, 64, 0).</p>
         </div>
 
         <div class="gamemodes-grid">
 
-          <!-- Gamemode 1: Survival SMP -->
+          <!-- 1. Player Worlds & Survival -->
           <div class="gamemode-card gm-survival">
-            <div class="gm-badge-tag">HOOFDWERELD</div>
-            <div class="gm-icon">🌲</div>
-            <h3>Survival SMP</h3>
-            <p>100% pure vanilla overleving samen met de vriendengroep. Overworld, Nether en The End zijn volledig verbonden. Bouw je basis, richt winkels in en markeer waypoints op de live kaart!</p>
+            <div class="gm-badge-tag">FEATURED REALMS</div>
+            <div class="gm-icon">🌍</div>
+            <h3>Player Worlds & Survival</h3>
+            <p>Jouw eigen persoonlijke Minecraft werelden! Inclusief Overworld, Nether en End met portal-routing, geïsoleerde inventaris, scoped cheats en live git-backups via het Web-CMS.</p>
             <div class="gm-specs">
-              <span>🌍 3 Dimensies</span>
-              <span>📍 Custom Waypoints</span>
-              <span>📱 Bedrock Crossplay</span>
+              <span>🏰 3 Dimensies</span>
+              <span>🔒 Geïsoleerde State</span>
+              <span>💾 Zero-Downtime Backups</span>
             </div>
           </div>
 
-          <!-- Gamemode 2: Parkour Studio -->
+          <!-- 2. Parkour Studio -->
           <div class="gamemode-card gm-parkour">
-            <div class="gm-badge-tag gm-tag-new">CREATOR STUDIO</div>
+            <div class="gm-badge-tag gm-tag-new">COMMUNITY MAKER</div>
             <div class="gm-icon">🏃</div>
             <h3>Parkour Studio & Duels</h3>
-            <p>Bouw je eigen obstakelparcoursen in de void studio met <code>/fpixel parkour create [naam]</code>. Bevat Checkpoints, Jump Boost pads (op emerald), Speed pads (op goud), Giga Boost platen en 1v1 duels!</p>
+            <p>Spring over gevaarlijke afgronden en bouw je eigen parcoursen. Met Speed Pads (op goud), Jump Boost pads (op emerald), Slime Springboards en Checkpoint tracking.</p>
             <div class="gm-specs">
               <span>🚀 Giga Boost Pads</span>
               <span>⚡ Slime Springboards</span>
@@ -234,571 +165,289 @@
             </div>
           </div>
 
-          <!-- Gamemode 3: BedWars -->
+          <!-- 3. BedWars -->
           <div class="gamemode-card gm-bedwars">
             <div class="gm-badge-tag">POPULAIR</div>
             <div class="gm-icon">🛏️</div>
             <h3>BedWars</h3>
-            <p>Bescherm je bed en vernietig vijandelijke bedden! Upgrade je armor en wapens met ijzer, goud en emeralds uit de resource generators. Speel op 10 unieke versterkte arena's.</p>
+            <p>Bescherm je bed en sloop de vijandelijke basissen. Upgrade je team met ijzer, goud en emeralds uit de generatoren op 10 unieke versterkte arena's.</p>
             <div class="gm-specs">
               <span>🏰 10 Fortified Arenas</span>
               <span>⚔️ Generator Upgrades</span>
-              <span>🛡️ Team Gameplay</span>
+              <span>🛡️ 2-8 Speler Teams</span>
             </div>
           </div>
 
-          <!-- Gamemode 4: SkyWars -->
+          <!-- 4. SkyWars -->
           <div class="gamemode-card gm-skywars">
-            <div class="gm-badge-tag">COMBAT</div>
+            <div class="gm-badge-tag">INTENS</div>
             <div class="gm-icon">👁️</div>
             <h3>SkyWars</h3>
-            <p>Spawn op je eigen zwevende eiland boven de leegte. Kies uit 10 unieke gevechtskits, loot kisten, verzamel bouwblokken en vecht je een weg naar het midden eiland.</p>
+            <p>Spawn op een zwevend eiland boven het luchtledige, loot de kisten, kies je gevechtskit en vecht voor de overwinning op het centrale eiland.</p>
             <div class="gm-specs">
-              <span>🏝️ 10 Floating Islands</span>
-              <span>🏹 10 Combat Kits</span>
-              <span>☁️ Void Battles</span>
+              <span>🪂 10 Floating Arenas</span>
+              <span>📦 Kisten & Loot</span>
+              <span>🏹 Combat Kits</span>
             </div>
           </div>
 
-          <!-- Gamemode 5: TNT Run -->
-          <div class="gamemode-card gm-tntrun">
-            <div class="gm-badge-tag">ARCADE</div>
+          <!-- 5. TNT Run -->
+          <div class="gamemode-card gm-tnt">
+            <div class="gm-badge-tag">SNEL</div>
             <div class="gm-icon">🧨</div>
             <h3>TNT Run</h3>
-            <p>De blokken onder je voeten verdwijnen zodra je erop stapt! Blijf sprinten, anticipeer op de gaten en gebruik je dubbele sprongen om als laatste overeind te blijven.</p>
+            <p>De zand- en gravelblokken onder je voeten storten direct in het ravijn in zodra je erop stapt! Blijf sprinten en gebruik tactische dubbelsprongen om te overleven.</p>
             <div class="gm-specs">
-              <span>🏛️ Roman Colosseums</span>
-              <span>⚡ Double Jump Perk</span>
-              <span>⏳ Instortende Vloeren</span>
+              <span>🏛️ 10 Colosseums</span>
+              <span>🏃 4 Verdiepingen</span>
+              <span>💨 Dubbelsprongen</span>
             </div>
           </div>
 
-          <!-- Gamemode 6: Murder Mystery -->
-          <div class="gamemode-card gm-murdermystery">
-            <div class="gm-badge-tag">MYSTERIE</div>
+          <!-- 6. Murder Mystery -->
+          <div class="gm-badge-tag-wrap gamemode-card gm-murder">
+            <div class="gm-badge-tag">DETECTIVE</div>
             <div class="gm-icon">🗡️</div>
             <h3>Murder Mystery</h3>
-            <p>Eén speler is de Moordenaar, één de Detective met de boog, en de rest zijn Onschuldigen. Verzamel goud voor een pijl of ontmasker de dader voor het te laat is!</p>
+            <p>Eén speler is de Moordenaar met een verborgen zwaard, één is de Detective met een boog, en de rest zijn Onschuldigen. Verzamel 10 goudstukken voor een boog!</p>
             <div class="gm-specs">
               <span>🏚️ Haunted Manor & Cyber</span>
-              <span>🎯 Mes-werp Mechanica</span>
-              <span>🕵️ Detective Rol</span>
+              <span>🔍 Detective Mechanics</span>
+              <span>🩸 Spanning</span>
             </div>
           </div>
 
-          <!-- Gamemode 7: Prop Hunt -->
+          <!-- 7. Prop Hunt -->
           <div class="gamemode-card gm-prophunt">
-            <div class="gm-badge-tag">PARTY</div>
+            <div class="gm-badge-tag">VERSTOPPERTJE</div>
             <div class="gm-icon">📦</div>
             <h3>Prop Hunt</h3>
-            <p>Het klassieke Garry's Mod verstoppertje! Verander in een crafting table, kist of bloempot, pas je rotatie aan en taunt de jagers. Jagers verliezen levens bij een verkeerde hit!</p>
+            <p>Klassiek Garry's Mod verstoppertje in Minecraft! Vermom je als kist, crafting table of bloempot, snap naar het grid en daag de jagers uit met spottende taunts.</p>
             <div class="gm-specs">
-              <span>🎭 Vermom als Blokken</span>
-              <span>🎪 Warehouse & Bazaar</span>
-              <span>💔 Jager Straf-systeem</span>
+              <span>🏬 Warehouse & Bazaar</span>
+              <span>🎯 Taunt Systeem</span>
+              <span>❤ Jager Penalty</span>
             </div>
           </div>
 
-          <!-- Gamemode 8: The Bridge & Sumo 1v1 -->
+          <!-- 8. The Bridge & Sumo 1v1 -->
           <div class="gamemode-card gm-duels">
-            <div class="gm-badge-tag">1v1 COMPETITIEF</div>
+            <div class="gm-badge-tag">1v1 COMPETITIE</div>
             <div class="gm-icon">🌉</div>
-            <h3>The Bridge & Sumo</h3>
-            <p>Snelle competitieve 1v1 duels. Ren over de smalle brug boven de void en spring in de pit van de tegenstander, of sla je rivaal van het zwevende Sumo platform af!</p>
+            <h3>The Bridge & Sumo 1v1</h3>
+            <p>Duik in bliksemsnelle 1v1 duels. Steek de smalle brug over het ravijn over om te scoren in de goal, of mep je tegenstander van het zwevende dojo-eiland in Sumo!</p>
             <div class="gm-specs">
-              <span>🥊 Sumo Dojo Temples</span>
-              <span>🌉 10 Bridge Arenas</span>
-              <span>⚡ Directe Respawn</span>
+              <span>⛩️ 20 Duel Arenas</span>
+              <span>⚔️ Direct Herstarten</span>
+              <span>🏆 ELO & Leaderboards</span>
             </div>
           </div>
 
         </div>
       </div>
+    </section>
 
-      <!-- Friends Leaderboard & Roster -->
-      <div class="section-card">
-        <div class="section-card-header">
-          <div>
-            <h3>👥 Vriendengroep Leaderboard & Voortgang</h3>
-            <span class="subtitle">Live ranking op basis van survival levels, rangen en minigame coins</span>
-          </div>
-          <button class="btn btn-sm btn-secondary" onclick="loadStats()">🔄 Verversen</button>
+    <!-- ======================================================== -->
+    <!-- TAB 2: MIJN WERELDEN (REALMS CONSOLE)                     -->
+    <!-- ======================================================== -->
+    <section id="tab-worlds" class="tab-pane">
+      <div class="panel-header">
+        <div class="panel-header-left">
+          <span class="panel-tag">🌍 SPELERWERELDEN ("REALMS")</span>
+          <h2>Jouw Persoonlijke Minecraft Werelden</h2>
+          <p>Maak geïsoleerde survival-werelden aan, nodig vrienden uit, beheer scoped cheats en maak zero-downtime Git backups.</p>
         </div>
-        <div class="table-responsive">
-          <table class="data-table">
+        <div class="panel-header-right">
+          <div id="world-limit-badge" class="limit-indicator-pill">
+            <span class="limit-label">WERELDEN GEBRUIKT:</span>
+            <span id="world-limit-count" class="limit-value">0 / 1</span>
+          </div>
+          <button class="btn btn-purple" onclick="openCreateWorldModal()">
+            <span>➕</span> Nieuwe Wereld Aanmaken
+          </button>
+        </div>
+      </div>
+
+      <!-- Worlds Grid Container -->
+      <div id="worlds-loading" class="loading-state">
+        <div class="spinner"></div>
+        <span>Jouw werelden ophalen...</span>
+      </div>
+
+      <div id="worlds-empty" class="empty-state" style="display: none;">
+        <div class="empty-icon">🌍</div>
+        <h3>Nog geen werelden aangemaakt</h3>
+        <p>Je hebt momenteel 0 werelden. Klik op de knop hierboven om je eerste wereld direct te starten!</p>
+      </div>
+
+      <div id="worlds-grid" class="worlds-grid" style="display: none;">
+        <!-- Dynamic World Cards injected by app.js -->
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- TAB 3: MAP MAKER CONSOLE                                  -->
+    <!-- ======================================================== -->
+    <section id="tab-maker" class="tab-pane">
+      <div class="panel-header">
+        <div class="panel-header-left">
+          <span class="panel-tag">🏗️ #RESPECTTHECOMMUNITY</span>
+          <h2>Universal Minigame Map Maker</h2>
+          <p>Bouw arena's voor alle 8 minigames in een void-bouwwereld. Voor BedWars & SkyWars worden basis- en middeneilanden automatisch klaargezet!</p>
+        </div>
+        <div class="panel-header-right">
+          <button class="btn btn-purple" onclick="openCreateMapModal()">
+            <span>➕</span> Nieuwe Map Starten
+          </button>
+        </div>
+      </div>
+
+      <div id="maker-loading" class="loading-state">
+        <div class="spinner"></div>
+        <span>Jouw maps inladen...</span>
+      </div>
+
+      <div id="maker-empty" class="empty-state" style="display: none;">
+        <div class="empty-icon">🏗️</div>
+        <h3>Nog geen maps ontworpen</h3>
+        <p>Start met het bouwen van een eigen BedWars, SkyWars of Parkour arena en dien hem in voor staff review!</p>
+      </div>
+
+      <div id="maker-grid" class="maker-grid" style="display: none;">
+        <!-- Dynamic Map Cards injected by app.js -->
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- TAB 4: UNIFIED STAFF CONSOLE (MODERATOR, ADMIN, OWNER)    -->
+    <!-- ======================================================== -->
+    <section id="tab-staff" class="tab-pane">
+      <div class="panel-header">
+        <div class="panel-header-left">
+          <span class="panel-tag">🛡️ STAFF CONSOLE</span>
+          <h2>Netwerk & Content Beheer</h2>
+          <p>Gecombineerd controlecentrum voor map reviews, speler-rangen en server operationele taken.</p>
+        </div>
+        <div class="panel-header-right">
+          <div class="staff-subnav">
+            <button class="subnav-pill active" onclick="switchStaffTab('reviews')">
+              📋 Map Reviews <span id="staff-subnav-review-count" class="counter-badge">0</span>
+            </button>
+            <button class="subnav-pill" onclick="switchStaffTab('ranks')">
+              👑 Spelers & Rangen
+            </button>
+            <button class="subnav-pill" onclick="switchStaffTab('server')">
+              ⚙️ Server Controle
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-section 1: Map Review Queue -->
+      <div id="staff-section-reviews" class="staff-subpane active">
+        <div class="section-sub-header">
+          <h3>Ingekomen Community Map Aanvragen</h3>
+          <p>Test maps in-game via het testcommando en keur ze goed om direct toe te voegen aan de minigames.</p>
+        </div>
+
+        <div id="staff-review-empty" class="empty-state" style="display: none;">
+          <div class="empty-icon">✅</div>
+          <h3>Geen openstaande map reviews</h3>
+          <p>Alle ingediende maps zijn op dit moment beoordeeld.</p>
+        </div>
+
+        <div id="staff-review-grid" class="review-queue-grid">
+          <!-- Injected by app.js -->
+        </div>
+      </div>
+
+      <!-- Sub-section 2: Spelers & Rangen -->
+      <div id="staff-section-ranks" class="staff-subpane" style="display: none;">
+        <div class="section-sub-header">
+          <h3>Speler Rangenbeheer (5 Rangen)</h3>
+          <p id="ranks-perm-notice">Bekijk de huidige rangen van alle spelers op het netwerk.</p>
+        </div>
+
+        <!-- Owner-only assign form -->
+        <div id="owner-rank-form-card" class="glass-card" style="display: none; margin-bottom: 24px;">
+          <h4 style="margin-top: 0; color: #eab308;">👑 Rang Toekennen (Alleen [OWNER])</h4>
+          <div class="form-row-grid">
+            <div class="form-group">
+              <label>Spelernaam (bijv. Jay_V0):</label>
+              <input type="text" id="assign-rank-username" placeholder="Minecraft naam...">
+            </div>
+            <div class="form-group">
+              <label>Nieuwe Rang:</label>
+              <select id="assign-rank-select">
+                <option value="MEMBER">MEMBER (Standaard)</option>
+                <option value="DONOR">DONOR [❤]</option>
+                <option value="MODERATOR">MODERATOR [🎩]</option>
+                <option value="ADMIN">ADMIN [⚔]</option>
+                <option value="OWNER">OWNER [👑]</option>
+              </select>
+            </div>
+            <div class="form-group" style="align-self: flex-end;">
+              <button class="btn btn-purple" onclick="assignRank()">
+                Rang Toepassen & Opslaan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ranks-table-container glass-card">
+          <table class="cms-table">
             <thead>
               <tr>
                 <th>Speler</th>
-                <th>Rang</th>
-                <th>Coins</th>
-                <th>Survival Level</th>
-                <th>Survival Basis</th>
-                <th>Status</th>
+                <th>Huidige Rang</th>
+                <th>Gewicht</th>
+                <th>Acties</th>
               </tr>
             </thead>
-            <tbody id="friends-tbody">
-              <!-- Rendered dynamically -->
+            <tbody id="ranks-table-body">
+              <!-- Injected by app.js -->
             </tbody>
           </table>
         </div>
       </div>
 
-    </section>
-
-    <!-- ======================================================== -->
-    <!-- TAB 2: INTERACTIVE SURVIVAL MAP & WAYPOINTS              -->
-    <!-- ======================================================== -->
-    <section id="tab-map" class="tab-pane">
-      <div class="map-wrapper">
-        <div class="map-controls-bar">
-          <div class="map-title-box">
-            <h2>🗺️ Live Survival Wereld Kaart</h2>
-            <p>Verken de Overworld, The Nether en The End. Ingelogde spelers kunnen waypoints toevoegen en beheren!</p>
-          </div>
-          <div class="map-actions">
-            <div class="segmented-control">
-              <button id="btn-world-survival" class="segment-btn active" onclick="changeMapWorld('survival')">🌍 Overworld</button>
-              <button id="btn-world-nether" class="segment-btn" onclick="changeMapWorld('nether')">🔥 The Nether</button>
-              <button id="btn-world-end" class="segment-btn" onclick="changeMapWorld('end')">🌌 The End</button>
-            </div>
-            <button class="btn btn-sm btn-secondary" onclick="resetMapView()">🎯 Reset Weergave</button>
-            <button id="btn-open-waypoint-modal" class="btn btn-sm btn-primary" onclick="openAddWaypointModal()">📍 Waypoint Toevoegen</button>
-          </div>
+      <!-- Sub-section 3: Server Controle -->
+      <div id="staff-section-server" class="staff-subpane" style="display: none;">
+        <div class="section-sub-header">
+          <h3>Systeem & Server Acties</h3>
+          <p>Voer live server-operaties uit via de beveiligde RCON bridge.</p>
         </div>
 
-        <!-- The Leaflet Map Canvas -->
-        <div id="survival-map-container" class="map-container"></div>
-
-        <div class="map-footer-bar">
-          <span id="map-coords" class="coords-pill">X: 0, Z: 0</span>
-          <span id="map-dim-label" class="dim-pill">🌍 Dimensie: Overworld (Survival)</span>
-          <span id="map-click-hint" class="hint-pill">💡 Tip: Klik op de kaart om direct een waypoint in te stellen!</span>
-        </div>
-
-        <!-- Waypoints List Drawer -->
-        <div class="waypoints-drawer">
-          <div class="drawer-header">
-            <h3>📍 Gemarkeerde Waypoints</h3>
-            <span id="waypoint-count" class="counter-badge">0 punten</span>
-          </div>
-          <div id="waypoints-list" class="waypoints-grid">
-            <!-- Rendered dynamically -->
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ======================================================== -->
-    <!-- TAB 3: WHITELIST AANVRAGEN (PUBLIC FORM)                  -->
-    <!-- ======================================================== -->
-    <section id="tab-join-request" class="tab-pane">
-      <div class="form-container">
-        <div class="form-card">
-          <div class="form-header">
-            <span class="tag-pill">🔒 Besloten Server</span>
-            <h2>📝 Vraag Toegang Tot De Server Aan</h2>
-            <p>De FPixel server maakt gebruik van een actieve whitelist. Vul je gegevens in; een beheerder beoordeelt je aanvraag en voegt je direct toe.</p>
+        <div class="server-actions-grid">
+          <div class="action-card">
+            <div class="action-icon">📢</div>
+            <h4>Server Omroepbericht (Broadcast)</h4>
+            <p>Stuur direct een live melding naar alle actieve spelers in Minecraft.</p>
+            <div class="form-group" style="margin-top: 12px;">
+              <input type="text" id="broadcast-message-input" placeholder="Typ een bericht...">
+            </div>
+            <button class="btn btn-secondary" onclick="sendBroadcast()" style="margin-top: 10px;">
+              Verzend Omroep
+            </button>
           </div>
 
-          <form id="whitelist-form" onsubmit="handleWhitelistSubmit(event)">
-            <div class="form-group">
-              <label for="wl-username">Minecraft Gebruikersnaam *</label>
-              <div class="input-with-preview">
-                <input type="text" id="wl-username" required placeholder="bijv. Jay_V0" oninput="previewSkin(this.value)">
-                <img id="skin-preview-head" class="input-avatar" src="https://mc-heads.net/avatar/MHF_Steve/64" alt="skin">
-              </div>
-              <p class="field-hint">Let op: type je naam exact zoals in Minecraft (hoofdletters/kleine letters).</p>
-            </div>
-
-            <div class="form-group">
-              <label>Minecraft Editie *</label>
-              <div class="radio-toggle-group">
-                <label class="radio-card">
-                  <input type="radio" name="wl-edition" value="Java" checked>
-                  <span class="radio-label">☕ Java Editie (PC / Mac)</span>
-                </label>
-                <label class="radio-card">
-                  <input type="radio" name="wl-edition" value="Bedrock">
-                  <span class="radio-label">📱 Bedrock (Console, Mobiel, Win 10)</span>
-                </label>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="wl-discord">Discord Gebruikersnaam (Optioneel)</label>
-              <input type="text" id="wl-discord" placeholder="bijv. jayv#1234">
-            </div>
-
-            <div class="form-group">
-              <label for="wl-reason">Waarom wil je meedoen? / Wie ken je op de server? *</label>
-              <textarea id="wl-reason" rows="3" required placeholder="Vertel kort wie je bent of via wie je bij de server terechtkomt..."></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-block">🚀 Aanvraag Versturen</button>
-          </form>
-        </div>
-      </div>
-    </section>
-
-    <!-- ======================================================== -->
-    <!-- TAB 4: UNIFIED CMS BEHEER (ADMIN & OWNER IN 1 PLATFORM)   -->
-    <!-- ======================================================== -->
-    <section id="tab-cms" class="tab-pane">
-      <div class="cms-wrapper">
-
-        <!-- 1. CMS Header Bar -->
-        <div class="cms-header-card">
-          <div class="cms-header-left">
-            <div class="cms-breadcrumbs">
-              <span class="crumb-net">FPixel Network</span>
-              <span class="crumb-div">/</span>
-              <span class="crumb-active">CMS Beheerplatform</span>
-            </div>
-            <h2 class="cms-heading">Server Management CMS</h2>
-            <p class="cms-subheading">Centraal controlecentrum voor whitelist aanvragen, spelers, rangen, community parkours en systeembeheer.</p>
+          <div class="action-card">
+            <div class="action-icon">💾</div>
+            <h4>Volledige Server Backup</h4>
+            <p>Maakt een complete pre-deploy snapshot van de serverbestanden naar de backuplocatie. (Vereist [ADMIN]+)</p>
+            <button class="btn btn-secondary" onclick="triggerServerBackup()" style="margin-top: 14px;">
+              Start Server Backup
+            </button>
           </div>
 
-          <div class="cms-header-right">
-            <div id="cms-role-badge" class="cms-role-pill role-pill-owner">
-              <span class="role-icon">🛡️</span>
-              <span id="cms-role-text">Toegangsniveau: Laden...</span>
-            </div>
-            <div class="cms-header-actions">
-              <button class="btn btn-sm btn-secondary" onclick="refreshCmsData()">🔄 Verversen</button>
-              <button id="cms-backup-btn" class="btn btn-sm btn-success" onclick="triggerServerBackup()">💾 Backup Maken</button>
-              <button id="cms-stop-btn" class="btn btn-sm btn-danger owner-only-btn" onclick="openStopServerModal()">🛑 Server Stoppen</button>
-            </div>
+          <div class="action-card action-danger">
+            <div class="action-icon">🛑</div>
+            <h4>Server Veilig Stoppen</h4>
+            <p>Kondigt een shutdown aan aan alle spelers en sluit PaperMC veilig af. (Strictly [OWNER])</p>
+            <button id="btn-server-stop" class="btn btn-danger" onclick="triggerServerStop()" style="margin-top: 14px;" disabled>
+              Server Veilig Stoppen
+            </button>
           </div>
-        </div>
-
-        <!-- 2. CMS Sub-Navigation Tab Bar -->
-        <div class="cms-nav-bar">
-          <button id="cms-tabbtn-overview" class="cms-tab-btn active" onclick="switchCmsSubTab('overview')">
-            <span class="tab-icon">📊</span> Overzicht
-          </button>
-          <button id="cms-tabbtn-whitelist" class="cms-tab-btn" onclick="switchCmsSubTab('whitelist')">
-            <span class="tab-icon">📬</span> Whitelist & Aanvragen
-            <span id="cms-tab-wl-badge" class="cms-tab-badge">0</span>
-          </button>
-          <button id="cms-tabbtn-ranks" class="cms-tab-btn" onclick="switchCmsSubTab('ranks')">
-            <span class="tab-icon">👑</span> Spelers & Rangen
-          </button>
-          <button id="cms-tabbtn-parkour" class="cms-tab-btn" onclick="switchCmsSubTab('parkour')">
-            <span class="tab-icon">🏃</span> Parkour Studio
-            <span id="cms-tab-pk-badge" class="cms-tab-badge">0</span>
-          </button>
-          <button id="cms-tabbtn-system" class="cms-tab-btn" onclick="switchCmsSubTab('system')">
-            <span class="tab-icon">⚙️</span> Server & Systeem
-          </button>
-        </div>
-
-        <!-- 3. CMS Content Panes -->
-        <div class="cms-content-area">
-
-          <!-- SUBTAB 1: OVERZICHT (DASHBOARD) -->
-          <div id="cms-subtab-overview" class="cms-subtab-pane active">
-            <div class="cms-kpi-grid">
-              <div class="kpi-card" onclick="switchCmsSubTab('whitelist')">
-                <div class="kpi-icon">👥</div>
-                <div class="kpi-details">
-                  <span class="kpi-value" id="cms-kpi-whitelist">0</span>
-                  <span class="kpi-label">Gewhiteliste Spelers</span>
-                </div>
-                <span class="kpi-link">Beheer &rarr;</span>
-              </div>
-
-              <div class="kpi-card kpi-card-warning" onclick="switchCmsSubTab('whitelist')">
-                <div class="kpi-icon">📬</div>
-                <div class="kpi-details">
-                  <span class="kpi-value" id="cms-kpi-requests">0</span>
-                  <span class="kpi-label">Openstaande Aanvragen</span>
-                </div>
-                <span class="kpi-link">Beoordelen &rarr;</span>
-              </div>
-
-              <div class="kpi-card kpi-card-info" onclick="switchCmsSubTab('parkour')">
-                <div class="kpi-icon">🏃</div>
-                <div class="kpi-details">
-                  <span class="kpi-value" id="cms-kpi-parkour">0</span>
-                  <span class="kpi-label">Parkour Maps</span>
-                </div>
-                <span class="kpi-link">Studio &rarr;</span>
-              </div>
-
-              <div class="kpi-card kpi-card-purple" onclick="switchCmsSubTab('ranks')">
-                <div class="kpi-icon">👑</div>
-                <div class="kpi-details">
-                  <span class="kpi-value" id="cms-kpi-ranks">0</span>
-                  <span class="kpi-label">Staf & Speciale Rangen</span>
-                </div>
-                <span class="kpi-link">Bekijk &rarr;</span>
-              </div>
-            </div>
-
-            <!-- Server Quick Health Box -->
-            <div class="cms-panel-card">
-              <div class="panel-header">
-                <h3>🖥️ Systeemstatus & Netwerk Overzicht</h3>
-                <span class="status-indicator online"><span class="status-pulse"></span> Operationeel</span>
-              </div>
-              <div class="cms-specs-grid">
-                <div class="spec-item">
-                  <span class="spec-k">Minecraft Versie</span>
-                  <span class="spec-v">Paper 1.21.x (Java 25)</span>
-                </div>
-                <div class="spec-item">
-                  <span class="spec-k">Java Server Adres</span>
-                  <span class="spec-v">mc.fpixel.nl:25565</span>
-                </div>
-                <div class="spec-item">
-                  <span class="spec-k">Bedrock Crossplay</span>
-                  <span class="spec-v">mc.fpixel.nl:19132 (Geyser/Floodgate)</span>
-                </div>
-                <div class="spec-item">
-                  <span class="spec-k">RCON Server Bridge</span>
-                  <span class="spec-v text-green">Actief & Verbonden</span>
-                </div>
-                <div class="spec-item">
-                  <span class="spec-k">Web authenticatie</span>
-                  <span class="spec-v">In-game chat verificatiecode</span>
-                </div>
-                <div class="spec-item">
-                  <span class="spec-k">Backups</span>
-                  <span class="spec-v">Geautomatiseerd snapshot systeem</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- SUBTAB 2: WHITELIST & AANVRAGEN -->
-          <div id="cms-subtab-whitelist" class="cms-subtab-pane">
-
-            <!-- 1. Openstaande Aanvragen -->
-            <div class="cms-panel-card">
-              <div class="panel-header">
-                <div>
-                  <h3>📬 Openstaande Join Aanvragen (<span id="pending-req-count">0</span>)</h3>
-                  <span class="subtitle">Keur nieuwe spelers goed om ze direct in Minecraft toe te laten.</span>
-                </div>
-                <div class="panel-header-actions">
-                  <button class="btn btn-sm btn-outline" onclick="cleanFakeRequests()" title="Verwijdert testaanvragen zoals gaysteve en testfriend">🧹 Oude / Test Aanvragen Opschonen</button>
-                  <button class="btn btn-sm btn-outline-danger" onclick="clearAllRequests()" title="Wist alle aanvragen">🗑️ Alle Aanvragen Wissen</button>
-                </div>
-              </div>
-
-              <div id="pending-requests-list" class="requests-grid">
-                <!-- Rendered dynamically -->
-              </div>
-            </div>
-
-            <!-- 2. Actieve Whitelist -->
-            <div class="cms-panel-card">
-              <div class="panel-header">
-                <div>
-                  <h3>✅ Actieve Whitelist Spelers (<span id="active-wl-count">0</span>)</h3>
-                  <span class="subtitle">Spelers die momenteel zijn toegelaten op de server.</span>
-                </div>
-                <div class="whitelist-toolbar">
-                  <div class="search-box">
-                    <input type="text" id="wl-search-input" placeholder="🔍 Zoek speler..." oninput="filterWhitelist(this.value)">
-                  </div>
-                  <div class="manual-add-box">
-                    <input type="text" id="manual-wl-input" placeholder="Minecraft speler toevoegen...">
-                    <button class="btn btn-sm btn-primary" onclick="manualAddWhitelist()">+ Whitelisten</button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="table-responsive">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Speler</th>
-                      <th>UUID / Identificatie</th>
-                      <th style="width: 120px; text-align: right;">Actie</th>
-                    </tr>
-                  </thead>
-                  <tbody id="whitelist-table-body">
-                    <!-- Rendered dynamically -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- SUBTAB 3: SPELERS & RANGEN -->
-          <div id="cms-subtab-ranks" class="cms-subtab-pane">
-
-            <!-- Lock Notice for Non-Owners -->
-            <div id="ranks-perm-notice" class="cms-lock-banner" style="display: none;">
-              <span class="lock-icon">🔒</span>
-              <div>
-                <strong>Alleen-lezen weergave:</strong> Alleen spelers met de <code>[OWNER]</code> rang hebben bevoegdheid om rangen toe te kennen of te wijzigen.
-              </div>
-            </div>
-
-            <!-- Rank Assignment Card -->
-            <div class="cms-panel-card" id="rank-assign-card">
-              <div class="panel-header">
-                <div>
-                  <h3>🎖️ Spelers Rangen Toekennen</h3>
-                  <span class="subtitle">Wijzig rangen live in Minecraft ([OWNER], [ADMIN], [MOD], [VIP], etc.).</span>
-                </div>
-              </div>
-
-              <form onsubmit="handleSetRankSubmit(event)" class="rank-assign-form" id="rank-assign-form">
-                <div class="form-group inline-group">
-                  <label for="rank-username">Speler Gebruikersnaam:</label>
-                  <input type="text" id="rank-username" required placeholder="bijv. Jay_V0 of SmileyGaming27">
-                </div>
-                <div class="form-group inline-group">
-                  <label for="rank-select">Nieuwe Rang:</label>
-                  <select id="rank-select" required>
-                    <option value="MEMBER">MEMBER (Standaard Speler)</option>
-                    <option value="VIP">VIP (Groen)</option>
-                    <option value="VIP_PLUS">VIP+ (Groen / Goud)</option>
-                    <option value="MVP">MVP (Aqua)</option>
-                    <option value="MVP_PLUS">MVP+ (Aqua / Rood)</option>
-                    <option value="MOD">MOD (Donkergroen Moderator)</option>
-                    <option value="ADMIN">ADMIN (Rood Administrator)</option>
-                    <option value="OWNER">OWNER (Donkerrood Eigenaar)</option>
-                  </select>
-                </div>
-                <button type="submit" class="btn btn-primary" id="btn-submit-rank">Rang Toekennen & Live Opslaan</button>
-              </form>
-            </div>
-
-            <!-- Ranks Overview Table (Clean CMS Table - No broken overlapping badges!) -->
-            <div class="cms-panel-card">
-              <div class="panel-header">
-                <div>
-                  <h3>👑 Huidige Server Rangen</h3>
-                  <span class="subtitle">Overzicht van alle spelers met een speciale rang of stafbevoegdheid.</span>
-                </div>
-                <div class="search-box">
-                  <input type="text" id="ranks-search-input" placeholder="🔍 Filter op speler of rang..." oninput="filterRanksTable(this.value)">
-                </div>
-              </div>
-
-              <div class="table-responsive">
-                <table class="data-table ranks-data-table">
-                  <thead>
-                    <tr>
-                      <th>Speler</th>
-                      <th>Rang</th>
-                      <th>Type / Status</th>
-                      <th style="width: 150px; text-align: right;">Beheer</th>
-                    </tr>
-                  </thead>
-                  <tbody id="ranks-table-body">
-                    <!-- Rendered dynamically -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- SUBTAB 4: PARKOUR STUDIO -->
-          <div id="cms-subtab-parkour" class="cms-subtab-pane">
-
-            <!-- Stats Overview Grid -->
-            <div class="stats-overview-grid">
-              <div class="stat-card" onclick="filterParkourCards('ALL')">
-                <div class="stat-icon">🗺️</div>
-                <div class="stat-content">
-                  <span class="stat-number" id="pk-stat-total">0</span>
-                  <span class="stat-label">Totaal Aantal Maps</span>
-                </div>
-              </div>
-              <div class="stat-card stat-pending-border" onclick="filterParkourCards('PENDING')">
-                <div class="stat-icon">⏳</div>
-                <div class="stat-content">
-                  <span class="stat-number highlight-pending" id="pk-stat-pending">0</span>
-                  <span class="stat-label">In Afwachting (Review)</span>
-                </div>
-              </div>
-              <div class="stat-card stat-approved-border" onclick="filterParkourCards('APPROVED')">
-                <div class="stat-icon">✅</div>
-                <div class="stat-content">
-                  <span class="stat-number highlight-approved" id="pk-stat-approved">0</span>
-                  <span class="stat-label">Goedgekeurd & Speelbaar</span>
-                </div>
-              </div>
-              <div class="stat-card stat-disabled-border" onclick="filterParkourCards('DISABLED')">
-                <div class="stat-icon">⏸️</div>
-                <div class="stat-content">
-                  <span class="stat-number highlight-disabled" id="pk-stat-disabled">0</span>
-                  <span class="stat-label">Uit Circulatie (Inactief)</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Parkour Manager Panel -->
-            <div class="cms-panel-card">
-              <div class="panel-header">
-                <div>
-                  <h3>🏃 Community Parkour Manager</h3>
-                  <span class="subtitle">Beoordeel parcoursen gemaakt via <code>/fpixel parkour create [naam]</code> en zet ze live of haal ze uit circulatie.</span>
-                </div>
-                <button class="btn btn-sm btn-secondary" onclick="loadParkourData()">🔄 Parcoursen Verversen</button>
-              </div>
-
-              <div id="parkour-maps-list" class="parkour-cards-grid">
-                <!-- Rendered dynamically -->
-              </div>
-            </div>
-
-          </div>
-
-          <!-- SUBTAB 5: SERVER & SYSTEEM -->
-          <div id="cms-subtab-system" class="cms-subtab-pane">
-
-            <!-- In-Game Broadcast Tool -->
-            <div class="cms-panel-card">
-              <div class="panel-header">
-                <div>
-                  <h3>📢 In-Game Chat Omroep (Broadcast)</h3>
-                  <span class="subtitle">Stuur direct een server-brede aankondiging naar alle spelers die momenteel online zijn.</span>
-                </div>
-              </div>
-
-              <form onsubmit="handleBroadcastSubmit(event)" class="broadcast-form">
-                <div class="form-group inline-group" style="flex: 1;">
-                  <input type="text" id="broadcast-message-input" required placeholder="Type hier je bericht voor in-game chat...">
-                </div>
-                <button type="submit" class="btn btn-primary">📢 Verstuur naar Minecraft</button>
-              </form>
-            </div>
-
-            <!-- Server Snapshot & Backups -->
-            <div class="cms-panel-card">
-              <div class="panel-header">
-                <div>
-                  <h3>💾 Server Backups & Wereldveiligheid</h3>
-                  <span class="subtitle">Maak handmatig een complete momentopname van alle Paper werelden en configuraties.</span>
-                </div>
-                <button class="btn btn-success" onclick="triggerServerBackup()">💾 Nu Volledige Backup Maken</button>
-              </div>
-              <p style="color: var(--text-dim); font-size: 0.9rem;">
-                Backups worden opgeslagen in <code>/home/jayv/backups/</code> en bevatten de Overworld, Nether, End, plugins en configuratiebestanden.
-              </p>
-            </div>
-
-            <!-- Server Noodstop (Strictly OWNER) -->
-            <div class="cms-panel-card panel-danger">
-              <div class="panel-header">
-                <div>
-                  <h3 class="text-danger">🛑 Server Veilig Stoppen (Gevaarlijke Zone)</h3>
-                  <span class="subtitle">Alleen toegankelijk voor <code>[OWNER]</code>. Stuurt een 5-seconden waarschuwing en sluit de server veilig af.</span>
-                </div>
-                <button id="system-stop-btn" class="btn btn-danger owner-only-btn" onclick="openStopServerModal()">🛑 Server Stoppen</button>
-              </div>
-            </div>
-
-          </div>
-
         </div>
       </div>
     </section>
@@ -806,154 +455,219 @@
   </main>
 
   <!-- ======================================================== -->
-  <!-- MODAL: INLOGGEN / WACHTWOORD RESETTEN MET IN-GAME CODE    -->
+  <!-- MODALS                                                   -->
   <!-- ======================================================== -->
-  <div id="login-modal" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 id="modal-title">🔑 Inloggen op FPixel</h3>
-        <button class="modal-close" onclick="closeLoginModal()">&times;</button>
-      </div>
 
-      <div class="modal-body">
-        <!-- Modal Tabs -->
+  <!-- 1. AUTH / LOGIN & RESET MODAL -->
+  <div id="modal-auth" class="modal-backdrop" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
         <div class="modal-tabs">
-          <button id="modal-tab-login" class="modal-tab active" onclick="switchLoginMode('login')">
-            🔑 Wachtwoord Login
-          </button>
-          <button id="modal-tab-code" class="modal-tab" onclick="switchLoginMode('code')">
-            ✉️ In-Game Code / Reset
-          </button>
+          <button id="modal-tab-login-btn" class="modal-tab-btn active" onclick="switchAuthModalTab('login')">Inloggen</button>
+          <button id="modal-tab-reset-btn" class="modal-tab-btn" onclick="switchAuthModalTab('reset')">Wachtwoord Resetten (In-Game)</button>
         </div>
-
-        <!-- Mode 1: Wachtwoord Login -->
-        <form id="form-login" onsubmit="handlePasswordLogin(event)">
-          <div class="form-group">
-            <label for="login-username">Minecraft Gebruikersnaam</label>
-            <input type="text" id="login-username" required placeholder="Jouw Minecraft naam">
-          </div>
-          <div class="form-group">
-            <label for="login-password">Wachtwoord</label>
-            <input type="password" id="login-password" required placeholder="Jouw wachtwoord">
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">Veilig Inloggen</button>
-          <p class="modal-help-text">
-            Nog geen wachtwoord ingesteld of vergeten? <a href="#" onclick="switchLoginMode('code'); return false;">Reset je wachtwoord met een in-game code</a> of gebruik in Minecraft <code>/webpass &lt;wachtwoord&gt;</code>.
-          </p>
-        </form>
-
-        <!-- Mode 2: In-Game Verificatiecode / Password Reset -->
-        <div id="form-code-section" style="display: none;">
-          <div class="modal-info-box">
-            <p><strong>Hoe wachtwoord resetten werkt:</strong> Vul je Minecraft naam in en klik op <em>Stuur Code</em>. Je ontvangt direct in je Minecraft chat een 6-cijferige verificatiecode. Vul die hieronder in om een nieuw wachtwoord in te stellen.</p>
-          </div>
-
-          <div class="form-group">
-            <label for="setup-username">Minecraft Gebruikersnaam</label>
-            <div class="input-with-button">
-              <input type="text" id="setup-username" placeholder="Jouw Minecraft naam">
-              <button type="button" class="btn btn-secondary" onclick="requestInGameCode()">Stuur Code 📩</button>
-            </div>
-            <p class="modal-tip">💡 Zorg dat je online bent op <strong>mc.fpixel.nl</strong> om de code in je chat te ontvangen.</p>
-          </div>
-
-          <form id="form-verify-code" onsubmit="handleVerifyCodeAndSetPassword(event)">
-            <div class="form-group">
-              <label for="verify-code">6-Cijferige Verificatiecode uit Minecraft Chat</label>
-              <input type="text" id="verify-code" required placeholder="bijv. 482910" maxlength="6" class="code-input">
-            </div>
-            <div class="form-group">
-              <label for="setup-new-password">Nieuw Wachtwoord</label>
-              <input type="password" id="setup-new-password" required placeholder="Kies een nieuw veilig wachtwoord" minlength="4">
-            </div>
-            <button type="submit" class="btn btn-primary btn-block">Nieuw Wachtwoord Opslaan & Direct Inloggen</button>
-          </form>
-        </div>
-
+        <button class="modal-close" onclick="closeModal('modal-auth')">&times;</button>
       </div>
-    </div>
-  </div>
 
-  <!-- ======================================================== -->
-  <!-- MODAL: WAYPOINT TOEVOEGEN OP KAART                        -->
-  <!-- ======================================================== -->
-  <div id="waypoint-modal" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>📍 Waypoint Toevoegen</h3>
-        <button class="modal-close" onclick="closeAddWaypointModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <form onsubmit="handleWaypointSubmit(event)">
-          <div class="form-group">
-            <label for="wp-name">Naam van het Waypoint *</label>
-            <input type="text" id="wp-name" required placeholder="bijv. Mijn Basis, Nether Portaal, Dorp...">
-          </div>
-
-          <div class="form-row-3">
-            <div class="form-group">
-              <label for="wp-x">Coördinaat X *</label>
-              <input type="number" id="wp-x" required placeholder="X">
-            </div>
-            <div class="form-group">
-              <label for="wp-y">Hoogte Y</label>
-              <input type="number" id="wp-y" value="64" placeholder="Y">
-            </div>
-            <div class="form-group">
-              <label for="wp-z">Coördinaat Z *</label>
-              <input type="number" id="wp-z" required placeholder="Z">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="wp-world">Dimensie / Wereld</label>
-            <select id="wp-world">
-              <option value="survival">🌍 Overworld (Survival)</option>
-              <option value="nether">🔥 The Nether</option>
-              <option value="end">🌌 The End</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="wp-icon">Icoon Marker</label>
-            <select id="wp-icon">
-              <option value="📍">📍 Standaard Pin</option>
-              <option value="🏠">🏠 Basis / Huis</option>
-              <option value="⛏️">⛏️ Mijn / Ores</option>
-              <option value="🔥">🔥 Nether Portaal</option>
-              <option value="🌌">🌌 End Portaal</option>
-              <option value="🌾">🌾 Boerderij / Farm</option>
-              <option value="🏪">🏪 Winkel / Handel</option>
-            </select>
-          </div>
-
-          <button type="submit" class="btn btn-primary btn-block">Plaats Waypoint op de Kaart</button>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- ======================================================== -->
-  <!-- MODAL: SERVER STOPPEN BEVESTIGING (OWNER ONLY)            -->
-  <!-- ======================================================== -->
-  <div id="stop-server-modal" class="modal-overlay">
-    <div class="modal-card modal-card-danger">
-      <div class="modal-header">
-        <h3>🛑 Minecraft Server Stoppen</h3>
-        <button class="modal-close" onclick="closeStopServerModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="danger-warning-box">
-          <p><strong>Let op!</strong> Dit stuurt het <code>stop</code> commando via RCON naar de actieve Minecraft server. Alle online spelers worden veilig ontkoppeld en de werelden worden opgeslagen.</p>
-        </div>
-        <p class="confirm-prompt">Typ <strong>STOP</strong> in het onderstaande veld om te bevestigen:</p>
+      <!-- Login Pane -->
+      <div id="modal-pane-login" class="modal-body">
+        <p class="modal-desc">Log in met jouw Minecraft-account. Activeer je account via in-game commando <code>/webpass &lt;wachtwoord&gt;</code>.</p>
         <div class="form-group">
-          <input type="text" id="stop-confirm-input" placeholder="Typ STOP...">
+          <label>Minecraft Gebruikersnaam:</label>
+          <input type="text" id="login-username" placeholder="bijv. Jay_V0 of .BedrockSpeler">
         </div>
-        <div class="modal-actions-row">
-          <button type="button" class="btn btn-secondary" onclick="closeStopServerModal()">Annuleren</button>
-          <button type="button" class="btn btn-danger" onclick="confirmStopServer()">🛑 Ja, Stop Server Nu</button>
+        <div class="form-group">
+          <label>Wachtwoord:</label>
+          <input type="password" id="login-password" placeholder="Jouw ingestelde web-wachtwoord">
         </div>
+        <button class="btn btn-purple btn-block" onclick="submitLogin()">Inloggen</button>
+      </div>
+
+      <!-- Password Reset Pane -->
+      <div id="modal-pane-reset" class="modal-body" style="display: none;">
+        <p class="modal-desc">Wachtwoord vergeten? Voer je gebruikersnaam in terwijl je in Minecraft op de server bent. We sturen direct een 6-cijferige verificatiecode naar je Minecraft chat!</p>
+        
+        <div id="reset-step-1">
+          <div class="form-group">
+            <label>Minecraft Gebruikersnaam:</label>
+            <input type="text" id="reset-username" placeholder="bijv. Jay_V0">
+          </div>
+          <button class="btn btn-purple btn-block" onclick="requestResetCode()">
+            Stuur Verificatiecode naar Minecraft Chat 📩
+          </button>
+        </div>
+
+        <div id="reset-step-2" style="display: none; margin-top: 16px;">
+          <div class="alert alert-info">
+            Er is een code gezonden naar jouw in-game Minecraft chat! Controleer je scherm.
+          </div>
+          <div class="form-group">
+            <label>6-Cijferige Code uit Minecraft:</label>
+            <input type="text" id="reset-code" placeholder="bijv. 481920" maxlength="6">
+          </div>
+          <div class="form-group">
+            <label>Nieuw Wachtwoord:</label>
+            <input type="password" id="reset-new-password" placeholder="Kies een nieuw veilig wachtwoord">
+          </div>
+          <button class="btn btn-purple btn-block" onclick="confirmResetCode()">
+            Nieuw Wachtwoord Opslaan & Direct Inloggen
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. CREATE WORLD MODAL -->
+  <div id="modal-create-world" class="modal-backdrop" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>➕ Nieuwe Spelerwereld Aanmaken</h3>
+        <button class="modal-close" onclick="closeModal('modal-create-world')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Je wereld krijgt een eigen Overworld, Nether en End dimensie met portal-routing en geïsoleerde inventaris.</p>
+        <div class="form-group">
+          <label>Wereldnaam:</label>
+          <input type="text" id="create-world-name" placeholder="bijv. Jay's Kasteel Wereld">
+        </div>
+        <div class="form-group">
+          <label>Wereld Seed (Optioneel):</label>
+          <input type="text" id="create-world-seed" placeholder="Laat leeg voor willekeurige seed">
+        </div>
+        <div class="form-group-checkbox">
+          <input type="checkbox" id="create-world-cheats">
+          <label for="create-world-cheats">Cheats toestaan (/gamemode, /weather, /tp, /give, /time)</label>
+        </div>
+        <button class="btn btn-purple btn-block" onclick="submitCreateWorld()">
+          Wereld Genereren & Activeren
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. SHARE WORLD MODAL -->
+  <div id="modal-share-world" class="modal-backdrop" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="share-modal-title">Vrienden Uitnodigen</h3>
+        <button class="modal-close" onclick="closeModal('modal-share-world')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="share-world-uid">
+        <p class="modal-desc">Geef vrienden toegang om jouw wereld te betreden via <code>/joinworld &lt;UID&gt;</code>.</p>
+        
+        <div class="form-group">
+          <label>Minecraft Spelernaam:</label>
+          <input type="text" id="share-target-player" placeholder="bijv. SmileyGaming27">
+        </div>
+        <div class="form-group-checkbox">
+          <input type="checkbox" id="share-allow-cheats">
+          <label for="share-allow-cheats">Deze speler ook cheat-rechten geven</label>
+        </div>
+        <button class="btn btn-purple btn-block" onclick="submitShareWorld()">
+          Toegang Toekennen
+        </button>
+
+        <h4 style="margin-top: 20px; margin-bottom: 8px;">Gedeelde Spelers</h4>
+        <div id="share-list" class="share-list-container">
+          <!-- Injected by app.js -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. WORLD BACKUPS & HOT RESTORE MODAL -->
+  <div id="modal-world-backups" class="modal-backdrop" style="display: none;">
+    <div class="modal-box modal-lg">
+      <div class="modal-header">
+        <h3 id="backups-modal-title">Zero-Downtime Git Backups</h3>
+        <button class="modal-close" onclick="closeModal('modal-world-backups')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="backups-world-uid">
+        <div class="backups-header-row">
+          <p class="modal-desc" style="margin: 0;">Herstel jouw wereld live naar een eerdere commit zonder dat de server hoeft te herstarten!</p>
+          <button class="btn btn-sm btn-purple" onclick="triggerWorldBackupFromModal()">
+            💾 Nu Backup Maken
+          </button>
+        </div>
+
+        <div id="backups-loading" class="loading-state">
+          <div class="spinner"></div>
+          <span>Git backups ophalen...</span>
+        </div>
+
+        <div id="backups-list" class="backups-table-wrap" style="display: none; margin-top: 14px;">
+          <table class="cms-table">
+            <thead>
+              <tr>
+                <th>Commit</th>
+                <th>Datum</th>
+                <th>Auteur / Beschrijving</th>
+                <th>Actie</th>
+              </tr>
+            </thead>
+            <tbody id="backups-table-body">
+              <!-- Injected by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. CREATE MAP MODAL -->
+  <div id="modal-create-map" class="modal-backdrop" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>🏗️ Nieuwe Minigame Map Bouwen</h3>
+        <button class="modal-close" onclick="closeModal('modal-create-map')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Map Naam:</label>
+          <input type="text" id="create-map-name" placeholder="bijv. Castle Siege">
+        </div>
+        <div class="form-group">
+          <label>Minigame Type:</label>
+          <select id="create-map-type">
+            <option value="BEDWARS">BedWars (Auto-eiland generator)</option>
+            <option value="SKYWARS">SkyWars (Auto-eiland generator)</option>
+            <option value="PARKOUR">Parkour Studio</option>
+            <option value="TNTRUN">TNT Run</option>
+            <option value="MURDER_MYSTERY">Murder Mystery</option>
+            <option value="PROP_HUNT">Prop Hunt</option>
+            <option value="THE_BRIDGE">The Bridge 1v1</option>
+            <option value="SUMO">Sumo 1v1</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Aantal Teams (2 tot 8):</label>
+          <input type="number" id="create-map-teams" min="2" max="8" value="4">
+        </div>
+        <button class="btn btn-purple btn-block" onclick="submitCreateMap()">
+          Bouwwereld Aanmaken
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. REJECT MAP MODAL -->
+  <div id="modal-reject-map" class="modal-backdrop" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Map Afkeuren</h3>
+        <button class="modal-close" onclick="closeModal('modal-reject-map')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="reject-map-id">
+        <p class="modal-desc">Geef feedback aan de bouwer waarom deze map niet is goedgekeurd:</p>
+        <div class="form-group">
+          <textarea id="reject-map-reason" rows="3" placeholder="bijv. Eilanden staan te dicht bij elkaar of spawn ontbreekt..."></textarea>
+        </div>
+        <button class="btn btn-danger btn-block" onclick="submitRejectMap()">
+          Map Afkeuren met Reden
+        </button>
       </div>
     </div>
   </div>

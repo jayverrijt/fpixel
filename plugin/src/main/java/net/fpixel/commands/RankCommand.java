@@ -29,7 +29,7 @@ public class RankCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 2) {
-            sender.sendMessage(ChatUtil.colorize("§cUsage: /setrank <player> <OWNER|ADMIN|MOD|VIP_PLUS|VIP|DEFAULT>"));
+            sender.sendMessage(ChatUtil.colorize("§cUsage: /setrank <player> <OWNER|ADMIN|MODERATOR|DONOR|MEMBER>"));
             return true;
         }
 
@@ -40,7 +40,7 @@ public class RankCommand implements CommandExecutor, TabCompleter {
         }
 
         try {
-            Rank rank = Rank.valueOf(args[1].toUpperCase());
+            Rank rank = Rank.fromString(args[1]);
             plugin.getRankManager().setRank(target, rank);
             sender.sendMessage(ChatUtil.colorize("§aSet " + target.getName() + "'s rank to " + rank.getColor() + rank.name() + "§a."));
             ChatUtil.sendMessage(target, "§aYour rank has been updated to " + rank.getColor() + rank.name() + "§a!");

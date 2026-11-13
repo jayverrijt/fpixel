@@ -10,6 +10,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -63,6 +64,12 @@ public class LobbyManager {
             spawnLocation = Bukkit.getWorlds().get(0).getSpawnLocation();
         }
         return spawnLocation;
+    }
+
+    public boolean isLobbyWorld(World world) {
+        if (world == null) return false;
+        Location spawn = getSpawnLocation();
+        return spawn != null && spawn.getWorld() != null && spawn.getWorld().equals(world);
     }
 
     public void giveLobbyItems(Player player) {

@@ -40,13 +40,16 @@ public class FPixelPlugin extends JavaPlugin {
     private DuelManager duelManager;
     private PartyManager partyManager;
     private SurvivalManager survivalManager;
-    private net.fpixel.survival.waypoints.WaypointManager waypointManager;
     private net.fpixel.core.map.MapImporter mapImporter;
     private net.fpixel.lobby.HubNPCManager hubNPCManager;
     private net.fpixel.lobby.HubLoreManager hubLoreManager;
     private net.fpixel.core.testing.TestingManager testingManager;
     private net.fpixel.core.security.HostnameListener hostnameListener;
     private net.fpixel.games.parkour.ParkourManager parkourManager;
+    private net.fpixel.lobby.HubGenerator hubGenerator;
+    private net.fpixel.lobby.portal.HubPortalManager hubPortalManager;
+    private net.fpixel.worlds.PlayerWorldManager playerWorldManager;
+    private net.fpixel.games.maker.MapMakerManager mapMakerManager;
 
 
     @Override
@@ -72,9 +75,12 @@ public class FPixelPlugin extends JavaPlugin {
         this.partyManager = new PartyManager(this);
         this.survivalManager = new SurvivalManager(this);
         this.survivalManager.init();
-        this.waypointManager = new net.fpixel.survival.waypoints.WaypointManager(this);
         this.mapImporter = new net.fpixel.core.map.MapImporter(this);
         this.parkourManager = new net.fpixel.games.parkour.ParkourManager(this);
+        this.hubGenerator = new net.fpixel.lobby.HubGenerator(this);
+        this.hubPortalManager = new net.fpixel.lobby.portal.HubPortalManager(this);
+        this.playerWorldManager = new net.fpixel.worlds.PlayerWorldManager(this);
+        this.mapMakerManager = new net.fpixel.games.maker.MapMakerManager(this);
 
         // 2. Visual & Display Managers (Scoreboards & Tablist)
         this.scoreboardManager = new ScoreboardManager(this);
@@ -89,6 +95,7 @@ public class FPixelPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new ChatListener(this), this);
         Bukkit.getPluginManager().registerEvents(new SurvivalListener(this), this);
         Bukkit.getPluginManager().registerEvents(new net.fpixel.games.parkour.ParkourListener(this, this.parkourManager), this);
+        Bukkit.getPluginManager().registerEvents(new net.fpixel.lobby.portal.HubPortalListener(this.hubPortalManager), this);
 
 
         // 4. Register Commands
@@ -154,11 +161,6 @@ public class FPixelPlugin extends JavaPlugin {
         getCommand("addcoins").setExecutor(coinsCmd);
         getCommand("addcoins").setTabCompleter(coinsCmd);
 
-        WaypointCommand wpCmd = new WaypointCommand(this);
-        getCommand("waypoint").setExecutor(wpCmd);
-        getCommand("waypoint").setTabCompleter(wpCmd);
-        getCommand("worldmap").setExecutor(wpCmd);
-        getCommand("worldmap").setTabCompleter(wpCmd);
 
         ServerUpdateCommand updateCmd = new ServerUpdateCommand(this);
         getCommand("serverupdate").setExecutor(updateCmd);
@@ -166,12 +168,16 @@ public class FPixelPlugin extends JavaPlugin {
         ServerBackupCommand sBackupCmd = new ServerBackupCommand(this);
         getCommand("serverbackup").setExecutor(sBackupCmd);
 
+        JoinWorldCommand joinWorldCmd = new JoinWorldCommand(this);
+        getCommand("joinworld").setExecutor(joinWorldCmd);
+        getCommand("joinworld").setTabCompleter(joinWorldCmd);
 
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);
         Bukkit.getScheduler().runTask(this, () -> {
             World defaultWorld = Bukkit.getWorlds().get(0);
             worldManager.generateAllMaps(defaultWorld);
+            hubPortalManager.setupPortals(defaultWorld, 64);
         });
 
         getLogger().info("FPixelCore has successfully loaded! Ready for players.");
@@ -197,6 +203,12 @@ public class FPixelPlugin extends JavaPlugin {
         if (survivalManager != null) {
             survivalManager.saveAllActiveProfiles();
         }
+        if (playerWorldManager != null) {
+            playerWorldManager.saveWorlds();
+        }
+        if (mapMakerManager != null) {
+            mapMakerManager.saveMaps();
+        }
         if (gameManager != null) {
             for (var arena : gameManager.getArenas()) {
                 arena.resetArena();
@@ -218,13 +230,16 @@ public class FPixelPlugin extends JavaPlugin {
     public DuelManager getDuelManager() { return duelManager; }
     public PartyManager getPartyManager() { return partyManager; }
     public SurvivalManager getSurvivalManager() { return survivalManager; }
-    public net.fpixel.survival.waypoints.WaypointManager getWaypointManager() { return waypointManager; }
     public net.fpixel.core.map.MapImporter getMapImporter() { return mapImporter; }
     public net.fpixel.lobby.HubNPCManager getHubNPCManager() { return hubNPCManager; }
     public net.fpixel.lobby.HubLoreManager getHubLoreManager() { return hubLoreManager; }
     public net.fpixel.core.testing.TestingManager getTestingManager() { return testingManager; }
     public net.fpixel.core.security.HostnameListener getHostnameListener() { return hostnameListener; }
     public net.fpixel.games.parkour.ParkourManager getParkourManager() { return parkourManager; }
+    public net.fpixel.lobby.HubGenerator getHubGenerator() { return hubGenerator; }
+    public net.fpixel.lobby.portal.HubPortalManager getHubPortalManager() { return hubPortalManager; }
+    public net.fpixel.worlds.PlayerWorldManager getPlayerWorldManager() { return playerWorldManager; }
+    public net.fpixel.games.maker.MapMakerManager getMapMakerManager() { return mapMakerManager; }
 
     @Override
     public org.bukkit.generator.ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
