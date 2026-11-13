@@ -1,10 +1,10 @@
 location:
   world: survival
-  x: -729.9875000119209
-  y: 63.0
-  z: 369.30000001192093
-  yaw: 88.52911
-  pitch: 2.6160634
+  x: -911.2979917665567
+  y: 52.0
+  z: -204.85117359940358
+  yaw: -138.85013
+  pitch: 16.171917
 level: 55
 exp: 0.03300242
 health: 20.0
@@ -17,6 +17,7 @@ inventory:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:fire_aspect":2,"minecraft:mending":1,"minecraft:sharpness":3,"minecraft:sweeping_edge":3,"minecraft:unbreaking":3}'
+    minecraft:damage: '1'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -45,8 +46,8 @@ inventory:
   id: minecraft:diamond_pickaxe
   count: 1
   components:
-    minecraft:custom_name: '"❄ Silky ❄"'
     minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:silk_touch":1,"minecraft:unbreaking":3}'
+    minecraft:custom_name: '"❄ Silky ❄"'
     minecraft:damage: '22'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
@@ -57,7 +58,11 @@ inventory:
     minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:mending":1,"minecraft:unbreaking":3,"minecraft:vanishing_curse":1}'
     minecraft:damage: '80'
   schema_version: 1
-- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:bone
+  count: 1
+  schema_version: 1
 - null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -80,8 +85,8 @@ inventory:
   count: 1
   components:
     minecraft:repair_cost: '1'
-    minecraft:custom_name: '"💎 Fortuny 💎"'
     minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:fortune":3,"minecraft:mending":1,"minecraft:unbreaking":3}'
+    minecraft:custom_name: '"💎 Fortuny 💎"'
     minecraft:damage: '8'
   schema_version: 1
 - null
@@ -169,8 +174,9 @@ inventory:
   count: 1
   components:
     minecraft:repair_cost: '7'
-    minecraft:custom_name: '"🌊 Wave Crasher 🌊"'
     minecraft:enchantments: '{"minecraft:impaling":5,"minecraft:mending":1,"minecraft:riptide":3,"minecraft:unbreaking":3}'
+    minecraft:custom_name: '"🌊 Wave Crasher 🌊"'
+    minecraft:damage: '4'
   schema_version: 1
 - null
 - null
@@ -215,8 +221,9 @@ offhand:
   count: 1
   components:
     minecraft:repair_cost: '7'
-    minecraft:custom_name: '"🌊 Wave Crasher 🌊"'
     minecraft:enchantments: '{"minecraft:impaling":5,"minecraft:mending":1,"minecraft:riptide":3,"minecraft:unbreaking":3}'
+    minecraft:custom_name: '"🌊 Wave Crasher 🌊"'
+    minecraft:damage: '4'
   schema_version: 1
 enderchest:
 - null
