@@ -790,7 +790,7 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
 
         if (action.equals("create")) {
             if (args.length < 5) {
-                sender.sendMessage("Gebruik: /fpixel world create <uid> <name> <creator> [seed] [cheats]");
+                sender.sendMessage("Gebruik: /fpixel world create <uid> <name> <creator> [seed] [cheats] [gamemode]");
                 return true;
             }
             String uid = args[2];
@@ -798,9 +798,16 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             String creator = args[4];
             long seed = args.length > 5 ? Long.parseLong(args[5]) : 0L;
             boolean cheats = args.length > 6 && Boolean.parseBoolean(args[6]);
+            String gamemode = args.length > 7 ? args[7].toUpperCase() : "SURVIVAL";
 
-            wm.createWorld(uid, name, creator, null, seed, cheats);
-            sender.sendMessage("OK: World " + uid + " created successfully.");
+            wm.createWorld(uid, name, creator, null, seed, cheats, gamemode);
+            sender.sendMessage("OK: World " + uid + " created successfully with gamemode " + gamemode + ".");
+            return true;
+        }
+
+        if (action.equals("sync") || action.equals("dump")) {
+            wm.saveWorlds();
+            sender.sendMessage("OK: player_worlds.json synchronized to disk.");
             return true;
         }
 

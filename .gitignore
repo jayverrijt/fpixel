@@ -41,4 +41,6 @@ server/usercache.json
 server/FPixelCore.jar
 server/player_worlds/
 player_worlds/
+server/plugins/FPixelCore/player_worlds.json
+server/plugins/FPixelCore/player_worlds_data/
 

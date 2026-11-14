@@ -1495,6 +1495,18 @@ app.post('/api/auth/reset-confirm', async (req, res) => {
 // CUSTOM PLAYER WORLDS ("REALMS") API
 // ==========================================
 
+function savePlayerWorlds(worlds) {
+  const file = resolveFilePath('plugins/FPixelCore/player_worlds.json') || path.join(SERVER_DIR, 'plugins/FPixelCore/player_worlds.json');
+  try {
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(worlds, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 function getPlayerWorlds() {
   const file = resolveFilePath('plugins/FPixelCore/player_worlds.json');
   let worlds = {};
@@ -1503,6 +1515,44 @@ function getPlayerWorlds() {
       worlds = JSON.parse(fs.readFileSync(file, 'utf8')) || {};
     } catch (e) {
       worlds = {};
+    }
+  }
+
+  // Auto-discover any player worlds created on disk in player_worlds directory
+  const pwDirs = [
+    path.join('/data', 'player_worlds'),
+    path.join(SERVER_DIR, 'player_worlds'),
+    path.join(__dirname, '../server/player_worlds')
+  ];
+  for (const pwDir of pwDirs) {
+    if (fs.existsSync(pwDir)) {
+      try {
+        const entries = fs.readdirSync(pwDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory()) {
+            const dName = entry.name;
+            if (!dName.endsWith('_nether') && !dName.endsWith('_the_end')) {
+              const uid = dName.toUpperCase();
+              if (!worlds[uid]) {
+                const isCreative = uid.toLowerCase().includes('creative') || dName.toLowerCase().includes('creative');
+                worlds[uid] = {
+                  uid,
+                  name: isCreative ? 'Creative wereld' : `Speler Wereld (${uid})`,
+                  creatorName: 'Jay_V0',
+                  createdAt: Date.now(),
+                  cheatsEnabled: true,
+                  seed: 0,
+                  difficulty: 'NORMAL',
+                  defaultGameMode: isCreative ? 'CREATIVE' : 'SURVIVAL',
+                  isPrimarySmp: false,
+                  sharedPlayers: {},
+                  locked: false
+                };
+              }
+            }
+          }
+        }
+      } catch (err) {}
     }
   }
 
@@ -1590,10 +1640,13 @@ app.post('/api/worlds/create', async (req, res) => {
   const user = getSessionUser(req);
   if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
 
-  const { name, seed, cheats } = req.body;
+  const { name, seed, cheats, gamemode } = req.body;
   if (!name || !name.trim()) {
     return res.status(400).json({ error: 'Vul een wereldnaam in.' });
   }
+
+  const validModes = ['SURVIVAL', 'CREATIVE', 'HARDCORE'];
+  const safeGamemode = validModes.includes((gamemode || '').toUpperCase()) ? (gamemode || '').toUpperCase() : 'SURVIVAL';
 
   const worldsObj = getPlayerWorlds();
   const username = user.username.toLowerCase();
@@ -1616,11 +1669,28 @@ app.post('/api/worlds/create', async (req, res) => {
   const cheatsBool = Boolean(cheats);
 
   try {
-    await sendRconCommand(`fpixel world create ${uid} ${safeName} ${user.username} ${worldSeed} ${cheatsBool}`);
+    await sendRconCommand(`fpixel world create ${uid} ${safeName} ${user.username} ${worldSeed} ${cheatsBool} ${safeGamemode}`);
+
+    // Update and persist player_worlds.json immediately
+    worldsObj[uid] = {
+      uid,
+      name: name.trim(),
+      creatorName: user.username,
+      createdAt: Date.now(),
+      cheatsEnabled: cheatsBool,
+      seed: worldSeed,
+      difficulty: safeGamemode === 'HARDCORE' ? 'HARD' : 'NORMAL',
+      defaultGameMode: safeGamemode,
+      isPrimarySmp: false,
+      sharedPlayers: {},
+      locked: false
+    };
+    savePlayerWorlds(worldsObj);
+
     res.json({
       success: true,
       uid,
-      message: `Wereld "${name.trim()}" (${uid}) is succesvol aangemaakt! Typ /joinworld ${uid} in Minecraft.`
+      message: `Wereld "${name.trim()}" (${uid}) [${safeGamemode}] is succesvol aangemaakt! Typ /joinworld ${uid} in Minecraft.`
     });
   } catch (err) {
     res.status(500).json({ error: 'Kon wereld niet aanmaken via server: ' + err.message });

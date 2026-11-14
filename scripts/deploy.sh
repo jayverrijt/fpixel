@@ -21,9 +21,18 @@ fi
 
 # 2. Update repository to latest origin/main
 echo ">>> [2/5] Updating repository from origin/main..."
+# Preserve persistent runtime files
+if [ -f "${SERVER_DIR}/plugins/FPixelCore/player_worlds.json" ]; then
+  cp "${SERVER_DIR}/plugins/FPixelCore/player_worlds.json" /tmp/player_worlds.json.bak 2>/dev/null || true
+fi
 cd "${BASE_DIR}"
 git fetch origin main
 git reset --hard origin/main
+if [ -f /tmp/player_worlds.json.bak ]; then
+  mkdir -p "${SERVER_DIR}/plugins/FPixelCore"
+  cp -f /tmp/player_worlds.json.bak "${SERVER_DIR}/plugins/FPixelCore/player_worlds.json" 2>/dev/null || true
+  rm -f /tmp/player_worlds.json.bak
+fi
 
 # 3. Ensure essential runtime jars are present
 echo ">>> [3/5] Verifying runtime dependencies..."
@@ -84,15 +93,8 @@ if [ ! -d "${SERVER_DIR}/survival/region" ] && [ ! -d "${SERVER_DIR}/world/dimen
   rm -rf /tmp/survival_restore_deploy
 fi
 
-# Seed authentic survival profiles to server/plugins/FPixelCore/survival_data
-mkdir -p "${SERVER_DIR}/plugins/FPixelCore/survival_data"
-if [ -d "${BASE_DIR}/server/survival_data_seed" ]; then
-  echo ">>> Restoring authentic survival profiles from server/survival_data_seed..."
-  cp -a "${BASE_DIR}/server/survival_data_seed/"* "${SERVER_DIR}/plugins/FPixelCore/survival_data/"
-fi
-
 # 4. Set execution permissions
-echo ">>> [4/5] Setting permissions..."
+echo ">>> [4/6] Setting permissions..."
 chmod +x "${BASE_DIR}"/scripts/*.sh "${SERVER_DIR}"/start.sh "${BASE_DIR}"/plugin/gradlew 2>/dev/null || true
 
 # 5. Build and launch Docker containers (Minecraft + Web Stats)
@@ -105,12 +107,24 @@ if screen -list | grep -q "\.fpixel[[:space:]]"; then
   screen -S fpixel -X quit 2>/dev/null || true
 fi
 
+cd "${BASE_DIR}"
+
+# Gracefully stop running containers so PaperMC saves and releases memory/locks cleanly
+echo "Gracefully stopping active Docker services for reload..."
+docker compose down || true
+
+# Seed authentic survival profiles to server/plugins/FPixelCore/survival_data WHILE server is down!
+mkdir -p "${SERVER_DIR}/plugins/FPixelCore/survival_data"
+if [ -d "${BASE_DIR}/server/survival_data_seed" ]; then
+  echo ">>> Restoring authentic survival profiles from server/survival_data_seed..."
+  cp -a "${BASE_DIR}/server/survival_data_seed/"* "${SERVER_DIR}/plugins/FPixelCore/survival_data/"
+fi
+
 # Clean up stale session.locks
 rm -f "${SERVER_DIR}"/world/session.lock "${SERVER_DIR}"/survival/session.lock "${SERVER_DIR}"/arenas/session.lock "${SERVER_DIR}"/world/dimensions/minecraft/survival/session.lock "${SERVER_DIR}"/Urban/session.lock "${SERVER_DIR}"/Galaxy/session.lock 2>/dev/null || true
 
-cd "${BASE_DIR}"
 docker compose build
-docker compose up -d --remove-orphans
+docker compose up -d --force-recreate --remove-orphans
 
 echo ">>> [6/6] Verifying service initialization..."
 sleep 8

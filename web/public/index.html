@@ -534,6 +534,14 @@
           <label>Wereld Seed (Optioneel):</label>
           <input type="text" id="create-world-seed" placeholder="Laat leeg voor willekeurige seed">
         </div>
+        <div class="form-group">
+          <label>Standaard Spelmodus:</label>
+          <select id="create-world-gamemode" class="form-control" style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: #f8fafc; font-size: 0.95rem;">
+            <option value="SURVIVAL" selected>⚔️ Survival (Standaard overleven)</option>
+            <option value="CREATIVE">🎨 Creative (Onbeperkt bouwen & vliegen)</option>
+            <option value="HARDCORE">💀 Hardcore (1 leven, moeilijke graad)</option>
+          </select>
+        </div>
         <div class="form-group-checkbox">
           <input type="checkbox" id="create-world-cheats">
           <label for="create-world-cheats">Cheats toestaan (/gamemode, /weather, /tp, /give, /time)</label>

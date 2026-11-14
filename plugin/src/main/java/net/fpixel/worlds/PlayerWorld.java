@@ -24,6 +24,10 @@ public class PlayerWorld {
     }
 
     public PlayerWorld(String uid, String name, UUID creatorUuid, String creatorName, long seed, boolean cheatsEnabled, boolean isPrimarySmp) {
+        this(uid, name, creatorUuid, creatorName, seed, cheatsEnabled, "SURVIVAL", isPrimarySmp);
+    }
+
+    public PlayerWorld(String uid, String name, UUID creatorUuid, String creatorName, long seed, boolean cheatsEnabled, String defaultGameMode, boolean isPrimarySmp) {
         this.uid = uid;
         this.name = name;
         this.creatorUuid = creatorUuid;
@@ -31,8 +35,8 @@ public class PlayerWorld {
         this.createdAt = System.currentTimeMillis();
         this.seed = seed;
         this.cheatsEnabled = cheatsEnabled;
-        this.difficulty = "NORMAL";
-        this.defaultGameMode = "SURVIVAL";
+        this.defaultGameMode = defaultGameMode != null && !defaultGameMode.isBlank() ? defaultGameMode.toUpperCase() : "SURVIVAL";
+        this.difficulty = "HARDCORE".equalsIgnoreCase(this.defaultGameMode) ? "HARD" : "NORMAL";
         this.isPrimarySmp = isPrimarySmp;
         this.locked = false;
     }

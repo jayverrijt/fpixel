@@ -506,6 +506,30 @@ public class SurvivalProfileManager {
         File ymlFile = new File(dataDir, player.getUniqueId().toString() + ".yml");
         File bakFile = new File(dataDir, player.getUniqueId().toString() + ".yml.bak");
 
+        // SAFETY: If player currently has only lobby items or empty inventory, DO NOT overwrite genuine survival items on disk!
+        boolean hasActualItem = false;
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && item.getType() != Material.AIR && !isLobbyItem(item)) {
+                hasActualItem = true;
+                break;
+            }
+        }
+        if (!hasActualItem) {
+            ItemStack offhand = player.getInventory().getItemInOffHand();
+            if (offhand != null && offhand.getType() != Material.AIR && !isLobbyItem(offhand)) {
+                hasActualItem = true;
+            }
+        }
+        if (!hasActualItem && ymlFile.exists()) {
+            try {
+                YamlConfiguration existingConfig = YamlConfiguration.loadConfiguration(ymlFile);
+                if (hasSurvivalItems(existingConfig)) {
+                    plugin.getLogger().warning("Blocked saving profile for " + player.getName() + ": current inventory has only lobby/empty items. Preserving genuine survival inventory on disk.");
+                    return;
+                }
+            } catch (Exception ignored) {}
+        }
+
         // Backup existing profile if it contains survival items
         if (ymlFile.exists()) {
             try {

@@ -398,6 +398,7 @@ function createWorldCard(w) {
 
     <div class="item-meta-row">
       <span class="meta-pill">👑 Maker: <strong>${escapeHtml(w.creatorName || 'Server')}</strong></span>
+      <span class="meta-pill">🎮 Modus: <strong>${escapeHtml(w.defaultGameMode || 'SURVIVAL')}</strong></span>
       <span class="meta-pill ${w.cheatsEnabled ? 'meta-cheats-on' : 'meta-cheats-off'}">
         ⚡ Cheats: ${w.cheatsEnabled ? 'AAN' : 'UIT'}
       </span>
@@ -434,6 +435,8 @@ function createWorldCard(w) {
 function openCreateWorldModal() {
   document.getElementById('create-world-name').value = '';
   document.getElementById('create-world-seed').value = '';
+  const gmEl = document.getElementById('create-world-gamemode');
+  if (gmEl) gmEl.value = 'SURVIVAL';
   document.getElementById('create-world-cheats').checked = false;
   openModal('modal-create-world');
 }
@@ -441,6 +444,8 @@ function openCreateWorldModal() {
 async function submitCreateWorld() {
   const name = document.getElementById('create-world-name').value.trim();
   const seed = document.getElementById('create-world-seed').value.trim();
+  const gmEl = document.getElementById('create-world-gamemode');
+  const gamemode = gmEl ? gmEl.value : 'SURVIVAL';
   const cheats = document.getElementById('create-world-cheats').checked;
 
   if (!name) {
@@ -453,7 +458,7 @@ async function submitCreateWorld() {
     const res = await fetch('/api/worlds/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, seed, cheats })
+      body: JSON.stringify({ name, seed, cheats, gamemode })
     });
     const data = await res.json();
 

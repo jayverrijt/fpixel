@@ -84,16 +84,49 @@ public class PlayerWorldManager implements Listener {
     }
 
     public synchronized void loadWorlds() {
-        if (!worldsFile.exists()) return;
-        try (FileReader reader = new FileReader(worldsFile)) {
-            Type type = new TypeToken<Map<String, PlayerWorld>>() {}.getType();
-            Map<String, PlayerWorld> loaded = gson.fromJson(reader, type);
-            if (loaded != null) {
-                worlds.clear();
-                worlds.putAll(loaded);
+        if (worldsFile.exists()) {
+            try (FileReader reader = new FileReader(worldsFile)) {
+                Type type = new TypeToken<Map<String, PlayerWorld>>() {}.getType();
+                Map<String, PlayerWorld> loaded = gson.fromJson(reader, type);
+                if (loaded != null) {
+                    worlds.clear();
+                    worlds.putAll(loaded);
+                }
+            } catch (Exception e) {
+                plugin.getLogger().severe("Failed to load player_worlds.json: " + e.getMessage());
             }
-        } catch (Exception e) {
-            plugin.getLogger().severe("Failed to load player_worlds.json: " + e.getMessage());
+        }
+
+        // Auto-discover any world folders in server/player_worlds/
+        File playerWorldsDir = new File(plugin.getServer().getWorldContainer(), "player_worlds");
+        if (playerWorldsDir.exists() && playerWorldsDir.isDirectory()) {
+            File[] dirs = playerWorldsDir.listFiles(File::isDirectory);
+            if (dirs != null) {
+                boolean discovered = false;
+                for (File d : dirs) {
+                    String dName = d.getName();
+                    if (!dName.endsWith("_nether") && !dName.endsWith("_the_end") && !worlds.containsKey(dName.toUpperCase())) {
+                        String uid = dName.toUpperCase();
+                        boolean isCreative = uid.toLowerCase().contains("creative") || dName.toLowerCase().contains("creative");
+                        PlayerWorld pw = new PlayerWorld(
+                                uid,
+                                isCreative ? "Creative wereld" : "Speler Wereld (" + uid + ")",
+                                null,
+                                "Jay_V0",
+                                0L,
+                                true,
+                                isCreative ? "CREATIVE" : "SURVIVAL",
+                                false
+                        );
+                        worlds.put(uid, pw);
+                        discovered = true;
+                        plugin.getLogger().info("Auto-discovered existing player world from disk: " + uid);
+                    }
+                }
+                if (discovered) {
+                    saveWorlds();
+                }
+            }
         }
     }
 
@@ -180,13 +213,21 @@ public class PlayerWorldManager implements Listener {
     }
 
     public synchronized PlayerWorld createWorld(String uid, String name, String creatorName, UUID creatorUuid, long seed, boolean cheats) {
+        return createWorld(uid, name, creatorName, creatorUuid, seed, cheats, "SURVIVAL");
+    }
+
+    public synchronized PlayerWorld createWorld(String uid, String name, String creatorName, UUID creatorUuid, long seed, boolean cheats, String defaultGameMode) {
         if (uid == null) {
             uid = generateUid();
         } else {
             uid = uid.toUpperCase().trim();
         }
+        if (defaultGameMode == null || defaultGameMode.isBlank()) {
+            defaultGameMode = "SURVIVAL";
+        }
+        defaultGameMode = defaultGameMode.toUpperCase().trim();
 
-        PlayerWorld pw = new PlayerWorld(uid, name, creatorUuid, creatorName, seed, cheats, false);
+        PlayerWorld pw = new PlayerWorld(uid, name, creatorUuid, creatorName, seed, cheats, defaultGameMode, false);
         worlds.put(uid, pw);
         saveWorlds();
 
@@ -240,6 +281,9 @@ public class PlayerWorldManager implements Listener {
                     .environment(World.Environment.NORMAL)
                     .seed(pw.getSeed() != 0 ? pw.getSeed() : new Random().nextLong())
                     .createWorld();
+        }
+        if (w != null && "HARDCORE".equalsIgnoreCase(pw.getDefaultGameMode())) {
+            w.setDifficulty(Difficulty.HARD);
         }
         return w;
     }
@@ -574,6 +618,12 @@ public class PlayerWorldManager implements Listener {
                 } else {
                     event.setRespawnLocation(ow.getSpawnLocation().clone().add(0.5, 0.5, 0.5));
                 }
+            }
+            if ("HARDCORE".equalsIgnoreCase(pw.getDefaultGameMode())) {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    player.setGameMode(GameMode.SPECTATOR);
+                    ChatUtil.sendMessage(player, "§c§l[Hardcore] §eJe bent overleden in deze Hardcore wereld. Je bent nu toeschouwer (Spectator).");
+                });
             }
             plugin.getScoreboardManager().remove(player);
         }
