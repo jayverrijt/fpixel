@@ -715,6 +715,31 @@ public class PlayerWorldManager implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onEntityPortal(EntityPortalEvent event) {
+        PlayerWorld pw = getWorldForLocation(event.getFrom());
+        if (pw == null || pw.isPrimarySmp()) return;
+
+        World currentWorld = event.getFrom().getWorld();
+        if (currentWorld.getEnvironment() == World.Environment.NETHER) {
+            World ow = getOverworld(pw);
+            if (ow != null) {
+                Location from = event.getFrom();
+                event.setTo(new Location(ow, from.getX() * 8.0, from.getY(), from.getZ() * 8.0));
+                event.setSearchRadius(128);
+                event.setCanCreatePortal(true);
+            }
+        } else if (currentWorld.getEnvironment() == World.Environment.NORMAL) {
+            World nether = getNether(pw);
+            if (nether != null) {
+                Location from = event.getFrom();
+                event.setTo(new Location(nether, from.getX() / 8.0, from.getY(), from.getZ() / 8.0));
+                event.setSearchRadius(128);
+                event.setCanCreatePortal(true);
+            }
+        }
+    }
+
     public PlayerWorld getWorldForLocation(Location loc) {
         if (loc == null || loc.getWorld() == null) return null;
         return getWorldFromWorldName(loc.getWorld().getName());

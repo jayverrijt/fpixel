@@ -99,9 +99,35 @@ jobs:
             echo ">>> [3/5] Updating repository to latest commit..."
             cd "${BASE_DIR}"
             docker exec fpixel-minecraft chown -R 1000:1000 /data/plugins /data/world 2>/dev/null || true
+
+            # Preserve persistent runtime files
+            if [ -f "${BASE_DIR}/server/plugins/FPixelCore/player_worlds.json" ]; then
+              cp -f "${BASE_DIR}/server/plugins/FPixelCore/player_worlds.json" /tmp/player_worlds.json.bak 2>/dev/null || true
+            fi
+            if [ -f "${BASE_DIR}/server/plugins/FPixelCore/ranks.yml" ]; then
+              cp -f "${BASE_DIR}/server/plugins/FPixelCore/ranks.yml" /tmp/ranks.yml.bak 2>/dev/null || true
+            fi
+            if [ -f "${BASE_DIR}/server/plugins/FPixelCore/custom_maps.json" ]; then
+              cp -f "${BASE_DIR}/server/plugins/FPixelCore/custom_maps.json" /tmp/custom_maps.json.bak 2>/dev/null || true
+            fi
+
             git fetch origin main
             git reset --hard origin/main
             git clean -fd || true
+
+            mkdir -p "${BASE_DIR}/server/plugins/FPixelCore"
+            if [ -f /tmp/player_worlds.json.bak ]; then
+              cp -f /tmp/player_worlds.json.bak "${BASE_DIR}/server/plugins/FPixelCore/player_worlds.json" 2>/dev/null || true
+              rm -f /tmp/player_worlds.json.bak
+            fi
+            if [ -f /tmp/ranks.yml.bak ]; then
+              cp -f /tmp/ranks.yml.bak "${BASE_DIR}/server/plugins/FPixelCore/ranks.yml" 2>/dev/null || true
+              rm -f /tmp/ranks.yml.bak
+            fi
+            if [ -f /tmp/custom_maps.json.bak ]; then
+              cp -f /tmp/custom_maps.json.bak "${BASE_DIR}/server/plugins/FPixelCore/custom_maps.json" 2>/dev/null || true
+              rm -f /tmp/custom_maps.json.bak
+            fi
 
             # Step 3: Run automated deploy verification
             echo ">>> [4/5] Executing deployment script..."

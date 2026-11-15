@@ -129,9 +129,10 @@ docker compose down || true
 
 # Seed authentic survival profiles to server/plugins/FPixelCore/survival_data WHILE server is down!
 mkdir -p "${SERVER_DIR}/plugins/FPixelCore/survival_data"
+chmod -R u+rwX "${SERVER_DIR}/plugins/FPixelCore" 2>/dev/null || true
 if [ -d "${BASE_DIR}/server/survival_data_seed" ]; then
   echo ">>> Restoring authentic survival profiles from server/survival_data_seed..."
-  cp -a "${BASE_DIR}/server/survival_data_seed/"* "${SERVER_DIR}/plugins/FPixelCore/survival_data/"
+  cp -rf "${BASE_DIR}/server/survival_data_seed/"* "${SERVER_DIR}/plugins/FPixelCore/survival_data/" 2>/dev/null || true
 fi
 
 # Clean up stale session.locks

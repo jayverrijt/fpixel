@@ -213,7 +213,7 @@ public class SurvivalManager {
 
 
     private void loadSurvivalWorld() {
-        plugin.getLogger().info("Loading Survival SMP world...");
+        plugin.getLogger().info("Loading Survival SMP worlds (Overworld, Nether, The End)...");
         WorldCreator wc = new WorldCreator("survival");
         wc.environment(World.Environment.NORMAL);
 
@@ -221,14 +221,31 @@ public class SurvivalManager {
             this.survivalWorld = wc.createWorld();
             if (survivalWorld != null) {
                 survivalWorld.setDifficulty(Difficulty.NORMAL);
+                survivalWorld.setPVP(true);
                 survivalWorld.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
                 survivalWorld.setGameRule(GameRule.DO_WEATHER_CYCLE, true);
                 survivalWorld.setGameRule(GameRule.KEEP_INVENTORY, false);
+                survivalWorld.setGameRule(GameRule.DO_MOB_SPAWNING, true);
                 survivalWorld.setAutoSave(true);
-                plugin.getLogger().info("Survival SMP world is ready at: " + survivalWorld.getName());
+                plugin.getLogger().info("Survival SMP overworld is ready at: " + survivalWorld.getName());
             }
         } catch (Exception e) {
             plugin.getLogger().severe("Failed to load survival world: " + e.getMessage());
+        }
+
+        World nether = getNetherWorld();
+        if (nether != null) {
+            nether.setDifficulty(Difficulty.NORMAL);
+            nether.setPVP(true);
+            nether.setGameRule(GameRule.DO_MOB_SPAWNING, true);
+            plugin.getLogger().info("Survival Nether is ready at: " + nether.getName() + " (Difficulty: NORMAL, Mob Spawning: true)");
+        }
+
+        World end = getEndWorld();
+        if (end != null) {
+            end.setDifficulty(Difficulty.NORMAL);
+            end.setPVP(true);
+            end.setGameRule(GameRule.DO_MOB_SPAWNING, true);
         }
     }
 

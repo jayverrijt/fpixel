@@ -59,8 +59,9 @@ public class SurvivalListener implements Listener {
                     World nether = plugin.getSurvivalManager().getNetherWorld();
                     if (nether != null) {
                         org.bukkit.Location from = event.getFrom();
-                        org.bukkit.Location dest = new org.bukkit.Location(nether, from.getX() / 8.0, Math.min(120, Math.max(32, from.getY())), from.getZ() / 8.0, from.getYaw(), from.getPitch());
+                        org.bukkit.Location dest = new org.bukkit.Location(nether, from.getX() / 8.0, from.getY(), from.getZ() / 8.0, from.getYaw(), from.getPitch());
                         event.setTo(dest);
+                        event.setSearchRadius(128);
                         event.setCanCreatePortal(true);
                     }
                 } else if (fromWorld.getEnvironment() == World.Environment.NETHER) {
@@ -68,8 +69,9 @@ public class SurvivalListener implements Listener {
                     World survivalWorld = plugin.getSurvivalManager().getSurvivalWorld();
                     if (survivalWorld != null) {
                         org.bukkit.Location from = event.getFrom();
-                        org.bukkit.Location dest = new org.bukkit.Location(survivalWorld, from.getX() * 8.0, Math.min(250, Math.max(60, from.getY())), from.getZ() * 8.0, from.getYaw(), from.getPitch());
+                        org.bukkit.Location dest = new org.bukkit.Location(survivalWorld, from.getX() * 8.0, from.getY(), from.getZ() * 8.0, from.getYaw(), from.getPitch());
                         event.setTo(dest);
+                        event.setSearchRadius(128);
                         event.setCanCreatePortal(true);
                     }
                 }
@@ -85,6 +87,36 @@ public class SurvivalListener implements Listener {
                         org.bukkit.Location bedSpawn = player.getRespawnLocation();
                         event.setTo(bedSpawn != null ? bedSpawn : survivalWorld.getSpawnLocation());
                     }
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onEntityPortal(org.bukkit.event.entity.EntityPortalEvent event) {
+        World fromWorld = event.getFrom().getWorld();
+        if (fromWorld == null) return;
+
+        if (plugin.getSurvivalManager().isSurvivalWorld(fromWorld)) {
+            if (fromWorld.getEnvironment() == World.Environment.NORMAL) {
+                // Overworld -> Nether for entities (guardians, mobs, items, minecarts)
+                World nether = plugin.getSurvivalManager().getNetherWorld();
+                if (nether != null) {
+                    org.bukkit.Location from = event.getFrom();
+                    org.bukkit.Location dest = new org.bukkit.Location(nether, from.getX() / 8.0, from.getY(), from.getZ() / 8.0);
+                    event.setTo(dest);
+                    event.setSearchRadius(128);
+                    event.setCanCreatePortal(true);
+                }
+            } else if (fromWorld.getEnvironment() == World.Environment.NETHER) {
+                // Nether -> Overworld for entities (guardians, mobs, items)
+                World survivalWorld = plugin.getSurvivalManager().getSurvivalWorld();
+                if (survivalWorld != null) {
+                    org.bukkit.Location from = event.getFrom();
+                    org.bukkit.Location dest = new org.bukkit.Location(survivalWorld, from.getX() * 8.0, from.getY(), from.getZ() * 8.0);
+                    event.setTo(dest);
+                    event.setSearchRadius(128);
+                    event.setCanCreatePortal(true);
                 }
             }
         }
