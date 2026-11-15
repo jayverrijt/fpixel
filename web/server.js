@@ -1612,11 +1612,11 @@ app.get('/api/worlds', (req, res) => {
 
     const isShared = (w.sharedPlayers && (w.sharedPlayers[username] !== undefined || w.sharedPlayers[cleanUser] !== undefined));
 
-    if (isCreator || isShared || isStaff || w.isPrimarySmp) {
+    if (isCreator || isShared || w.isPrimarySmp) {
       accessible.push({
         ...w,
         isCreator,
-        canCheat: isStaff || isCreator || (w.sharedPlayers && (w.sharedPlayers[username] === true || w.sharedPlayers[cleanUser] === true))
+        canCheat: isCreator || (w.sharedPlayers && (w.sharedPlayers[username] === true || w.sharedPlayers[cleanUser] === true))
       });
     }
   }

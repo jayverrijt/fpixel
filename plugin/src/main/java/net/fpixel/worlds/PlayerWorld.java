@@ -42,7 +42,7 @@ public class PlayerWorld {
     }
 
     public boolean canAccess(Player player) {
-        if (player.hasPermission("fpixel.admin") || player.isOp()) return true;
+        if (isPrimarySmp) return true;
         if (creatorUuid != null && creatorUuid.equals(player.getUniqueId())) return true;
         String pName = player.getName().toLowerCase();
         String pNameClean = pName.startsWith(".") ? pName.substring(1) : pName;

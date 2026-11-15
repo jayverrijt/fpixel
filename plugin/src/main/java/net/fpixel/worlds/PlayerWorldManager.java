@@ -376,7 +376,7 @@ public class PlayerWorldManager implements Listener {
             return false;
         }
 
-        if (!pw.canAccess(player)) {
+        if (!pw.canAccess(player) && !player.hasPermission("fpixel.admin") && !player.isOp()) {
             ChatUtil.sendMessage(player, "§cJe hebt geen toegang tot wereld §f" + pw.getName() + " §7(" + pw.getUid() + ")§c!");
             return false;
         }

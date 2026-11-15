@@ -31,6 +31,10 @@ fi
 if [ -f "${SERVER_DIR}/plugins/FPixelCore/custom_maps.json" ]; then
   cp "${SERVER_DIR}/plugins/FPixelCore/custom_maps.json" /tmp/custom_maps.json.bak 2>/dev/null || true
 fi
+if [ -d "${SERVER_DIR}/plugins/FPixelCore/survival_data" ]; then
+  mkdir -p /tmp/survival_data_persist
+  cp -rf "${SERVER_DIR}/plugins/FPixelCore/survival_data/"* /tmp/survival_data_persist/ 2>/dev/null || true
+fi
 cd "${BASE_DIR}"
 git fetch origin main
 git reset --hard origin/main
@@ -46,6 +50,11 @@ fi
 if [ -f /tmp/custom_maps.json.bak ]; then
   cp -f /tmp/custom_maps.json.bak "${SERVER_DIR}/plugins/FPixelCore/custom_maps.json" 2>/dev/null || true
   rm -f /tmp/custom_maps.json.bak
+fi
+if [ -d /tmp/survival_data_persist ]; then
+  mkdir -p "${SERVER_DIR}/plugins/FPixelCore/survival_data"
+  cp -rf /tmp/survival_data_persist/* "${SERVER_DIR}/plugins/FPixelCore/survival_data/" 2>/dev/null || true
+  rm -rf /tmp/survival_data_persist
 fi
 
 # 3. Ensure essential runtime jars are present
@@ -125,14 +134,36 @@ cd "${BASE_DIR}"
 
 # Gracefully stop running containers so PaperMC saves and releases memory/locks cleanly
 echo "Gracefully stopping active Docker services for reload..."
-docker compose down || true
+docker compose down -t 35 || true
 
-# Seed authentic survival profiles to server/plugins/FPixelCore/survival_data WHILE server is down!
+# Restore genuine live survival profiles from pre-deploy backup snapshot if available
 mkdir -p "${SERVER_DIR}/plugins/FPixelCore/survival_data"
 chmod -R u+rwX "${SERVER_DIR}/plugins/FPixelCore" 2>/dev/null || true
+for SNAPSHOT in /home/jayv/backups/fpixel_backup_20261115_192238.tar.gz $(ls -t /home/jayv/backups/fpixel_backup_*.tar.gz 2>/dev/null); do
+  if [ -f "${SNAPSHOT}" ]; then
+    if tar -tzf "${SNAPSHOT}" 2>/dev/null | grep -q "server/plugins/FPixelCore/survival_data/.*\.yml"; then
+      echo ">>> Restoring authentic survival profiles from backup snapshot: ${SNAPSHOT}..."
+      mkdir -p /tmp/survival_snap_restore
+      tar -xzf "${SNAPSHOT}" -C /tmp/survival_snap_restore "server/plugins/FPixelCore/survival_data" 2>/dev/null || true
+      if [ -d "/tmp/survival_snap_restore/server/plugins/FPixelCore/survival_data" ]; then
+        cp -rf /tmp/survival_snap_restore/server/plugins/FPixelCore/survival_data/* "${SERVER_DIR}/plugins/FPixelCore/survival_data/" 2>/dev/null || true
+        rm -rf /tmp/survival_snap_restore
+        echo "  -> Authentic player survival inventories restored successfully from backup!"
+        break
+      fi
+      rm -rf /tmp/survival_snap_restore
+    fi
+  fi
+done
+
+# Initialize survival profiles from seed ONLY if survival_data directory has no existing yaml profiles!
 if [ -d "${BASE_DIR}/server/survival_data_seed" ]; then
-  echo ">>> Restoring authentic survival profiles from server/survival_data_seed..."
-  cp -rf "${BASE_DIR}/server/survival_data_seed/"* "${SERVER_DIR}/plugins/FPixelCore/survival_data/" 2>/dev/null || true
+  if [ -z "$(ls -A "${SERVER_DIR}/plugins/FPixelCore/survival_data"/*.yml 2>/dev/null)" ]; then
+    echo ">>> Initializing empty survival_data from server/survival_data_seed..."
+    cp -rn "${BASE_DIR}/server/survival_data_seed/"* "${SERVER_DIR}/plugins/FPixelCore/survival_data/" 2>/dev/null || true
+  else
+    echo ">>> Preserved live survival_data profiles (not overwriting with static seed)."
+  fi
 fi
 
 # Clean up stale session.locks

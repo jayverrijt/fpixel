@@ -110,6 +110,10 @@ jobs:
             if [ -f "${BASE_DIR}/server/plugins/FPixelCore/custom_maps.json" ]; then
               cp -f "${BASE_DIR}/server/plugins/FPixelCore/custom_maps.json" /tmp/custom_maps.json.bak 2>/dev/null || true
             fi
+            if [ -d "${BASE_DIR}/server/plugins/FPixelCore/survival_data" ]; then
+              mkdir -p /tmp/survival_data_persist
+              cp -rf "${BASE_DIR}/server/plugins/FPixelCore/survival_data/"* /tmp/survival_data_persist/ 2>/dev/null || true
+            fi
 
             git fetch origin main
             git reset --hard origin/main
@@ -127,6 +131,11 @@ jobs:
             if [ -f /tmp/custom_maps.json.bak ]; then
               cp -f /tmp/custom_maps.json.bak "${BASE_DIR}/server/plugins/FPixelCore/custom_maps.json" 2>/dev/null || true
               rm -f /tmp/custom_maps.json.bak
+            fi
+            if [ -d /tmp/survival_data_persist ]; then
+              mkdir -p "${BASE_DIR}/server/plugins/FPixelCore/survival_data"
+              cp -rf /tmp/survival_data_persist/* "${BASE_DIR}/server/plugins/FPixelCore/survival_data/" 2>/dev/null || true
+              rm -rf /tmp/survival_data_persist
             fi
 
             # Step 3: Run automated deploy verification
