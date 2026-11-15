@@ -7,6 +7,14 @@ import net.fpixel.FPixelPlugin;
 import net.fpixel.core.map.VoidChunkGenerator;
 import net.fpixel.core.util.ChatUtil;
 import net.fpixel.core.util.ItemBuilder;
+import net.fpixel.games.bedwars.BedWarsGame;
+import net.fpixel.games.bridge.BridgeGame;
+import net.fpixel.games.murdermystery.MurderMysteryGame;
+import net.fpixel.games.parkour.ParkourGame;
+import net.fpixel.games.prophunt.PropHuntGame;
+import net.fpixel.games.skywars.SkyWarsGame;
+import net.fpixel.games.sumo.SumoGame;
+import net.fpixel.games.tntrun.TNTRunGame;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -43,6 +51,7 @@ public class MapMakerManager implements Listener {
             if (loaded != null) {
                 maps.clear();
                 maps.putAll(loaded);
+                registerAllApprovedMaps();
             }
         } catch (Exception e) {
             plugin.getLogger().severe("Failed to load custom_maps.json: " + e.getMessage());
@@ -406,16 +415,28 @@ public class MapMakerManager implements Listener {
         }
 
         World world = getOrCreateBuildWorld(map);
-        Location target = new Location(world, 0.5, 66, 0.5);
-        if (map.getSpectatorSpawn() != null) {
-            Location s = parseLoc(map.getSpectatorSpawn());
-            if (s != null) target = s;
+        Location target = null;
+        if (map.getTeamSpawns() != null && !map.getTeamSpawns().isEmpty()) {
+            target = parseLoc(map.getTeamSpawns().get(0));
+        }
+        if (target == null && map.getParkourCheckpoints() != null && !map.getParkourCheckpoints().isEmpty()) {
+            target = parseLoc(map.getParkourCheckpoints().get(0));
+        }
+        if (target == null && map.getSpectatorSpawn() != null) {
+            target = parseLoc(map.getSpectatorSpawn());
+        }
+        if (target == null) {
+            target = new Location(world, 0.5, 65, 0.5);
         }
 
         staff.teleport(target);
-        staff.setGameMode(GameMode.SPECTATOR);
-        ChatUtil.sendMessage(staff, "§a§l[Map Review] §eJe test nu map: §f" + map.getName() + " §7(" + map.getId() + ") - Maker: §b" + map.getCreatorName());
-        ChatUtil.sendMessage(staff, "§7Status: §f" + map.getStatus() + " §7| Typ `/fpixel map approve " + map.getId() + "` om goed te keuren.");
+        staff.setGameMode(GameMode.SURVIVAL);
+        staff.setHealth(20.0);
+        staff.setFoodLevel(20);
+
+        ChatUtil.sendMessage(staff, "§a§l[Play Test] §eJe playtest nu map: §f" + map.getName() + " §7(" + map.getGameType().getDisplayName() + ") - Maker: §b" + map.getCreatorName());
+        ChatUtil.sendMessage(staff, "§7Modus: §aSurvival Playtest §7| Wissel met §e/gmc§7, §e/gms§7 of §e/gmsp");
+        ChatUtil.sendMessage(staff, "§7Status: §f" + map.getStatus() + " §7| Keur goed via §a/fpixel map approve " + map.getId() + " §7of verlaat via §b/lobby");
         return true;
     }
 
@@ -426,9 +447,10 @@ public class MapMakerManager implements Listener {
         map.setStatus(CustomMinigameMap.Status.APPROVED);
         map.setRejectionReason(null);
         saveMaps();
+        registerMapAsArena(map);
 
         if (staff != null) {
-            ChatUtil.sendMessage(staff, "§a§l[Map Review] §eMap §f" + map.getName() + " §e(" + map.getId() + ") is §aGOEDGEKEURD§e!");
+            ChatUtil.sendMessage(staff, "§a§l[Map Review] §eMap §f" + map.getName() + " §e(" + map.getId() + ") is §aGOEDGEKEURD§e en direct toegevoegd aan het Game Compass!");
         }
         return true;
     }
@@ -440,6 +462,7 @@ public class MapMakerManager implements Listener {
         map.setStatus(CustomMinigameMap.Status.REJECTED);
         map.setRejectionReason(reason != null && !reason.isBlank() ? reason : "Voldoet niet aan de community kwaliteitsrichtlijnen.");
         saveMaps();
+        unregisterMapArena(map);
 
         if (staff != null) {
             ChatUtil.sendMessage(staff, "§c§l[Map Review] §eMap §f" + map.getName() + " §e(" + map.getId() + ") is §cAFGEKEURD§e. Reden: §f" + map.getRejectionReason());
@@ -453,11 +476,126 @@ public class MapMakerManager implements Listener {
 
         map.setStatus(CustomMinigameMap.Status.ARCHIVED);
         saveMaps();
+        unregisterMapArena(map);
 
         if (staff != null) {
             ChatUtil.sendMessage(staff, "§e§l[Map Review] §eMap §f" + map.getName() + " §e(" + map.getId() + ") is gedeactiveerd (uit circulatie gehaald).");
         }
         return true;
+    }
+
+    public void registerMapAsArena(CustomMinigameMap map) {
+        if (map == null || map.getStatus() != CustomMinigameMap.Status.APPROVED) return;
+
+        World world = getOrCreateBuildWorld(map);
+        if (world == null) return;
+
+        String arenaId = "custom-" + map.getGameType().name().toLowerCase() + "-" + map.getId().toLowerCase();
+        String displayName = map.getName() + " §7(Community)";
+
+        Location center = new Location(world, 0.5, 65, 0.5);
+        Location waitingLobby = new Location(world, 0.5, 100, 0.5);
+        Location spectatorSpawn = waitingLobby.clone().add(0, 5, 0);
+
+        if (map.getSpectatorSpawn() != null) {
+            Location s = parseLoc(map.getSpectatorSpawn());
+            if (s != null) spectatorSpawn = s;
+        }
+
+        switch (map.getGameType()) {
+            case BEDWARS -> {
+                BedWarsGame bw = new BedWarsGame(plugin, arenaId, displayName, 2, Math.max(2, map.getTeamCount()) * 4);
+                bw.setLobbySpawn(waitingLobby);
+                bw.setSpectatorSpawn(spectatorSpawn);
+                List<String> spawns = map.getTeamSpawns();
+                List<String> beds = map.getTeamBeds();
+                String[] teamKeys = {"RED", "BLUE", "GREEN", "YELLOW", "CYAN", "WHITE", "PINK", "GRAY"};
+                for (int i = 0; i < Math.min(map.getTeamCount(), teamKeys.length); i++) {
+                    var t = bw.getTeam(teamKeys[i]);
+                    if (t != null) {
+                        if (i < spawns.size()) {
+                            Location sp = parseLoc(spawns.get(i));
+                            if (sp != null) t.setSpawnLocation(sp);
+                        }
+                        if (i < beds.size()) {
+                            Location bp = parseLoc(beds.get(i));
+                            if (bp != null) t.setBedLocation(bp);
+                        }
+                    }
+                }
+                plugin.getGameManager().registerArena(bw);
+            }
+            case SKYWARS -> {
+                SkyWarsGame sw = new SkyWarsGame(plugin, arenaId, displayName, 2, Math.max(2, map.getTeamCount()) * 2, 60);
+                sw.setLobbySpawn(waitingLobby);
+                sw.setSpectatorSpawn(spectatorSpawn);
+                if (map.getTeamSpawns() != null) {
+                    for (String spStr : map.getTeamSpawns()) {
+                        Location sp = parseLoc(spStr);
+                        if (sp != null) sw.addIslandSpawn(sp);
+                    }
+                }
+                plugin.getGameManager().registerArena(sw);
+            }
+            case THE_BRIDGE -> {
+                BridgeGame bg = new BridgeGame(plugin, arenaId, displayName, 40);
+                bg.setLobbySpawn(waitingLobby);
+                bg.setSpectatorSpawn(spectatorSpawn);
+                plugin.getGameManager().registerArena(bg);
+            }
+            case SUMO -> {
+                SumoGame sg = new SumoGame(plugin, arenaId, displayName, 50);
+                sg.setLobbySpawn(waitingLobby);
+                sg.setSpectatorSpawn(spectatorSpawn);
+                sg.setSpawn1(center.clone().add(-4, 1, 0));
+                sg.setSpawn2(center.clone().add(4, 1, 0));
+                plugin.getGameManager().registerArena(sg);
+            }
+            case TNTRUN -> {
+                TNTRunGame tg = new TNTRunGame(plugin, arenaId, displayName, 2, 8, 30);
+                tg.setLobbySpawn(waitingLobby);
+                tg.setSpectatorSpawn(spectatorSpawn);
+                tg.setArenaSpawn(center.clone().add(0, 1, 0));
+                plugin.getGameManager().registerArena(tg);
+            }
+            case MURDER_MYSTERY -> {
+                MurderMysteryGame mm = new MurderMysteryGame(plugin, arenaId, displayName);
+                mm.setLobbySpawn(waitingLobby);
+                mm.setSpectatorSpawn(spectatorSpawn);
+                mm.addSpawnPoint(center.clone().add(0, 1, 0));
+                plugin.getGameManager().registerArena(mm);
+            }
+            case PROP_HUNT -> {
+                PropHuntGame ph = new PropHuntGame(plugin, arenaId, displayName);
+                ph.setLobbySpawn(waitingLobby);
+                ph.setSpectatorSpawn(spectatorSpawn);
+                ph.setHunterSpawn(waitingLobby);
+                ph.addPropSpawn(center.clone().add(0, 1, 0));
+                plugin.getGameManager().registerArena(ph);
+            }
+            case PARKOUR -> {
+                ParkourGame pg = new ParkourGame(plugin, arenaId, displayName, 1, 8, 40);
+                pg.setLobbySpawn(waitingLobby);
+                pg.setSpectatorSpawn(spectatorSpawn);
+                pg.setStartLocation(center.clone().add(0, 1, 0));
+                plugin.getGameManager().registerArena(pg);
+            }
+        }
+        plugin.getLogger().info("Registered custom approved minigame map as active arena: " + arenaId + " (" + displayName + ")");
+    }
+
+    public void registerAllApprovedMaps() {
+        for (CustomMinigameMap m : maps.values()) {
+            if (m.getStatus() == CustomMinigameMap.Status.APPROVED) {
+                registerMapAsArena(m);
+            }
+        }
+    }
+
+    public void unregisterMapArena(CustomMinigameMap map) {
+        if (map == null) return;
+        String arenaId = "custom-" + map.getGameType().name().toLowerCase() + "-" + map.getId().toLowerCase();
+        plugin.getGameManager().unregisterArena(arenaId);
     }
 
     private String formatLoc(Location loc) {

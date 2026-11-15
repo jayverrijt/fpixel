@@ -754,12 +754,15 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage("Alleen spelers kunnen een map testen.");
                 return true;
             }
-            if (!checkModPermission(sender)) {
-                sender.sendMessage(ChatUtil.colorize("§cJe hebt minstens de [MODERATOR] rang nodig om maps te testen."));
-                return true;
-            }
             if (args.length < 3) {
                 sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel map test <id>"));
+                return true;
+            }
+            var map = plugin.getMapMakerManager().getMap(args[2]);
+            boolean isStaff = checkModPermission(sender);
+            boolean isCreator = map != null && (staff.getName().equalsIgnoreCase(map.getCreatorName()) || (map.getCreatorUuid() != null && map.getCreatorUuid().equals(staff.getUniqueId())));
+            if (!isStaff && !isCreator) {
+                sender.sendMessage(ChatUtil.colorize("§cJe hebt minstens de [MODERATOR] rang nodig om maps te testen."));
                 return true;
             }
             plugin.getMapMakerManager().testMap(args[2], staff);
