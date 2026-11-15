@@ -33,17 +33,22 @@ public class RankCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        Player target = Bukkit.getPlayer(args[0]);
-        if (target == null) {
-            sender.sendMessage(ChatUtil.colorize("§cPlayer not found."));
-            return true;
+        String targetName = args[0];
+        Player target = Bukkit.getPlayer(targetName);
+        if (target == null && targetName.startsWith(".")) {
+            target = Bukkit.getPlayer(targetName.substring(1));
         }
 
         try {
             Rank rank = Rank.fromString(args[1]);
-            plugin.getRankManager().setRank(target, rank);
-            sender.sendMessage(ChatUtil.colorize("§aSet " + target.getName() + "'s rank to " + rank.getColor() + rank.name() + "§a."));
-            ChatUtil.sendMessage(target, "§aYour rank has been updated to " + rank.getColor() + rank.name() + "§a!");
+            if (target != null) {
+                plugin.getRankManager().setRank(target, rank);
+                sender.sendMessage(ChatUtil.colorize("§aSet " + target.getName() + "'s rank to " + rank.getColor() + rank.name() + "§a."));
+                ChatUtil.sendMessage(target, "§aYour rank has been updated to " + rank.getColor() + rank.name() + "§a!");
+            } else {
+                plugin.getRankManager().setRankByName(targetName, rank);
+                sender.sendMessage(ChatUtil.colorize("§aSet offline player " + targetName + "'s rank to " + rank.getColor() + rank.name() + "§a."));
+            }
         } catch (IllegalArgumentException e) {
             sender.sendMessage(ChatUtil.colorize("§cInvalid rank! Valid ranks: " + Arrays.toString(Rank.values())));
         }

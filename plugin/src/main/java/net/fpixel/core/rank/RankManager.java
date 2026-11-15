@@ -28,7 +28,7 @@ public class RankManager {
         loadRanks();
     }
 
-    public void loadRanks() {
+    public synchronized void loadRanks() {
         if (!ranksFile.exists()) {
             plugin.getDataFolder().mkdirs();
             try {
@@ -39,6 +39,9 @@ public class RankManager {
         }
         ranksConfig = YamlConfiguration.loadConfiguration(ranksFile);
         boolean migrated = false;
+        playerRanks.clear();
+        nameRanks.clear();
+
         for (String key : ranksConfig.getKeys(false)) {
             try {
                 String raw = ranksConfig.getString(key, "MEMBER");
@@ -51,7 +54,19 @@ public class RankManager {
                 if (key.contains("-")) {
                     playerRanks.put(UUID.fromString(key), rank);
                 } else {
-                    nameRanks.put(key.toLowerCase(), rank);
+                    String lower = key.toLowerCase();
+                    String clean = lower.startsWith(".") ? lower.substring(1) : lower;
+                    nameRanks.put(lower, rank);
+                    nameRanks.put(clean, rank);
+                    nameRanks.put("." + clean, rank);
+
+                    // Also try to resolve offline player UUID
+                    try {
+                        org.bukkit.OfflinePlayer off = Bukkit.getOfflinePlayer(clean);
+                        if (off != null && off.getUniqueId() != null) {
+                            playerRanks.put(off.getUniqueId(), rank);
+                        }
+                    } catch (Exception ignored) {}
                 }
             } catch (Exception ignored) {}
         }
@@ -60,7 +75,7 @@ public class RankManager {
         }
     }
 
-    public void saveRanks() {
+    public synchronized void saveRanks() {
         for (Map.Entry<UUID, Rank> entry : playerRanks.entrySet()) {
             ranksConfig.set(entry.getKey().toString(), entry.getValue().name());
         }
@@ -80,11 +95,16 @@ public class RankManager {
             return playerRanks.get(player.getUniqueId());
         }
         String name = player.getName().toLowerCase();
+        String clean = name.startsWith(".") ? name.substring(1) : name;
+
         if (nameRanks.containsKey(name)) {
             return nameRanks.get(name);
         }
-        if (name.startsWith(".") && nameRanks.containsKey(name.substring(1))) {
-            return nameRanks.get(name.substring(1));
+        if (nameRanks.containsKey(clean)) {
+            return nameRanks.get(clean);
+        }
+        if (nameRanks.containsKey("." + clean)) {
+            return nameRanks.get("." + clean);
         }
         return Rank.MEMBER;
     }
@@ -95,7 +115,11 @@ public class RankManager {
 
     public void setRank(Player player, Rank rank) {
         setRank(player.getUniqueId(), rank);
-        nameRanks.put(player.getName().toLowerCase(), rank);
+        String name = player.getName().toLowerCase();
+        String clean = name.startsWith(".") ? name.substring(1) : name;
+        nameRanks.put(name, rank);
+        nameRanks.put(clean, rank);
+        nameRanks.put("." + clean, rank);
         saveRanks();
         updatePlayerDisplayName(player);
         applyPermissions(player);
@@ -112,9 +136,24 @@ public class RankManager {
     }
 
     public void setRankByName(String name, Rank rank) {
-        nameRanks.put(name.toLowerCase(), rank);
+        String lower = name.toLowerCase();
+        String clean = lower.startsWith(".") ? lower.substring(1) : lower;
+        nameRanks.put(lower, rank);
+        nameRanks.put(clean, rank);
+        nameRanks.put("." + clean, rank);
+
+        try {
+            org.bukkit.OfflinePlayer off = Bukkit.getOfflinePlayer(clean);
+            if (off != null && off.getUniqueId() != null) {
+                playerRanks.put(off.getUniqueId(), rank);
+            }
+        } catch (Exception ignored) {}
+
         saveRanks();
+
         Player target = Bukkit.getPlayerExact(name);
+        if (target == null) target = Bukkit.getPlayerExact(clean);
+        if (target == null) target = Bukkit.getPlayerExact("." + clean);
         if (target != null) {
             updatePlayerDisplayName(target);
             applyPermissions(target);

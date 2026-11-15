@@ -34,6 +34,9 @@ commands:
   joinworld:
     description: Join a personal or shared custom player world
     aliases: [jw, worldjoin]
+  mapbuild:
+    description: Join and build your custom minigame map
+    aliases: [buildmap, mapedit]
   serverupdate:
     description: Full server update with pre-update backup, git pull, and restart
     permission: fpixel.owner

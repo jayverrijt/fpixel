@@ -96,18 +96,32 @@ public class MapMakerManager implements Listener {
     }
 
     public CustomMinigameMap createMap(String id, String name, CustomMinigameMap.GameType gameType, int teamCount, Player creator) {
+        return createMap(id, name, gameType, teamCount, creator, creator != null ? creator.getName() : "Console");
+    }
+
+    public CustomMinigameMap createMap(String id, String name, CustomMinigameMap.GameType gameType, int teamCount, Player creator, String creatorName) {
         if (id == null || id.isBlank()) {
             id = generateMapId(gameType);
         } else {
             id = id.toLowerCase().trim().replace(" ", "_");
         }
 
+        String finalName = (name != null && !name.isBlank()) ? name.replace("_", " ") : ("Map " + id.toUpperCase());
+        String finalCreatorName = creator != null ? creator.getName() : (creatorName != null && !creatorName.isBlank() ? creatorName : "Console");
+        UUID creatorUUID = creator != null ? creator.getUniqueId() : null;
+        if (creatorUUID == null && creatorName != null && !creatorName.equalsIgnoreCase("Console")) {
+            try {
+                org.bukkit.OfflinePlayer off = Bukkit.getOfflinePlayer(creatorName);
+                if (off != null) creatorUUID = off.getUniqueId();
+            } catch (Exception ignored) {}
+        }
+
         CustomMinigameMap map = new CustomMinigameMap(
                 id,
-                name != null && !name.isBlank() ? name : ("Map " + id.toUpperCase()),
+                finalName,
                 gameType,
-                creator != null ? creator.getUniqueId() : null,
-                creator != null ? creator.getName() : "Console",
+                creatorUUID,
+                finalCreatorName,
                 teamCount
         );
 
@@ -163,7 +177,68 @@ public class MapMakerManager implements Listener {
             wc.environment(World.Environment.NORMAL);
             world = wc.createWorld();
         }
+        if (world != null) {
+            world.setPVP(true);
+            world.setDifficulty(Difficulty.NORMAL);
+        }
         return world;
+    }
+
+    public boolean enterBuildMode(Player player, String id) {
+        if (player == null || id == null) return false;
+        String cleanId = id.toLowerCase().trim();
+        if (cleanId.startsWith("map_build_")) {
+            cleanId = cleanId.substring("map_build_".length());
+        }
+
+        loadMaps(); // Ensure latest state from disk
+        CustomMinigameMap map = getMap(cleanId);
+        if (map == null) {
+            for (CustomMinigameMap m : maps.values()) {
+                if (m.getId().equalsIgnoreCase(cleanId) || m.getName().equalsIgnoreCase(cleanId)) {
+                    map = m;
+                    break;
+                }
+            }
+        }
+
+        if (map == null) {
+            ChatUtil.sendMessage(player, "§cMap niet gevonden met ID: §f" + id);
+            return false;
+        }
+
+        String pName = player.getName().toLowerCase();
+        String pClean = pName.startsWith(".") ? pName.substring(1) : pName;
+        String cName = map.getCreatorName() != null ? map.getCreatorName().toLowerCase() : "";
+        String cClean = cName.startsWith(".") ? cName.substring(1) : cName;
+        boolean isCreator = pName.equals(cName) || pClean.equals(cClean)
+                || (map.getCreatorUuid() != null && map.getCreatorUuid().equals(player.getUniqueId()));
+        boolean isStaff = plugin.getRankManager().getRank(player).isStaff();
+
+        if (!isCreator && !isStaff) {
+            ChatUtil.sendMessage(player, "§cJe bent niet de maker van deze map en geen stafflid.");
+            return false;
+        }
+
+        World world = getOrCreateBuildWorld(map);
+        Location target = new Location(world, 0.5, 65, 0.5, 0f, 0f);
+        if (map.getSpectatorSpawn() != null) {
+            Location s = parseLoc(map.getSpectatorSpawn());
+            if (s != null) target = s;
+        }
+
+        player.teleport(target);
+        player.setGameMode(GameMode.CREATIVE);
+        player.setAllowFlight(true);
+        player.setFlying(true);
+        giveSetupWand(player);
+        ChatUtil.sendMessage(player, "§a§l[Map Maker] §eWelkom in de bouwwereld voor: §f" + map.getName() + " §7(" + map.getId() + ")");
+        ChatUtil.sendMessage(player, "§7Gebruik de Setup Wand om markers in te stellen. Typ §b/lobby §7om terug te keren naar de Hub.");
+        return true;
+    }
+
+    public synchronized void reloadMaps() {
+        loadMaps();
     }
 
     private void generateParkourPlatform(World world, CustomMinigameMap map) {

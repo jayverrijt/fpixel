@@ -172,6 +172,10 @@ public class FPixelPlugin extends JavaPlugin {
         getCommand("joinworld").setExecutor(joinWorldCmd);
         getCommand("joinworld").setTabCompleter(joinWorldCmd);
 
+        MapBuildCommand mapBuildCmd = new MapBuildCommand(this);
+        getCommand("mapbuild").setExecutor(mapBuildCmd);
+        getCommand("mapbuild").setTabCompleter(mapBuildCmd);
+
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);
         Bukkit.getScheduler().runTask(this, () -> {

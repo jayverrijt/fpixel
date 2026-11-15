@@ -271,8 +271,13 @@ public class PlayerWorldManager implements Listener {
                     w = new WorldCreator("survival").createWorld();
                 } catch (Exception ignored) {}
             }
-            if (w != null) return w;
-            return Bukkit.getWorld("world");
+            if (w != null) {
+                w.setPVP(true);
+                return w;
+            }
+            World def = Bukkit.getWorld("world");
+            if (def != null) def.setPVP(true);
+            return def;
         }
         String path = "player_worlds/" + pw.getUid();
         World w = Bukkit.getWorld(path);
@@ -282,8 +287,13 @@ public class PlayerWorldManager implements Listener {
                     .seed(pw.getSeed() != 0 ? pw.getSeed() : new Random().nextLong())
                     .createWorld();
         }
-        if (w != null && "HARDCORE".equalsIgnoreCase(pw.getDefaultGameMode())) {
-            w.setDifficulty(Difficulty.HARD);
+        if (w != null) {
+            w.setPVP(true);
+            if ("HARDCORE".equalsIgnoreCase(pw.getDefaultGameMode())) {
+                w.setDifficulty(Difficulty.HARD);
+            } else if (!"CREATIVE".equalsIgnoreCase(pw.getDefaultGameMode())) {
+                w.setDifficulty(Difficulty.NORMAL);
+            }
         }
         return w;
     }
@@ -291,7 +301,9 @@ public class PlayerWorldManager implements Listener {
     public World getNether(PlayerWorld pw) {
         if (pw.isPrimarySmp()) {
             World w = Bukkit.getWorld("world_nether");
-            return w != null ? w : Bukkit.getWorld("the_nether");
+            World res = w != null ? w : Bukkit.getWorld("the_nether");
+            if (res != null) res.setPVP(true);
+            return res;
         }
         String path = "player_worlds/" + pw.getUid() + "_nether";
         World w = Bukkit.getWorld(path);
@@ -300,13 +312,19 @@ public class PlayerWorldManager implements Listener {
                     .environment(World.Environment.NETHER)
                     .createWorld();
         }
+        if (w != null) {
+            w.setPVP(true);
+            w.setDifficulty(Difficulty.NORMAL);
+        }
         return w;
     }
 
     public World getEnd(PlayerWorld pw) {
         if (pw.isPrimarySmp()) {
             World w = Bukkit.getWorld("world_the_end");
-            return w != null ? w : Bukkit.getWorld("the_end");
+            World res = w != null ? w : Bukkit.getWorld("the_end");
+            if (res != null) res.setPVP(true);
+            return res;
         }
         String path = "player_worlds/" + pw.getUid() + "_the_end";
         World w = Bukkit.getWorld(path);
@@ -314,6 +332,10 @@ public class PlayerWorldManager implements Listener {
             w = new WorldCreator(path)
                     .environment(World.Environment.THE_END)
                     .createWorld();
+        }
+        if (w != null) {
+            w.setPVP(true);
+            w.setDifficulty(Difficulty.NORMAL);
         }
         return w;
     }
@@ -717,6 +739,11 @@ public class PlayerWorldManager implements Listener {
             return worlds.get(sub.toUpperCase());
         }
         return null;
+    }
+
+    public boolean isPlayerWorld(World world) {
+        if (world == null) return false;
+        return getWorldFromWorldName(world.getName()) != null;
     }
 
     // -------------------------------------------------------------

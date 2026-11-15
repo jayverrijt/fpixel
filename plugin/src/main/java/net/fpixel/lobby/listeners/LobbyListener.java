@@ -44,7 +44,11 @@ public class LobbyListener implements Listener {
             return false;
         }
         String worldName = player.getWorld().getName().toLowerCase();
-        if (worldName.contains("survival") || worldName.contains("parkour_studio")) {
+        if (worldName.contains("survival") || worldName.contains("parkour_studio")
+                || worldName.startsWith("player_worlds") || worldName.startsWith("map_build_")) {
+            return false;
+        }
+        if (plugin.getPlayerWorldManager() != null && plugin.getPlayerWorldManager().isPlayerWorld(player.getWorld())) {
             return false;
         }
         if (plugin.getParkourManager() != null && (plugin.getParkourManager().isInTestSession(player) || plugin.getParkourManager().getEditingMapId(player) != null)) {
@@ -62,6 +66,7 @@ public class LobbyListener implements Listener {
         Player player = event.getPlayer();
         event.joinMessage(null); // Silent join message, Hypixel style
 
+        plugin.getRankManager().loadRanks();
         plugin.getRankManager().updatePlayerDisplayName(player);
         plugin.getRankManager().applyPermissions(player);
         plugin.getLobbyManager().teleportToLobby(player);

@@ -21,8 +21,11 @@ public enum Rank {
 
     public String getPrefix() { return prefix; }
     public String getColor() { return color; }
+    public int weight() { return weight; }
     public int getWeight() { return weight; }
     public String getPermission() { return permission; }
+    public boolean isStaff() { return this == OWNER || this == ADMIN || this == MODERATOR; }
+    public boolean isAdmin() { return this == OWNER || this == ADMIN; }
 
     public static Rank fromString(String raw) {
         if (raw == null) return MEMBER;

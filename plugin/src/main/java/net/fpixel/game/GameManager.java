@@ -196,6 +196,16 @@ public class GameManager implements Listener {
             Arena damagerArena = getPlayerArena(damager);
             Arena targetArena = getPlayerArena(target);
             if (damagerArena == null || targetArena == null || damagerArena != targetArena) {
+                // When neither is in a minigame arena:
+                if (damagerArena == null && targetArena == null) {
+                    // Only cancel PvP if players are in the Lobby Hub
+                    if (plugin.getLobbyManager().isLobbyWorld(damager.getWorld())) {
+                        event.setCancelled(true);
+                        return;
+                    }
+                    // Outside lobby (Survival, Player Worlds, etc.), allow PvP!
+                    return;
+                }
                 event.setCancelled(true);
                 return;
             }

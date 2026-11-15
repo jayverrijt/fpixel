@@ -755,8 +755,8 @@ function createMapCard(m) {
       </div>
     ` : ''}
 
-    <div class="item-join-box" onclick="copyText('/join ${m.worldName}', 'Bouwwereld commando')">
-      <span class="join-cmd-text">/join ${m.worldName}</span>
+    <div class="item-join-box" onclick="copyText('/mapbuild ${m.id}', 'Bouwwereld commando')">
+      <span class="join-cmd-text">/mapbuild ${m.id}</span>
       <button class="btn-copy-tag">Bouwen 🔨</button>
     </div>
 

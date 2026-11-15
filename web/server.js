@@ -1920,7 +1920,7 @@ app.post('/api/worlds/restore', async (req, res) => {
 // ==========================================
 
 function getCustomMaps() {
-  const file = resolveFilePath('plugins/FPixelCore/custom_maps.json');
+  const file = resolveFilePath('plugins/FPixelCore/custom_maps.json') || path.join(SERVER_DIR, 'plugins/FPixelCore/custom_maps.json');
   if (file && fs.existsSync(file)) {
     try {
       return JSON.parse(fs.readFileSync(file, 'utf8')) || {};
@@ -1979,12 +1979,32 @@ app.post('/api/maker/create', async (req, res) => {
 
   const safeName = name.trim().replace(/\s+/g, '_');
   const teams = parseInt(teamCount, 10) || 2;
+  const username = user.username.trim();
 
   try {
-    await sendRconCommand(`fpixel map create ${safeName} ${gameType} ${teams}`);
+    const rconOutput = await sendRconCommand(`fpixel map create ${safeName} ${gameType} ${teams} ${username}`);
+    console.log('Map create RCON response:', rconOutput);
+
+    // Extract generated ID from output if present
+    let mapId = null;
+    const match = (rconOutput || '').match(/Map\s+([A-Za-z0-9_\-]+)\s+created/i);
+    if (match) mapId = match[1];
+
+    if (!mapId) {
+      const mapsObj = getCustomMaps();
+      for (const [id, m] of Object.entries(mapsObj)) {
+        if (m.name && m.name.toLowerCase() === name.trim().toLowerCase()) {
+          mapId = id;
+          break;
+        }
+      }
+    }
+
     res.json({
       success: true,
-      message: `Map "${name.trim()}" (${gameType}) is aangemaakt! Verbind met de server om direct te bouwen.`
+      mapId: mapId,
+      buildCommand: mapId ? `/mapbuild ${mapId}` : null,
+      message: `Map "${name.trim()}" (${gameType}) is aangemaakt! Typ /mapbuild ${mapId || ''} in-game om direct te bouwen.`
     });
   } catch (err) {
     res.status(500).json({ error: 'Kon map niet aanmaken via server: ' + err.message });
@@ -1997,7 +2017,7 @@ app.post('/api/maker/submit', async (req, res) => {
   if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
 
   const { id } = req.body;
-  const mapsFile = resolveFilePath('plugins/FPixelCore/custom_maps.json');
+  const mapsFile = resolveFilePath('plugins/FPixelCore/custom_maps.json') || path.join(SERVER_DIR, 'plugins/FPixelCore/custom_maps.json');
   if (!mapsFile || !fs.existsSync(mapsFile)) return res.status(404).json({ error: 'Map niet gevonden.' });
 
   try {
@@ -2005,12 +2025,22 @@ app.post('/api/maker/submit', async (req, res) => {
     const map = mapsObj[(id || '').toLowerCase()];
     if (!map) return res.status(404).json({ error: 'Map niet gevonden.' });
 
+    // Verify creator or staff
+    const cleanUser = user.username.toLowerCase().replace(/^\./, '');
+    const mapCreator = (map.creatorName || '').toLowerCase().replace(/^\./, '');
+    if (cleanUser !== mapCreator && !user.isStaff) {
+      return res.status(403).json({ error: 'Alleen de maker van deze map kan hem indienen voor review.' });
+    }
+
     map.status = 'PENDING_REVIEW';
     map.updatedAt = Date.now();
     fs.writeFileSync(mapsFile, JSON.stringify(mapsObj, null, 2), 'utf8');
 
-    // Notify staff in-game
-    await sendRconCommand(`say §e[Map Maker] §f${user.username} §eheeft zojuist map §a"${map.name}" §eingediend voor review! Staff kan testen via §b/fpixel map test ${map.id}`);
+    // Notify staff in-game & reload plugin map list
+    try {
+      await sendRconCommand(`fpixel map reload`);
+      await sendRconCommand(`say §e[Map Maker] §f${user.username} §eheeft zojuist map §a"${map.name}" §eingediend voor review! Staff kan testen via §b/fpixel map test ${map.id}`);
+    } catch (e) {}
 
     res.json({ success: true, message: `Map "${map.name}" is ingediend voor review bij het staff team!` });
   } catch (err) {

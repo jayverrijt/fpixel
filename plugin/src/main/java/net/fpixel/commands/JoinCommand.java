@@ -31,7 +31,13 @@ public class JoinCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        String gameType = args[0].toUpperCase();
+        String arg = args[0];
+        if (arg.toLowerCase().startsWith("map_build_") || (plugin.getMapMakerManager() != null && plugin.getMapMakerManager().getMap(arg) != null)) {
+            plugin.getMapMakerManager().enterBuildMode(player, arg);
+            return true;
+        }
+
+        String gameType = arg.toUpperCase();
         if (gameType.equalsIgnoreCase("MM") || gameType.equalsIgnoreCase("MURDER")) gameType = "MURDER_MYSTERY";
         if (gameType.equalsIgnoreCase("PH") || gameType.equalsIgnoreCase("PROP")) gameType = "PROP_HUNT";
         plugin.getGameManager().joinQueue(player, gameType);

@@ -689,21 +689,63 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
         Player staff = (sender instanceof Player p) ? p : null;
 
         if (action.equals("create")) {
-            if (!(sender instanceof Player player)) {
-                sender.sendMessage("Alleen spelers kunnen /fpixel map create uitvoeren.");
-                return true;
-            }
-            if (args.length < 4) {
-                ChatUtil.sendMessage(player, "§cGebruik: /fpixel map create <naam> <BEDWARS|SKYWARS|PARKOUR|...> [teams]");
-                return true;
-            }
-            String name = args[2];
-            net.fpixel.games.maker.CustomMinigameMap.GameType type = net.fpixel.games.maker.CustomMinigameMap.GameType.fromString(args[3]);
+            String name;
+            String typeStr;
             int teams = 2;
-            if (args.length > 4) {
-                try { teams = Integer.parseInt(args[4]); } catch (Exception ignored) {}
+            Player creatorPlayer = null;
+            String creatorName = "Console";
+
+            if (sender instanceof Player player) {
+                if (args.length < 4) {
+                    ChatUtil.sendMessage(player, "§cGebruik: /fpixel map create <naam> <BEDWARS|SKYWARS|PARKOUR|...> [teams]");
+                    return true;
+                }
+                name = args[2];
+                typeStr = args[3];
+                if (args.length > 4) {
+                    try { teams = Integer.parseInt(args[4]); } catch (Exception ignored) {}
+                }
+                creatorPlayer = player;
+                creatorName = player.getName();
+            } else {
+                // Console / RCON
+                if (args.length < 4) {
+                    sender.sendMessage("Gebruik: /fpixel map create <naam> <BEDWARS|SKYWARS|PARKOUR|...> [teams] [creator]");
+                    return true;
+                }
+                name = args[2];
+                typeStr = args[3];
+                if (args.length > 4) {
+                    try { teams = Integer.parseInt(args[4]); } catch (Exception ignored) {}
+                }
+                if (args.length > 5) {
+                    creatorName = args[5];
+                    creatorPlayer = Bukkit.getPlayerExact(creatorName);
+                }
             }
-            plugin.getMapMakerManager().createMap(null, name, type, teams, player);
+
+            net.fpixel.games.maker.CustomMinigameMap.GameType type = net.fpixel.games.maker.CustomMinigameMap.GameType.fromString(typeStr);
+            var map = plugin.getMapMakerManager().createMap(null, name, type, teams, creatorPlayer, creatorName);
+            sender.sendMessage("OK: Map " + map.getId() + " created successfully for " + creatorName);
+            return true;
+        }
+
+        if (action.equals("build") || action.equals("edit") || action.equals("tp")) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage("Alleen spelers kunnen naar een bouwwereld teleporteren.");
+                return true;
+            }
+            if (args.length < 3) {
+                ChatUtil.sendMessage(player, "§cGebruik: /fpixel map build <id>");
+                return true;
+            }
+            plugin.getMapMakerManager().enterBuildMode(player, args[2]);
+            return true;
+        }
+
+        if (action.equals("reload")) {
+            plugin.getMapMakerManager().reloadMaps();
+            sender.sendMessage("OK: custom_maps.json reloaded.");
             return true;
         }
 

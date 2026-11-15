@@ -25,13 +25,27 @@ echo ">>> [2/5] Updating repository from origin/main..."
 if [ -f "${SERVER_DIR}/plugins/FPixelCore/player_worlds.json" ]; then
   cp "${SERVER_DIR}/plugins/FPixelCore/player_worlds.json" /tmp/player_worlds.json.bak 2>/dev/null || true
 fi
+if [ -f "${SERVER_DIR}/plugins/FPixelCore/ranks.yml" ]; then
+  cp "${SERVER_DIR}/plugins/FPixelCore/ranks.yml" /tmp/ranks.yml.bak 2>/dev/null || true
+fi
+if [ -f "${SERVER_DIR}/plugins/FPixelCore/custom_maps.json" ]; then
+  cp "${SERVER_DIR}/plugins/FPixelCore/custom_maps.json" /tmp/custom_maps.json.bak 2>/dev/null || true
+fi
 cd "${BASE_DIR}"
 git fetch origin main
 git reset --hard origin/main
+mkdir -p "${SERVER_DIR}/plugins/FPixelCore"
 if [ -f /tmp/player_worlds.json.bak ]; then
-  mkdir -p "${SERVER_DIR}/plugins/FPixelCore"
   cp -f /tmp/player_worlds.json.bak "${SERVER_DIR}/plugins/FPixelCore/player_worlds.json" 2>/dev/null || true
   rm -f /tmp/player_worlds.json.bak
+fi
+if [ -f /tmp/ranks.yml.bak ]; then
+  cp -f /tmp/ranks.yml.bak "${SERVER_DIR}/plugins/FPixelCore/ranks.yml" 2>/dev/null || true
+  rm -f /tmp/ranks.yml.bak
+fi
+if [ -f /tmp/custom_maps.json.bak ]; then
+  cp -f /tmp/custom_maps.json.bak "${SERVER_DIR}/plugins/FPixelCore/custom_maps.json" 2>/dev/null || true
+  rm -f /tmp/custom_maps.json.bak
 fi
 
 # 3. Ensure essential runtime jars are present
