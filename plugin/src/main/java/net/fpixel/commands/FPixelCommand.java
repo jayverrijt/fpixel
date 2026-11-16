@@ -408,6 +408,8 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             String[] wdArgs = new String[args.length - 1];
             System.arraycopy(args, 1, wdArgs, 0, args.length - 1);
             return new net.fpixel.core.watchdog.WatchdogCommand(plugin, plugin.getWatchdogManager()).onCommand(sender, command, label, wdArgs);
+        } else if (sub.equals("fixinv") || sub.equals("sync") || sub.equals("syncinv")) {
+            return new FixInvCommand(plugin).onCommand(sender, command, label, args);
         } else {
             sendHelp(sender);
         }

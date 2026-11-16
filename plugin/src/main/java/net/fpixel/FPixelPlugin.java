@@ -183,6 +183,9 @@ public class FPixelPlugin extends JavaPlugin {
         getCommand("watchdog").setExecutor(watchdogCmd);
         getCommand("watchdog").setTabCompleter(watchdogCmd);
 
+        net.fpixel.commands.FixInvCommand fixInvCmd = new net.fpixel.commands.FixInvCommand(this);
+        getCommand("fixinv").setExecutor(fixInvCmd);
+
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);
         Bukkit.getScheduler().runTask(this, () -> {

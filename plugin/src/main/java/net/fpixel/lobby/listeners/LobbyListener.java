@@ -467,6 +467,29 @@ public class LobbyListener implements Listener {
     /**
      * Ensures minigame chests (SkyWars, custom maps, playtest worlds) are never empty when opened by players.
      */
+    /**
+     * Resolves Bedrock/Geyser container desyncs where the server thinks a previous container or GUI
+     * is still open, blocking the player from opening chests, hoppers, barrels or their own inventory.
+     */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onContainerInteractDesyncRecovery(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        var block = event.getClickedBlock();
+        if (block == null) return;
+
+        if (block.getState() instanceof org.bukkit.block.Container) {
+            Player player = event.getPlayer();
+            if (player.isSneaking() && event.getItem() != null && event.getItem().getType().isBlock()) {
+                return;
+            }
+
+            if (player.getOpenInventory() != null && player.getOpenInventory().getType() != org.bukkit.event.inventory.InventoryType.CRAFTING) {
+                player.closeInventory();
+                player.updateInventory();
+            }
+        }
+    }
+
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInventoryOpen(org.bukkit.event.inventory.InventoryOpenEvent event) {
         if (!(event.getPlayer() instanceof Player player)) return;
