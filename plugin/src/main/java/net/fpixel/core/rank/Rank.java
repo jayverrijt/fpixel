@@ -26,6 +26,7 @@ public enum Rank {
     public String getPermission() { return permission; }
     public boolean isStaff() { return this == OWNER || this == ADMIN || this == MODERATOR; }
     public boolean isAdmin() { return this == OWNER || this == ADMIN; }
+    public boolean isOwner() { return this == OWNER; }
 
     public static Rank fromString(String raw) {
         if (raw == null) return MEMBER;

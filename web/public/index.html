@@ -339,6 +339,9 @@
             <button class="subnav-pill" onclick="switchStaffTab('server')">
               ⚙️ Server Controle
             </button>
+            <button class="subnav-pill" onclick="switchStaffTab('watchdog')">
+              🛡️ Watchdog Anticheat
+            </button>
           </div>
         </div>
       </div>
@@ -453,6 +456,75 @@
             <button id="btn-server-stop" class="btn btn-danger" onclick="triggerServerStop()" style="margin-top: 14px;" disabled>
               Server Veilig Stoppen
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-section 4: Watchdog Anticheat -->
+      <div id="staff-section-watchdog" class="staff-subpane" style="display: none;">
+        <div class="section-sub-header">
+          <h3>🛡️ Watchdog Anticheat & Client Integriteit</h3>
+          <p>Real-time detectie van hack clients (Wurst, Meteor, LiquidBounce) en automatische Trust Score handhaving.</p>
+        </div>
+
+        <div class="watchdog-summary-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div class="glass-card" style="text-align: center; border-left: 4px solid #10b981;">
+            <div style="font-size: 0.85rem; color: #94a3b8; text-transform: uppercase;">Minimaal Vereiste Score</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #10b981; margin: 8px 0;">90 / 100</div>
+            <div style="font-size: 0.8rem; color: #64748b;">Spelers onder 90 worden direct gekickt</div>
+          </div>
+          <div class="glass-card" style="text-align: center; border-left: 4px solid #ef4444;">
+            <div style="font-size: 0.85rem; color: #94a3b8; text-transform: uppercase;">Hackclients Score</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #ef4444; margin: 8px 0;">0 / 100</div>
+            <div style="font-size: 0.8rem; color: #64748b;">Wurst, Meteor, Aristois etc. direct geblokkeerd</div>
+          </div>
+          <div class="glass-card" style="text-align: center; border-left: 4px solid #6366f1;">
+            <div style="font-size: 0.85rem; color: #94a3b8; text-transform: uppercase;">Totaal Overtredingen</div>
+            <div id="watchdog-violation-count" style="font-size: 2rem; font-weight: bold; color: #818cf8; margin: 8px 0;">0</div>
+            <div style="font-size: 0.8rem; color: #64748b;">Gedetecteerde kicks & waarschuwingen</div>
+          </div>
+        </div>
+
+        <!-- Owner manual override -->
+        <div id="owner-watchdog-override-card" class="glass-card" style="display: none; margin-bottom: 24px;">
+          <h4 style="margin-top: 0; color: #eab308;">⚖️ Handmatige Trust Score Instellen (Alleen [OWNER])</h4>
+          <div class="form-row-grid">
+            <div class="form-group">
+              <label for="wd-override-player">Spelersnaam</label>
+              <input type="text" id="wd-override-player" placeholder="Bijv. Steve">
+            </div>
+            <div class="form-group">
+              <label for="wd-override-score">Trust Score (0 - 100)</label>
+              <input type="number" id="wd-override-score" min="0" max="100" placeholder="100">
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+              <button class="btn btn-primary" onclick="setWatchdogScore()" style="width: 100%;">
+                Score Opslaan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h4 style="margin: 0;">Recente Watchdog Overtredingen & Kicks</h4>
+            <button class="btn btn-sm btn-ghost" onclick="loadWatchdogData()">🔄 Vernieuwen</button>
+          </div>
+          <div class="ranks-table-container">
+            <table class="ranks-table">
+              <thead>
+                <tr>
+                  <th>Tijdstip</th>
+                  <th>Speler</th>
+                  <th>Client Brand</th>
+                  <th>Score</th>
+                  <th>Gedetecteerde Reden</th>
+                </tr>
+              </thead>
+              <tbody id="watchdog-table-body">
+                <tr><td colspan="5" style="text-align: center; color: #64748b;">Geen recente overtredingen.</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

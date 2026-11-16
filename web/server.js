@@ -2201,6 +2201,57 @@ app.post('/api/maker/rename', async (req, res) => {
   }
 });
 
+// API: /api/admin/watchdog (Staff view Watchdog anticheat violations and status)
+app.get('/api/admin/watchdog', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isStaff) {
+    return res.status(403).json({ error: 'Minimaal [MODERATOR] rang vereist om Watchdog te bekijken.' });
+  }
+
+  const logFile = path.join(DATA_DIR, 'watchdog_log.json');
+  let violations = [];
+  try {
+    if (fs.existsSync(logFile)) {
+      violations = JSON.parse(fs.readFileSync(logFile, 'utf8'));
+    }
+  } catch (err) {
+    console.warn('Kon watchdog_log.json niet lezen:', err.message);
+  }
+
+  res.json({
+    success: true,
+    minRequiredScore: 90,
+    bannedClients: ['Wurst', 'Meteor', 'LiquidBounce', 'Aristois', 'Sigma', 'Impact', 'BleachHack', 'Inertia', 'Future', 'Vape'],
+    violations: Array.isArray(violations) ? violations : []
+  });
+});
+
+// API: /api/admin/watchdog/setscore (Owner set trust score)
+app.post('/api/admin/watchdog/setscore', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen de [OWNER] kan trust scores handmatig instellen.' });
+  }
+
+  const { player, score } = req.body;
+  if (!player || score === undefined) {
+    return res.status(400).json({ error: 'Vul een spelersnaam en score (0-100) in.' });
+  }
+
+  const cleanPlayer = player.trim();
+  const numScore = parseInt(score, 10);
+  if (isNaN(numScore) || numScore < 0 || numScore > 100) {
+    return res.status(400).json({ error: 'Score moet tussen 0 en 100 liggen.' });
+  }
+
+  try {
+    const reply = await sendRconCommand(`watchdog setscore ${cleanPlayer} ${numScore}`);
+    res.json({ success: true, message: reply || `Trust score van ${cleanPlayer} ingesteld op ${numScore}/100.` });
+  } catch (err) {
+    res.status(500).json({ error: 'Kon commando niet uitvoeren via Minecraft RCON: ' + err.message });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`==========================================`);
   console.log(` FPixel Network Portal running on port ${PORT}`);

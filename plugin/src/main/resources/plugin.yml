@@ -82,3 +82,7 @@ commands:
   addcoins:
     description: Add coins to a player
     permission: fpixel.admin
+  watchdog:
+    description: FPixel Custom Watchdog Anticheat & Integrity Management
+    aliases: [wd, anticheat]
+    permission: fpixel.mod

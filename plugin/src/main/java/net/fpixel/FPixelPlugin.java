@@ -50,6 +50,7 @@ public class FPixelPlugin extends JavaPlugin {
     private net.fpixel.lobby.portal.HubPortalManager hubPortalManager;
     private net.fpixel.worlds.PlayerWorldManager playerWorldManager;
     private net.fpixel.games.maker.MapMakerManager mapMakerManager;
+    private net.fpixel.core.watchdog.WatchdogManager watchdogManager;
 
 
     @Override
@@ -81,6 +82,7 @@ public class FPixelPlugin extends JavaPlugin {
         this.hubPortalManager = new net.fpixel.lobby.portal.HubPortalManager(this);
         this.playerWorldManager = new net.fpixel.worlds.PlayerWorldManager(this);
         this.mapMakerManager = new net.fpixel.games.maker.MapMakerManager(this);
+        this.watchdogManager = new net.fpixel.core.watchdog.WatchdogManager(this);
 
         // 2. Visual & Display Managers (Scoreboards & Tablist)
         this.scoreboardManager = new ScoreboardManager(this);
@@ -96,6 +98,7 @@ public class FPixelPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new SurvivalListener(this), this);
         Bukkit.getPluginManager().registerEvents(new net.fpixel.games.parkour.ParkourListener(this, this.parkourManager), this);
         Bukkit.getPluginManager().registerEvents(new net.fpixel.lobby.portal.HubPortalListener(this.hubPortalManager), this);
+        Bukkit.getPluginManager().registerEvents(new net.fpixel.core.watchdog.WatchdogListener(this, this.watchdogManager), this);
 
 
         // 4. Register Commands
@@ -176,6 +179,10 @@ public class FPixelPlugin extends JavaPlugin {
         getCommand("mapbuild").setExecutor(mapBuildCmd);
         getCommand("mapbuild").setTabCompleter(mapBuildCmd);
 
+        net.fpixel.core.watchdog.WatchdogCommand watchdogCmd = new net.fpixel.core.watchdog.WatchdogCommand(this, this.watchdogManager);
+        getCommand("watchdog").setExecutor(watchdogCmd);
+        getCommand("watchdog").setTabCompleter(watchdogCmd);
+
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);
         Bukkit.getScheduler().runTask(this, () -> {
@@ -245,6 +252,7 @@ public class FPixelPlugin extends JavaPlugin {
     public net.fpixel.lobby.portal.HubPortalManager getHubPortalManager() { return hubPortalManager; }
     public net.fpixel.worlds.PlayerWorldManager getPlayerWorldManager() { return playerWorldManager; }
     public net.fpixel.games.maker.MapMakerManager getMapMakerManager() { return mapMakerManager; }
+    public net.fpixel.core.watchdog.WatchdogManager getWatchdogManager() { return watchdogManager; }
 
     @Override
     public org.bukkit.generator.ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {

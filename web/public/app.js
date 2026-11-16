@@ -85,6 +85,8 @@ function switchStaffTab(subtabId) {
 
   if (subtabId === 'ranks') {
     loadRanks();
+  } else if (subtabId === 'watchdog') {
+    loadWatchdogData();
   }
 }
 
@@ -225,6 +227,12 @@ function renderAuthUser(user) {
   const ownerCard = document.getElementById('owner-rank-form-card');
   if (ownerCard) {
     ownerCard.style.display = (user.rank === 'OWNER') ? 'block' : 'none';
+  }
+
+  // Owner Watchdog override card
+  const ownerWdCard = document.getElementById('owner-watchdog-override-card');
+  if (ownerWdCard) {
+    ownerWdCard.style.display = (user.rank === 'OWNER') ? 'block' : 'none';
   }
 }
 
@@ -1204,4 +1212,78 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+// -------------------------------------------------------------
+// WATCHDOG ANTICHEAT & INTEGRITY
+// -------------------------------------------------------------
+async function loadWatchdogData() {
+  const countEl = document.getElementById('watchdog-violation-count');
+  const tbody = document.getElementById('watchdog-table-body');
+  if (!tbody) return;
+
+  try {
+    const res = await fetch('/api/admin/watchdog');
+    const data = await res.json();
+    if (!data.success) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444;">Fout bij laden: ${data.error || 'Geen toegang'}</td></tr>`;
+      return;
+    }
+
+    const violations = data.violations || [];
+    if (countEl) countEl.textContent = violations.length;
+
+    if (violations.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">Geen recente overtredingen. Server is 100% veilig.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = violations.map(v => {
+      const scoreColor = v.score >= 90 ? '#10b981' : (v.score >= 50 ? '#eab308' : '#ef4444');
+      const cleanPlayer = (v.player || 'Onbekend').replace(/^\./, '');
+      return `
+        <tr>
+          <td style="color: #94a3b8; font-size: 0.85rem;">${v.timestamp || '-'}</td>
+          <td style="display: flex; align-items: center; gap: 8px;">
+            <img src="https://mc-heads.net/avatar/${cleanPlayer}/24" style="width: 24px; height: 24px; border-radius: 4px;" alt="${cleanPlayer}">
+            <strong>${escapeHtml(v.player)}</strong>
+          </td>
+          <td><span style="font-family: monospace; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; color: #38bdf8;">${escapeHtml(v.brand || 'Unknown')}</span></td>
+          <td style="font-weight: bold; color: ${scoreColor};">${v.score} / 100</td>
+          <td style="color: #fca5a5;">${escapeHtml(v.reason || 'Overtreding')}</td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444;">Netwerkfout bij laden van Watchdog logs: ${err.message}</td></tr>`;
+  }
+}
+
+async function setWatchdogScore() {
+  const player = document.getElementById('wd-override-player').value.trim();
+  const score = document.getElementById('wd-override-score').value;
+
+  if (!player || score === '') {
+    showToast('Vul een spelersnaam en score in.', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/admin/watchdog/setscore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player, score: parseInt(score, 10) })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || 'Score succesvol bijgewerkt!', 'success');
+      document.getElementById('wd-override-player').value = '';
+      document.getElementById('wd-override-score').value = '';
+      loadWatchdogData();
+    } else {
+      showToast(data.error || 'Kon score niet bijwerken.', 'error');
+    }
+  } catch (err) {
+    showToast('Fout bij verzenden van commando: ' + err.message, 'error');
+  }
 }

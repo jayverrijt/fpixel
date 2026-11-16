@@ -404,6 +404,10 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             }
             Bukkit.dispatchCommand(sender, "serverbackup");
             return true;
+        } else if (sub.equals("watchdog") || sub.equals("wd")) {
+            String[] wdArgs = new String[args.length - 1];
+            System.arraycopy(args, 1, wdArgs, 0, args.length - 1);
+            return new net.fpixel.core.watchdog.WatchdogCommand(plugin, plugin.getWatchdogManager()).onCommand(sender, command, label, wdArgs);
         } else {
             sendHelp(sender);
         }
@@ -1048,6 +1052,7 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel import §7- Map & Hub Importer (/fpixel import list|hub|map|scan)"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel update §7- Start whole-server update (backup, git, compile, restart)"));
         sender.sendMessage(ChatUtil.colorize(" §e/fpixel backup §7- Create full server backup snapshot"));
+        sender.sendMessage(ChatUtil.colorize(" §e/fpixel watchdog §7- Custom Watchdog Anticheat & Client Integrity status"));
     }
 
     @Override
@@ -1070,7 +1075,17 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
 
         List<String> list = new ArrayList<>();
         if (args.length == 1) {
-            list.addAll(Arrays.asList("map", "parkour", "test", "approve", "disable", "fill", "empty", "undo", "import", "update", "backup", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
+            list.addAll(Arrays.asList("map", "parkour", "watchdog", "test", "approve", "disable", "fill", "empty", "undo", "import", "update", "backup", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
+        } else if (args[0].equalsIgnoreCase("watchdog") || args[0].equalsIgnoreCase("wd")) {
+            if (args.length == 2) {
+                list.addAll(Arrays.asList("status", "check", "violations", "setscore"));
+            } else if (args.length == 3 && (args[1].equalsIgnoreCase("check") || args[1].equalsIgnoreCase("setscore"))) {
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    list.add(p.getName());
+                }
+            } else if (args.length == 4 && args[1].equalsIgnoreCase("setscore")) {
+                list.addAll(Arrays.asList("100", "95", "90", "80", "50", "0"));
+            }
         } else if (args[0].equalsIgnoreCase("map")) {
             if (args.length == 2) {
                 list.addAll(Arrays.asList("create", "build", "test", "approve", "reject", "rename", "disable", "enable", "setlobby", "generatelobby", "list"));
