@@ -1995,6 +1995,19 @@ function getCustomMaps() {
   return {};
 }
 
+function saveCustomMaps(maps) {
+  const file = resolveFilePath('plugins/FPixelCore/custom_maps.json') || path.join(SERVER_DIR, 'plugins/FPixelCore/custom_maps.json');
+  try {
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(maps, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Failed to save custom_maps.json:', e);
+    return false;
+  }
+}
+
 // API: /api/maker/maps (List maps: personal for players, all for staff)
 app.get('/api/maker/maps', (req, res) => {
   const user = getSessionUser(req);
@@ -2112,7 +2125,7 @@ app.post('/api/maker/submit', async (req, res) => {
   }
 });
 
-// API: /api/maker/review (Staff approve/reject/disable map)
+// API: /api/maker/review (Staff approve/reject/disable/enable map)
 app.post('/api/maker/review', async (req, res) => {
   const user = getSessionUser(req);
   if (!user || !user.isStaff) {
@@ -2129,13 +2142,62 @@ app.post('/api/maker/review', async (req, res) => {
     } else if (action === 'reject') {
       const safeReason = (reason || 'Niet goedgekeurd door staff').replace(/"/g, '');
       await sendRconCommand(`fpixel map reject ${id.toLowerCase()} ${safeReason}`);
-    } else if (action === 'disable') {
+    } else if (action === 'disable' || action === 'archive') {
       await sendRconCommand(`fpixel map disable ${id.toLowerCase()}`);
+      await sendRconCommand(`say §e[Map Maker] §eMap §f${id.toUpperCase()} §eis uit circulatie gehaald door staff.`);
+    } else if (action === 'enable' || action === 'activate') {
+      await sendRconCommand(`fpixel map enable ${id.toLowerCase()}`);
+      await sendRconCommand(`say §a[Map Maker] §eMap §f${id.toUpperCase()} §eis weer geactiveerd in de minigames!`);
     }
 
     res.json({ success: true, message: `Review actie "${action}" succesvol uitgevoerd voor map ${id}.` });
   } catch (err) {
+    // Fallback directly in custom_maps.json if RCON offline
+    const maps = getCustomMaps();
+    const mapKey = Object.keys(maps).find(k => k.toLowerCase() === id.toLowerCase());
+    if (mapKey && maps[mapKey]) {
+      if (action === 'approve' || action === 'enable' || action === 'activate') {
+        maps[mapKey].status = 'APPROVED';
+      } else if (action === 'reject') {
+        maps[mapKey].status = 'REJECTED';
+        maps[mapKey].rejectionReason = reason || 'Afgewezen door staff';
+      } else if (action === 'disable' || action === 'archive') {
+        maps[mapKey].status = 'ARCHIVED';
+      }
+      saveCustomMaps(maps);
+      return res.json({ success: true, message: `Review actie "${action}" lokaal opgeslagen voor map ${id}.` });
+    }
     res.status(500).json({ error: 'Kon actie niet uitvoeren via server: ' + err.message });
+  }
+});
+
+// API: /api/maker/rename (Staff rename map)
+app.post('/api/maker/rename', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isStaff) {
+    return res.status(403).json({ error: 'Minimaal [MODERATOR] rang vereist om maps te hernoemen.' });
+  }
+
+  const { id, newName } = req.body;
+  if (!id || !newName || !newName.trim()) {
+    return res.status(400).json({ error: 'Vul een map ID en nieuwe naam in.' });
+  }
+
+  const cleanName = newName.trim().replace(/"/g, '');
+
+  try {
+    await sendRconCommand(`fpixel map rename ${id.toLowerCase()} ${cleanName}`);
+    res.json({ success: true, message: `Map ${id} succesvol hernoemd naar "${cleanName}".` });
+  } catch (err) {
+    // Local fallback update in custom_maps.json
+    const maps = getCustomMaps();
+    const mapKey = Object.keys(maps).find(k => k.toLowerCase() === id.toLowerCase());
+    if (mapKey && maps[mapKey]) {
+      maps[mapKey].name = cleanName;
+      saveCustomMaps(maps);
+      return res.json({ success: true, message: `Map ${id} lokaal hernoemd naar "${cleanName}".` });
+    }
+    res.status(500).json({ error: 'Kon map niet hernoemen: ' + err.message });
   }
 });
 

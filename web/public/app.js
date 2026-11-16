@@ -837,6 +837,27 @@ async function submitMapForReview(id) {
 // -------------------------------------------------------------
 // UNIFIED STAFF CONSOLE
 // -------------------------------------------------------------
+let currentStaffMapFilter = 'PENDING_REVIEW';
+
+function setStaffMapFilter(filter) {
+  currentStaffMapFilter = filter;
+  const filterMap = {
+    'PENDING_REVIEW': 'pending',
+    'APPROVED': 'approved',
+    'ARCHIVED': 'archived'
+  };
+  ['pending', 'approved', 'archived'].forEach(key => {
+    const btn = document.getElementById('map-filter-' + key);
+    if (!btn) return;
+    if (filterMap[filter] === key) {
+      btn.className = 'btn btn-sm btn-purple';
+    } else {
+      btn.className = 'btn btn-sm btn-ghost';
+    }
+  });
+  loadReviewQueue();
+}
+
 async function loadStaffData() {
   loadReviewQueue();
 }
@@ -850,6 +871,7 @@ async function loadReviewQueue() {
   try {
     const res = await fetch('/api/maker/maps');
     const data = await res.json();
+    const allMaps = data.maps || [];
     const queue = data.reviewQueue || [];
 
     if (badge) {
@@ -858,7 +880,18 @@ async function loadReviewQueue() {
     }
     if (subnavBadge) subnavBadge.textContent = queue.length;
 
-    if (queue.length === 0) {
+    let displayList = [];
+    if (currentStaffMapFilter === 'PENDING_REVIEW') {
+      displayList = allMaps.filter(m => m.status === 'PENDING_REVIEW');
+    } else if (currentStaffMapFilter === 'APPROVED') {
+      displayList = allMaps.filter(m => m.status === 'APPROVED');
+    } else if (currentStaffMapFilter === 'ARCHIVED') {
+      displayList = allMaps.filter(m => m.status === 'ARCHIVED' || m.status === 'DISABLED' || m.status === 'REJECTED');
+    } else {
+      displayList = allMaps;
+    }
+
+    if (displayList.length === 0) {
       empty.style.display = 'block';
       grid.innerHTML = '';
       return;
@@ -867,9 +900,51 @@ async function loadReviewQueue() {
     empty.style.display = 'none';
     grid.innerHTML = '';
 
-    queue.forEach(m => {
+    displayList.forEach(m => {
       const card = document.createElement('div');
       card.className = 'review-item-card';
+
+      let statusBadge = '<span class="rank-badge rank-donor">IN AFWACHTING</span>';
+      if (m.status === 'APPROVED') {
+        statusBadge = '<span class="rank-badge rank-owner">ACTIEF IN GAMES</span>';
+      } else if (m.status === 'ARCHIVED' || m.status === 'DISABLED') {
+        statusBadge = '<span class="rank-badge" style="background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);">UIT CIRCULATIE</span>';
+      } else if (m.status === 'REJECTED') {
+        statusBadge = '<span class="rank-badge rank-admin">AFGEKEURD</span>';
+      }
+
+      let actionButtons = '';
+      if (m.status === 'PENDING_REVIEW') {
+        actionButtons = `
+          <button class="btn btn-sm btn-purple" onclick="staffReviewMap('${m.id}', 'approve')">
+            ✅ Goedkeuren & Live
+          </button>
+          <button class="btn btn-sm btn-ghost" onclick="openRenameModal('${m.id}', '${escapeHtml(m.name)}')">
+            ✏️ Hernoemen
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="openRejectModal('${m.id}')">
+            ❌ Afkeuren
+          </button>
+        `;
+      } else if (m.status === 'APPROVED') {
+        actionButtons = `
+          <button class="btn btn-sm btn-ghost" onclick="openRenameModal('${m.id}', '${escapeHtml(m.name)}')">
+            ✏️ Hernoemen
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="staffReviewMap('${m.id}', 'disable')">
+            📦 Uit Circulatie Halen
+          </button>
+        `;
+      } else {
+        actionButtons = `
+          <button class="btn btn-sm btn-purple" onclick="staffReviewMap('${m.id}', 'enable')">
+            🚀 Weer In Circulatie Brengen
+          </button>
+          <button class="btn btn-sm btn-ghost" onclick="openRenameModal('${m.id}', '${escapeHtml(m.name)}')">
+            ✏️ Hernoemen
+          </button>
+        `;
+      }
 
       card.innerHTML = `
         <div class="item-card-header">
@@ -877,7 +952,7 @@ async function loadReviewQueue() {
             <span class="item-uid-tag">${m.id ? m.id.toUpperCase() : 'MAP'}</span>
             <h3 class="item-card-title">${escapeHtml(m.name)}</h3>
           </div>
-          <span class="rank-badge rank-donor">IN AFWACHTING</span>
+          ${statusBadge}
         </div>
 
         <div class="item-meta-row">
@@ -891,12 +966,7 @@ async function loadReviewQueue() {
         </div>
 
         <div class="item-actions-row">
-          <button class="btn btn-sm btn-purple" onclick="staffReviewMap('${m.id}', 'approve')">
-            ✅ Goedkeuren & Live Zetten
-          </button>
-          <button class="btn btn-sm btn-danger" onclick="openRejectModal('${m.id}')">
-            ❌ Afkeuren
-          </button>
+          ${actionButtons}
         </div>
       `;
 
@@ -924,6 +994,38 @@ async function staffReviewMap(id, action, reason = '') {
     }
   } catch (e) {
     showToast('Netwerkfout bij review actie.', 'error');
+  }
+}
+
+function openRenameModal(id, currentName) {
+  document.getElementById('rename-map-id').value = id;
+  document.getElementById('rename-map-newname').value = currentName || '';
+  openModal('modal-rename-map');
+}
+
+async function submitRenameMap() {
+  const id = document.getElementById('rename-map-id').value;
+  const newName = document.getElementById('rename-map-newname').value.trim();
+  if (!newName) {
+    showToast('Vul een geldige naam in.', 'error');
+    return;
+  }
+  closeModal('modal-rename-map');
+  try {
+    const res = await fetch('/api/maker/rename', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, newName })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      loadReviewQueue();
+    } else {
+      showToast(data.error || 'Kon map niet hernoemen.', 'error');
+    }
+  } catch (e) {
+    showToast('Netwerkfout bij hernoemen van map.', 'error');
   }
 }
 

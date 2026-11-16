@@ -472,6 +472,48 @@ public class ParkourManager {
     }
 
     /**
+     * Enables an archived parkour map and puts it back in circulation.
+     */
+    public boolean enableMap(CommandSender sender, String mapId) {
+        CustomParkourMap map = getMap(mapId);
+        if (map == null) {
+            ChatUtil.sendMessage(sender, "§cGeen parkour map gevonden met ID: §e" + mapId);
+            return false;
+        }
+
+        map.setStatus("APPROVED");
+        saveMaps();
+        registerMapAsArena(map);
+
+        ChatUtil.sendMessage(sender, "§6§lPARKOUR §8» §aMap §e\"" + map.getName() + "\" §7(" + map.getId() + ") §ais weer geactiveerd en speelbaar in games!");
+        return true;
+    }
+
+    /**
+     * Renames a parkour map and updates its active arena display name.
+     */
+    public boolean renameMap(CommandSender sender, String mapId, String newName) {
+        CustomParkourMap map = getMap(mapId);
+        if (map == null) {
+            ChatUtil.sendMessage(sender, "§cGeen parkour map gevonden met ID: §e" + mapId);
+            return false;
+        }
+
+        String oldName = map.getName();
+        map.setName(newName.trim());
+        saveMaps();
+
+        if (map.isApproved()) {
+            String arenaId = "parkour-" + map.getId().toLowerCase().replace("-", "");
+            plugin.getGameManager().unregisterArena(arenaId);
+            registerMapAsArena(map);
+        }
+
+        ChatUtil.sendMessage(sender, "§6§lPARKOUR §8» §aMap §e" + mapId + " §ais hernoemd van §7\"" + oldName + "\" §enaar §f\"" + map.getName() + "\"§a.");
+        return true;
+    }
+
+    /**
      * Registers an approved custom map as an active ParkourGame arena in GameManager.
      */
     public void registerMapAsArena(CustomParkourMap map) {

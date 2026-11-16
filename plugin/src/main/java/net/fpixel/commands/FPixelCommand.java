@@ -511,7 +511,20 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel parkour enable <map-id>"));
                     return true;
                 }
-                plugin.getParkourManager().approveMap(sender, args[2]);
+                plugin.getParkourManager().enableMap(sender, args[2]);
+                return true;
+            }
+            case "rename" -> {
+                if (!checkModPermission(sender)) {
+                    sender.sendMessage(ChatUtil.colorize("§cJe hebt minstens de [MODERATOR] rang nodig om maps te hernoemen."));
+                    return true;
+                }
+                if (args.length < 4) {
+                    sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel parkour rename <map-id> <nieuwe-naam>"));
+                    return true;
+                }
+                String newName = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
+                plugin.getParkourManager().renameMap(sender, args[2], newName);
                 return true;
             }
             case "setstart" -> {
@@ -681,7 +694,7 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleMapCommand(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel map <create|test|approve|reject|disable|list>"));
+            sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel map <create|test|approve|reject|rename|disable|enable|list>"));
             return true;
         }
 
@@ -807,7 +820,34 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel map disable <id>"));
                 return true;
             }
-            plugin.getMapMakerManager().disableMap(args[2], staff);
+            plugin.getMapMakerManager().disableMap(args[2], sender);
+            return true;
+        }
+
+        if (action.equals("enable") || action.equals("activate") || action.equals("reactivate")) {
+            if (!checkModPermission(sender)) {
+                sender.sendMessage(ChatUtil.colorize("§cJe hebt minstens de [MODERATOR] rang nodig."));
+                return true;
+            }
+            if (args.length < 3) {
+                sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel map enable <id>"));
+                return true;
+            }
+            plugin.getMapMakerManager().enableMap(args[2], sender);
+            return true;
+        }
+
+        if (action.equals("rename")) {
+            if (!checkModPermission(sender)) {
+                sender.sendMessage(ChatUtil.colorize("§cJe hebt minstens de [MODERATOR] rang nodig."));
+                return true;
+            }
+            if (args.length < 4) {
+                sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel map rename <id> <nieuwe-naam>"));
+                return true;
+            }
+            String newName = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
+            plugin.getMapMakerManager().renameMap(args[2], newName, sender);
             return true;
         }
 
@@ -987,13 +1027,24 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
 
         List<String> list = new ArrayList<>();
         if (args.length == 1) {
-            list.addAll(Arrays.asList("parkour", "test", "approve", "disable", "fill", "empty", "undo", "import", "update", "backup", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
-        } else if (args[0].equalsIgnoreCase("parkour")) {
+            list.addAll(Arrays.asList("map", "parkour", "test", "approve", "disable", "fill", "empty", "undo", "import", "update", "backup", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
+        } else if (args[0].equalsIgnoreCase("map")) {
             if (args.length == 2) {
-                list.addAll(Arrays.asList("create", "build", "setstart", "checkpoint", "setfinish", "clearcheckpoints", "list", "test", "approve", "disable", "enable", "reject", "reload"));
+                list.addAll(Arrays.asList("create", "build", "test", "approve", "reject", "rename", "disable", "enable", "list"));
             } else if (args.length == 3) {
                 String sub = args[1].toLowerCase();
-                if (sub.equals("test") || sub.equals("approve") || sub.equals("disable") || sub.equals("enable") || sub.equals("reject") || sub.equals("build")) {
+                if (sub.equals("test") || sub.equals("approve") || sub.equals("reject") || sub.equals("rename") || sub.equals("disable") || sub.equals("enable") || sub.equals("build")) {
+                    for (var m : plugin.getMapMakerManager().getAllMaps()) {
+                        list.add(m.getId());
+                    }
+                }
+            }
+        } else if (args[0].equalsIgnoreCase("parkour")) {
+            if (args.length == 2) {
+                list.addAll(Arrays.asList("create", "build", "setstart", "checkpoint", "setfinish", "clearcheckpoints", "list", "test", "approve", "disable", "enable", "rename", "reject", "reload"));
+            } else if (args.length == 3) {
+                String sub = args[1].toLowerCase();
+                if (sub.equals("test") || sub.equals("approve") || sub.equals("disable") || sub.equals("enable") || sub.equals("rename") || sub.equals("reject") || sub.equals("build")) {
                     for (net.fpixel.games.parkour.CustomParkourMap m : plugin.getParkourManager().getAllMaps()) {
                         list.add(m.getId());
                     }

@@ -21,6 +21,10 @@ import java.util.List;
 public class MapSelectMenu {
 
     public static void open(FPixelPlugin plugin, Player player, String gameType) {
+        open(plugin, player, gameType, 1);
+    }
+
+    public static void open(FPixelPlugin plugin, Player player, String gameType, int page) {
         String cleanType = gameType.toUpperCase().trim();
 
         List<Arena> gameArenas = new ArrayList<>();
@@ -36,8 +40,19 @@ public class MapSelectMenu {
             return;
         }
 
-        // Java Chest GUI
-        String title = "§8Select Map: " + cleanType;
+        // Slots for maps (21 slots per page in rows 1, 2, 3)
+        int[] slots = {
+                10, 11, 12, 13, 14, 15, 16,
+                19, 20, 21, 22, 23, 24, 25,
+                28, 29, 30, 31, 32, 33, 34
+        };
+
+        int totalPages = Math.max(1, (int) Math.ceil((double) gameArenas.size() / slots.length));
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+
+        // Java Chest GUI with pagination indicator
+        String title = "§8Select Map: " + cleanType + (totalPages > 1 ? " §7(" + page + "/" + totalPages + ")" : "");
         Inventory inv = Bukkit.createInventory(null, 45, ChatUtil.component(title));
 
         // Glass fillers
@@ -55,13 +70,6 @@ public class MapSelectMenu {
                 )
                 .build();
         inv.setItem(4, quickJoin);
-
-        // Display up to 21 maps in rows 1, 2, 3 (slots 10-16, 19-25, 28-34)
-        int[] slots = {
-                10, 11, 12, 13, 14, 15, 16,
-                19, 20, 21, 22, 23, 24, 25,
-                28, 29, 30, 31, 32, 33, 34
-        };
 
         Material icon = switch (cleanType) {
             case "BEDWARS" -> Material.RED_BED;
@@ -86,28 +94,63 @@ public class MapSelectMenu {
                     .build();
             inv.setItem(22, noMaps);
         } else {
-            for (int i = 0; i < Math.min(gameArenas.size(), slots.length); i++) {
+            int startIndex = (page - 1) * slots.length;
+            int endIndex = Math.min(startIndex + slots.length, gameArenas.size());
+
+            for (int i = startIndex; i < endIndex; i++) {
                 Arena arena = gameArenas.get(i);
-                boolean isJoinable = arena.getState() == GameState.WAITING || arena.getState() == GameState.STARTING || (arena.getState() == GameState.IN_GAME && arena.getPlayerCount() == 0);
-                String statusColor = isJoinable ? "§a" : "§c";
-                String actionText = isJoinable ? "§e▶ Click to play on this map!" : "§b▶ Click to spectate this map!";
+                boolean isFull = arena.getPlayerCount() >= arena.getMaxPlayers();
+                boolean isJoinable = !isFull && (arena.getState() == GameState.WAITING || arena.getState() == GameState.STARTING || (arena.getState() == GameState.IN_GAME && arena.getPlayerCount() == 0));
+
+                String statusColor;
+                String statusDisplay;
+                String actionText;
+
+                if (isFull) {
+                    statusColor = "§c";
+                    statusDisplay = "§c§lVOL (§e" + arena.getPlayerCount() + "§7/§e" + arena.getMaxPlayers() + "§c)";
+                    actionText = "§b▶ Klik om mee te kijken (Spectator)";
+                } else if (isJoinable) {
+                    statusColor = "§a";
+                    statusDisplay = arena.getPlayerCount() == 0 ? "WAITING" : arena.getState().getDisplay();
+                    actionText = "§e▶ Click to play on this map!";
+                } else {
+                    statusColor = "§6";
+                    statusDisplay = arena.getState().getDisplay();
+                    actionText = "§b▶ Click to spectate this map!";
+                }
 
                 ItemStack mapItem = new ItemBuilder(icon)
                         .name("§e§l" + arena.getDisplayName())
                         .lore(
-                                "§7Status: " + statusColor + (isJoinable && arena.getPlayerCount() == 0 ? "WAITING" : arena.getState().getDisplay()),
+                                "§7Status: " + statusColor + statusDisplay,
                                 "§7Players: §a" + arena.getPlayerCount() + "§7/§a" + arena.getMaxPlayers(),
                                 "§7Game Mode: §f" + (arena.getMaxPlayers() <= 2 ? "1v1 Duel" : "Multiplayer"),
                                 "",
                                 actionText
                         )
                         .build();
-                inv.setItem(slots[i], mapItem);
+                inv.setItem(slots[i - startIndex], mapItem);
             }
         }
 
-        // Back to Main Navigator item
+        // Navigation row (Row 5: slots 36-44)
+        if (page > 1) {
+            inv.setItem(38, new ItemBuilder(Material.ARROW)
+                    .name("§e◀ Vorige Pagina §7(" + (page - 1) + "/" + totalPages + ")")
+                    .lore("§7Klik om terug te gaan naar pagina " + (page - 1))
+                    .build());
+        }
+
+        // Back to Main Navigator item at slot 40
         inv.setItem(40, new ItemBuilder(Material.BARRIER).name("§c« Back to Navigator").build());
+
+        if (page < totalPages) {
+            inv.setItem(42, new ItemBuilder(Material.ARROW)
+                    .name("§eVolgende Pagina ▶ §7(" + (page + 1) + "/" + totalPages + ")")
+                    .lore("§7Klik om naar pagina " + (page + 1) + " te gaan")
+                    .build());
+        }
 
         player.openInventory(inv);
         ChatUtil.playSound(player, Sound.UI_BUTTON_CLICK, 0.7f, 1.2f);
@@ -124,8 +167,9 @@ public class MapSelectMenu {
                     .button("§b§lQuick Join §7(Any Open Map)");
 
             for (Arena arena : gameArenas) {
-                boolean isJoinable = arena.getState() == GameState.WAITING || arena.getState() == GameState.STARTING || (arena.getState() == GameState.IN_GAME && arena.getPlayerCount() == 0);
-                String status = isJoinable ? "§aWAITING" : "§c" + arena.getState().getDisplay();
+                boolean isFull = arena.getPlayerCount() >= arena.getMaxPlayers();
+                boolean isJoinable = !isFull && (arena.getState() == GameState.WAITING || arena.getState() == GameState.STARTING || (arena.getState() == GameState.IN_GAME && arena.getPlayerCount() == 0));
+                String status = isFull ? "§c[VOL - Spectate]" : (isJoinable ? "§aWAITING" : "§c" + arena.getState().getDisplay());
                 builder.button("§e§l" + arena.getDisplayName() + "\n§7" + status + " (" + arena.getPlayerCount() + "/" + arena.getMaxPlayers() + ")");
             }
 
@@ -154,22 +198,30 @@ public class MapSelectMenu {
     }
 
     public static void handleClick(FPixelPlugin plugin, Player player, String title, int slot) {
+        String rawTitle = ChatColor.stripColor(title);
+        // Extract gameType and page from title, e.g. "Select Map: SKYWARS (1/2)" or "Select Map: SKYWARS"
+        String gameType = rawTitle.replace("Select Map: ", "").trim();
+        int page = 1;
+        if (gameType.contains("(") && gameType.contains(")")) {
+            try {
+                int pStart = gameType.indexOf('(');
+                int pEnd = gameType.indexOf(')');
+                String pagePart = gameType.substring(pStart + 1, pEnd).trim();
+                if (pagePart.contains("/")) {
+                    page = Integer.parseInt(pagePart.split("/")[0].trim());
+                }
+                gameType = gameType.substring(0, pStart).trim();
+            } catch (Exception ignored) {}
+        }
+        gameType = gameType.toUpperCase().trim();
+
         if (slot == 40) {
             GameSelectorMenu.open(plugin, player);
             return;
         }
 
-        String rawTitle = ChatColor.stripColor(title);
-        String gameType = rawTitle.replace("Select Map: ", "").trim().toUpperCase();
-
-        // Slot 4 or Slot 22 (Empty / Quick Join)
-        if (slot == 4 || slot == 22) {
-            player.closeInventory();
-            Arena current = plugin.getGameManager().getPlayerArena(player);
-            if (current != null) {
-                current.leave(player);
-            }
-            plugin.getGameManager().joinQueue(player, gameType);
+        if (slot == 38 && page > 1) {
+            open(plugin, player, gameType, page - 1);
             return;
         }
 
@@ -186,12 +238,35 @@ public class MapSelectMenu {
                 28, 29, 30, 31, 32, 33, 34
         };
 
+        int totalPages = Math.max(1, (int) Math.ceil((double) gameArenas.size() / slots.length));
+
+        if (slot == 42 && page < totalPages) {
+            open(plugin, player, gameType, page + 1);
+            return;
+        }
+
+        // Slot 4 or Slot 22 (Empty / Quick Join)
+        if (slot == 4 || slot == 22) {
+            player.closeInventory();
+            Arena current = plugin.getGameManager().getPlayerArena(player);
+            if (current != null) {
+                current.leave(player);
+            }
+            plugin.getGameManager().joinQueue(player, gameType);
+            return;
+        }
+
+        int startIndex = (page - 1) * slots.length;
+
         for (int i = 0; i < slots.length; i++) {
-            if (slots[i] == slot && i < gameArenas.size()) {
-                Arena chosen = gameArenas.get(i);
-                player.closeInventory();
-                joinChosenArena(plugin, player, chosen);
-                return;
+            if (slots[i] == slot) {
+                int mapIndex = startIndex + i;
+                if (mapIndex < gameArenas.size()) {
+                    Arena chosen = gameArenas.get(mapIndex);
+                    player.closeInventory();
+                    joinChosenArena(plugin, player, chosen);
+                    return;
+                }
             }
         }
     }
@@ -243,7 +318,11 @@ public class MapSelectMenu {
 
         boolean joined = chosen.join(player);
         if (joined) {
-            ChatUtil.sendMessage(player, "§aJoined §e" + chosen.getDisplayName() + "§a!");
+            if (chosen.getPlayerCount() > chosen.getMaxPlayers()) {
+                ChatUtil.sendMessage(player, "§eToegevoegd als §bSpectator§e op §f" + chosen.getDisplayName() + "§e.");
+            } else {
+                ChatUtil.sendMessage(player, "§aJoined §e" + chosen.getDisplayName() + "§a!");
+            }
         }
     }
 }

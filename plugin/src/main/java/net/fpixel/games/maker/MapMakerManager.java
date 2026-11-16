@@ -440,7 +440,7 @@ public class MapMakerManager implements Listener {
         return true;
     }
 
-    public boolean approveMap(String id, Player staff) {
+    public boolean approveMap(String id, org.bukkit.command.CommandSender staff) {
         CustomMinigameMap map = getMap(id);
         if (map == null) return false;
 
@@ -455,7 +455,7 @@ public class MapMakerManager implements Listener {
         return true;
     }
 
-    public boolean rejectMap(String id, String reason, Player staff) {
+    public boolean rejectMap(String id, String reason, org.bukkit.command.CommandSender staff) {
         CustomMinigameMap map = getMap(id);
         if (map == null) return false;
 
@@ -470,7 +470,7 @@ public class MapMakerManager implements Listener {
         return true;
     }
 
-    public boolean disableMap(String id, Player staff) {
+    public boolean disableMap(String id, org.bukkit.command.CommandSender staff) {
         CustomMinigameMap map = getMap(id);
         if (map == null) return false;
 
@@ -479,7 +479,45 @@ public class MapMakerManager implements Listener {
         unregisterMapArena(map);
 
         if (staff != null) {
-            ChatUtil.sendMessage(staff, "§e§l[Map Review] §eMap §f" + map.getName() + " §e(" + map.getId() + ") is gedeactiveerd (uit circulatie gehaald).");
+            ChatUtil.sendMessage(staff, "§e§l[Map Beheer] §eMap §f" + map.getName() + " §e(" + map.getId() + ") is §cuit circulatie gehaald§e (Gearchiveerd).");
+        }
+        return true;
+    }
+
+    public boolean enableMap(String id, org.bukkit.command.CommandSender staff) {
+        CustomMinigameMap map = getMap(id);
+        if (map == null) return false;
+
+        map.setStatus(CustomMinigameMap.Status.APPROVED);
+        map.setRejectionReason(null);
+        saveMaps();
+        registerMapAsArena(map);
+
+        if (staff != null) {
+            ChatUtil.sendMessage(staff, "§a§l[Map Beheer] §eMap §f" + map.getName() + " §e(" + map.getId() + ") is §ageheractiveerd§e en weer in circulatie gebracht!");
+        }
+        return true;
+    }
+
+    public boolean renameMap(String id, String newName, org.bukkit.command.CommandSender staff) {
+        if (id == null || newName == null || newName.isBlank()) return false;
+        CustomMinigameMap map = getMap(id);
+        if (map == null) {
+            if (staff != null) ChatUtil.sendMessage(staff, "§cMap niet gevonden met ID: §f" + id);
+            return false;
+        }
+
+        String oldName = map.getName();
+        map.setName(newName.trim());
+        saveMaps();
+
+        if (map.getStatus() == CustomMinigameMap.Status.APPROVED) {
+            unregisterMapArena(map);
+            registerMapAsArena(map);
+        }
+
+        if (staff != null) {
+            ChatUtil.sendMessage(staff, "§a§l[Map Beheer] §eMap §f" + id + " §eis hernoemd van §7\"" + oldName + "\" §enaar §f\"" + map.getName() + "\"§e.");
         }
         return true;
     }

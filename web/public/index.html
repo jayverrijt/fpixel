@@ -343,17 +343,23 @@
         </div>
       </div>
 
-      <!-- Sub-section 1: Map Review Queue -->
+      <!-- Sub-section 1: Map Review Queue & Beheer -->
       <div id="staff-section-reviews" class="staff-subpane active">
         <div class="section-sub-header">
-          <h3>Ingekomen Community Map Aanvragen</h3>
-          <p>Test maps in-game via het testcommando en keur ze goed om direct toe te voegen aan de minigames.</p>
+          <h3>Community Maps & Circulatie Beheer</h3>
+          <p>Beoordeel ingekomen maps, hernoem bestaande maps en haal ze desgewenst uit of in circulatie.</p>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+          <button id="map-filter-pending" class="btn btn-sm btn-purple" onclick="setStaffMapFilter('PENDING_REVIEW')">⏳ In Beoordeling</button>
+          <button id="map-filter-approved" class="btn btn-sm btn-ghost" onclick="setStaffMapFilter('APPROVED')">✅ Actief in Circulatie</button>
+          <button id="map-filter-archived" class="btn btn-sm btn-ghost" onclick="setStaffMapFilter('ARCHIVED')">📦 Uit Circulatie</button>
         </div>
 
         <div id="staff-review-empty" class="empty-state" style="display: none;">
           <div class="empty-icon">✅</div>
-          <h3>Geen openstaande map reviews</h3>
-          <p>Alle ingediende maps zijn op dit moment beoordeeld.</p>
+          <h3>Geen maps in deze categorie</h3>
+          <p>Er zijn op dit moment geen maps gevonden met deze filterstatus.</p>
         </div>
 
         <div id="staff-review-grid" class="review-queue-grid">
@@ -675,6 +681,27 @@
         </div>
         <button class="btn btn-danger btn-block" onclick="submitRejectMap()">
           Map Afkeuren met Reden
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. RENAME MAP MODAL -->
+  <div id="modal-rename-map" class="modal-backdrop" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Map Hernoemen</h3>
+        <button class="modal-close" onclick="closeModal('modal-rename-map')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="rename-map-id">
+        <p class="modal-desc">Kies een nieuwe naam voor deze minigame map (direct zichtbaar in Minecraft & kompas):</p>
+        <div class="form-group">
+          <label>Nieuwe Weergavenaam:</label>
+          <input type="text" id="rename-map-newname" placeholder="bijv. Sky High 2.0...">
+        </div>
+        <button class="btn btn-purple btn-block" onclick="submitRenameMap()">
+          Map Hernoemen Opslaan ✏️
         </button>
       </div>
     </div>

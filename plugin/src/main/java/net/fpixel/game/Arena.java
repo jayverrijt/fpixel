@@ -256,8 +256,22 @@ public abstract class Arena {
         }
 
         if (getPlayerCount() >= maxPlayers) {
-            ChatUtil.sendMessage(player, "§cThis arena is full!");
-            return false;
+            // Arena is full of players -> allow spectating rather than blocking
+            if (plugin.getSurvivalManager() != null) {
+                if (plugin.getSurvivalManager().isSurvivalWorld(player.getWorld())) {
+                    plugin.getSurvivalManager().getProfileManager().saveProfile(player);
+                }
+                plugin.getSurvivalManager().removeSurvivalPlayer(player);
+            }
+            spectators.add(player.getUniqueId());
+            plugin.getSpectatorManager().makeSpectator(player, this);
+            if (spectatorSpawn != null) {
+                player.teleport(spectatorSpawn);
+            } else if (lobbySpawn != null) {
+                player.teleport(lobbySpawn);
+            }
+            ChatUtil.sendMessage(player, "§eDeze arena zit vol met actieve spelers! Je kijkt nu mee als §bSpectator§e.");
+            return true;
         }
 
         if (plugin.getSurvivalManager() != null) {
