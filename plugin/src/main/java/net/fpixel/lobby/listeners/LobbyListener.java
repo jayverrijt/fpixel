@@ -399,4 +399,93 @@ public class LobbyListener implements Listener {
             event.setCancelled(true);
         }
     }
+
+    /**
+     * Prevents any natural or monster mob spawning across minigame maps, arenas, lobbies and builder worlds.
+     * Only true survival SMP worlds allow mob spawning.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onCreatureSpawn(org.bukkit.event.entity.CreatureSpawnEvent event) {
+        org.bukkit.World world = event.getLocation().getWorld();
+        if (world == null) return;
+
+        // Allow natural mob spawning strictly in true Survival SMP worlds
+        if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().isSurvivalWorld(world)) {
+            return;
+        }
+        if (plugin.getPlayerWorldManager() != null && plugin.getPlayerWorldManager().isPlayerWorld(world)) {
+            var pw = plugin.getPlayerWorldManager().getWorld(world.getName());
+            if (pw != null && "SURVIVAL".equalsIgnoreCase(pw.getDefaultGameMode())) {
+                return;
+            }
+        }
+
+        // Allow plugin-driven game spawns (e.g. Iron Golems/Silverfish in BedWars, Doom Dragon in SkyWars, NPC armor stands)
+        var reason = event.getSpawnReason();
+        if (reason == org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM
+                || reason == org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.BUILD_IRONGOLEM
+                || reason == org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.BUILD_SNOWMAN
+                || reason == org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER_EGG) {
+            return;
+        }
+
+        // Cancel all other mob spawning in minigames, void arenas, lobbies, map maker worlds
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onEntitySpawn(org.bukkit.event.entity.EntitySpawnEvent event) {
+        org.bukkit.entity.Entity entity = event.getEntity();
+        if (!(entity instanceof org.bukkit.entity.Monster || entity instanceof org.bukkit.entity.Slime || entity instanceof org.bukkit.entity.Phantom || entity instanceof org.bukkit.entity.Bat)) {
+            return;
+        }
+
+        org.bukkit.World world = entity.getWorld();
+        if (world == null) return;
+
+        if (plugin.getSurvivalManager() != null && plugin.getSurvivalManager().isSurvivalWorld(world)) {
+            return;
+        }
+        if (plugin.getPlayerWorldManager() != null && plugin.getPlayerWorldManager().isPlayerWorld(world)) {
+            var pw = plugin.getPlayerWorldManager().getWorld(world.getName());
+            if (pw != null && "SURVIVAL".equalsIgnoreCase(pw.getDefaultGameMode())) {
+                return;
+            }
+        }
+
+        event.setCancelled(true);
+    }
+
+    /**
+     * Ensures minigame chests (SkyWars, custom maps, playtest worlds) are never empty when opened by players.
+     */
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onChestOpen(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        var block = event.getClickedBlock();
+        if (block == null) return;
+        if (block.getType() != Material.CHEST && block.getType() != Material.TRAPPED_CHEST) return;
+        if (!(block.getState() instanceof org.bukkit.block.Chest chest)) return;
+
+        Player player = event.getPlayer();
+        Arena arena = plugin.getGameManager().getPlayerArena(player);
+
+        if (arena instanceof net.fpixel.games.skywars.SkyWarsGame sw) {
+            if (chest.getBlockInventory().isEmpty()) {
+                sw.fillChestDynamically(chest);
+            }
+        } else {
+            String wName = block.getWorld().getName().toLowerCase();
+            if (wName.startsWith("map_build_") || (plugin.getMapMakerManager() != null && plugin.getMapMakerManager().isBuilderWorld(block.getWorld()))) {
+                if (chest.getBlockInventory().isEmpty()) {
+                    double dist = Math.sqrt(Math.pow(chest.getX(), 2) + Math.pow(chest.getZ(), 2));
+                    if (dist <= 22) {
+                        net.fpixel.games.skywars.SkyWarsGame.fillStaticMidChest(chest.getBlockInventory());
+                    } else {
+                        net.fpixel.games.skywars.SkyWarsGame.fillStaticIslandChest(chest.getBlockInventory());
+                    }
+                }
+            }
+        }
+    }
 }

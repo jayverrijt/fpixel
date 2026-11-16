@@ -17,6 +17,7 @@ import net.fpixel.games.sumo.SumoGame;
 import net.fpixel.games.tntrun.TNTRunGame;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -191,13 +192,34 @@ public class MapMakerManager implements Listener {
         }
         if (world != null) {
             world.setPVP(true);
-            world.setDifficulty(Difficulty.NORMAL);
+            world.setDifficulty(Difficulty.EASY);
+            world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+            world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+            world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+            world.setTime(6000L);
+            for (org.bukkit.entity.Entity e : world.getEntities()) {
+                if (e instanceof org.bukkit.entity.Monster || e instanceof org.bukkit.entity.Slime || e instanceof org.bukkit.entity.Phantom || e instanceof org.bukkit.entity.Bat) {
+                    e.remove();
+                }
+            }
             // Ensure waiting lobby exists in world (builds at Y=100 if missing)
             if (world.getBlockAt(0, 99, 0).getType().isAir()) {
                 generateWaitingLobby(world, map);
             }
         }
         return world;
+    }
+
+    public boolean isBuilderWorld(World world) {
+        if (world == null) return false;
+        String name = world.getName().toLowerCase();
+        if (name.startsWith("map_build_")) return true;
+        for (CustomMinigameMap map : maps.values()) {
+            if (map.getWorldName() != null && map.getWorldName().equalsIgnoreCase(world.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -356,6 +378,12 @@ public class MapMakerManager implements Listener {
             map.getMidChests().add(formatLoc(new Location(world, -2, cy + 1, -2)));
             map.getMidChests().add(formatLoc(new Location(world, -2, cy + 1, 2)));
             map.getMidChests().add(formatLoc(new Location(world, 2, cy + 1, -2)));
+            for (String mcLocStr : map.getMidChests()) {
+                Location mc = parseLoc(mcLocStr);
+                if (mc != null && mc.getBlock().getState() instanceof Chest chest) {
+                    net.fpixel.games.skywars.SkyWarsGame.fillStaticMidChest(chest.getBlockInventory());
+                }
+            }
         }
 
         // 2. Base Islands in circle (radius 40)
@@ -363,6 +391,7 @@ public class MapMakerManager implements Listener {
         map.getTeamSpawns().clear();
         map.getTeamBeds().clear();
         map.getTeamGenerators().clear();
+        map.getIslandChests().clear();
 
         Material[] teamWool = new Material[]{
                 Material.RED_WOOL, Material.BLUE_WOOL, Material.GREEN_WOOL, Material.YELLOW_WOOL,
@@ -397,7 +426,10 @@ public class MapMakerManager implements Listener {
                 map.getTeamBeds().add(formatLoc(new Location(world, bx + 1, cy + 1, bz)));
             } else {
                 world.getBlockAt(bx + 1, cy + 1, bz).setType(Material.CHEST, false);
-                map.getTeamBeds().add(formatLoc(new Location(world, bx + 1, cy + 1, bz)));
+                map.getIslandChests().add(formatLoc(new Location(world, bx + 1, cy + 1, bz)));
+                if (world.getBlockAt(bx + 1, cy + 1, bz).getState() instanceof Chest chest) {
+                    net.fpixel.games.skywars.SkyWarsGame.fillStaticIslandChest(chest.getBlockInventory());
+                }
             }
 
             // Spawn Location
@@ -481,6 +513,22 @@ public class MapMakerManager implements Listener {
         staff.setGameMode(GameMode.SURVIVAL);
         staff.setHealth(20.0);
         staff.setFoodLevel(20);
+
+        // Auto-fill empty chests in the test world for SkyWars playtesting
+        if (map.getGameType() == CustomMinigameMap.GameType.SKYWARS) {
+            for (org.bukkit.Chunk chunk : world.getLoadedChunks()) {
+                for (org.bukkit.block.BlockState state : chunk.getTileEntities()) {
+                    if (state instanceof Chest chest && chest.getBlockInventory().isEmpty()) {
+                        double dist = Math.sqrt(Math.pow(chest.getX(), 2) + Math.pow(chest.getZ(), 2));
+                        if (dist <= 22) {
+                            net.fpixel.games.skywars.SkyWarsGame.fillStaticMidChest(chest.getBlockInventory());
+                        } else {
+                            net.fpixel.games.skywars.SkyWarsGame.fillStaticIslandChest(chest.getBlockInventory());
+                        }
+                    }
+                }
+            }
+        }
 
         ChatUtil.sendMessage(staff, "§a§l[Play Test] §eJe playtest nu map: §f" + map.getName() + " §7(" + map.getGameType().getDisplayName() + ") - Maker: §b" + map.getCreatorName());
         ChatUtil.sendMessage(staff, "§7Modus: §aSurvival Playtest §7| Wissel met §e/gmc§7, §e/gms§7 of §e/gmsp");
@@ -625,6 +673,26 @@ public class MapMakerManager implements Listener {
                     for (String spStr : map.getTeamSpawns()) {
                         Location sp = parseLoc(spStr);
                         if (sp != null) sw.addIslandSpawn(sp);
+                    }
+                }
+                if (map.getMidChests() != null) {
+                    for (String mcStr : map.getMidChests()) {
+                        Location mc = parseLoc(mcStr);
+                        if (mc != null) sw.addMidChest(mc);
+                    }
+                }
+                if (map.getIslandChests() != null) {
+                    for (String icStr : map.getIslandChests()) {
+                        Location ic = parseLoc(icStr);
+                        if (ic != null) sw.addIslandChest(ic);
+                    }
+                }
+                if (map.getTeamBeds() != null) {
+                    for (String bStr : map.getTeamBeds()) {
+                        Location b = parseLoc(bStr);
+                        if (b != null && b.getBlock().getType() == Material.CHEST) {
+                            sw.addIslandChest(b);
+                        }
                     }
                 }
                 plugin.getGameManager().registerArena(sw);

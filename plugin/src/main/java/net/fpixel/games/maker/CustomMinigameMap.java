@@ -60,6 +60,7 @@ public class CustomMinigameMap {
     private List<String> teamBeds = new ArrayList<>();
     private List<String> teamGenerators = new ArrayList<>();
     private List<String> midChests = new ArrayList<>();
+    private List<String> islandChests = new ArrayList<>();
     private List<String> midGenerators = new ArrayList<>();
     private List<String> parkourCheckpoints = new ArrayList<>();
     private String spectatorSpawn;
@@ -127,6 +128,9 @@ public class CustomMinigameMap {
 
     public List<String> getMidChests() { return midChests; }
     public void setMidChests(List<String> midChests) { this.midChests = midChests; }
+
+    public List<String> getIslandChests() { return islandChests; }
+    public void setIslandChests(List<String> islandChests) { this.islandChests = islandChests; }
 
     public List<String> getMidGenerators() { return midGenerators; }
     public void setMidGenerators(List<String> midGenerators) { this.midGenerators = midGenerators; }

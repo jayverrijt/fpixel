@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Listens for client handshake brand packets, plugin messages, and live movement/combat patterns
  * to feed real-time integrity signals to the WatchdogManager.
  */
-public class WatchdogListener implements Listener, PluginMessageListener {
+public class WatchdogListener implements Listener {
 
     private final FPixelPlugin plugin;
     private final WatchdogManager watchdog;
@@ -40,23 +40,6 @@ public class WatchdogListener implements Listener, PluginMessageListener {
     public WatchdogListener(FPixelPlugin plugin, WatchdogManager watchdog) {
         this.plugin = plugin;
         this.watchdog = watchdog;
-
-        // Register incoming plugin channels for client brand interception
-        Bukkit.getMessenger().registerIncomingPluginChannel(plugin, "minecraft:brand", this);
-        Bukkit.getMessenger().registerIncomingPluginChannel(plugin, "MC|Brand", this);
-    }
-
-    @Override
-    public void onPluginMessageReceived(String channel, Player player, byte[] message) {
-        if (channel.equalsIgnoreCase("minecraft:brand") || channel.equalsIgnoreCase("MC|Brand")) {
-            try {
-                // Packet format: varint or raw UTF-8 string
-                String brand = new String(message, StandardCharsets.UTF_8).trim();
-                // Strip non-printable ascii characters often present from VarInt prefix
-                brand = brand.replaceAll("[^\\x20-\\x7E]", "");
-                watchdog.processClientBrand(player, brand);
-            } catch (Exception ignored) {}
-        }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)

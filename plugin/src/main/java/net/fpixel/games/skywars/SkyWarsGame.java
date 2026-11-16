@@ -124,7 +124,10 @@ public class SkyWarsGame extends Arena {
         }
     }
 
-    private void populateChests() {
+    public void populateChests() {
+        if (islandChests.isEmpty() && midChests.isEmpty()) {
+            scanAndRegisterChests();
+        }
         for (Location loc : islandChests) {
             if (loc.getBlock().getState() instanceof Chest chest) {
                 fillIslandChest(chest.getBlockInventory());
@@ -137,7 +140,46 @@ public class SkyWarsGame extends Arena {
         }
     }
 
-    private void fillIslandChest(Inventory inv) {
+    public void scanAndRegisterChests() {
+        Location center = (lobbySpawn != null) ? lobbySpawn : (spectatorSpawn != null ? spectatorSpawn : null);
+        if (center == null || center.getWorld() == null) return;
+        org.bukkit.World w = center.getWorld();
+        int cx = center.getBlockX();
+        int cz = center.getBlockZ();
+
+        for (org.bukkit.Chunk chunk : w.getLoadedChunks()) {
+            for (org.bukkit.block.BlockState state : chunk.getTileEntities()) {
+                if (state instanceof Chest chest) {
+                    Location loc = chest.getLocation();
+                    if (loc.getY() >= voidKillY) {
+                        double dist = Math.sqrt(Math.pow(loc.getX() - cx, 2) + Math.pow(loc.getZ() - cz, 2));
+                        if (dist <= 22) {
+                            if (!midChests.contains(loc)) midChests.add(loc);
+                        } else {
+                            if (!islandChests.contains(loc)) islandChests.add(loc);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void fillChestDynamically(Chest chest) {
+        if (chest == null || !chest.getBlockInventory().isEmpty()) return;
+        Location center = (lobbySpawn != null) ? lobbySpawn : (spectatorSpawn != null ? spectatorSpawn : null);
+        if (center == null) {
+            fillIslandChest(chest.getBlockInventory());
+            return;
+        }
+        double dist = Math.sqrt(Math.pow(chest.getX() - center.getBlockX(), 2) + Math.pow(chest.getZ() - center.getBlockZ(), 2));
+        if (dist <= 22) {
+            fillMidChest(chest.getBlockInventory());
+        } else {
+            fillIslandChest(chest.getBlockInventory());
+        }
+    }
+
+    public static void fillStaticIslandChest(Inventory inv) {
         inv.clear();
         // Guaranteed weapon
         inv.setItem(RNG.nextInt(9), new ItemStack(RNG.nextBoolean() ? Material.IRON_SWORD : Material.STONE_SWORD));
@@ -158,7 +200,7 @@ public class SkyWarsGame extends Arena {
         }
     }
 
-    private void fillMidChest(Inventory inv) {
+    public static void fillStaticMidChest(Inventory inv) {
         inv.clear();
         // OP Mid loot
         inv.setItem(RNG.nextInt(9), new ItemStack(Material.DIAMOND_SWORD));
@@ -171,6 +213,14 @@ public class SkyWarsGame extends Arena {
         if (RNG.nextBoolean()) inv.setItem(RNG.nextInt(27), new ItemStack(Material.LAVA_BUCKET));
         if (RNG.nextBoolean()) inv.setItem(RNG.nextInt(27), new ItemStack(Material.TNT, 8));
         if (RNG.nextBoolean()) inv.setItem(RNG.nextInt(27), new ItemStack(Material.FLINT_AND_STEEL));
+    }
+
+    private void fillIslandChest(Inventory inv) {
+        fillStaticIslandChest(inv);
+    }
+
+    private void fillMidChest(Inventory inv) {
+        fillStaticMidChest(inv);
     }
 
     @Override
