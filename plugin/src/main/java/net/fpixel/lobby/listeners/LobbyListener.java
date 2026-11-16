@@ -436,7 +436,10 @@ public class LobbyListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onEntitySpawn(org.bukkit.event.entity.EntitySpawnEvent event) {
         org.bukkit.entity.Entity entity = event.getEntity();
-        if (!(entity instanceof org.bukkit.entity.Monster || entity instanceof org.bukkit.entity.Slime || entity instanceof org.bukkit.entity.Phantom || entity instanceof org.bukkit.entity.Bat)) {
+        if (!(entity instanceof org.bukkit.entity.LivingEntity)) {
+            return;
+        }
+        if (entity instanceof Player || entity instanceof org.bukkit.entity.ArmorStand) {
             return;
         }
 
@@ -453,12 +456,55 @@ public class LobbyListener implements Listener {
             }
         }
 
+        // Allow BedWars shop iron golem / silverfish and SkyWars doom dragon
+        if (entity instanceof org.bukkit.entity.IronGolem || entity instanceof org.bukkit.entity.Silverfish || entity instanceof org.bukkit.entity.EnderDragon) {
+            return;
+        }
+
         event.setCancelled(true);
     }
 
     /**
      * Ensures minigame chests (SkyWars, custom maps, playtest worlds) are never empty when opened by players.
      */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onInventoryOpen(org.bukkit.event.inventory.InventoryOpenEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) return;
+        var inv = event.getInventory();
+        if (inv == null || !inv.isEmpty()) return;
+
+        var holder = inv.getHolder();
+        Location loc = null;
+        if (holder instanceof org.bukkit.block.Chest chest) {
+            loc = chest.getLocation();
+        } else if (holder instanceof org.bukkit.block.DoubleChest doubleChest) {
+            loc = doubleChest.getLocation();
+        }
+
+        if (loc == null || loc.getWorld() == null) return;
+
+        Arena arena = plugin.getGameManager().getPlayerArena(player);
+        if (arena instanceof net.fpixel.games.skywars.SkyWarsGame sw) {
+            Location center = (sw.getLobbySpawn() != null) ? sw.getLobbySpawn() : sw.getSpectatorSpawn();
+            double dist = center != null ? Math.sqrt(Math.pow(loc.getX() - center.getBlockX(), 2) + Math.pow(loc.getZ() - center.getBlockZ(), 2)) : 50;
+            if (dist <= 22) {
+                net.fpixel.games.skywars.SkyWarsGame.fillStaticMidChest(inv);
+            } else {
+                net.fpixel.games.skywars.SkyWarsGame.fillStaticIslandChest(inv);
+            }
+        } else {
+            String wName = loc.getWorld().getName().toLowerCase();
+            if (wName.startsWith("map_build_") || (plugin.getMapMakerManager() != null && plugin.getMapMakerManager().isBuilderWorld(loc.getWorld()))) {
+                double dist = Math.sqrt(Math.pow(loc.getX(), 2) + Math.pow(loc.getZ(), 2));
+                if (dist <= 22) {
+                    net.fpixel.games.skywars.SkyWarsGame.fillStaticMidChest(inv);
+                } else {
+                    net.fpixel.games.skywars.SkyWarsGame.fillStaticIslandChest(inv);
+                }
+            }
+        }
+    }
+
     @EventHandler(priority = EventPriority.NORMAL)
     public void onChestOpen(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;

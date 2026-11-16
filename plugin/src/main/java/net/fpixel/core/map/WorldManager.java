@@ -76,12 +76,21 @@ public class WorldManager {
             World w = wc.createWorld();
             if (w != null) {
                 w.setAutoSave(false);
+                w.setDifficulty(Difficulty.EASY);
                 w.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+                w.setGameRule(GameRule.DO_PATROL_SPAWNING, false);
+                w.setGameRule(GameRule.DO_TRADER_SPAWNING, false);
+                w.setGameRule(GameRule.DO_INSOMNIA, false);
                 w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
                 w.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
                 w.setGameRule(GameRule.DO_TILE_DROPS, true);
                 w.setGameRule(GameRule.DO_ENTITY_DROPS, true);
                 w.setTime(6000L);
+                for (org.bukkit.entity.Entity e : w.getEntities()) {
+                    if (e instanceof org.bukkit.entity.LivingEntity && !(e instanceof org.bukkit.entity.Player) && !(e instanceof org.bukkit.entity.ArmorStand)) {
+                        e.remove();
+                    }
+                }
                 return w;
             }
         } catch (Exception e) {
@@ -100,9 +109,19 @@ public class WorldManager {
                 if (w != null) {
                     w.setAutoSave(false);
                     w.setKeepSpawnInMemory(false);
+                    w.setDifficulty(Difficulty.EASY);
+                    w.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+                    w.setGameRule(GameRule.DO_PATROL_SPAWNING, false);
+                    w.setGameRule(GameRule.DO_TRADER_SPAWNING, false);
+                    w.setGameRule(GameRule.DO_INSOMNIA, false);
                     w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
                     w.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
                     w.setTime(6000L);
+                    for (org.bukkit.entity.Entity e : w.getEntities()) {
+                        if (e instanceof org.bukkit.entity.LivingEntity && !(e instanceof org.bukkit.entity.Player) && !(e instanceof org.bukkit.entity.ArmorStand)) {
+                            e.remove();
+                        }
+                    }
                     return w;
                 }
             } catch (Exception e) {

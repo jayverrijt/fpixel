@@ -198,6 +198,27 @@ public class FPixelPlugin extends JavaPlugin {
             rankManager.updatePlayerDisplayName(p);
             rankManager.applyPermissions(p);
         }
+
+        // Anti-Mob Auto-Purge Task for all minigame, arena, lobby, and builder worlds
+        Bukkit.getScheduler().runTaskTimer(this, () -> {
+            for (World w : Bukkit.getWorlds()) {
+                if (survivalManager != null && survivalManager.isSurvivalWorld(w)) continue;
+                if (playerWorldManager != null && playerWorldManager.isPlayerWorld(w)) {
+                    var pw = playerWorldManager.getWorld(w.getName());
+                    if (pw != null && "SURVIVAL".equalsIgnoreCase(pw.getDefaultGameMode())) continue;
+                }
+                for (org.bukkit.entity.Entity e : w.getEntities()) {
+                    if (e instanceof org.bukkit.entity.LivingEntity
+                            && !(e instanceof Player)
+                            && !(e instanceof org.bukkit.entity.ArmorStand)
+                            && !(e instanceof org.bukkit.entity.IronGolem)
+                            && !(e instanceof org.bukkit.entity.Silverfish)
+                            && !(e instanceof org.bukkit.entity.EnderDragon)) {
+                        e.remove();
+                    }
+                }
+            }
+        }, 100L, 200L);
     }
 
     @Override

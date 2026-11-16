@@ -129,14 +129,27 @@ public class SkyWarsGame extends Arena {
             scanAndRegisterChests();
         }
         for (Location loc : islandChests) {
+            ensureChunkLoaded(loc);
             if (loc.getBlock().getState() instanceof Chest chest) {
                 fillIslandChest(chest.getBlockInventory());
+                chest.update(true, false);
             }
         }
         for (Location loc : midChests) {
+            ensureChunkLoaded(loc);
             if (loc.getBlock().getState() instanceof Chest chest) {
                 fillMidChest(chest.getBlockInventory());
+                chest.update(true, false);
             }
+        }
+    }
+
+    private void ensureChunkLoaded(Location loc) {
+        if (loc == null || loc.getWorld() == null) return;
+        int chunkX = loc.getBlockX() >> 4;
+        int chunkZ = loc.getBlockZ() >> 4;
+        if (!loc.getWorld().isChunkLoaded(chunkX, chunkZ)) {
+            loc.getWorld().loadChunk(chunkX, chunkZ, true);
         }
     }
 
@@ -146,6 +159,19 @@ public class SkyWarsGame extends Arena {
         org.bukkit.World w = center.getWorld();
         int cx = center.getBlockX();
         int cz = center.getBlockZ();
+
+        // Ensure arena chunks are loaded
+        int centerChunkX = cx >> 4;
+        int centerChunkZ = cz >> 4;
+        for (int dx = -6; dx <= 6; dx++) {
+            for (int dz = -6; dz <= 6; dz++) {
+                int chX = centerChunkX + dx;
+                int chZ = centerChunkZ + dz;
+                if (!w.isChunkLoaded(chX, chZ)) {
+                    w.loadChunk(chX, chZ, true);
+                }
+            }
+        }
 
         for (org.bukkit.Chunk chunk : w.getLoadedChunks()) {
             for (org.bukkit.block.BlockState state : chunk.getTileEntities()) {
@@ -169,6 +195,7 @@ public class SkyWarsGame extends Arena {
         Location center = (lobbySpawn != null) ? lobbySpawn : (spectatorSpawn != null ? spectatorSpawn : null);
         if (center == null) {
             fillIslandChest(chest.getBlockInventory());
+            chest.update(true, false);
             return;
         }
         double dist = Math.sqrt(Math.pow(chest.getX() - center.getBlockX(), 2) + Math.pow(chest.getZ() - center.getBlockZ(), 2));
@@ -177,6 +204,7 @@ public class SkyWarsGame extends Arena {
         } else {
             fillIslandChest(chest.getBlockInventory());
         }
+        chest.update(true, false);
     }
 
     public static void fillStaticIslandChest(Inventory inv) {

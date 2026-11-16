@@ -507,6 +507,7 @@ public abstract class Arena {
     public RollbackEngine getRollbackEngine() { return rollbackEngine; }
     public void setLobbySpawn(Location lobbySpawn) { this.lobbySpawn = lobbySpawn; }
     public void setSpectatorSpawn(Location spectatorSpawn) { this.spectatorSpawn = spectatorSpawn; }
+    public Location getSpectatorSpawn() { return spectatorSpawn; }
     public Location getLobbySpawn() { return lobbySpawn; }
     public int getPlayerCount() { return players.size() + simulatedPlayers.size(); }
     public int getMinPlayers() { return minPlayers; }
