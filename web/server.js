@@ -257,6 +257,16 @@ function getRanks() {
   return ranks;
 }
 
+// Offline UUID helper (matches Java nameUUIDFromBytes("OfflinePlayer:" + name))
+function getOfflinePlayerUUID(username) {
+  if (!username) return null;
+  const hash = crypto.createHash('md5').update('OfflinePlayer:' + username, 'utf8').digest();
+  hash[6] = (hash[6] & 0x0f) | 0x30; // Version 3
+  hash[8] = (hash[8] & 0x3f) | 0x80; // Variant RFC 4122
+  const hex = hash.toString('hex');
+  return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}`;
+}
+
 // Usercache mapping
 function getUserCache() {
   const cache = {};
@@ -282,6 +292,14 @@ function getResolvedPlayerRanks() {
   const cache = getUserCache();
   const whitelist = getWhitelist();
 
+  const rankPriority = {
+    'OWNER': 100,
+    'ADMIN': 90,
+    'MODERATOR': 80,
+    'DONOR': 50,
+    'MEMBER': 10
+  };
+
   const uuidToName = {};
   for (const [uuid, name] of Object.entries(cache)) {
     uuidToName[uuid.toLowerCase()] = name;
@@ -289,6 +307,43 @@ function getResolvedPlayerRanks() {
   for (const w of whitelist) {
     if (w.uuid && w.name) {
       uuidToName[w.uuid.toLowerCase()] = w.name;
+    }
+  }
+
+  // Also resolve from plugin userdata directory
+  const userdataDir = resolveFilePath('plugins/FPixelCore/userdata');
+  if (userdataDir && fs.existsSync(userdataDir)) {
+    try {
+      const files = fs.readdirSync(userdataDir);
+      for (const file of files) {
+        if (file.endsWith('.yml')) {
+          const u = file.replace('.yml', '').toLowerCase();
+          const content = fs.readFileSync(path.join(userdataDir, file), 'utf8');
+          const m = content.match(/^name:\s*(.+)$/m);
+          if (m && m[1]) {
+            uuidToName[u] = m[1].trim();
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  // Calculate offline UUIDs for all known player names to cleanly group offline & Bedrock accounts
+  const allKnownNames = new Set();
+  for (const name of Object.values(uuidToName)) allKnownNames.add(name);
+  for (const w of whitelist) if (w.name) allKnownNames.add(w.name);
+  for (const key of Object.keys(rawRanks)) {
+    if (!key.includes('-')) allKnownNames.add(key);
+  }
+
+  for (const name of allKnownNames) {
+    const clean = name.replace(/^\./, '');
+    const variants = [name, name.toLowerCase(), clean, clean.toLowerCase(), '.' + clean, '.' + clean.toLowerCase()];
+    for (const v of variants) {
+      const offUuid = getOfflinePlayerUUID(v);
+      if (offUuid) {
+        uuidToName[offUuid.toLowerCase()] = name;
+      }
     }
   }
 
@@ -303,6 +358,9 @@ function getResolvedPlayerRanks() {
       isUuid = true;
       if (uuidToName[key.toLowerCase()]) {
         resolvedName = uuidToName[key.toLowerCase()];
+      } else if (rank === 'MEMBER') {
+        // Skip unresolvable raw UUIDs that are only MEMBER to prevent orphan clutter in Staff UI
+        continue;
       }
     }
 
@@ -311,6 +369,11 @@ function getResolvedPlayerRanks() {
     if (seenUsernames.has(cleanLower)) {
       const existing = seenUsernames.get(cleanLower);
       existing.rawKeys.push(key);
+      const currentWeight = rankPriority[existing.rank] || 0;
+      const newWeight = rankPriority[rank] || 0;
+      if (newWeight > currentWeight) {
+        existing.rank = rank;
+      }
       continue;
     }
 
@@ -343,14 +406,6 @@ function getResolvedPlayerRanks() {
     }
   }
 
-  const rankPriority = {
-    'OWNER': 100,
-    'ADMIN': 90,
-    'MODERATOR': 80,
-    'DONOR': 50,
-    'MEMBER': 10
-  };
-
   result.sort((a, b) => {
     const pA = rankPriority[a.rank] || 0;
     const pB = rankPriority[b.rank] || 0;
@@ -359,15 +414,6 @@ function getResolvedPlayerRanks() {
   });
 
   return result;
-}
-
-// Offline UUID helper (matches Java nameUUIDFromBytes("OfflinePlayer:" + name))
-function getOfflinePlayerUUID(username) {
-  const hash = crypto.createHash('md5').update('OfflinePlayer:' + username, 'utf8').digest();
-  hash[6] = (hash[6] & 0x0f) | 0x30; // Version 3
-  hash[8] = (hash[8] & 0x3f) | 0x80; // Variant RFC 4122
-  const hex = hash.toString('hex');
-  return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}`;
 }
 
 // Whitelist helper
@@ -1248,19 +1294,28 @@ app.post('/api/admin/ranks/set', async (req, res) => {
   }
 
   const cleanUser = username.trim();
+  const cleanLower = cleanUser.toLowerCase().replace(/^\./, '');
   const ranks = getRanks();
   ranks[cleanUser.toLowerCase()] = cleanRank;
+  ranks[cleanLower] = cleanRank;
+  ranks['.' + cleanLower] = cleanRank;
 
-  // Also sync matching UUIDs so Bukkit UUID lookup doesn't override with old rank
+  // Also sync matching offline UUIDs so Bukkit UUID lookup doesn't override with old rank
+  const variants = [cleanUser, cleanUser.toLowerCase(), cleanLower, '.' + cleanLower];
+  for (const v of variants) {
+    const offUuid = getOfflinePlayerUUID(v);
+    if (offUuid) ranks[offUuid.toLowerCase()] = cleanRank;
+  }
+
   const whitelist = getWhitelist();
   const cache = getUserCache();
   for (const w of whitelist) {
-    if (w.name && w.name.toLowerCase() === cleanUser.toLowerCase() && w.uuid) {
+    if (w.name && w.name.toLowerCase().replace(/^\./, '') === cleanLower && w.uuid) {
       ranks[w.uuid.toLowerCase()] = cleanRank;
     }
   }
   for (const [uuid, name] of Object.entries(cache)) {
-    if (name && name.toLowerCase() === cleanUser.toLowerCase()) {
+    if (name && name.toLowerCase().replace(/^\./, '') === cleanLower) {
       ranks[uuid.toLowerCase()] = cleanRank;
     }
   }
@@ -1293,19 +1348,28 @@ app.post('/api/admin/ranks/reset', async (req, res) => {
     return res.status(400).json({ error: 'Vul een gebruikersnaam in.' });
   }
 
-  const cleanUser = username.trim().toLowerCase();
+  const cleanUser = username.trim();
+  const cleanLower = cleanUser.toLowerCase().replace(/^\./, '');
   const ranks = getRanks();
-  delete ranks[cleanUser];
+  delete ranks[cleanUser.toLowerCase()];
+  delete ranks[cleanLower];
+  delete ranks['.' + cleanLower];
+
+  const variants = [cleanUser, cleanUser.toLowerCase(), cleanLower, '.' + cleanLower];
+  for (const v of variants) {
+    const offUuid = getOfflinePlayerUUID(v);
+    if (offUuid) delete ranks[offUuid.toLowerCase()];
+  }
 
   const whitelist = getWhitelist();
   const cache = getUserCache();
   for (const w of whitelist) {
-    if (w.name && w.name.toLowerCase() === cleanUser && w.uuid) {
+    if (w.name && w.name.toLowerCase().replace(/^\./, '') === cleanLower && w.uuid) {
       delete ranks[w.uuid.toLowerCase()];
     }
   }
   for (const [uuid, name] of Object.entries(cache)) {
-    if (name && name.toLowerCase() === cleanUser) {
+    if (name && name.toLowerCase().replace(/^\./, '') === cleanLower) {
       delete ranks[uuid.toLowerCase()];
     }
   }

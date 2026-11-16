@@ -91,21 +91,26 @@ public class RankManager {
 
     public Rank getRank(Player player) {
         if (player == null) return Rank.MEMBER;
-        if (playerRanks.containsKey(player.getUniqueId())) {
-            return playerRanks.get(player.getUniqueId());
-        }
         String name = player.getName().toLowerCase();
         String clean = name.startsWith(".") ? name.substring(1) : name;
 
+        Rank nameRank = null;
         if (nameRanks.containsKey(name)) {
-            return nameRanks.get(name);
+            nameRank = nameRanks.get(name);
+        } else if (nameRanks.containsKey(clean)) {
+            nameRank = nameRanks.get(clean);
+        } else if (nameRanks.containsKey("." + clean)) {
+            nameRank = nameRanks.get("." + clean);
         }
-        if (nameRanks.containsKey(clean)) {
-            return nameRanks.get(clean);
+
+        Rank uuidRank = playerRanks.get(player.getUniqueId());
+
+        if (nameRank != null && uuidRank != null) {
+            return nameRank.getWeight() >= uuidRank.getWeight() ? nameRank : uuidRank;
         }
-        if (nameRanks.containsKey("." + clean)) {
-            return nameRanks.get("." + clean);
-        }
+        if (nameRank != null) return nameRank;
+        if (uuidRank != null) return uuidRank;
+
         return Rank.MEMBER;
     }
 
@@ -146,6 +151,12 @@ public class RankManager {
             org.bukkit.OfflinePlayer off = Bukkit.getOfflinePlayer(clean);
             if (off != null && off.getUniqueId() != null) {
                 playerRanks.put(off.getUniqueId(), rank);
+            }
+        } catch (Exception ignored) {}
+        try {
+            org.bukkit.OfflinePlayer off2 = Bukkit.getOfflinePlayer(lower);
+            if (off2 != null && off2.getUniqueId() != null) {
+                playerRanks.put(off2.getUniqueId(), rank);
             }
         } catch (Exception ignored) {}
 
