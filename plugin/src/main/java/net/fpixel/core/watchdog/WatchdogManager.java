@@ -130,6 +130,11 @@ public class WatchdogManager {
     public void penalize(Player player, int points, String reason) {
         if (player == null || !player.isOnline()) return;
 
+        // Exempt server owner and staff from heuristic movement penalties
+        if (player.hasPermission("fpixel.owner") || (plugin.getRankManager() != null && plugin.getRankManager().getRank(player).isOwner())) {
+            return;
+        }
+
         // Exempt staff in creative or godmode
         if (player.hasPermission("fpixel.admin") && player.getGameMode() == org.bukkit.GameMode.CREATIVE) {
             return;
@@ -154,6 +159,12 @@ public class WatchdogManager {
      */
     public void kickForViolation(Player player, int score, String reason) {
         if (player == null || !player.isOnline()) return;
+
+        // Exempt server owner
+        if (player.hasPermission("fpixel.owner") || (plugin.getRankManager() != null && plugin.getRankManager().getRank(player).isOwner())) {
+            setTrustScore(player.getUniqueId(), MAX_TRUST_SCORE);
+            return;
+        }
 
         String brand = getClientBrand(player);
         String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());

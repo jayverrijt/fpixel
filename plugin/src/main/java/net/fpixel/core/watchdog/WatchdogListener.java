@@ -36,10 +36,17 @@ public class WatchdogListener implements Listener {
     private final Map<UUID, Integer> airTicks = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastBreakTime = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> breakCount = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> lastBlockPlaceTime = new ConcurrentHashMap<>();
 
     public WatchdogListener(FPixelPlugin plugin, WatchdogManager watchdog) {
         this.plugin = plugin;
         this.watchdog = watchdog;
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockPlace(org.bukkit.event.block.BlockPlaceEvent event) {
+        lastBlockPlaceTime.put(event.getPlayer().getUniqueId(), System.currentTimeMillis());
+        airTicks.put(event.getPlayer().getUniqueId(), 0);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -121,33 +128,69 @@ public class WatchdogListener implements Listener {
         }
 
         // 2. Fly & Mid-Air Hover Check
-        double dy = to.getY() - from.getY();
         UUID uid = player.getUniqueId();
 
+        // If sneaking or on ground (e.g. bridging on block edges), reset air count immediately!
+        if (player.isSneaking() || player.isOnGround()) {
+            airTicks.put(uid, 0);
+            return;
+        }
+
+        // If player placed a block in the last 2.5 seconds, they are actively bridging/building
+        long lastPlace = lastBlockPlaceTime.getOrDefault(uid, 0L);
+        if (System.currentTimeMillis() - lastPlace < 2500) {
+            airTicks.put(uid, 0);
+            return;
+        }
+
+        double dy = to.getY() - from.getY();
         boolean inLiquidOrClimbing = player.isInWater() || player.isInLava() || player.isClimbing();
         boolean hasJumpBoost = player.hasPotionEffect(PotionEffectType.JUMP_BOOST) || player.hasPotionEffect(PotionEffectType.LEVITATION);
 
         if (!inLiquidOrClimbing && !hasJumpBoost) {
-            // Check if there are blocks immediately beneath
-            Block ground = to.clone().subtract(0, 0.5, 0).getBlock();
-            boolean hasGroundBelow = ground.getType().isSolid() || ground.getType() == Material.WATER || ground.getType() == Material.LADDER || ground.getType() == Material.SCAFFOLDING;
+            // Check bounding box corners around player footprint (0.35 block radius)
+            double px = to.getX();
+            double py = to.getY();
+            double pz = to.getZ();
+            boolean hasGroundBelow = false;
+            double[] offsets = {-0.35, 0.0, 0.35};
+            for (double ox : offsets) {
+                for (double oz : offsets) {
+                    Block b = to.getWorld().getBlockAt((int) Math.floor(px + ox), (int) Math.floor(py - 0.5), (int) Math.floor(pz + oz));
+                    if (b.getType().isSolid() || b.getType() == Material.WATER || b.getType() == Material.LADDER || b.getType() == Material.SCAFFOLDING) {
+                        hasGroundBelow = true;
+                        break;
+                    }
+                }
+                if (hasGroundBelow) break;
+            }
 
             if (!hasGroundBelow) {
                 int airCount = airTicks.getOrDefault(uid, 0) + 1;
                 airTicks.put(uid, airCount);
 
-                // If ascending in the air for more than 15 consecutive move packets without ground or effects
-                if (dy > 0.35 && airCount > 15) {
-                    watchdog.penalize(player, 15, "Vliegen in survival / Fly Hack (Ascending in mid-air)");
+                // If ascending in the air for more than 25 consecutive move packets without ground or effects
+                if (dy > 0.35 && airCount > 25) {
+                    watchdog.penalize(player, 5, "Vliegen in survival / Fly Hack (Ascending in mid-air)");
                     airTicks.put(uid, 0);
                     return;
                 }
 
-                // If hovering at exact same Y in mid-air for more than 20 packets without falling
-                if (Math.abs(dy) < 0.0001 && airCount > 25) {
-                    watchdog.penalize(player, 15, "Zweven in de lucht / Hover Hack");
-                    airTicks.put(uid, 0);
-                    return;
+                // If hovering at exact same Y in mid-air for more than 50 packets without falling,
+                // and there are NO solid blocks within 3 blocks directly beneath
+                if (Math.abs(dy) < 0.0001 && airCount > 50) {
+                    boolean nearbyFloor = false;
+                    for (int dyCheck = 1; dyCheck <= 3; dyCheck++) {
+                        if (to.clone().subtract(0, dyCheck, 0).getBlock().getType().isSolid()) {
+                            nearbyFloor = true;
+                            break;
+                        }
+                    }
+                    if (!nearbyFloor) {
+                        watchdog.penalize(player, 5, "Zweven in de lucht / Hover Hack");
+                        airTicks.put(uid, 0);
+                        return;
+                    }
                 }
             } else {
                 airTicks.put(uid, 0);
