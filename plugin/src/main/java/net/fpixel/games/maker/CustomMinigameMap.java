@@ -63,6 +63,7 @@ public class CustomMinigameMap {
     private List<String> midGenerators = new ArrayList<>();
     private List<String> parkourCheckpoints = new ArrayList<>();
     private String spectatorSpawn;
+    private String waitingLobby;
 
     public CustomMinigameMap() {}
 
@@ -135,4 +136,7 @@ public class CustomMinigameMap {
 
     public String getSpectatorSpawn() { return spectatorSpawn; }
     public void setSpectatorSpawn(String spectatorSpawn) { this.spectatorSpawn = spectatorSpawn; }
+
+    public String getWaitingLobby() { return waitingLobby; }
+    public void setWaitingLobby(String waitingLobby) { this.waitingLobby = waitingLobby; }
 }

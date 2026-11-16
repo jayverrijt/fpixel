@@ -851,6 +851,49 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if (action.equals("setlobby")) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage("Alleen spelers kunnen setlobby gebruiken.");
+                return true;
+            }
+            String mapId = args.length > 2 ? args[2] : null;
+            if (mapId == null) {
+                String wName = player.getWorld().getName();
+                if (wName.startsWith("map_build_")) {
+                    mapId = wName.substring("map_build_".length());
+                }
+            }
+            if (mapId == null) {
+                sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel map setlobby <id>"));
+                return true;
+            }
+            var m = plugin.getMapMakerManager().getMap(mapId);
+            if (m == null) {
+                sender.sendMessage(ChatUtil.colorize("§cMap niet gevonden met ID: " + mapId));
+                return true;
+            }
+            m.setWaitingLobby(plugin.getMapMakerManager().formatLoc(player.getLocation()));
+            plugin.getMapMakerManager().saveMaps();
+            ChatUtil.sendMessage(player, "§aWaiting Lobby spawn voor map §e" + mapId + " §ais ingesteld op jouw positie!");
+            return true;
+        }
+
+        if (action.equals("generatelobby") || action.equals("buildlobby")) {
+            if (args.length < 3) {
+                sender.sendMessage(ChatUtil.colorize("§cGebruik: /fpixel map generatelobby <id>"));
+                return true;
+            }
+            var m = plugin.getMapMakerManager().getMap(args[2]);
+            if (m == null) {
+                sender.sendMessage(ChatUtil.colorize("§cMap niet gevonden met ID: " + args[2]));
+                return true;
+            }
+            World w = plugin.getMapMakerManager().getOrCreateBuildWorld(m);
+            plugin.getMapMakerManager().generateWaitingLobby(w, m);
+            sender.sendMessage(ChatUtil.colorize("§aWaiting lobby voor map §e" + args[2] + " §ais succesvol gegenereerd op Y=100!"));
+            return true;
+        }
+
         sender.sendMessage(ChatUtil.colorize("§cOnbekend map subcommando: " + action));
         return true;
     }
@@ -1030,10 +1073,10 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             list.addAll(Arrays.asList("map", "parkour", "test", "approve", "disable", "fill", "empty", "undo", "import", "update", "backup", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
         } else if (args[0].equalsIgnoreCase("map")) {
             if (args.length == 2) {
-                list.addAll(Arrays.asList("create", "build", "test", "approve", "reject", "rename", "disable", "enable", "list"));
+                list.addAll(Arrays.asList("create", "build", "test", "approve", "reject", "rename", "disable", "enable", "setlobby", "generatelobby", "list"));
             } else if (args.length == 3) {
                 String sub = args[1].toLowerCase();
-                if (sub.equals("test") || sub.equals("approve") || sub.equals("reject") || sub.equals("rename") || sub.equals("disable") || sub.equals("enable") || sub.equals("build")) {
+                if (sub.equals("test") || sub.equals("approve") || sub.equals("reject") || sub.equals("rename") || sub.equals("disable") || sub.equals("enable") || sub.equals("build") || sub.equals("setlobby") || sub.equals("generatelobby")) {
                     for (var m : plugin.getMapMakerManager().getAllMaps()) {
                         list.add(m.getId());
                     }

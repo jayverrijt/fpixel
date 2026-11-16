@@ -149,6 +149,9 @@ public class MapMakerManager implements Listener {
             generateGenericPlatform(world, map);
         }
 
+        // Auto-generate high-altitude waiting area lounge at Y=100
+        generateWaitingLobby(world, map);
+
         if (creator != null) {
             creator.teleport(new Location(world, 0.5, 65, 0.5, 0f, 0f));
             creator.setGameMode(GameMode.CREATIVE);
@@ -189,8 +192,53 @@ public class MapMakerManager implements Listener {
         if (world != null) {
             world.setPVP(true);
             world.setDifficulty(Difficulty.NORMAL);
+            // Ensure waiting lobby exists in world (builds at Y=100 if missing)
+            if (world.getBlockAt(0, 99, 0).getType().isAir()) {
+                generateWaitingLobby(world, map);
+            }
         }
         return world;
+    }
+
+    /**
+     * Auto-generates a floating, transparent waiting lounge high above the map at Y=100.
+     * Features an 11x11 floor with sea lantern borders, light blue / cyan glass floor for viewing the islands below,
+     * protective glass safety walls, and a central gold spawn block.
+     */
+    public void generateWaitingLobby(World world, CustomMinigameMap map) {
+        if (world == null || map == null) return;
+        int wy = 100;
+
+        for (int x = -5; x <= 5; x++) {
+            for (int z = -5; z <= 5; z++) {
+                // Floor at wy - 1 (Y=99)
+                if (Math.abs(x) == 5 || Math.abs(z) == 5) {
+                    world.getBlockAt(x, wy - 1, z).setType(Material.SEA_LANTERN, false);
+                } else if (Math.abs(x) == 0 && Math.abs(z) == 0) {
+                    world.getBlockAt(x, wy - 1, z).setType(Material.GOLD_BLOCK, false);
+                } else if ((Math.abs(x) + Math.abs(z)) % 2 == 0) {
+                    world.getBlockAt(x, wy - 1, z).setType(Material.CYAN_STAINED_GLASS, false);
+                } else {
+                    world.getBlockAt(x, wy - 1, z).setType(Material.LIGHT_BLUE_STAINED_GLASS, false);
+                }
+
+                // Protective walls (3 blocks high so players can safely look down without falling into the void)
+                if (Math.abs(x) == 5 || Math.abs(z) == 5) {
+                    for (int dy = 0; dy < 3; dy++) {
+                        world.getBlockAt(x, wy + dy, z).setType(Material.GLASS, false);
+                    }
+                } else {
+                    // Ensure clear air space inside the lounge
+                    for (int dy = 0; dy < 4; dy++) {
+                        world.getBlockAt(x, wy + dy, z).setType(Material.AIR, false);
+                    }
+                }
+            }
+        }
+
+        Location lobbyLoc = new Location(world, 0.5, wy, 0.5, 0f, 0f);
+        map.setWaitingLobby(formatLoc(lobbyLoc));
+        saveMaps();
     }
 
     public boolean enterBuildMode(Player player, String id) {
@@ -533,6 +581,12 @@ public class MapMakerManager implements Listener {
 
         Location center = new Location(world, 0.5, 65, 0.5);
         Location waitingLobby = new Location(world, 0.5, 100, 0.5);
+
+        if (map.getWaitingLobby() != null) {
+            Location wl = parseLoc(map.getWaitingLobby());
+            if (wl != null) waitingLobby = wl;
+        }
+
         Location spectatorSpawn = waitingLobby.clone().add(0, 5, 0);
 
         if (map.getSpectatorSpawn() != null) {
@@ -636,12 +690,12 @@ public class MapMakerManager implements Listener {
         plugin.getGameManager().unregisterArena(arenaId);
     }
 
-    private String formatLoc(Location loc) {
+    public String formatLoc(Location loc) {
         if (loc == null || loc.getWorld() == null) return "world,0,64,0,0,0";
         return loc.getWorld().getName() + "," + loc.getX() + "," + loc.getY() + "," + loc.getZ() + "," + loc.getYaw() + "," + loc.getPitch();
     }
 
-    private Location parseLoc(String str) {
+    public Location parseLoc(String str) {
         if (str == null || str.isBlank()) return null;
         String[] parts = str.split(",");
         if (parts.length < 4) return null;
