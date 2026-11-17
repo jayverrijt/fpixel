@@ -1,20 +1,29 @@
 location:
   world: survival
-  x: 1403.0414
-  y: 74.0
-  z: 7.57074
-  yaw: -179.59686
-  pitch: -34.868454
-level: 9
-exp: 0.5199999
+  x: 1305.2108
+  y: 57.0
+  z: 97.68226
+  yaw: 154.32043
+  pitch: 59.15007
+level: 10
+exp: 0.25925925
 health: 20.0
 food: 20
 inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:water_bucket
+  id: minecraft:diamond_pickaxe
   count: 1
+  components:
+    minecraft:damage: '215'
   schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:spruce_log
+  count: 7
+  schema_version: 1
+- null
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:diamond_sword
@@ -22,114 +31,55 @@ inventory:
   components:
     minecraft:damage: '118'
   schema_version: 1
+- null
+- null
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:stone_bricks
+  id: minecraft:stone_brick_wall
+  count: 34
+  schema_version: 1
+- null
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:stone
+  count: 64
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:stone
+  count: 64
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:stone
   count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:stone_stairs
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:villager_spawn_egg
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:spruce_planks
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:oak_sign
-  count: 2
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:hopper
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:chest
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:stone
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:stone
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:stone
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:stone
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:leather_helmet
-  count: 1
-  components:
-    minecraft:damage: '19'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:stone
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:stone
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:stone
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:stone
-  count: 64
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:cooked_cod
   count: 64
   schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:diamond_pickaxe
-  count: 1
-  components:
-    minecraft:damage: '213'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:poppy
-  count: 3
-  schema_version: 1
-- null
-- null
-- null
 - null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:stone
-  count: 1
+  count: 64
   schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:stone
+  count: 64
+  schema_version: 1
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:diamond_shovel
@@ -138,13 +88,13 @@ inventory:
 - null
 - null
 - null
+- null
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:stone_brick_wall
+  id: minecraft:torch
   count: 1
   schema_version: 1
-- null
-- null
 - null
 - null
 - null

@@ -1,61 +1,54 @@
 location:
   world: survival
-  x: -946.4548201018429
-  y: 62.9375
-  z: -184.29247554741983
-  yaw: -90.20219
-  pitch: 65.6138
+  x: -909.5537711073745
+  y: 52.0
+  z: -146.38810492608536
+  yaw: 130.33435
+  pitch: 16.466814
 level: 70
-exp: 0.33307442
+exp: 0.89875287
 health: 20.0
 food: 20
 inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:diamond_pickaxe
-  count: 1
-  components:
-    minecraft:repair_cost: '7'
-    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:mending":1,"minecraft:silk_touch":1,"minecraft:unbreaking":3}'
-    minecraft:damage: '240'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:diamond_shovel
-  count: 1
-  components:
-    minecraft:repair_cost: '1'
-    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:silk_touch":1,"minecraft:unbreaking":3}'
-    minecraft:damage: '456'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:totem_of_undying
+  id: minecraft:deepslate_brick_wall
   count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:magma_cream
-  count: 16
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:cooked_beef
-  count: 16
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:water_bucket
+  id: minecraft:magma_block
   count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:crossbow
+  id: minecraft:spruce_planks
   count: 1
-  components:
-    minecraft:repair_cost: '1'
-    minecraft:enchantments: '{"minecraft:piercing":4,"minecraft:unbreaking":3}'
-    minecraft:damage: '11'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:black_stained_glass
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:rotten_flesh
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:potato
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:dirt
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_hoe
+  count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -68,159 +61,53 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:diamond_axe
+  id: minecraft:torch
+  count: 3
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:chest
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:spider_eye
+  count: 10
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:bow
   count: 1
   components:
-    minecraft:repair_cost: '3'
-    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:fortune":3,"minecraft:unbreaking":3}'
-    minecraft:damage: '70'
+    minecraft:damage: '369'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:arrow
-  count: 36
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:iron_sword
-  count: 1
-  components:
-    minecraft:enchantments: '{"minecraft:smite":5}'
-    minecraft:damage: '115'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:glowstone
-  count: 4
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:cooked_porkchop
-  count: 8
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:gold_ingot
-  count: 57
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:piglin_banner_pattern
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:snout_armor_trim_smithing_template
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:diamond_boots
-  count: 1
-  components:
-    minecraft:repair_cost: '7'
-    minecraft:enchantments: '{"minecraft:depth_strider":3,"minecraft:feather_falling":4,"minecraft:mending":1,"minecraft:protection":4,"minecraft:unbreaking":3}'
-    minecraft:damage: '4'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:golden_axe
-  count: 1
-  components:
-    minecraft:enchantments: '{"minecraft:efficiency":4}'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:arrow
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:iron_ingot
-  count: 20
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:dried_ghast
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:netherite_scrap
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:ender_pearl
-  count: 4
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:blackstone
-  count: 21
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:iron_chain
-  count: 18
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:spectral_arrow
-  count: 23
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:iron_nugget
-  count: 13
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:diamond_pickaxe
+  id: minecraft:trident
   count: 1
   components:
     minecraft:repair_cost: '1'
-    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:fortune":3,"minecraft:unbreaking":3}'
-    minecraft:damage: '60'
+    minecraft:enchantments: '{"minecraft:impaling":4,"minecraft:mending":1,"minecraft:riptide":2,"minecraft:unbreaking":3}'
   schema_version: 1
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:netherrack
-  count: 38
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:cooked_cod
-  count: 13
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:bone_block
-  count: 35
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:polished_blackstone_bricks
-  count: 4
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:music_disc_pigstep
+  id: minecraft:diorite
   count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:crossbow
+  id: minecraft:string
+  count: 10
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:glow_ink_sac
   count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:obsidian
-  count: 6
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:netherite_upgrade_smithing_template
+  id: minecraft:arrow
   count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
@@ -230,6 +117,54 @@ inventory:
   components:
     minecraft:enchantments: '{"minecraft:soul_speed":1}'
     minecraft:damage: '69'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:water_bucket
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_axe
+  count: 1
+  components:
+    minecraft:repair_cost: '3'
+    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:fortune":3,"minecraft:unbreaking":3}'
+    minecraft:damage: '70'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_shovel
+  count: 1
+  components:
+    minecraft:repair_cost: '1'
+    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:silk_touch":1,"minecraft:unbreaking":3}'
+    minecraft:damage: '456'
+  schema_version: 1
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:soul_sand
+  count: 1
+  schema_version: 1
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_boots
+  count: 1
+  components:
+    minecraft:repair_cost: '7'
+    minecraft:enchantments: '{"minecraft:depth_strider":3,"minecraft:feather_falling":4,"minecraft:mending":1,"minecraft:protection":4,"minecraft:unbreaking":3}'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -255,24 +190,17 @@ inventory:
     minecraft:repair_cost: '15'
     minecraft:enchantments: '{"minecraft:aqua_affinity":1,"minecraft:mending":1,"minecraft:protection":4,"minecraft:respiration":3,"minecraft:unbreaking":3}'
   schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:trident
-  count: 1
-  components:
-    minecraft:repair_cost: '1'
-    minecraft:enchantments: '{"minecraft:impaling":4,"minecraft:mending":1,"minecraft:riptide":2,"minecraft:unbreaking":3}'
-  schema_version: 1
+- null
 - null
 - null
 armor:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:golden_boots
+  id: minecraft:diamond_boots
   count: 1
   components:
-    minecraft:enchantments: '{"minecraft:soul_speed":1}'
-    minecraft:damage: '69'
+    minecraft:repair_cost: '7'
+    minecraft:enchantments: '{"minecraft:depth_strider":3,"minecraft:feather_falling":4,"minecraft:mending":1,"minecraft:protection":4,"minecraft:unbreaking":3}'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -300,13 +228,9 @@ armor:
   schema_version: 1
 offhand:
   ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:trident
-  count: 1
-  components:
-    minecraft:repair_cost: '1'
-    minecraft:enchantments: '{"minecraft:impaling":4,"minecraft:mending":1,"minecraft:riptide":2,"minecraft:unbreaking":3}'
   schema_version: 1
+  id: minecraft:air
+  DataVersion: 5023
 enderchest:
 - null
 - null

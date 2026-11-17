@@ -1,12 +1,12 @@
 location:
   world: survival
-  x: -911.2979917665567
-  y: 52.0
-  z: -204.85117359940358
-  yaw: -138.85013
-  pitch: 16.171917
+  x: 74.93182335677648
+  y: 164.5
+  z: 34.40987116342606
+  yaw: 88.20038
+  pitch: 46.164047
 level: 55
-exp: 0.03300242
+exp: 0.047839213
 health: 20.0
 food: 20
 inventory:
@@ -17,7 +17,6 @@ inventory:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:fire_aspect":2,"minecraft:mending":1,"minecraft:sharpness":3,"minecraft:sweeping_edge":3,"minecraft:unbreaking":3}'
-    minecraft:damage: '1'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -46,8 +45,8 @@ inventory:
   id: minecraft:diamond_pickaxe
   count: 1
   components:
-    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:silk_touch":1,"minecraft:unbreaking":3}'
     minecraft:custom_name: '"❄ Silky ❄"'
+    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:silk_touch":1,"minecraft:unbreaking":3}'
     minecraft:damage: '22'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
@@ -58,11 +57,7 @@ inventory:
     minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:mending":1,"minecraft:unbreaking":3,"minecraft:vanishing_curse":1}'
     minecraft:damage: '80'
   schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:bone
-  count: 1
-  schema_version: 1
+- null
 - null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -75,8 +70,16 @@ inventory:
   count: 1
   schema_version: 1
 - null
-- null
-- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:phantom_membrane
+  count: 1
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:bone
+  count: 1
+  schema_version: 1
 - null
 - null
 - ==: org.bukkit.inventory.ItemStack
@@ -85,8 +88,8 @@ inventory:
   count: 1
   components:
     minecraft:repair_cost: '1'
-    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:fortune":3,"minecraft:mending":1,"minecraft:unbreaking":3}'
     minecraft:custom_name: '"💎 Fortuny 💎"'
+    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:fortune":3,"minecraft:mending":1,"minecraft:unbreaking":3}'
     minecraft:damage: '8'
   schema_version: 1
 - null
@@ -174,9 +177,8 @@ inventory:
   count: 1
   components:
     minecraft:repair_cost: '7'
-    minecraft:enchantments: '{"minecraft:impaling":5,"minecraft:mending":1,"minecraft:riptide":3,"minecraft:unbreaking":3}'
     minecraft:custom_name: '"🌊 Wave Crasher 🌊"'
-    minecraft:damage: '4'
+    minecraft:enchantments: '{"minecraft:impaling":5,"minecraft:mending":1,"minecraft:riptide":3,"minecraft:unbreaking":3}'
   schema_version: 1
 - null
 - null
@@ -221,9 +223,8 @@ offhand:
   count: 1
   components:
     minecraft:repair_cost: '7'
-    minecraft:enchantments: '{"minecraft:impaling":5,"minecraft:mending":1,"minecraft:riptide":3,"minecraft:unbreaking":3}'
     minecraft:custom_name: '"🌊 Wave Crasher 🌊"'
-    minecraft:damage: '4'
+    minecraft:enchantments: '{"minecraft:impaling":5,"minecraft:mending":1,"minecraft:riptide":3,"minecraft:unbreaking":3}'
   schema_version: 1
 enderchest:
 - null
