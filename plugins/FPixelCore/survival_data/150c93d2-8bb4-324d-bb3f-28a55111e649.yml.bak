@@ -1,10 +1,10 @@
 location:
   world: survival
-  x: -909.5537711073745
-  y: 52.0
-  z: -146.38810492608536
-  yaw: 130.33435
-  pitch: 16.466814
+  x: -930.0500000119209
+  y: 63.0
+  z: -165.98750001192093
+  yaw: 69.336006
+  pitch: 68.57193
 level: 70
 exp: 0.89875287
 health: 20.0
@@ -38,7 +38,7 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:potato
-  count: 1
+  count: 2
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
