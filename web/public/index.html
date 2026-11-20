@@ -110,9 +110,14 @@
                 <span class="ip-platform">BEDROCK (CONSOLE / TELEFOON / WIN 10)</span>
                 <span class="ip-address">mc.fpixel.nl</span>
                 <span class="ip-port-label">Bedrock Poort: <code onclick="event.stopPropagation(); copyIp('19132', 'Bedrock Poort')">19132</code> 📋</span>
-                <div id="bedrock-status-pill" class="bedrock-code-badge badge-code-200">
-                  <span class="status-pulse-dot"></span>
-                  <span id="bedrock-status-text">Code 200: Spel is goed & joinbaar</span>
+                <div class="bedrock-card-footer">
+                  <div id="bedrock-status-pill" class="bedrock-code-badge badge-code-200">
+                    <span class="status-pulse-dot"></span>
+                    <span id="bedrock-status-text">Code 200: Spel is goed & joinbaar</span>
+                  </div>
+                  <button type="button" class="btn-bedrock-info" onclick="event.stopPropagation(); openBedrockErrorsModal();">
+                    📖 Foutcodes (HTTP 100-504)
+                  </button>
                 </div>
               </div>
               <button class="btn-copy-tag">Kopieer 📋</button>
@@ -779,6 +784,33 @@
         <button class="btn btn-purple btn-block" onclick="submitRenameMap()">
           Map Hernoemen Opslaan ✏️
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. BEDROCK ERRORS & HTTP CODES MODAL -->
+  <div id="modal-bedrock-errors" class="modal-backdrop" style="display: none;">
+    <div class="modal-box modal-lg">
+      <div class="modal-header">
+        <h3>📱 Minecraft Bedrock Named Errors & HTTP Status Codes</h3>
+        <button class="modal-close" onclick="closeModal('modal-bedrock-errors')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">
+          Minecraft Bedrock gebruikt dieren- en bloknamen voor verbindingsfouten. Wij hebben alle officiële foutcodes van <a href="https://help.minecraft.net/hc/en-us/articles/38555497091469-Named-Error-Code-Troubleshooting-for-Minecraft-Bedrock-Edition" target="_blank" style="color: var(--emerald); text-decoration: underline;">help.minecraft.net</a> gekoppeld aan universele HTTP-statuscodes.
+        </p>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <input type="text" id="bedrock-error-search" placeholder="🔍 Zoek op code (404, 504, 100, 200) of naam (Terracotta, Drowned, Goat, Creeper)..." oninput="filterBedrockErrors()" style="width: 100%; padding: 12px 16px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; font-size: 0.95rem;">
+        </div>
+
+        <div id="bedrock-errors-container" class="bedrock-errors-grid" style="max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 6px;">
+          <!-- Dynamically loaded via app.js -->
+        </div>
+
+        <div style="margin-top: 16px; text-align: right;">
+          <button class="btn btn-secondary" onclick="closeModal('modal-bedrock-errors')">Sluiten</button>
+        </div>
       </div>
     </div>
   </div>

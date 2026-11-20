@@ -919,17 +919,166 @@ app.post('/api/logout', (req, res) => {
   res.json({ success: true });
 });
 
-// API: /api/bedrock/status (Bedrock Health & Status Codes: 100 Outdated, 200 Good to Join, 503 Offline)
+// Official Bedrock Named Error Codes mapped to HTTP Status Codes
+// Reference: https://help.minecraft.net/hc/en-us/articles/38555497091469-Named-Error-Code-Troubleshooting-for-Minecraft-Bedrock-Edition
+const BEDROCK_ERROR_DICTIONARY = [
+  {
+    httpCode: 200,
+    status: "OK",
+    bedrockNames: ["Geen error"],
+    category: "Gezond",
+    description: "Verbinding gezond, server bereikbaar, spelers kunnen direct joinen.",
+    solution: "Alles werkt naar behoren! Je kunt direct verbinden via mc.fpixel.nl poort 19132."
+  },
+  {
+    httpCode: 100,
+    status: "Continue / Outdated",
+    bedrockNames: ["Outdated Client", "Outdated Server"],
+    category: "Versie mismatch",
+    description: "Minecraft Bedrock client of server versie verouderd / protocol mismatch.",
+    solution: "Update je Minecraft app via de App Store / Google Play / Microsoft Store, of wacht tot Geyser op de server is bijgewerkt."
+  },
+  {
+    httpCode: 400,
+    status: "Bad Request",
+    bedrockNames: ["Block", "Creeper"],
+    category: "Pakket data / Corruptie",
+    description: "Ongeldig verbindingspakket, corrupte netwerk handshake of ongeldige karakters in profiel.",
+    solution: "Herstart de game, wis de lokale cache via Bedrock Instellingen -> Opslag, en controleer of je gebruikersnaam geen speciale tekens bevat."
+  },
+  {
+    httpCode: 401,
+    status: "Unauthorized",
+    bedrockNames: ["Drowned", "Blaze", "Axolotl", "Glowstone"],
+    category: "Authenticatie",
+    description: "Microsoft/Xbox account authenticatie mislukt, sessietoken verlopen of Floodgate validatie ongeldig.",
+    solution: "Log uit van je Microsoft-account in het hoofdmenu van Minecraft, herstart de app en log opnieuw in met een verse login."
+  },
+  {
+    httpCode: 403,
+    status: "Forbidden",
+    bedrockNames: ["Spyglass", "Coal"],
+    category: "Toegang geweigerd",
+    description: "Toegang geweigerd: niet op whitelist, account verbannen of ouderlijk toezicht / multiplayer restrictie.",
+    solution: "Meld je aan voor de whitelist via mc.fpixel.nl of controleer je Xbox Live privacy-instellingen (multiplayer toestaan)."
+  },
+  {
+    httpCode: 404,
+    status: "Not Found",
+    bedrockNames: ["Goat"],
+    category: "Wereld niet gevonden",
+    description: "De gezochte spelerwereld, minigame arena of realm is niet gevonden of host is offline.",
+    solution: "Controleer of de gewenste arena of spelerwereld actief is met /joinworld of vraag de host om online te komen."
+  },
+  {
+    httpCode: 408,
+    status: "Request Timeout",
+    bedrockNames: ["Bat", "Silverfish"],
+    category: "Netwerk time-out",
+    description: "Verbindingstime-out: netwerkping te hoog, te hoge packet latency of server reageert te traag.",
+    solution: "Controleer je wifi of 4G-verbinding, ga dichter bij de router staan of herstart je internetmodem."
+  },
+  {
+    httpCode: 410,
+    status: "Gone",
+    bedrockNames: ["Armadillo"],
+    category: "Niet meer beschikbaar",
+    description: "De wereld of arena is permanent afgesloten, herstart of uit de roulatie gehaald.",
+    solution: "Kies een andere minigame arena of keer terug naar de centrale Lobby via /lobby."
+  },
+  {
+    httpCode: 413,
+    status: "Payload Too Large",
+    bedrockNames: ["Chest", "Rabbit"],
+    category: "Opslagruimte",
+    description: "Lokale opslagruimte op toestel/console is vol of add-on / texture pack download is te groot.",
+    solution: "Maak opslagruimte vrij op je toestel of wis ongebruikte werelden en texture packs via Bedrock Instellingen -> Opslag."
+  },
+  {
+    httpCode: 429,
+    status: "Too Many Requests",
+    bedrockNames: ["Kelp"],
+    category: "Rate limit",
+    description: "Te veel verbindingspogingen of packet requests in korte tijd.",
+    solution: "Wacht 30 tot 60 seconden voordat je opnieuw probeert te verbinden om de flood-beveiliging te laten rusten."
+  },
+  {
+    httpCode: 500,
+    status: "Internal Server Error",
+    bedrockNames: ["Emerald"],
+    category: "Server crash / Exception",
+    description: "Interne Geyser of Paper serverfout bij packet-vertaling of inventaris synchronisatie.",
+    solution: "Gebruik in-game het commando /fixinv om inventaris te resetten of meld het bij een serverbeheerder."
+  },
+  {
+    httpCode: 502,
+    status: "Bad Gateway",
+    bedrockNames: ["Snowball"],
+    category: "Backend down",
+    description: "De Java backend server is herstarten of down terwijl de Bedrock proxy luistert.",
+    solution: "Wacht 10 tot 15 seconden tot de Java-server volledig is doorgestart."
+  },
+  {
+    httpCode: 503,
+    status: "Service Unavailable",
+    bedrockNames: ["Sand"],
+    category: "Dienst onbereikbaar",
+    description: "Bedrock server service is offline, onderhoudsmodus is actief of poort 19132 is gesloten.",
+    solution: "De server voert momenteel een update of herstart uit. Probeer het over een halve minuut opnieuw."
+  },
+  {
+    httpCode: 504,
+    status: "Gateway Timeout",
+    bedrockNames: ["Terracotta", "NetherNet", "Door"],
+    category: "WebRTC / Signaling time-out",
+    description: "Geen netwerkpad gevonden / STUN WebRTC signaling time-out tussen client en server.",
+    solution: "Gebruik het standaard poortnummer 19132 (RakNet UDP fallback) of controleer of je router WebRTC UDP toestaat."
+  }
+];
+
+// API: /api/bedrock/errors (Catalog of all Bedrock Named Error Codes -> HTTP status codes)
+app.get('/api/bedrock/errors', (req, res) => {
+  res.json({
+    success: true,
+    referenceUrl: "https://help.minecraft.net/hc/en-us/articles/38555497091469-Named-Error-Code-Troubleshooting-for-Minecraft-Bedrock-Edition",
+    totalErrors: BEDROCK_ERROR_DICTIONARY.length,
+    errors: BEDROCK_ERROR_DICTIONARY
+  });
+});
+
+// API: /api/bedrock/errors/:query (Lookup by HTTP code or Bedrock error name)
+app.get('/api/bedrock/errors/:query', (req, res) => {
+  const q = req.params.query.toLowerCase().trim();
+  const num = parseInt(q, 10);
+
+  let match = BEDROCK_ERROR_DICTIONARY.find(e => e.httpCode === num);
+  if (!match) {
+    match = BEDROCK_ERROR_DICTIONARY.find(e => 
+      e.status.toLowerCase().includes(q) || 
+      e.bedrockNames.some(n => n.toLowerCase().includes(q))
+    );
+  }
+
+  if (match) {
+    res.json({ success: true, match });
+  } else {
+    res.status(404).json({
+      success: false,
+      error: `Geen Bedrock foutcode of naam gevonden voor '${req.params.query}'.`,
+      availableCodes: BEDROCK_ERROR_DICTIONARY.map(e => e.httpCode)
+    });
+  }
+});
+
+// API: /api/bedrock/status (Live Bedrock Health, Diagnostics & Active HTTP Code)
 app.get('/api/bedrock/status', async (req, res) => {
   const bedrock = await pingBedrock(MINECRAFT_HOST, BEDROCK_PORT);
+  const activeDef = BEDROCK_ERROR_DICTIONARY.find(e => e.httpCode === bedrock.code) || BEDROCK_ERROR_DICTIONARY[0];
   res.json({
     success: true,
     ...bedrock,
-    statusCodes: {
-      100: "Outdated - Versie van speler of server verouderd",
-      200: "OK - Het spel is goed en ze kunnen joinen",
-      503: "Offline - Bedrock service down of onbereikbaar"
-    }
+    details: activeDef,
+    referenceUrl: "https://help.minecraft.net/hc/en-us/articles/38555497091469-Named-Error-Code-Troubleshooting-for-Minecraft-Bedrock-Edition"
   });
 });
 

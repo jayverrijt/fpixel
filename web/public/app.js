@@ -1304,3 +1304,79 @@ async function setWatchdogScore() {
     showToast('Fout bij verzenden van commando: ' + err.message, 'error');
   }
 }
+
+// -------------------------------------------------------------
+// BEDROCK ERROR & HTTP CODES MODAL
+// -------------------------------------------------------------
+let cachedBedrockErrors = [];
+
+async function openBedrockErrorsModal() {
+  const modal = document.getElementById('modal-bedrock-errors');
+  if (!modal) return;
+  modal.style.display = 'flex';
+
+  if (cachedBedrockErrors.length === 0) {
+    try {
+      const res = await fetch('/api/bedrock/errors');
+      const data = await res.json();
+      if (data.success && data.errors) {
+        cachedBedrockErrors = data.errors;
+      }
+    } catch (e) {
+      console.warn('Failed to load bedrock errors:', e);
+    }
+  }
+
+  filterBedrockErrors();
+}
+
+function filterBedrockErrors() {
+  const container = document.getElementById('bedrock-errors-container');
+  const searchInput = document.getElementById('bedrock-error-search');
+  if (!container) return;
+
+  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+  const filtered = cachedBedrockErrors.filter(err => {
+    if (!query) return true;
+    if (err.httpCode.toString().includes(query)) return true;
+    if (err.status.toLowerCase().includes(query)) return true;
+    if (err.description.toLowerCase().includes(query)) return true;
+    if (err.bedrockNames.some(name => name.toLowerCase().includes(query))) return true;
+    return false;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 24px; color: var(--text-muted);">
+        Geen foutcode gevonden voor '<strong>${escapeHtml(query)}</strong>'. Probeer bijvoorbeeld <em>404</em>, <em>504</em> of <em>Terracotta</em>.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map(err => {
+    const isOk = err.httpCode === 200;
+    const isWarn = err.httpCode < 400;
+    const badgeColor = isOk ? 'badge-code-200' : (isWarn ? 'badge-code-100' : 'badge-code-503');
+    const borderCol = isOk ? '#34d399' : (isWarn ? '#fbbf24' : '#f87171');
+
+    return `
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-left: 4px solid ${borderCol}; border-radius: 8px; padding: 14px 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="bedrock-code-badge ${badgeColor}" style="margin: 0; font-size: 0.78rem;">HTTP ${err.httpCode} ${escapeHtml(err.status)}</span>
+            <span style="font-size: 0.76rem; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px;">${escapeHtml(err.category)}</span>
+          </div>
+          <span style="font-size: 0.8rem; font-weight: 700; color: #fff;">Bedrock: <span style="color: var(--amber);">${escapeHtml(err.bedrockNames.join(', '))}</span></span>
+        </div>
+        <div style="font-size: 0.85rem; color: #e2e8f0; margin-bottom: 6px;">
+          <strong>Oorzaak:</strong> ${escapeHtml(err.description)}
+        </div>
+        <div style="font-size: 0.82rem; color: #94a3b8; background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 6px;">
+          <strong style="color: var(--emerald);">💡 Oplossing:</strong> ${escapeHtml(err.solution)}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
