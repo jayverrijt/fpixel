@@ -89,3 +89,6 @@ commands:
   fixinv:
     description: Fix and resynchronize client container and inventory state
     aliases: [syncinv, fixinventory]
+  bedrock:
+    description: Bedrock status, connectivity, and status codes (100 Outdated, 200 Good)
+    aliases: [bedrockstatus, geyserstatus]

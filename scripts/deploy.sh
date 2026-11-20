@@ -79,9 +79,13 @@ fi
 echo "Verifying latest Geyser-Spigot.jar..."
 curl -sSL "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot" -o "${SERVER_DIR}/plugins/Geyser-Spigot.jar" || true
 
-# Ensure NetherNet transport is enabled in Geyser config
+# Ensure dual transport (both RakNet UDP 19132 and NetherNet WebRTC UDP 19133) is enabled in Geyser config
 if [ -f "${SERVER_DIR}/plugins/Geyser-Spigot/config.yml" ]; then
-  sed -i 's/transport: raknet/transport: nethernet/' "${SERVER_DIR}/plugins/Geyser-Spigot/config.yml" || true
+  sed -i 's/transport: nethernet/transport: both/' "${SERVER_DIR}/plugins/Geyser-Spigot/config.yml" || true
+  sed -i 's/transport: raknet/transport: both/' "${SERVER_DIR}/plugins/Geyser-Spigot/config.yml" || true
+  sed -i 's/webrtc-port: 0/webrtc-port: 19133/' "${SERVER_DIR}/plugins/Geyser-Spigot/config.yml" || true
+  sed -i 's/mtu: 1400/mtu: 1200/' "${SERVER_DIR}/plugins/Geyser-Spigot/config.yml" || true
+  sed -i 's/assisted-joins: false/assisted-joins: true/' "${SERVER_DIR}/plugins/Geyser-Spigot/config.yml" || true
 fi
 
 # Check floodgate-spigot.jar

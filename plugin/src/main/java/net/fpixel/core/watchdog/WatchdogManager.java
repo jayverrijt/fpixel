@@ -135,6 +135,15 @@ public class WatchdogManager {
             return;
         }
 
+        // Exempt Bedrock Edition players from automated heuristic penalties to prevent false-positive kicks (e.g. error Terracotta)
+        boolean isBedrock = (plugin.getBedrockManager() != null && plugin.getBedrockManager().isBedrock(player))
+                || player.getName().startsWith(".");
+        if (isBedrock) {
+            plugin.getLogger().info("[Watchdog] Heuristic warning suppressed for Bedrock player " + player.getName() + ": " + reason);
+            trustScores.put(player.getUniqueId(), MAX_TRUST_SCORE);
+            return;
+        }
+
         // Exempt staff in creative or godmode
         if (player.hasPermission("fpixel.admin") && player.getGameMode() == org.bukkit.GameMode.CREATIVE) {
             return;

@@ -159,12 +159,29 @@ async function fetchServerStats() {
 
     const statusPill = document.getElementById('server-status-pill');
     const statusText = document.getElementById('status-text');
-    if (data.online) {
+    if (data.online || (data.server && data.server.online)) {
       statusPill.className = 'status-indicator online';
       statusText.textContent = 'ONLINE';
     } else {
       statusPill.className = 'status-indicator offline';
       statusText.textContent = 'OFFLINE';
+    }
+
+    // Dynamic Bedrock Status & Status Codes (100 = Outdated, 200 = Good to Join, 503 = Offline)
+    const bedrockPill = document.getElementById('bedrock-status-pill');
+    const bedrockText = document.getElementById('bedrock-status-text');
+    if (bedrockPill && bedrockText && data.bedrock) {
+      const code = data.bedrock.code;
+      if (code === 200) {
+        bedrockPill.className = 'bedrock-code-badge badge-code-200';
+        bedrockText.textContent = 'Code 200: Spel is goed & joinbaar';
+      } else if (code === 100) {
+        bedrockPill.className = 'bedrock-code-badge badge-code-100';
+        bedrockText.textContent = 'Code 100: Outdated (Update vereist)';
+      } else {
+        bedrockPill.className = 'bedrock-code-badge badge-code-503';
+        bedrockText.textContent = 'Code 503: Bedrock Offline';
+      }
     }
   } catch (e) {
     console.warn('Failed to fetch server stats:', e);

@@ -410,6 +410,8 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             return new net.fpixel.core.watchdog.WatchdogCommand(plugin, plugin.getWatchdogManager()).onCommand(sender, command, label, wdArgs);
         } else if (sub.equals("fixinv") || sub.equals("sync") || sub.equals("syncinv")) {
             return new FixInvCommand(plugin).onCommand(sender, command, label, args);
+        } else if (sub.equals("bedrock") || sub.equals("bedrockstatus")) {
+            return new BedrockStatusCommand(plugin).onCommand(sender, command, label, args);
         } else {
             sendHelp(sender);
         }

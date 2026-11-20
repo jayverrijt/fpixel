@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const net = require('net');
+const dgram = require('dgram');
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 
@@ -9,6 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const MINECRAFT_HOST = process.env.MINECRAFT_HOST || '127.0.0.1';
 const MINECRAFT_PORT = parseInt(process.env.MINECRAFT_PORT || '25565', 10);
+const BEDROCK_PORT = parseInt(process.env.BEDROCK_PORT || '19132', 10);
 const RCON_PORT = parseInt(process.env.RCON_PORT || '25575', 10);
 const RCON_PASSWORD = process.env.RCON_PASSWORD || 'fpixel_rcon_2026';
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../server/plugins/FPixelCore');
@@ -134,6 +136,129 @@ function pingMinecraft(host, port, timeoutMs = 2500) {
         resolve({ online: false, error: err.message });
       }
     });
+  });
+}
+
+// Native Minecraft Bedrock RakNet Ping Client (Status Codes: 100 Outdated, 200 Good to Join, 503 Offline)
+function pingBedrock(host, port = 19132, timeoutMs = 2500) {
+  return new Promise((resolve) => {
+    let resolved = false;
+    let client;
+    try {
+      client = dgram.createSocket('udp4');
+    } catch (e) {
+      return resolve({
+        online: false,
+        code: 503,
+        status: 'OFFLINE',
+        message: 'Kan UDP socket niet aanmaken: ' + e.message,
+        port
+      });
+    }
+
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        try { client.close(); } catch (e) {}
+        resolve({
+          online: false,
+          code: 503,
+          status: 'OFFLINE',
+          message: 'Bedrock server is momenteel down of onbereikbaar (Connection timed out)',
+          port
+        });
+      }
+    }, timeoutMs);
+
+    // RakNet Unconnected Ping packet (0x01 + 8 bytes timestamp + 16 bytes magic + 8 bytes client GUID)
+    const magic = Buffer.from('00ffff00fefefefefdfdfdfd12345678', 'hex');
+    const timeBuf = Buffer.alloc(8);
+    timeBuf.writeBigInt64BE(BigInt(Date.now()));
+    const guidBuf = Buffer.alloc(8);
+    guidBuf.writeBigInt64BE(BigInt(Date.now()));
+
+    const pingPacket = Buffer.concat([
+      Buffer.from([0x01]),
+      timeBuf,
+      magic,
+      guidBuf
+    ]);
+
+    client.on('message', (msg) => {
+      if (resolved) return;
+      try {
+        if (msg[0] === 0x1c) { // Unconnected Pong (ID 0x1c)
+          const strLength = msg.readUInt16BE(33);
+          const pongStr = msg.toString('utf8', 35, 35 + strLength);
+          const parts = pongStr.split(';');
+
+          // MCPE;Server Name;Protocol Version;Game Version;Players;Max;ServerID;SubMOTD;GameMode;1;Port;Port;
+          const gameVersion = parts[3] || 'Bedrock 1.21.x';
+          const protocol = parseInt(parts[2], 10) || 0;
+          const players = parseInt(parts[4], 10) || 0;
+          const maxPlayers = parseInt(parts[5], 10) || 100;
+          const motd = parts[1] || 'FPixel Bedrock';
+
+          resolved = true;
+          clearTimeout(timer);
+          try { client.close(); } catch (e) {}
+
+          let code = 200;
+          let statusText = 'Het spel is goed en ze kunnen joinen';
+          const combined = (pongStr || '').toLowerCase();
+          if (combined.includes('outdated') || combined.includes('update')) {
+            code = 100;
+            statusText = 'Bedrock server of client versie is verouderd (Outdated)';
+          }
+
+          resolve({
+            online: true,
+            code,
+            status: code === 200 ? 'ONLINE' : 'OUTDATED',
+            message: statusText,
+            version: gameVersion,
+            protocol,
+            players,
+            maxPlayers,
+            motd,
+            port
+          });
+          return;
+        }
+      } catch (e) {}
+    });
+
+    client.on('error', (err) => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timer);
+        try { client.close(); } catch (e) {}
+        resolve({
+          online: false,
+          code: 503,
+          status: 'OFFLINE',
+          message: err.message,
+          port
+        });
+      }
+    });
+
+    try {
+      client.send(pingPacket, port, host);
+    } catch (err) {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timer);
+        try { client.close(); } catch (e) {}
+        resolve({
+          online: false,
+          code: 503,
+          status: 'OFFLINE',
+          message: err.message,
+          port
+        });
+      }
+    }
   });
 }
 
@@ -794,9 +919,26 @@ app.post('/api/logout', (req, res) => {
   res.json({ success: true });
 });
 
+// API: /api/bedrock/status (Bedrock Health & Status Codes: 100 Outdated, 200 Good to Join, 503 Offline)
+app.get('/api/bedrock/status', async (req, res) => {
+  const bedrock = await pingBedrock(MINECRAFT_HOST, BEDROCK_PORT);
+  res.json({
+    success: true,
+    ...bedrock,
+    statusCodes: {
+      100: "Outdated - Versie van speler of server verouderd",
+      200: "OK - Het spel is goed en ze kunnen joinen",
+      503: "Offline - Bedrock service down of onbereikbaar"
+    }
+  });
+});
+
 // API: /api/stats (Live overview)
 app.get('/api/stats', async (req, res) => {
-  const pingRes = await pingMinecraft(MINECRAFT_HOST, MINECRAFT_PORT);
+  const [pingRes, bedrockRes] = await Promise.all([
+    pingMinecraft(MINECRAFT_HOST, MINECRAFT_PORT),
+    pingBedrock(MINECRAFT_HOST, BEDROCK_PORT)
+  ]);
   const ranks = getRanks();
   const userCache = getUserCache();
   const whitelist = getWhitelist();
@@ -828,6 +970,7 @@ app.get('/api/stats', async (req, res) => {
       whitelistEnabled: true,
       whitelistedCount: whitelist.length
     },
+    bedrock: bedrockRes,
     leaderboard: friendProfiles
   });
 });

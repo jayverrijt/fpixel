@@ -111,6 +111,14 @@ public class WatchdogListener implements Listener {
         Location to = event.getTo();
         if (to == null) return;
 
+        // Bedrock Edition players use touch controls, client-side predictive physics and scaffolding packets
+        boolean isBedrock = (plugin.getBedrockManager() != null && plugin.getBedrockManager().isBedrock(player))
+                || player.getName().startsWith(".");
+        if (isBedrock) {
+            airTicks.put(player.getUniqueId(), 0);
+            return;
+        }
+
         // 1. Horizontal Speed Check
         double dx = to.getX() - from.getX();
         double dz = to.getZ() - from.getZ();
@@ -211,8 +219,11 @@ public class WatchdogListener implements Listener {
         if (player.getGameMode() == GameMode.CREATIVE) return;
 
         double distance = player.getEyeLocation().distance(target.getLocation());
-        // Max vanilla reach is ~3.0 - 3.5 blocks. Give generous buffer for ping (4.6 blocks)
-        if (distance > 4.60) {
+        // Max vanilla Java reach is ~3.0 - 3.5 blocks. Bedrock Edition has native reach up to 5.5 - 6.0 blocks with touch controls
+        boolean isBedrock = (plugin.getBedrockManager() != null && plugin.getBedrockManager().isBedrock(player))
+                || player.getName().startsWith(".");
+        double maxAllowedReach = isBedrock ? 6.50 : 4.60;
+        if (distance > maxAllowedReach) {
             watchdog.penalize(player, 15, "Onmogelijke aanvalsafstand / Reach Hack (" + String.format("%.2f", distance) + " blocks)");
         }
     }

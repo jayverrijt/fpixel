@@ -186,6 +186,10 @@ public class FPixelPlugin extends JavaPlugin {
         net.fpixel.commands.FixInvCommand fixInvCmd = new net.fpixel.commands.FixInvCommand(this);
         getCommand("fixinv").setExecutor(fixInvCmd);
 
+        net.fpixel.commands.BedrockStatusCommand bedrockCmd = new net.fpixel.commands.BedrockStatusCommand(this);
+        getCommand("bedrock").setExecutor(bedrockCmd);
+        getCommand("bedrock").setTabCompleter(bedrockCmd);
+
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);
         Bukkit.getScheduler().runTask(this, () -> {
