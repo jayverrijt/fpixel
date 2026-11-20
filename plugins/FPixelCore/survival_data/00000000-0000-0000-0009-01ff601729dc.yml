@@ -1,63 +1,59 @@
 location:
   world: survival
-  x: 1403.5347
-  y: 81.0
-  z: -13.353501
-  yaw: 57.551086
-  pitch: -61.521164
-level: 1
-exp: 0.5555556
+  x: 1314.104
+  y: 55.0
+  z: 101.84685
+  yaw: 14.5811615
+  pitch: 21.193283
+level: 6
+exp: 0.15789479
 health: 20.0
 food: 20
 inventory:
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:shield
-  count: 1
-  components:
-    minecraft:damage: '103'
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:cooked_cod
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:cooked_cod
-  count: 44
-  schema_version: 1
+- null
+- null
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:diamond_sword
   count: 1
   components:
-    minecraft:damage: '175'
+    minecraft:damage: '189'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_pickaxe
+  count: 1
+  components:
+    minecraft:damage: '221'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:bowl
+  count: 1
   schema_version: 1
 - null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:spruce_trapdoor
+  id: minecraft:snowball
+  count: 3
+  schema_version: 1
+- null
+- null
+- null
+- null
+- null
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:crafting_table
   count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:ladder
+  id: minecraft:stone_brick_wall
   count: 1
   schema_version: 1
-- null
-- null
-- null
-- null
-- null
-- null
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:torch
-  count: 20
-  schema_version: 1
-- null
-- null
 - null
 - null
 - null
@@ -74,13 +70,7 @@ inventory:
   schema_version: 1
 - null
 - null
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:diamond_pickaxe
-  count: 1
-  components:
-    minecraft:damage: '221'
-  schema_version: 1
+- null
 - null
 - null
 - null
@@ -97,30 +87,36 @@ inventory:
   id: minecraft:diamond_boots
   count: 1
   components:
-    minecraft:damage: '63'
+    minecraft:damage: '80'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:diamond_leggings
   count: 1
   components:
-    minecraft:damage: '85'
+    minecraft:damage: '102'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:diamond_chestplate
   count: 1
   components:
-    minecraft:damage: '85'
+    minecraft:damage: '102'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:diamond_helmet
   count: 1
   components:
-    minecraft:damage: '86'
+    minecraft:damage: '103'
   schema_version: 1
-- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:shield
+  count: 1
+  components:
+    minecraft:damage: '138'
+  schema_version: 1
 - null
 - null
 armor:
@@ -129,34 +125,37 @@ armor:
   id: minecraft:diamond_boots
   count: 1
   components:
-    minecraft:damage: '63'
+    minecraft:damage: '80'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:diamond_leggings
   count: 1
   components:
-    minecraft:damage: '85'
+    minecraft:damage: '102'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:diamond_chestplate
   count: 1
   components:
-    minecraft:damage: '85'
+    minecraft:damage: '102'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:diamond_helmet
   count: 1
   components:
-    minecraft:damage: '86'
+    minecraft:damage: '103'
   schema_version: 1
 offhand:
   ==: org.bukkit.inventory.ItemStack
-  schema_version: 1
-  id: minecraft:air
   DataVersion: 5023
+  id: minecraft:shield
+  count: 1
+  components:
+    minecraft:damage: '138'
+  schema_version: 1
 enderchest:
 - null
 - null
