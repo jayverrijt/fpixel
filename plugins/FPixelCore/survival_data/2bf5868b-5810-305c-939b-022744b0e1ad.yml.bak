@@ -1,10 +1,10 @@
 location:
   world: survival
-  x: -1594.2400870069885
-  y: 72.24459586424605
-  z: 261.58095915507397
-  yaw: -133.49992
-  pitch: 16.049923
+  x: -1591.5267318459876
+  y: 68.0
+  z: 270.7549963708217
+  yaw: 47.250126
+  pitch: 24.299938
 level: 26
 exp: 0.3411479
 health: 20.0
@@ -62,7 +62,7 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:cooked_porkchop
-  count: 24
+  count: 23
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
