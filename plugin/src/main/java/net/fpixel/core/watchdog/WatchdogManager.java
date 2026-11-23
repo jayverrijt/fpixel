@@ -45,6 +45,17 @@ public class WatchdogManager {
     public WatchdogManager(FPixelPlugin plugin) {
         this.plugin = plugin;
         this.logFile = new File(plugin.getDataFolder(), "watchdog_log.json");
+
+        // Periodic Trust Score gradual recovery: +1 point every 30 seconds for clean active players
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                UUID uid = player.getUniqueId();
+                int score = trustScores.getOrDefault(uid, MAX_TRUST_SCORE);
+                if (score >= MIN_REQUIRED_SCORE && score < MAX_TRUST_SCORE) {
+                    trustScores.put(uid, Math.min(MAX_TRUST_SCORE, score + 1));
+                }
+            }
+        }, 600L, 600L);
     }
 
     /**
@@ -130,8 +141,10 @@ public class WatchdogManager {
     public void penalize(Player player, int points, String reason) {
         if (player == null || !player.isOnline()) return;
 
-        // Exempt server owner and staff from heuristic movement penalties
-        if (player.hasPermission("fpixel.owner") || (plugin.getRankManager() != null && plugin.getRankManager().getRank(player).isOwner())) {
+        // Exempt server owner, ops, and staff from heuristic movement penalties
+        if (player.isOp() || player.hasPermission("fpixel.owner") || player.hasPermission("fpixel.admin")
+                || (plugin.getRankManager() != null && (plugin.getRankManager().getRank(player).isOwner() || plugin.getRankManager().getRank(player).isStaff()))) {
+            trustScores.put(player.getUniqueId(), MAX_TRUST_SCORE);
             return;
         }
 

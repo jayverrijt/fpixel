@@ -269,6 +269,8 @@ public class SurvivalManager {
             arena.leave(player);
         }
 
+        player.closeInventory();
+
         // 1. Remove scoreboard immediately so it does not show in survival
         plugin.getScoreboardManager().remove(player);
 

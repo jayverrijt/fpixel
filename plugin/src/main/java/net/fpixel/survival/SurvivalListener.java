@@ -61,7 +61,10 @@ public class SurvivalListener implements Listener {
                         org.bukkit.Location from = event.getFrom();
                         org.bukkit.Location dest = new org.bukkit.Location(nether, from.getX() / 8.0, from.getY(), from.getZ() / 8.0, from.getYaw(), from.getPitch());
                         event.setTo(dest);
-                        event.setSearchRadius(128);
+                        // In the Nether, search radius must be 16 blocks (128 blocks Overworld equivalent)!
+                        // Using 128 here causes portals up to 1024 Overworld blocks away to cross-link into other players' bases.
+                        event.setSearchRadius(16);
+                        event.setCreationRadius(16);
                         event.setCanCreatePortal(true);
                     }
                 } else if (fromWorld.getEnvironment() == World.Environment.NETHER) {
@@ -72,6 +75,7 @@ public class SurvivalListener implements Listener {
                         org.bukkit.Location dest = new org.bukkit.Location(survivalWorld, from.getX() * 8.0, from.getY(), from.getZ() * 8.0, from.getYaw(), from.getPitch());
                         event.setTo(dest);
                         event.setSearchRadius(128);
+                        event.setCreationRadius(16);
                         event.setCanCreatePortal(true);
                     }
                 }
@@ -105,7 +109,8 @@ public class SurvivalListener implements Listener {
                     org.bukkit.Location from = event.getFrom();
                     org.bukkit.Location dest = new org.bukkit.Location(nether, from.getX() / 8.0, from.getY(), from.getZ() / 8.0);
                     event.setTo(dest);
-                    event.setSearchRadius(128);
+                    event.setSearchRadius(16);
+                    event.setCreationRadius(16);
                     event.setCanCreatePortal(true);
                 }
             } else if (fromWorld.getEnvironment() == World.Environment.NETHER) {
@@ -116,6 +121,7 @@ public class SurvivalListener implements Listener {
                     org.bukkit.Location dest = new org.bukkit.Location(survivalWorld, from.getX() * 8.0, from.getY(), from.getZ() * 8.0);
                     event.setTo(dest);
                     event.setSearchRadius(128);
+                    event.setCreationRadius(16);
                     event.setCanCreatePortal(true);
                 }
             }

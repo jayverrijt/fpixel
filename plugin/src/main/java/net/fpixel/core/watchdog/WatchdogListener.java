@@ -138,6 +138,13 @@ public class WatchdogListener implements Listener {
         // 2. Fly & Mid-Air Hover Check
         UUID uid = player.getUniqueId();
 
+        // Minigames (SkyWars, BedWars, The Bridge, Parkour) feature bridging, clutching, and knockback:
+        // do not run mid-air hover penalties during active minigames
+        if (plugin.getGameManager().getPlayerArena(player) != null) {
+            airTicks.put(uid, 0);
+            return;
+        }
+
         // If sneaking or on ground (e.g. bridging on block edges), reset air count immediately!
         if (player.isSneaking() || player.isOnGround()) {
             airTicks.put(uid, 0);
@@ -156,19 +163,22 @@ public class WatchdogListener implements Listener {
         boolean hasJumpBoost = player.hasPotionEffect(PotionEffectType.JUMP_BOOST) || player.hasPotionEffect(PotionEffectType.LEVITATION);
 
         if (!inLiquidOrClimbing && !hasJumpBoost) {
-            // Check bounding box corners around player footprint (0.35 block radius)
+            // Check surrounding blocks around player footprint and below (detects slabs, stairs, fences, walls, chests, etc.)
+            boolean hasGroundBelow = false;
             double px = to.getX();
             double py = to.getY();
             double pz = to.getZ();
-            boolean hasGroundBelow = false;
-            double[] offsets = {-0.35, 0.0, 0.35};
+            double[] offsets = {-0.4, 0.0, 0.4};
             for (double ox : offsets) {
                 for (double oz : offsets) {
-                    Block b = to.getWorld().getBlockAt((int) Math.floor(px + ox), (int) Math.floor(py - 0.5), (int) Math.floor(pz + oz));
-                    if (b.getType().isSolid() || b.getType() == Material.WATER || b.getType() == Material.LADDER || b.getType() == Material.SCAFFOLDING) {
-                        hasGroundBelow = true;
-                        break;
+                    for (double oy : new double[]{-1.0, -0.5, 0.0}) {
+                        Block b = to.getWorld().getBlockAt((int) Math.floor(px + ox), (int) Math.floor(py + oy), (int) Math.floor(pz + oz));
+                        if (!b.isPassable() || b.getType() == Material.WATER || b.getType() == Material.LADDER || b.getType() == Material.SCAFFOLDING) {
+                            hasGroundBelow = true;
+                            break;
+                        }
                     }
+                    if (hasGroundBelow) break;
                 }
                 if (hasGroundBelow) break;
             }
@@ -189,13 +199,15 @@ public class WatchdogListener implements Listener {
                 if (Math.abs(dy) < 0.0001 && airCount > 50) {
                     boolean nearbyFloor = false;
                     for (int dyCheck = 1; dyCheck <= 3; dyCheck++) {
-                        if (to.clone().subtract(0, dyCheck, 0).getBlock().getType().isSolid()) {
+                        Block b = to.clone().subtract(0, dyCheck, 0).getBlock();
+                        if (!b.isPassable()) {
                             nearbyFloor = true;
                             break;
                         }
                     }
                     if (!nearbyFloor) {
-                        watchdog.penalize(player, 5, "Zweven in de lucht / Hover Hack");
+                        // Rubberband player to avoid false-positive kicks from client jitter / bridging
+                        player.teleport(from);
                         airTicks.put(uid, 0);
                         return;
                     }

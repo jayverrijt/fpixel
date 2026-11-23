@@ -106,6 +106,7 @@ public class LobbyManager {
     }
 
     public void teleportToLobby(Player player) {
+        player.closeInventory();
         if (plugin.getSurvivalManager() != null) {
             if (plugin.getSurvivalManager().isPlayerInSurvival(player)) {
                 plugin.getSurvivalManager().getProfileManager().saveProfile(player);
