@@ -790,6 +790,14 @@ function createMapCard(m) {
     'ARCHIVED': 'rank-member'
   };
 
+  const statusLabels = {
+    'DRAFT': 'Concept',
+    'PENDING_REVIEW': 'In beoordeling',
+    'APPROVED': 'Goedgekeurd',
+    'REJECTED': 'Afgekeurd',
+    'ARCHIVED': 'Gearchiveerd'
+  };
+
   card.innerHTML = `
     <div class="item-card-header">
       <div>
@@ -797,36 +805,42 @@ function createMapCard(m) {
         <h3 class="item-card-title">${escapeHtml(m.name)}</h3>
       </div>
       <span class="rank-badge ${statusColors[m.status] || 'rank-default'}">
-        ${m.status}
+        ${statusLabels[m.status] || m.status}
       </span>
     </div>
 
     <div class="item-meta-row">
-      <span class="meta-pill">🎮 Modus: <strong>${m.gameType || 'PARKOUR'}</strong></span>
-      <span class="meta-pill">👥 Teams: <strong>${m.teamCount || 2}</strong></span>
+      <span class="meta-pill">Modus: <strong>${m.gameType || 'PARKOUR'}</strong></span>
+      <span class="meta-pill">Teams: <strong>${m.teamCount || 2}</strong></span>
     </div>
 
     ${m.rejectionReason ? `
-      <div class="alert alert-info" style="margin-bottom: 12px; font-size: 0.8rem; background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #fca5a5;">
+      <div class="alert alert-info" style="margin-bottom: 12px; font-size: 0.82rem; background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #fca5a5;">
         Reden afkeuring: ${escapeHtml(m.rejectionReason)}
       </div>
     ` : ''}
 
     <div class="item-join-box" onclick="copyText('/mapbuild ${m.id}', 'Bouwwereld commando')">
       <span class="join-cmd-text">/mapbuild ${m.id}</span>
-      <button class="btn-copy-tag">Bouwen 🔨</button>
+      <button class="btn-copy-tag">Bouwen</button>
     </div>
 
     <div class="item-actions-row">
       ${m.status === 'DRAFT' || m.status === 'REJECTED' ? `
         <button class="btn btn-sm btn-purple" onclick="submitMapForReview('${m.id}')">
-          🚀 Indienen voor Staff Review
+          Indienen voor Review
         </button>
       ` : `
-        <span style="font-size:0.8rem; color:#94a3b8;">
-          ${m.status === 'APPROVED' ? '✅ Goedgekeurd & Actief in minigames' : '⏳ In beoordeling bij staff'}
+        <span style="font-size:0.82rem; color:#94a3b8; align-self:center;">
+          ${m.status === 'APPROVED' ? 'Goedgekeurd & actief in games' : 'In beoordeling bij staff'}
         </span>
       `}
+      <button class="btn btn-sm btn-secondary" onclick="openRenameModal('${m.id}', '${escapeHtml(m.name)}')">
+        Hernoemen
+      </button>
+      <button class="btn btn-sm btn-danger" onclick="deleteMap('${m.id}', '${escapeHtml(m.name)}')">
+        Verwijderen
+      </button>
     </div>
   `;
 
@@ -974,31 +988,22 @@ async function loadReviewQueue() {
       if (m.status === 'PENDING_REVIEW') {
         actionButtons = `
           <button class="btn btn-sm btn-purple" onclick="staffReviewMap('${m.id}', 'approve')">
-            ✅ Goedkeuren & Live
-          </button>
-          <button class="btn btn-sm btn-ghost" onclick="openRenameModal('${m.id}', '${escapeHtml(m.name)}')">
-            ✏️ Hernoemen
+            Goedkeuren & Live
           </button>
           <button class="btn btn-sm btn-danger" onclick="openRejectModal('${m.id}')">
-            ❌ Afkeuren
+            Afkeuren
           </button>
         `;
       } else if (m.status === 'APPROVED') {
         actionButtons = `
-          <button class="btn btn-sm btn-ghost" onclick="openRenameModal('${m.id}', '${escapeHtml(m.name)}')">
-            ✏️ Hernoemen
-          </button>
           <button class="btn btn-sm btn-danger" onclick="staffReviewMap('${m.id}', 'disable')">
-            📦 Uit Circulatie Halen
+            Uit Circulatie Halen
           </button>
         `;
       } else {
         actionButtons = `
           <button class="btn btn-sm btn-purple" onclick="staffReviewMap('${m.id}', 'enable')">
-            🚀 Weer In Circulatie Brengen
-          </button>
-          <button class="btn btn-sm btn-ghost" onclick="openRenameModal('${m.id}', '${escapeHtml(m.name)}')">
-            ✏️ Hernoemen
+            Weer In Circulatie Brengen
           </button>
         `;
       }
@@ -1013,13 +1018,13 @@ async function loadReviewQueue() {
         </div>
 
         <div class="item-meta-row">
-          <span class="meta-pill">👑 Maker: <strong>${escapeHtml(m.creatorName || 'Speler')}</strong></span>
-          <span class="meta-pill">🎮 Spelmodus: <strong>${m.gameType || 'PARKOUR'}</strong></span>
+          <span class="meta-pill">Maker: <strong>${escapeHtml(m.creatorName || 'Speler')}</strong></span>
+          <span class="meta-pill">Spelmodus: <strong>${m.gameType || 'PARKOUR'}</strong></span>
         </div>
 
         <div class="item-join-box" onclick="copyText('/fpixel map test ${m.id}', 'Staff inspectie commando')">
           <span class="join-cmd-text">/fpixel map test ${m.id}</span>
-          <button class="btn-copy-tag">Testen 🔍</button>
+          <button class="btn-copy-tag">Testen</button>
         </div>
 
         <div class="item-actions-row">
@@ -1031,6 +1036,29 @@ async function loadReviewQueue() {
     });
   } catch (e) {
     showToast('Kon review wachtrij niet laden.', 'error');
+  }
+}
+
+async function deleteMap(id, name) {
+  if (!confirm(`Weet je zeker dat je map "${name}" (${id}) wilt verwijderen? Deze actie is onomkeerbaar!`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/maker/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      loadMakerMaps();
+    } else {
+      showToast(data.error || 'Kon map niet verwijderen.', 'error');
+    }
+  } catch (e) {
+    showToast('Netwerkfout bij verwijderen map.', 'error');
   }
 }
 

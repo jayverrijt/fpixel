@@ -1,10 +1,10 @@
 /* ==========================================================================
-   FPIXEL NETWORK - HUMAN-CENTRIC MINECRAFT DESIGN SYSTEM
+   FPIXEL NETWORK - FONTYS HYPIXEL DESIGN SYSTEM
    Principles:
-   - 60-30-10 Domain Palette: Deepslate Obsidian (60%), Structural Slate (30%),
-     Minecraft Vitality Accents (10%: Emerald Grass, Diamond Cyan, Warm Gold, Redstone).
-   - Strict ban on generic AI purple gradients & glassmorphism-overkill.
-   - Fluid typography with clamp() and typographic hierarchy.
+   - Fontys Hypixel Branding: Fontys Purple (#663366 / #7d2e7d) & Hypixel Gold (#f59e0b).
+   - Deepslate Canvas (60%), Structural Slate (30%), Fontys & Minecraft Accents (10%).
+   - Clean, functional UI with no emoji slop.
+   - Fluid typography with clamp() and high-contrast typographic hierarchy.
    - Mobile thumb-zone ergonomics: bottom nav bar, min 48px touch targets, bottom-sheet modals.
    - 100% preservation of all existing IDs, classes, CMS features, and flows.
    ========================================================================== */
@@ -25,14 +25,27 @@
   --border-subtle: rgba(255, 255, 255, 0.06);
   --border: rgba(255, 255, 255, 0.10);
   --border-hover: rgba(255, 255, 255, 0.22);
-  --border-focus: #10b981;
+  --border-focus: #7d2e7d;
 
   /* High-Contrast Typography */
   --text-main: #f1f5f9;
   --text-muted: #94a3b8;
   --text-dim: #64748b;
 
-  /* 10% Minecraft Domain Accents */
+  /* Fontys Hypixel Identity */
+  --fontys-purple: #663366;
+  --fontys-purple-light: #7d2e7d;
+  --fontys-purple-hover: #8a318a;
+  --fontys-purple-subtle: rgba(102, 51, 102, 0.22);
+  --fontys-purple-border: rgba(140, 55, 140, 0.45);
+  --fontys-purple-glow: rgba(102, 51, 102, 0.40);
+
+  --hypixel-gold: #f59e0b;
+  --hypixel-gold-hover: #d97706;
+  --hypixel-gold-subtle: rgba(245, 158, 11, 0.16);
+  --hypixel-gold-border: rgba(245, 158, 11, 0.40);
+
+  /* Minecraft Domain Accents */
   --emerald: #10b981;
   --emerald-hover: #059669;
   --emerald-glow: rgba(16, 185, 129, 0.25);
@@ -54,10 +67,10 @@
   --red-subtle: rgba(239, 68, 68, 0.14);
   --red-border: rgba(239, 68, 68, 0.35);
 
-  /* Primary Action Colors (Replaces generic AI purple) */
-  --btn-primary-bg: #10b981;
-  --btn-primary-hover: #059669;
-  --btn-primary-text: #042417;
+  /* Primary Action Colors (Authentic Fontys Purple) */
+  --btn-primary-bg: #663366;
+  --btn-primary-hover: #7d2e7d;
+  --btn-primary-text: #ffffff;
 
   /* Radii & Shadows */
   --radius-xs: 4px;
@@ -87,8 +100,8 @@ body {
   flex-direction: column;
   overflow-x: hidden;
   background-image:
-    radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.05) 0%, transparent 55%),
-    radial-gradient(circle at 90% 100%, rgba(14, 165, 233, 0.04) 0%, transparent 45%);
+    radial-gradient(circle at 50% 0%, rgba(102, 51, 102, 0.14) 0%, transparent 60%),
+    radial-gradient(circle at 90% 100%, rgba(245, 158, 11, 0.05) 0%, transparent 45%);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
 }
@@ -151,9 +164,10 @@ body {
 .brand-logo-cube {
   width: 34px;
   height: 34px;
-  background: linear-gradient(135deg, var(--emerald) 0%, #047857 100%);
+  background: linear-gradient(135deg, var(--fontys-purple) 0%, #461b46 100%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 2px 10px rgba(102, 51, 102, 0.45);
   position: relative;
   display: flex;
   align-items: center;
@@ -164,7 +178,7 @@ body {
   content: "";
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.9);
+  border: 2px solid var(--hypixel-gold);
   border-radius: 3px;
 }
 
@@ -182,7 +196,7 @@ body {
 }
 
 .brand-dot {
-  color: var(--emerald);
+  color: var(--hypixel-gold);
 }
 
 .brand-sub {
@@ -224,8 +238,8 @@ body {
 .nav-link.active {
   color: #ffffff;
   background: var(--bg-surface);
-  border-color: var(--border);
-  box-shadow: var(--shadow-sm);
+  border-color: var(--fontys-purple-border);
+  box-shadow: 0 2px 8px rgba(102, 51, 102, 0.25);
 }
 
 .counter-pill {
@@ -330,17 +344,17 @@ body {
   user-select: none;
 }
 
-/* Primary CTA Button: Tactile Emerald / Amber Action (Replaces purple gradient) */
+/* Primary CTA Button: Authentic Fontys Purple Action */
 .btn-purple {
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.28);
+  background: linear-gradient(135deg, var(--fontys-purple) 0%, var(--fontys-purple-light) 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 14px rgba(102, 51, 102, 0.40);
 }
 
 .btn-purple:hover {
-  background: var(--btn-primary-hover);
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.38);
+  background: linear-gradient(135deg, var(--fontys-purple-light) 0%, var(--fontys-purple-hover) 100%);
+  box-shadow: 0 6px 20px rgba(102, 51, 102, 0.55);
   transform: translateY(-1px);
 }
 
@@ -470,7 +484,7 @@ body {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--emerald), var(--diamond), var(--gold));
+  background: linear-gradient(90deg, var(--fontys-purple), var(--hypixel-gold), var(--emerald));
 }
 
 .hero-badge-row {
@@ -487,9 +501,9 @@ body {
   letter-spacing: 0.05em;
   padding: 5px 12px;
   border-radius: var(--radius-pill);
-  background: var(--emerald-subtle);
-  color: var(--emerald);
-  border: 1px solid var(--emerald-border);
+  background: var(--fontys-purple-subtle);
+  color: #e2c1e8;
+  border: 1px solid var(--fontys-purple-border);
 }
 
 .whitelist-off-badge {
@@ -534,7 +548,7 @@ body {
 }
 
 .glow-accent {
-  color: var(--emerald);
+  color: var(--hypixel-gold);
   position: relative;
 }
 
@@ -572,14 +586,31 @@ body {
 }
 
 .ip-card:hover {
-  border-color: var(--diamond);
-  background: #0f1522;
-  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.15);
+  border-color: var(--fontys-purple-light);
+  background: #111520;
+  box-shadow: 0 4px 18px rgba(102, 51, 102, 0.25);
   transform: translateY(-2px);
 }
 
 .ip-card:active {
   transform: translateY(0);
+}
+
+.ip-platform-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  background: var(--fontys-purple-subtle);
+  color: #e2c1e8;
+  border: 1px solid var(--fontys-purple-border);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 80px;
 }
 
 .ip-icon-box {
@@ -1444,8 +1475,9 @@ body {
   }
 
   .mob-nav-item.active {
-    color: var(--emerald);
-    background: var(--emerald-subtle);
+    color: #e2c1e8;
+    background: var(--fontys-purple-subtle);
+    border: 1px solid var(--fontys-purple-border);
   }
 
   .mob-nav-icon {

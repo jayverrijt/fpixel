@@ -2467,34 +2467,81 @@ app.post('/api/maker/review', async (req, res) => {
   }
 });
 
-// API: /api/maker/rename (Staff rename map)
+// API: /api/maker/rename (Map owner or Admin rename map)
 app.post('/api/maker/rename', async (req, res) => {
   const user = getSessionUser(req);
-  if (!user || !user.isStaff) {
-    return res.status(403).json({ error: 'Minimaal [MODERATOR] rang vereist om maps te hernoemen.' });
-  }
+  if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
 
   const { id, newName } = req.body;
   if (!id || !newName || !newName.trim()) {
     return res.status(400).json({ error: 'Vul een map ID en nieuwe naam in.' });
   }
 
+  const maps = getCustomMaps();
+  const mapKey = Object.keys(maps).find(k => k.toLowerCase() === id.toLowerCase());
+  if (!mapKey || !maps[mapKey]) {
+    return res.status(404).json({ error: 'Map niet gevonden.' });
+  }
+
+  const map = maps[mapKey];
+  const cleanUser = user.username.toLowerCase().replace(/^\./, '');
+  const cleanCreator = (map.creatorName || '').toLowerCase().replace(/^\./, '');
+  const isOwner = cleanUser === cleanCreator;
+  const isAdmin = user.rank === 'OWNER' || user.rank === 'ADMIN';
+
+  if (!isOwner && !isAdmin) {
+    return res.status(403).json({ error: 'Alleen de eigenaar van deze map kan de naam wijzigen.' });
+  }
+
   const cleanName = newName.trim().replace(/"/g, '');
 
   try {
     await sendRconCommand(`fpixel map rename ${id.toLowerCase()} ${cleanName}`);
-    res.json({ success: true, message: `Map ${id} succesvol hernoemd naar "${cleanName}".` });
   } catch (err) {
-    // Local fallback update in custom_maps.json
-    const maps = getCustomMaps();
-    const mapKey = Object.keys(maps).find(k => k.toLowerCase() === id.toLowerCase());
-    if (mapKey && maps[mapKey]) {
-      maps[mapKey].name = cleanName;
-      saveCustomMaps(maps);
-      return res.json({ success: true, message: `Map ${id} lokaal hernoemd naar "${cleanName}".` });
-    }
-    res.status(500).json({ error: 'Kon map niet hernoemen: ' + err.message });
+    console.warn('RCON rename fallback to local:', err.message);
   }
+
+  map.name = cleanName;
+  map.updatedAt = Date.now();
+  saveCustomMaps(maps);
+
+  res.json({ success: true, message: `Map ${id} succesvol hernoemd naar "${cleanName}".` });
+});
+
+// API: /api/maker/delete (Map owner or Admin delete map)
+app.post('/api/maker/delete', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
+
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ error: 'Geen map ID opgegeven.' });
+
+  const maps = getCustomMaps();
+  const mapKey = Object.keys(maps).find(k => k.toLowerCase() === id.toLowerCase());
+  if (!mapKey || !maps[mapKey]) {
+    return res.status(404).json({ error: 'Map niet gevonden.' });
+  }
+
+  const map = maps[mapKey];
+  const cleanUser = user.username.toLowerCase().replace(/^\./, '');
+  const cleanCreator = (map.creatorName || '').toLowerCase().replace(/^\./, '');
+  const isOwner = cleanUser === cleanCreator;
+  const isAdmin = user.rank === 'OWNER' || user.rank === 'ADMIN';
+
+  if (!isOwner && !isAdmin) {
+    return res.status(403).json({ error: 'Alleen de eigenaar van deze map kan hem verwijderen.' });
+  }
+
+  try {
+    await sendRconCommand(`fpixel map delete ${id.toLowerCase()}`);
+  } catch (err) {
+    console.warn('RCON delete fallback to local:', err.message);
+  }
+
+  delete maps[mapKey];
+  saveCustomMaps(maps);
+
+  res.json({ success: true, message: `Map "${map.name}" (${id}) is succesvol verwijderd.` });
 });
 
 // API: /api/admin/watchdog (Staff view Watchdog anticheat violations and status)
