@@ -58,6 +58,11 @@ function switchTab(tabId) {
   const activeBtn = document.getElementById(`nav-btn-${tabId}`);
   if (activeBtn) activeBtn.classList.add('active');
 
+  // Update mobile bottom nav states
+  document.querySelectorAll('.mob-nav-item').forEach(btn => btn.classList.remove('active'));
+  const activeMobBtn = document.getElementById(`mob-nav-btn-${tabId}`);
+  if (activeMobBtn) activeMobBtn.classList.add('active');
+
   // Update tab pane visibility
   document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
   const activePane = document.getElementById(`tab-${tabId}`);
@@ -70,6 +75,14 @@ function switchTab(tabId) {
     loadMakerMaps();
   } else if (tabId === 'staff') {
     loadStaffData();
+  }
+}
+
+function handleMobileAuthClick() {
+  if (currentUser && currentUser.loggedIn) {
+    switchTab('worlds');
+  } else {
+    openLoginModal('login');
   }
 }
 
@@ -217,11 +230,20 @@ function renderAuthUser(user) {
 
   // Staff Console link
   const staffBtn = document.getElementById('nav-btn-staff');
+  const mobStaffBtn = document.getElementById('mob-nav-btn-staff');
   if (user.isStaff) {
     staffBtn.style.display = 'inline-flex';
+    if (mobStaffBtn) mobStaffBtn.style.display = 'flex';
   } else {
     staffBtn.style.display = 'none';
+    if (mobStaffBtn) mobStaffBtn.style.display = 'none';
   }
+
+  // Mobile Auth pill
+  const mobAuthLabel = document.getElementById('mob-nav-auth-label');
+  const mobAuthIcon = document.getElementById('mob-nav-auth-icon');
+  if (mobAuthLabel) mobAuthLabel.textContent = 'Werelden';
+  if (mobAuthIcon) mobAuthIcon.textContent = '👤';
 
   // Update Navbar info
   document.getElementById('nav-username').textContent = user.username;
@@ -258,6 +280,13 @@ function renderLoggedOut() {
   document.getElementById('auth-logged-in').style.display = 'none';
   document.querySelectorAll('.auth-required-tab').forEach(el => el.style.display = 'none');
   document.getElementById('nav-btn-staff').style.display = 'none';
+  const mobStaffBtn = document.getElementById('mob-nav-btn-staff');
+  if (mobStaffBtn) mobStaffBtn.style.display = 'none';
+
+  const mobAuthLabel = document.getElementById('mob-nav-auth-label');
+  const mobAuthIcon = document.getElementById('mob-nav-auth-icon');
+  if (mobAuthLabel) mobAuthLabel.textContent = 'Inloggen';
+  if (mobAuthIcon) mobAuthIcon.textContent = '🔑';
 
   if (currentTab !== 'home') {
     switchTab('home');
