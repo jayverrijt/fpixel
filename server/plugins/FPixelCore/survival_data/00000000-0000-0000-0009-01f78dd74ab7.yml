@@ -1,0 +1,117 @@
+location:
+  world: survival
+  x: -927.9151
+  y: 64.0
+  z: -207.64626
+  yaw: 171.18854
+  pitch: 21.832657
+level: 0
+exp: 0.0
+health: 20.0
+food: 20
+inventory:
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:compass
+  count: 1
+  components:
+    minecraft:lore: '[{color:"gray",text:"Click to teleport to an alive player."}]'
+    minecraft:custom_name: '{extra:[{bold:1b,color:"green",text:"Teleporter "},{color:"gray",text:"(Right
+      Click)"}],text:""}'
+  schema_version: 1
+- null
+- null
+- null
+- null
+- null
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:paper
+  count: 1
+  components:
+    minecraft:lore: '[{color:"gray",text:"Click to queue for another match."}]'
+    minecraft:custom_name: '{extra:[{bold:1b,color:"aqua",text:"Play Again "},{color:"gray",text:"(Right
+      Click)"}],text:""}'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:red_bed
+  count: 1
+  components:
+    minecraft:lore: '[{color:"gray",text:"Click to return to the Hub."}]'
+    minecraft:custom_name: '{extra:[{bold:1b,color:"red",text:"Back to Lobby "},{color:"gray",text:"(Right
+      Click)"}],text:""}'
+  schema_version: 1
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+armor:
+- null
+- null
+- null
+- null
+offhand:
+  ==: org.bukkit.inventory.ItemStack
+  schema_version: 1
+  id: minecraft:air
+  DataVersion: 5023
+enderchest:
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null

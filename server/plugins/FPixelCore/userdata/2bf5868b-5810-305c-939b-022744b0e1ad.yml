@@ -1,0 +1,31 @@
+name: Amigapower2018
+coins: 1050
+level: 1
+experience: 0
+visibility: ALL
+stats:
+  bedwars:
+    wins: 0
+    losses: 0
+    kills: 2
+    finalKills: 1
+    bedsBroken: 1
+  tntrun:
+    wins: 2
+    losses: 0
+  sumo:
+    wins: 1
+    losses: 4
+    streak: 0
+  murdermystery:
+    wins: 4
+  prophunt:
+    wins: 1
+secrets:
+- relic_sunken_chalice
+- relic_blacksmith_hammer
+- relic_alchemist_core
+- relic_cloudrunner_feather
+- relic_archivist_journal
+- relic_stargazer_lens
+- relic_torii_offering

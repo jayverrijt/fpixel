@@ -1,0 +1,55 @@
+{
+  "ORIGIN1": {
+    "uid": "ORIGIN1",
+    "name": "Survival SMP (Origineel)",
+    "creatorName": "Jay_V0",
+    "createdAt": 1731522000000,
+    "cheatsEnabled": false,
+    "seed": 0,
+    "difficulty": "NORMAL",
+    "defaultGameMode": "SURVIVAL",
+    "isPrimarySmp": true,
+    "generatorType": "NORMAL",
+    "publicWorld": true,
+    "sharedPlayers": {
+      "smileygaming27": true,
+      ".minnieheks": true,
+      "amigapower2018": true
+    },
+    "locked": false
+  },
+  "W89O3OL": {
+    "uid": "W89O3OL",
+    "name": "OneblockTest",
+    "creatorName": "Jay_v0",
+    "createdAt": 1795471454313,
+    "cheatsEnabled": true,
+    "seed": 0,
+    "difficulty": "NORMAL",
+    "defaultGameMode": "CREATIVE",
+    "isPrimarySmp": false,
+    "generatorType": "ONEBLOCK",
+    "publicWorld": true,
+    "sharedPlayers": {
+      "amigapower2018": true
+    },
+    "locked": false
+  },
+  "WP60V6B": {
+    "uid": "WP60V6B",
+    "name": "Creative wereld",
+    "creatorName": "Jay_V0",
+    "createdAt": 1794595300896,
+    "cheatsEnabled": true,
+    "seed": 0,
+    "difficulty": "NORMAL",
+    "defaultGameMode": "SURVIVAL",
+    "isPrimarySmp": false,
+    "generatorType": "NORMAL",
+    "publicWorld": true,
+    "sharedPlayers": {
+      "smileygaming27": false
+    },
+    "locked": false
+  }
+}

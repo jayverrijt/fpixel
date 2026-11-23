@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FPixel Network | Minecraft Server & Community CMS</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand" onclick="switchTab('home')">
+        <div class="brand-logo-cube"></div>
+        <div class="brand-text">
+          <span class="brand-title">FPIXEL<span class="brand-dot">.NL</span></span>
+          <span class="brand-sub">MINECRAFT NETWORK</span>
+        </div>
+      </div>
+
+      <nav class="nav-links">
+        <button id="nav-btn-home" class="nav-link active" onclick="switchTab('home')">
+          <span class="nav-icon">🎮</span> Server & Gamemodes
+        </button>
+        <button id="nav-btn-worlds" class="nav-link auth-required-tab" style="display: none;" onclick="switchTab('worlds')">
+          <span class="nav-icon">🌍</span> Mijn Werelden
+        </button>
+        <button id="nav-btn-maker" class="nav-link auth-required-tab" style="display: none;" onclick="switchTab('maker')">
+          <span class="nav-icon">🏗️</span> Map Maker
+        </button>
+        <button id="nav-btn-staff" class="nav-link staff-pill-link" style="display: none;" onclick="switchTab('staff')">
+          <span class="nav-icon">🛡️</span> Staff Console
+          <span id="staff-review-badge" class="counter-pill" style="display: none;">0</span>
+        </button>
+      </nav>
+
+      <div class="nav-auth">
+        <!-- Logged Out Button -->
+        <div id="auth-logged-out" class="auth-box">
+          <button class="btn btn-sm btn-purple" onclick="openLoginModal('login')">
+            <span class="btn-icon">🔑</span> Inloggen
+          </button>
+        </div>
+
+        <!-- Logged In User Pill -->
+        <div id="auth-logged-in" class="auth-box" style="display: none;">
+          <div class="user-pill" onclick="switchTab('worlds')">
+            <img id="nav-user-avatar" class="user-avatar" src="https://mc-heads.net/avatar/MHF_Steve/64" alt="avatar">
+            <div class="user-meta">
+              <span id="nav-username" class="user-name">...</span>
+              <span id="nav-user-coins" class="coins-badge">🪙 0</span>
+            </div>
+            <span id="nav-user-rank" class="rank-badge rank-default">MEMBER</span>
+          </div>
+          <button class="btn btn-sm btn-icon-only btn-logout" title="Uitloggen" onclick="logout()">
+            🚪
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Global Toast Notification -->
+  <div id="toast" class="toast">Melding</div>
+
+  <!-- MAIN APPLICATION CONTENT -->
+  <main class="main-content">
+
+    <!-- ======================================================== -->
+    <!-- TAB 1: HOME, IP/PORT HERO & GAMEMODES (PUBLIC)           -->
+    <!-- ======================================================== -->
+    <section id="tab-home" class="tab-pane active">
+
+      <!-- Server Connection Hero -->
+      <div class="hero-banner">
+        <div class="hero-content">
+          <div class="hero-badge-row">
+            <span class="network-badge">🟢 JAVA & BEDROCK CROSSPLAY 1.21.x</span>
+            <div id="server-status-pill" class="status-indicator online">
+              <span class="status-pulse"></span>
+              <span id="status-text">ONLINE</span>
+              <span class="status-count">(<strong id="hero-player-count">0</strong> online)</span>
+            </div>
+            <span class="whitelist-off-badge">🔓 WHITELIST UIT: IEDEREEN WELKOM</span>
+          </div>
+          <h1 class="hero-title">Welkom op <span class="glow-accent">FPixel Network</span></h1>
+          <p class="hero-description">
+            Het schaalbare Nederlandse crossplay-netwerk. Speel in de originele <strong>Survival SMP</strong>, maak je eigen persoonlijke <strong>Spelerwereld (Realm)</strong> met zero-downtime backups, ontwerp minigame arena's in de <strong>Map Maker</strong> of strijd in BedWars, SkyWars en Duels!
+          </p>
+
+          <!-- IP & Port Copy Cards -->
+          <div class="ip-cards-grid">
+            <div class="ip-card" onclick="copyIp('mc.fpixel.nl', 'Java Server Adres')">
+              <div class="ip-icon-box">☕</div>
+              <div class="ip-details">
+                <span class="ip-platform">JAVA EDITIE (PC / MAC)</span>
+                <span class="ip-address">mc.fpixel.nl</span>
+                <span class="ip-port-label">Standaard Poort: <code>25565</code></span>
+              </div>
+              <button class="btn-copy-tag">Kopieer 📋</button>
+            </div>
+
+            <div class="ip-card" onclick="copyIp('mc.fpixel.nl', 'Bedrock Server Adres')">
+              <div class="ip-icon-box">📱</div>
+              <div class="ip-details">
+                <span class="ip-platform">BEDROCK (CONSOLE / TELEFOON / WIN 10)</span>
+                <span class="ip-address">mc.fpixel.nl</span>
+                <span class="ip-port-label">Bedrock Poort: <code onclick="event.stopPropagation(); copyIp('19132', 'Bedrock Poort')">19132</code> 📋</span>
+                <div class="bedrock-card-footer">
+                  <div id="bedrock-status-pill" class="bedrock-code-badge badge-code-200">
+                    <span class="status-pulse-dot"></span>
+                    <span id="bedrock-status-text">Code 200: Spel is goed & joinbaar</span>
+                  </div>
+                  <button type="button" class="btn-bedrock-info" onclick="event.stopPropagation(); openBedrockErrorsModal();">
+                    📖 Foutcodes (HTTP 100-504)
+                  </button>
+                </div>
+              </div>
+              <button class="btn-copy-tag">Kopieer 📋</button>
+            </div>
+          </div>
+
+          <div class="hero-cta-row">
+            <button class="btn btn-purple" onclick="handleCtaWorlds()">
+              🌍 Beheer Jouw Spelerwerelden
+            </button>
+            <button class="btn btn-secondary" onclick="handleCtaMaker()">
+              🏗️ Minigame Map Maker
+            </button>
+            <button class="btn btn-outline" onclick="openLoginModal('reset')">
+              🔑 Wachtwoord Resetten (In-Game Code)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gamemodes Showcase (Public Bento Grid) -->
+      <div class="gamemodes-section">
+        <div class="section-title-wrap">
+          <span class="section-tag">🎮 8 SPELMODI & WERELDEN</span>
+          <h2>Ontdek De FPixel Spelervaring</h2>
+          <p>Kies een modus in-game via het <strong>Lobby Kompas</strong> of loop door de 8 gloeiende bogen op het <strong>Paleisplein</strong> rondom (0, 64, 0).</p>
+        </div>
+
+        <div class="gamemodes-grid">
+
+          <!-- 1. Player Worlds & Survival -->
+          <div class="gamemode-card gm-survival">
+            <div class="gm-badge-tag">FEATURED REALMS</div>
+            <div class="gm-icon">🌍</div>
+            <h3>Player Worlds & Survival</h3>
+            <p>Jouw eigen persoonlijke Minecraft werelden! Inclusief Overworld, Nether en End met portal-routing, geïsoleerde inventaris, scoped cheats en live git-backups via het Web-CMS.</p>
+            <div class="gm-specs">
+              <span>🏰 3 Dimensies</span>
+              <span>🔒 Geïsoleerde State</span>
+              <span>💾 Zero-Downtime Backups</span>
+            </div>
+          </div>
+
+          <!-- 2. Parkour Studio -->
+          <div class="gamemode-card gm-parkour">
+            <div class="gm-badge-tag gm-tag-new">COMMUNITY MAKER</div>
+            <div class="gm-icon">🏃</div>
+            <h3>Parkour Studio & Duels</h3>
+            <p>Spring over gevaarlijke afgronden en bouw je eigen parcoursen. Met Speed Pads (op goud), Jump Boost pads (op emerald), Slime Springboards en Checkpoint tracking.</p>
+            <div class="gm-specs">
+              <span>🚀 Giga Boost Pads</span>
+              <span>⚡ Slime Springboards</span>
+              <span>🏁 Checkpoint Tracking</span>
+            </div>
+          </div>
+
+          <!-- 3. BedWars -->
+          <div class="gamemode-card gm-bedwars">
+            <div class="gm-badge-tag">POPULAIR</div>
+            <div class="gm-icon">🛏️</div>
+            <h3>BedWars</h3>
+            <p>Bescherm je bed en sloop de vijandelijke basissen. Upgrade je team met ijzer, goud en emeralds uit de generatoren op 10 unieke versterkte arena's.</p>
+            <div class="gm-specs">
+              <span>🏰 10 Fortified Arenas</span>
+              <span>⚔️ Generator Upgrades</span>
+              <span>🛡️ 2-8 Speler Teams</span>
+            </div>
+          </div>
+
+          <!-- 4. SkyWars -->
+          <div class="gamemode-card gm-skywars">
+            <div class="gm-badge-tag">INTENS</div>
+            <div class="gm-icon">👁️</div>
+            <h3>SkyWars</h3>
+            <p>Spawn op een zwevend eiland boven het luchtledige, loot de kisten, kies je gevechtskit en vecht voor de overwinning op het centrale eiland.</p>
+            <div class="gm-specs">
+              <span>🪂 10 Floating Arenas</span>
+              <span>📦 Kisten & Loot</span>
+              <span>🏹 Combat Kits</span>
+            </div>
+          </div>
+
+          <!-- 5. TNT Run -->
+          <div class="gamemode-card gm-tnt">
+            <div class="gm-badge-tag">SNEL</div>
+            <div class="gm-icon">🧨</div>
+            <h3>TNT Run</h3>
+            <p>De zand- en gravelblokken onder je voeten storten direct in het ravijn in zodra je erop stapt! Blijf sprinten en gebruik tactische dubbelsprongen om te overleven.</p>
+            <div class="gm-specs">
+              <span>🏛️ 10 Colosseums</span>
+              <span>🏃 4 Verdiepingen</span>
+              <span>💨 Dubbelsprongen</span>
+            </div>
+          </div>
+
+          <!-- 6. Murder Mystery -->
+          <div class="gm-badge-tag-wrap gamemode-card gm-murder">
+            <div class="gm-badge-tag">DETECTIVE</div>
+            <div class="gm-icon">🗡️</div>
+            <h3>Murder Mystery</h3>
+            <p>Eén speler is de Moordenaar met een verborgen zwaard, één is de Detective met een boog, en de rest zijn Onschuldigen. Verzamel 10 goudstukken voor een boog!</p>
+            <div class="gm-specs">
+              <span>🏚️ Haunted Manor & Cyber</span>
+              <span>🔍 Detective Mechanics</span>
+              <span>🩸 Spanning</span>
+            </div>
+          </div>
+
+          <!-- 7. Prop Hunt -->
+          <div class="gamemode-card gm-prophunt">
+            <div class="gm-badge-tag">VERSTOPPERTJE</div>
+            <div class="gm-icon">📦</div>
+            <h3>Prop Hunt</h3>
+            <p>Klassiek Garry's Mod verstoppertje in Minecraft! Vermom je als kist, crafting table of bloempot, snap naar het grid en daag de jagers uit met spottende taunts.</p>
+            <div class="gm-specs">
+              <span>🏬 Warehouse & Bazaar</span>
+              <span>🎯 Taunt Systeem</span>
+              <span>❤ Jager Penalty</span>
+            </div>
+          </div>
+
+          <!-- 8. The Bridge & Sumo 1v1 -->
+          <div class="gamemode-card gm-duels">
+            <div class="gm-badge-tag">1v1 COMPETITIE</div>
+            <div class="gm-icon">🌉</div>
+            <h3>The Bridge & Sumo 1v1</h3>
+            <p>Duik in bliksemsnelle 1v1 duels. Steek de smalle brug over het ravijn over om te scoren in de goal, of mep je tegenstander van het zwevende dojo-eiland in Sumo!</p>
+            <div class="gm-specs">
+              <span>⛩️ 20 Duel Arenas</span>
+              <span>⚔️ Direct Herstarten</span>
+              <span>🏆 ELO & Leaderboards</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- TAB 2: MIJN WERELDEN (REALMS CONSOLE)                     -->
+    <!-- ======================================================== -->
+    <section id="tab-worlds" class="tab-pane">
+      <div class="panel-header">
+        <div class="panel-header-left">
+          <span class="panel-tag">🌍 SPELERWERELDEN ("REALMS")</span>
+          <h2>Jouw Persoonlijke Minecraft Werelden</h2>
+          <p>Maak geïsoleerde survival-werelden aan, nodig vrienden uit, beheer scoped cheats en maak zero-downtime Git backups.</p>
+        </div>
+        <div class="panel-header-right">
+          <div id="world-limit-badge" class="limit-indicator-pill">
+            <span class="limit-label">WERELDEN GEBRUIKT:</span>
+            <span id="world-limit-count" class="limit-value">0 / 1</span>
+          </div>
+          <button class="btn btn-purple" onclick="openCreateWorldModal()">
+            <span>➕</span> Nieuwe Wereld Aanmaken
+          </button>
+        </div>
+      </div>
+
+      <!-- Worlds Grid Container -->
+      <div id="worlds-loading" class="loading-state">
+        <div class="spinner"></div>
+        <span>Jouw werelden ophalen...</span>
+      </div>
+
+      <div id="worlds-empty" class="empty-state" style="display: none;">
+        <div class="empty-icon">🌍</div>
+        <h3>Nog geen werelden aangemaakt</h3>
+        <p>Je hebt momenteel 0 werelden. Klik op de knop hierboven om je eerste wereld direct te starten!</p>
+      </div>
+
+      <div id="worlds-grid" class="worlds-grid" style="display: none;">
+        <!-- Dynamic World Cards injected by app.js -->
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- TAB 3: MAP MAKER CONSOLE                                  -->
+    <!-- ======================================================== -->
+    <section id="tab-maker" class="tab-pane">
+      <div class="panel-header">
+        <div class="panel-header-left">
+          <span class="panel-tag">🏗️ #RESPECTTHECOMMUNITY</span>
+          <h2>Universal Minigame Map Maker</h2>
+          <p>Bouw arena's voor alle 8 minigames in een void-bouwwereld. Voor BedWars & SkyWars worden basis- en middeneilanden automatisch klaargezet!</p>
+        </div>
+        <div class="panel-header-right">
+          <button class="btn btn-purple" onclick="openCreateMapModal()">
+            <span>➕</span> Nieuwe Map Starten
+          </button>
+        </div>
+      </div>
+
+      <div id="maker-loading" class="loading-state">
+        <div class="spinner"></div>
+        <span>Jouw maps inladen...</span>
+      </div>
+
+      <div id="maker-empty" class="empty-state" style="display: none;">
+        <div class="empty-icon">🏗️</div>
+        <h3>Nog geen maps ontworpen</h3>
+        <p>Start met het bouwen van een eigen BedWars, SkyWars of Parkour arena en dien hem in voor staff review!</p>
+      </div>
+
+      <div id="maker-grid" class="maker-grid" style="display: none;">
+        <!-- Dynamic Map Cards injected by app.js -->
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- TAB 4: UNIFIED STAFF CONSOLE (MODERATOR, ADMIN, OWNER)    -->
+    <!-- ======================================================== -->
+    <section id="tab-staff" class="tab-pane">
+      <div class="panel-header">
+        <div class="panel-header-left">
+          <span class="panel-tag">🛡️ STAFF CONSOLE</span>
+          <h2>Netwerk & Content Beheer</h2>
+          <p>Gecombineerd controlecentrum voor map reviews, speler-rangen en server operationele taken.</p>
+        </div>
+        <div class="panel-header-right">
+          <div class="staff-subnav">
+            <button class="subnav-pill active" onclick="switchStaffTab('reviews')">
+              📋 Map Reviews <span id="staff-subnav-review-count" class="counter-badge">0</span>
+            </button>
+            <button class="subnav-pill" onclick="switchStaffTab('ranks')">
+              👑 Spelers & Rangen
+            </button>
+            <button class="subnav-pill" onclick="switchStaffTab('server')">
+              ⚙️ Server Controle
+            </button>
+            <button class="subnav-pill" onclick="switchStaffTab('watchdog')">
+              🛡️ Watchdog Anticheat
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-section 1: Map Review Queue & Beheer -->
+      <div id="staff-section-reviews" class="staff-subpane active">
+        <div class="section-sub-header">
+          <h3>Community Maps & Circulatie Beheer</h3>
+          <p>Beoordeel ingekomen maps, hernoem bestaande maps en haal ze desgewenst uit of in circulatie.</p>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+          <button id="map-filter-pending" class="btn btn-sm btn-purple" onclick="setStaffMapFilter('PENDING_REVIEW')">⏳ In Beoordeling</button>
+          <button id="map-filter-approved" class="btn btn-sm btn-ghost" onclick="setStaffMapFilter('APPROVED')">✅ Actief in Circulatie</button>
+          <button id="map-filter-archived" class="btn btn-sm btn-ghost" onclick="setStaffMapFilter('ARCHIVED')">📦 Uit Circulatie</button>
+        </div>
+
+        <div id="staff-review-empty" class="empty-state" style="display: none;">
+          <div class="empty-icon">✅</div>
+          <h3>Geen maps in deze categorie</h3>
+          <p>Er zijn op dit moment geen maps gevonden met deze filterstatus.</p>
+        </div>
+
+        <div id="staff-review-grid" class="review-queue-grid">
+          <!-- Injected by app.js -->
+        </div>
+      </div>
+
+      <!-- Sub-section 2: Spelers & Rangen -->
+      <div id="staff-section-ranks" class="staff-subpane" style="display: none;">
+        <div class="section-sub-header">
+          <h3>Speler Rangenbeheer (5 Rangen)</h3>
+          <p id="ranks-perm-notice">Bekijk de huidige rangen van alle spelers op het netwerk.</p>
+        </div>
+
+        <!-- Owner-only assign form -->
+        <div id="owner-rank-form-card" class="glass-card" style="display: none; margin-bottom: 24px;">
+          <h4 style="margin-top: 0; color: #eab308;">👑 Rang Toekennen (Alleen [OWNER])</h4>
+          <div class="form-row-grid">
+            <div class="form-group">
+              <label>Spelernaam (bijv. Jay_V0):</label>
+              <input type="text" id="assign-rank-username" placeholder="Minecraft naam...">
+            </div>
+            <div class="form-group">
+              <label>Nieuwe Rang:</label>
+              <select id="assign-rank-select">
+                <option value="MEMBER">MEMBER (Standaard)</option>
+                <option value="DONOR">DONOR [❤]</option>
+                <option value="MODERATOR">MODERATOR [🎩]</option>
+                <option value="ADMIN">ADMIN [⚔]</option>
+                <option value="OWNER">OWNER [👑]</option>
+              </select>
+            </div>
+            <div class="form-group" style="align-self: flex-end;">
+              <button class="btn btn-purple" onclick="assignRank()">
+                Rang Toepassen & Opslaan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ranks-table-container glass-card">
+          <table class="cms-table">
+            <thead>
+              <tr>
+                <th>Speler</th>
+                <th>Huidige Rang</th>
+                <th>Gewicht</th>
+                <th>Acties</th>
+              </tr>
+            </thead>
+            <tbody id="ranks-table-body">
+              <!-- Injected by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sub-section 3: Server Controle -->
+      <div id="staff-section-server" class="staff-subpane" style="display: none;">
+        <div class="section-sub-header">
+          <h3>Systeem & Server Acties</h3>
+          <p>Voer live server-operaties uit via de beveiligde RCON bridge.</p>
+        </div>
+
+        <div class="server-actions-grid">
+          <div class="action-card">
+            <div class="action-icon">📢</div>
+            <h4>Server Omroepbericht (Broadcast)</h4>
+            <p>Stuur direct een live melding naar alle actieve spelers in Minecraft.</p>
+            <div class="form-group" style="margin-top: 12px;">
+              <input type="text" id="broadcast-message-input" placeholder="Typ een bericht...">
+            </div>
+            <button class="btn btn-secondary" onclick="sendBroadcast()" style="margin-top: 10px;">
+              Verzend Omroep
+            </button>
+          </div>
+
+          <div class="action-card">
+            <div class="action-icon">💾</div>
+            <h4>Volledige Server Backup</h4>
+            <p>Maakt een complete pre-deploy snapshot van de serverbestanden naar de backuplocatie. (Vereist [ADMIN]+)</p>
+            <button class="btn btn-secondary" onclick="triggerServerBackup()" style="margin-top: 14px;">
+              Start Server Backup
+            </button>
+          </div>
+
+          <div class="action-card action-danger">
+            <div class="action-icon">🛑</div>
+            <h4>Server Veilig Stoppen</h4>
+            <p>Kondigt een shutdown aan aan alle spelers en sluit PaperMC veilig af. (Strictly [OWNER])</p>
+            <button id="btn-server-stop" class="btn btn-danger" onclick="triggerServerStop()" style="margin-top: 14px;" disabled>
+              Server Veilig Stoppen
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-section 4: Watchdog Anticheat -->
+      <div id="staff-section-watchdog" class="staff-subpane" style="display: none;">
+        <div class="section-sub-header">
+          <h3>🛡️ Watchdog Anticheat & Client Integriteit</h3>
+          <p>Real-time detectie van hack clients (Wurst, Meteor, LiquidBounce) en automatische Trust Score handhaving.</p>
+        </div>
+
+        <div class="watchdog-summary-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div class="glass-card" style="text-align: center; border-left: 4px solid #10b981;">
+            <div style="font-size: 0.85rem; color: #94a3b8; text-transform: uppercase;">Minimaal Vereiste Score</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #10b981; margin: 8px 0;">90 / 100</div>
+            <div style="font-size: 0.8rem; color: #64748b;">Spelers onder 90 worden direct gekickt</div>
+          </div>
+          <div class="glass-card" style="text-align: center; border-left: 4px solid #ef4444;">
+            <div style="font-size: 0.85rem; color: #94a3b8; text-transform: uppercase;">Hackclients Score</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #ef4444; margin: 8px 0;">0 / 100</div>
+            <div style="font-size: 0.8rem; color: #64748b;">Wurst, Meteor, Aristois etc. direct geblokkeerd</div>
+          </div>
+          <div class="glass-card" style="text-align: center; border-left: 4px solid #6366f1;">
+            <div style="font-size: 0.85rem; color: #94a3b8; text-transform: uppercase;">Totaal Overtredingen</div>
+            <div id="watchdog-violation-count" style="font-size: 2rem; font-weight: bold; color: #818cf8; margin: 8px 0;">0</div>
+            <div style="font-size: 0.8rem; color: #64748b;">Gedetecteerde kicks & waarschuwingen</div>
+          </div>
+        </div>
+
+        <!-- Owner manual override -->
+        <div id="owner-watchdog-override-card" class="glass-card" style="display: none; margin-bottom: 24px;">
+          <h4 style="margin-top: 0; color: #eab308;">⚖️ Handmatige Trust Score Instellen (Alleen [OWNER])</h4>
+          <div class="form-row-grid">
+            <div class="form-group">
+              <label for="wd-override-player">Spelersnaam</label>
+              <input type="text" id="wd-override-player" placeholder="Bijv. Steve">
+            </div>
+            <div class="form-group">
+              <label for="wd-override-score">Trust Score (0 - 100)</label>
+              <input type="number" id="wd-override-score" min="0" max="100" placeholder="100">
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+              <button class="btn btn-primary" onclick="setWatchdogScore()" style="width: 100%;">
+                Score Opslaan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h4 style="margin: 0;">Recente Watchdog Overtredingen & Kicks</h4>
+            <button class="btn btn-sm btn-ghost" onclick="loadWatchdogData()">🔄 Vernieuwen</button>
+          </div>
+          <div class="ranks-table-container">
+            <table class="ranks-table">
+              <thead>
+                <tr>
+                  <th>Tijdstip</th>
+                  <th>Speler</th>
+                  <th>Client Brand</th>
+                  <th>Score</th>
+                  <th>Gedetecteerde Reden</th>
+                </tr>
+              </thead>
+              <tbody id="watchdog-table-body">
+                <tr><td colspan="5" style="text-align: center; color: #64748b;">Geen recente overtredingen.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- MODALS                                                   -->
+  <!-- ======================================================== -->
+
+  <!-- 1. AUTH / LOGIN & RESET MODAL -->
+  <div id="modal-auth" class="modal-backdrop" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-tabs">
+          <button id="modal-tab-login-btn" class="modal-tab-btn active" onclick="switchAuthModalTab('login')">Inloggen</button>
+          <button id="modal-tab-reset-btn" class="modal-tab-btn" onclick="switchAuthModalTab('reset')">Wachtwoord Resetten (In-Game)</button>
+        </div>
+        <button class="modal-close" onclick="closeModal('modal-auth')">&times;</button>
+      </div>
+
+      <!-- Login Pane -->
+      <div id="modal-pane-login" class="modal-body">
+        <p class="modal-desc">Log in met jouw Minecraft-account. Activeer je account via in-game commando <code>/webpass &lt;wachtwoord&gt;</code>.</p>
+        <div class="form-group">
+          <label>Minecraft Gebruikersnaam:</label>
+          <input type="text" id="login-username" placeholder="bijv. Jay_V0 of .BedrockSpeler">
+        </div>
+        <div class="form-group">
+          <label>Wachtwoord:</label>
+          <input type="password" id="login-password" placeholder="Jouw ingestelde web-wachtwoord">
+        </div>
+        <button class="btn btn-purple btn-block" onclick="submitLogin()">Inloggen</button>
+      </div>
+
+      <!-- Password Reset Pane -->
+      <div id="modal-pane-reset" class="modal-body" style="display: none;">
+        <p class="modal-desc">Wachtwoord vergeten? Voer je gebruikersnaam in terwijl je in Minecraft op de server bent. We sturen direct een 6-cijferige verificatiecode naar je Minecraft chat!</p>
+        
+        <div id="reset-step-1">
+          <div class="form-group">
+            <label>Minecraft Gebruikersnaam:</label>
+            <input type="text" id="reset-username" placeholder="bijv. Jay_V0">
+          </div>
+          <button class="btn btn-purple btn-block" onclick="requestResetCode()">
+            Stuur Verificatiecode naar Minecraft Chat 📩
+          </button>
+        </div>
+
+        <div id="reset-step-2" style="display: none; margin-top: 16px;">
+          <div class="alert alert-info">
+            Er is een code gezonden naar jouw in-game Minecraft chat! Controleer je scherm.
+          </div>
+          <div class="form-group">
+            <label>6-Cijferige Code uit Minecraft:</label>
+            <input type="text" id="reset-code" placeholder="bijv. 481920" maxlength="6">
+          </div>
+          <div class="form-group">
+            <label>Nieuw Wachtwoord:</label>
+            <input type="password" id="reset-new-password" placeholder="Kies een nieuw veilig wachtwoord">
+          </div>
+          <button class="btn btn-purple btn-block" onclick="confirmResetCode()">
+            Nieuw Wachtwoord Opslaan & Direct Inloggen
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. CREATE WORLD MODAL -->
+  <div id="modal-create-world" class="modal-backdrop" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>➕ Nieuwe Spelerwereld Aanmaken</h3>
+        <button class="modal-close" onclick="closeModal('modal-create-world')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Je wereld krijgt een eigen Overworld, Nether en End dimensie met portal-routing en geïsoleerde inventaris.</p>
+        <div class="form-group">
+          <label>Wereldnaam:</label>
+          <input type="text" id="create-world-name" placeholder="bijv. Jay's Kasteel Wereld">
+        </div>
+        <div class="form-group">
+          <label>Wereld Seed (Optioneel):</label>
+          <input type="text" id="create-world-seed" placeholder="Laat leeg voor willekeurige seed">
+        </div>
+        <div class="form-group">
+          <label>Generatie Type:</label>
+          <select id="create-world-generator" class="form-control" style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: #f8fafc; font-size: 0.95rem;">
+            <option value="NORMAL" selected>🌍 Normal World (Klassieke generatie met oceanen, grotten & biomen)</option>
+            <option value="SKYBLOCK">🏝️ SkyBlock (Klassiek zwevend eiland met boom & starterkist)</option>
+            <option value="ONEBLOCK">⛏️ OneBlock (Eén herhalend blok met 8 voortgangsfasen)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Standaard Spelmodus:</label>
+          <select id="create-world-gamemode" class="form-control" style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: #f8fafc; font-size: 0.95rem;">
+            <option value="SURVIVAL" selected>⚔️ Survival (Standaard overleven)</option>
+            <option value="CREATIVE">🎨 Creative (Onbeperkt bouwen & vliegen)</option>
+            <option value="HARDCORE">💀 Hardcore (1 leven, moeilijke graad)</option>
+          </select>
+        </div>
+        <div class="form-group-checkbox">
+          <input type="checkbox" id="create-world-cheats">
+          <label for="create-world-cheats">Cheats toestaan (/gamemode, /weather, /tp, /give, /time)</label>
+        </div>
+        <button class="btn btn-purple btn-block" onclick="submitCreateWorld()">
+          Wereld Genereren & Activeren
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. SHARE WORLD MODAL -->
+  <div id="modal-share-world" class="modal-backdrop" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="share-modal-title">Vrienden Uitnodigen</h3>
+        <button class="modal-close" onclick="closeModal('modal-share-world')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="share-world-uid">
+        <p class="modal-desc">Geef vrienden toegang om jouw wereld te betreden via <code>/joinworld &lt;UID&gt;</code>.</p>
+        
+        <div class="form-group">
+          <label>Minecraft Spelernaam:</label>
+          <input type="text" id="share-target-player" placeholder="bijv. SmileyGaming27">
+        </div>
+        <div class="form-group-checkbox">
+          <input type="checkbox" id="share-allow-cheats">
+          <label for="share-allow-cheats">Deze speler ook cheat-rechten geven</label>
+        </div>
+        <button class="btn btn-purple btn-block" onclick="submitShareWorld()">
+          Toegang Toekennen
+        </button>
+
+        <h4 style="margin-top: 20px; margin-bottom: 8px;">Gedeelde Spelers</h4>
+        <div id="share-list" class="share-list-container">
+          <!-- Injected by app.js -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. WORLD BACKUPS & HOT RESTORE MODAL -->
+  <div id="modal-world-backups" class="modal-backdrop" style="display: none;">
+    <div class="modal-box modal-lg">
+      <div class="modal-header">
+        <h3 id="backups-modal-title">Zero-Downtime Git Backups</h3>
+        <button class="modal-close" onclick="closeModal('modal-world-backups')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="backups-world-uid">
+        <div class="backups-header-row">
+          <p class="modal-desc" style="margin: 0;">Herstel jouw wereld live naar een eerdere commit zonder dat de server hoeft te herstarten!</p>
+          <button class="btn btn-sm btn-purple" onclick="triggerWorldBackupFromModal()">
+            💾 Nu Backup Maken
+          </button>
+        </div>
+
+        <div id="backups-loading" class="loading-state">
+          <div class="spinner"></div>
+          <span>Git backups ophalen...</span>
+        </div>
+
+        <div id="backups-list" class="backups-table-wrap" style="display: none; margin-top: 14px;">
+          <table class="cms-table">
+            <thead>
+              <tr>
+                <th>Commit</th>
+                <th>Datum</th>
+                <th>Auteur / Beschrijving</th>
+                <th>Actie</th>
+              </tr>
+            </thead>
+            <tbody id="backups-table-body">
+              <!-- Injected by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. CREATE MAP MODAL -->
+  <div id="modal-create-map" class="modal-backdrop" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>🏗️ Nieuwe Minigame Map Bouwen</h3>
+        <button class="modal-close" onclick="closeModal('modal-create-map')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Map Naam:</label>
+          <input type="text" id="create-map-name" placeholder="bijv. Castle Siege">
+        </div>
+        <div class="form-group">
+          <label>Minigame Type:</label>
+          <select id="create-map-type">
+            <option value="BEDWARS">BedWars (Auto-eiland generator)</option>
+            <option value="SKYWARS">SkyWars (Auto-eiland generator)</option>
+            <option value="PARKOUR">Parkour Studio</option>
+            <option value="TNTRUN">TNT Run</option>
+            <option value="MURDER_MYSTERY">Murder Mystery</option>
+            <option value="PROP_HUNT">Prop Hunt</option>
+            <option value="THE_BRIDGE">The Bridge 1v1</option>
+            <option value="SUMO">Sumo 1v1</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Aantal Teams (2 tot 8):</label>
+          <input type="number" id="create-map-teams" min="2" max="8" value="4">
+        </div>
+        <button class="btn btn-purple btn-block" onclick="submitCreateMap()">
+          Bouwwereld Aanmaken
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. REJECT MAP MODAL -->
+  <div id="modal-reject-map" class="modal-backdrop" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Map Afkeuren</h3>
+        <button class="modal-close" onclick="closeModal('modal-reject-map')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="reject-map-id">
+        <p class="modal-desc">Geef feedback aan de bouwer waarom deze map niet is goedgekeurd:</p>
+        <div class="form-group">
+          <textarea id="reject-map-reason" rows="3" placeholder="bijv. Eilanden staan te dicht bij elkaar of spawn ontbreekt..."></textarea>
+        </div>
+        <button class="btn btn-danger btn-block" onclick="submitRejectMap()">
+          Map Afkeuren met Reden
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. RENAME MAP MODAL -->
+  <div id="modal-rename-map" class="modal-backdrop" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Map Hernoemen</h3>
+        <button class="modal-close" onclick="closeModal('modal-rename-map')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="rename-map-id">
+        <p class="modal-desc">Kies een nieuwe naam voor deze minigame map (direct zichtbaar in Minecraft & kompas):</p>
+        <div class="form-group">
+          <label>Nieuwe Weergavenaam:</label>
+          <input type="text" id="rename-map-newname" placeholder="bijv. Sky High 2.0...">
+        </div>
+        <button class="btn btn-purple btn-block" onclick="submitRenameMap()">
+          Map Hernoemen Opslaan ✏️
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. BEDROCK ERRORS & HTTP CODES MODAL -->
+  <div id="modal-bedrock-errors" class="modal-backdrop" style="display: none;">
+    <div class="modal-box modal-lg">
+      <div class="modal-header">
+        <h3>📱 Minecraft Bedrock Named Errors & HTTP Status Codes</h3>
+        <button class="modal-close" onclick="closeModal('modal-bedrock-errors')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">
+          Minecraft Bedrock gebruikt dieren- en bloknamen voor verbindingsfouten. Wij hebben alle officiële foutcodes van <a href="https://help.minecraft.net/hc/en-us/articles/38555497091469-Named-Error-Code-Troubleshooting-for-Minecraft-Bedrock-Edition" target="_blank" style="color: var(--emerald); text-decoration: underline;">help.minecraft.net</a> gekoppeld aan universele HTTP-statuscodes.
+        </p>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <input type="text" id="bedrock-error-search" placeholder="🔍 Zoek op code (404, 504, 100, 200) of naam (Terracotta, Drowned, Goat, Creeper)..." oninput="filterBedrockErrors()" style="width: 100%; padding: 12px 16px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; font-size: 0.95rem;">
+        </div>
+
+        <div id="bedrock-errors-container" class="bedrock-errors-grid" style="max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 6px;">
+          <!-- Dynamically loaded via app.js -->
+        </div>
+
+        <div style="margin-top: 16px; text-align: right;">
+          <button class="btn btn-secondary" onclick="closeModal('modal-bedrock-errors')">Sluiten</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

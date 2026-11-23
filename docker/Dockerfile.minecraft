@@ -1,0 +1,18 @@
+FROM eclipse-temurin:25-jdk
+
+# Install necessary runtime tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /data
+
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+EXPOSE 25565/tcp
+EXPOSE 19132/udp
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

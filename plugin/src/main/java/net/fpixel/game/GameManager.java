@@ -1,0 +1,462 @@
+package net.fpixel.game;
+
+import net.fpixel.FPixelPlugin;
+import net.fpixel.core.util.ChatUtil;
+import net.fpixel.party.Party;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Snowball;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+
+import java.util.*;
+
+public class GameManager implements Listener {
+    private final FPixelPlugin plugin;
+    private final Map<String, Arena> arenas = new HashMap<>();
+
+    public GameManager(FPixelPlugin plugin) {
+        this.plugin = plugin;
+        Bukkit.getPluginManager().registerEvents(this, plugin);
+        startGameTicker();
+    }
+
+    private void startGameTicker() {
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            for (Arena arena : arenas.values()) {
+                try {
+                    arena.tick();
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Error ticking arena " + arena.getId() + ": " + e.getMessage());
+                }
+            }
+        }, 20L, 20L); // Tick every 1 second
+    }
+
+    public void registerArena(Arena arena) {
+        arenas.put(arena.getId().toLowerCase(), arena);
+        plugin.getLogger().info("Registered arena: " + arena.getId() + " (" + arena.getGameType() + ")");
+    }
+
+    public void unregisterArena(String id) {
+        if (id == null) return;
+        Arena arena = arenas.remove(id.toLowerCase());
+        if (arena != null) {
+            arena.resetArena();
+            plugin.getLogger().info("Unregistered arena: " + id);
+        }
+    }
+
+    public Arena getArena(String id) {
+        return arenas.get(id.toLowerCase());
+    }
+
+    public Collection<Arena> getArenas() {
+        return arenas.values();
+    }
+
+    public Arena getPlayerArena(Player player) {
+        for (Arena arena : arenas.values()) {
+            if (arena.contains(player)) {
+                return arena;
+            }
+        }
+        return null;
+    }
+
+    public boolean joinQueue(Player player, String gameType) {
+        // Prevent party guests from joining minigames alone
+        Party party = null;
+        if (plugin.getPartyManager() != null) {
+            party = plugin.getPartyManager().getParty(player);
+            if (party != null && !party.isLeader(player)) {
+                ChatUtil.sendMessage(player, "§cOnly the party leader can queue for minigames!");
+                return false;
+            }
+        }
+
+        int partySize = (party != null) ? party.getOnlineMembers().size() : 1;
+
+        // Auto-reset any empty IN_GAME arenas for this gameType so queue is never starved
+        for (Arena arena : arenas.values()) {
+            if (arena.getGameType().equalsIgnoreCase(gameType) && arena.getState() == GameState.IN_GAME && arena.getPlayerCount() == 0) {
+                arena.resetArena();
+            }
+        }
+
+        // Leave current arena if any
+        Arena current = getPlayerArena(player);
+        if (current != null) {
+            current.leave(player);
+        }
+
+        // Find best arena (starting first, then waiting with most players)
+        Arena best = null;
+        for (Arena arena : arenas.values()) {
+            if (!arena.getGameType().equalsIgnoreCase(gameType)) continue;
+            // If party has more than 2 players, cannot fit in 2-player duel maps
+            if (partySize > 2 && arena.getMaxPlayers() <= 2) continue;
+            // Only route solo global queue to large lobbies (maxPlayers > 2) for global games
+            if (partySize == 1 && arena.getMaxPlayers() <= 2 && (gameType.equalsIgnoreCase("SKYWARS") || gameType.equalsIgnoreCase("BEDWARS") || gameType.equalsIgnoreCase("PARKOUR") || gameType.equalsIgnoreCase("TNTRUN") || gameType.equalsIgnoreCase("TNT"))) continue;
+            if (arena.getState() != GameState.WAITING && arena.getState() != GameState.STARTING) continue;
+            if (arena.getMaxPlayers() - arena.getPlayerCount() < partySize) continue;
+
+            if (best == null) {
+                best = arena;
+            } else if (arena.getState() == GameState.STARTING && best.getState() != GameState.STARTING) {
+                best = arena;
+            } else if (arena.getPlayerCount() > best.getPlayerCount()) {
+                best = arena;
+            }
+        }
+
+        if (best != null) {
+            if (party != null && party.isLeader(player)) {
+                party.warpToGame(best);
+                ChatUtil.sendMessage(player, "§aQueued and joined §e" + best.getDisplayName() + " §awith your party (" + partySize + " players)!");
+                return true;
+            } else {
+                return best.join(player);
+            }
+        } else {
+            if (partySize > 1) {
+                ChatUtil.sendMessage(player, "§cNo open arena found for " + gameType + " with room for your party (" + partySize + " players)! Try selecting a specific map in the compass menu.");
+            } else {
+                ChatUtil.sendMessage(player, "§cNo open arena found for " + gameType + "! Please try again soon.");
+            }
+            return false;
+        }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            arena.leave(player);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onBlockBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            if (arena.getState() != GameState.IN_GAME) {
+                event.setCancelled(true);
+                return;
+            }
+            arena.onBlockBreak(event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            if (arena.getState() != GameState.IN_GAME) {
+                event.setCancelled(true);
+                return;
+            }
+            arena.onBlockPlace(event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onDamage(EntityDamageByEntityEvent event) {
+        // Cancel all firework damage globally in minigames
+        if (event.getDamager() instanceof org.bukkit.entity.Firework) {
+            event.setCancelled(true);
+            return;
+        }
+
+        Player damager = null;
+        if (event.getDamager() instanceof Player p) {
+            damager = p;
+        } else if (event.getDamager() instanceof Arrow arrow && arrow.getShooter() instanceof Player p) {
+            damager = p;
+        } else if (event.getDamager() instanceof Snowball sb && sb.getShooter() instanceof Player p) {
+            damager = p;
+        }
+
+        if (damager != null && event.getEntity() instanceof Player target) {
+            Arena damagerArena = getPlayerArena(damager);
+            Arena targetArena = getPlayerArena(target);
+            if (damagerArena == null || targetArena == null || damagerArena != targetArena) {
+                // When neither is in a minigame arena:
+                if (damagerArena == null && targetArena == null) {
+                    // Only cancel PvP if players are in the Lobby Hub
+                    if (plugin.getLobbyManager().isLobbyWorld(damager.getWorld())) {
+                        event.setCancelled(true);
+                        return;
+                    }
+                    // Outside lobby (Survival, Player Worlds, etc.), allow PvP!
+                    return;
+                }
+                event.setCancelled(true);
+                return;
+            }
+            if (damagerArena.getState() != GameState.IN_GAME) {
+                event.setCancelled(true);
+                return;
+            }
+            damagerArena.onPlayerDamage(event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onGeneralDamage(org.bukkit.event.entity.EntityDamageEvent event) {
+        if (event instanceof EntityDamageByEntityEvent edbe && edbe.getDamager() instanceof org.bukkit.entity.Firework) {
+            event.setCancelled(true);
+            return;
+        }
+
+        if (event.getEntity() instanceof Player player) {
+            Arena arena = getPlayerArena(player);
+            if (arena != null) {
+                // Sumo: No fall damage
+                if (arena.getGameType().equalsIgnoreCase("SUMO") && event.getCause() == org.bukkit.event.entity.EntityDamageEvent.DamageCause.FALL) {
+                    event.setCancelled(true);
+                    return;
+                }
+                // Parkour: No fall damage or environmental damage
+                if (arena.getGameType().equalsIgnoreCase("PARKOUR")) {
+                    event.setCancelled(true);
+                    return;
+                }
+                // BedWars: Void damage triggers at Y <= 50.0 (promptly upon falling off islands)
+                if (arena.getGameType().equalsIgnoreCase("BEDWARS") && event.getCause() == org.bukkit.event.entity.EntityDamageEvent.DamageCause.VOID) {
+                    if (player.getLocation().getY() > 50.0) {
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onRegainHealth(org.bukkit.event.entity.EntityRegainHealthEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            Arena arena = getPlayerArena(player);
+            // BedWars & PropHunt: Disable instant/satiated health regeneration
+            if (arena != null && (arena.getGameType().equalsIgnoreCase("BEDWARS") || arena.getGameType().equalsIgnoreCase("PROP_HUNT"))) {
+                if (event.getRegainReason() == org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.SATIATED) {
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPickupItem(EntityPickupItemEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            Arena arena = getPlayerArena(player);
+            if (arena != null) {
+                arena.onPlayerPickupItem(event);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onShootBow(EntityShootBowEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            Arena arena = getPlayerArena(player);
+            if (arena != null) {
+                arena.onShootBow(event);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onEntityExplode(org.bukkit.event.entity.EntityExplodeEvent event) {
+        org.bukkit.Location loc = event.getLocation();
+        for (Arena arena : arenas.values()) {
+            if (arena.getWorld() != null && arena.getWorld().equals(loc.getWorld())) {
+                arena.onEntityExplode(event);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onBlockExplode(org.bukkit.event.block.BlockExplodeEvent event) {
+        org.bukkit.Location loc = event.getBlock().getLocation();
+        for (Arena arena : arenas.values()) {
+            if (arena.getWorld() != null && arena.getWorld().equals(loc.getWorld())) {
+                arena.onBlockExplode(event);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBucketEmpty(org.bukkit.event.player.PlayerBucketEmptyEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            if (arena.getState() != GameState.IN_GAME) {
+                event.setCancelled(true);
+                return;
+            }
+            arena.onBucketEmpty(event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBucketFill(org.bukkit.event.player.PlayerBucketFillEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            if (arena.getState() != GameState.IN_GAME) {
+                event.setCancelled(true);
+                return;
+            }
+            arena.onBucketFill(event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBlockFromTo(org.bukkit.event.block.BlockFromToEvent event) {
+        org.bukkit.World w = event.getBlock().getWorld();
+        for (Arena arena : arenas.values()) {
+            if (arena.getWorld() != null && arena.getWorld().equals(w)) {
+                if (arena.getState() == GameState.IN_GAME) {
+                    Location toLoc = event.getToBlock().getLocation();
+                    if (arena.getLobbySpawn() != null && toLoc.distanceSquared(arena.getLobbySpawn()) <= 150 * 150) {
+                        arena.getRollbackEngine().recordPlace(event.getToBlock());
+                    }
+                } else if (arena.getLobbySpawn() != null && event.getBlock().getLocation().distanceSquared(arena.getLobbySpawn()) <= 150 * 150) {
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBlockBurn(org.bukkit.event.block.BlockBurnEvent event) {
+        org.bukkit.World w = event.getBlock().getWorld();
+        for (Arena arena : arenas.values()) {
+            if (arena.getWorld() != null && arena.getWorld().equals(w)) {
+                if (arena.getState() == GameState.IN_GAME) {
+                    arena.getRollbackEngine().recordBreak(event.getBlock());
+                } else {
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBlockIgnite(org.bukkit.event.block.BlockIgniteEvent event) {
+        if (event.getBlock() != null) {
+            org.bukkit.World w = event.getBlock().getWorld();
+            for (Arena arena : arenas.values()) {
+                if (arena.getWorld() != null && arena.getWorld().equals(w)) {
+                    if (arena.getState() == GameState.IN_GAME) {
+                        arena.getRollbackEngine().recordPlace(event.getBlock());
+                    } else {
+                        event.setCancelled(true);
+                    }
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onEntityChangeBlock(org.bukkit.event.entity.EntityChangeBlockEvent event) {
+        if (event.getEntity() instanceof org.bukkit.entity.EnderDragon) {
+            for (Arena arena : arenas.values()) {
+                if (arena.getWorld() != null && arena.getWorld().equals(event.getBlock().getWorld())) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onProjectileHit(ProjectileHitEvent event) {
+        if (event.getEntity().getShooter() instanceof Player player) {
+            Arena arena = getPlayerArena(player);
+            if (arena != null) {
+                arena.onProjectileHit(event);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onDeath(PlayerDeathEvent event) {
+        Player player = event.getEntity();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            arena.onPlayerDeath(event);
+        }
+    }
+
+    @EventHandler
+    public void onMove(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            arena.onPlayerMove(event);
+        }
+    }
+
+    @EventHandler
+    public void onInteract(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            arena.onPlayerInteract(event);
+        }
+    }
+
+    @EventHandler
+    public void onInteractEntity(org.bukkit.event.player.PlayerInteractEntityEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            arena.onPlayerInteractEntity(event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onDropItem(org.bukkit.event.player.PlayerDropItemEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            arena.onPlayerDropItem(event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onSwapHandItems(org.bukkit.event.player.PlayerSwapHandItemsEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            arena.onPlayerSwapHandItems(event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onItemConsume(org.bukkit.event.player.PlayerItemConsumeEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            arena.onItemConsume(event);
+        }
+    }
+}

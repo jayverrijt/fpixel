@@ -1,0 +1,29 @@
+name: Jay_V0
+coins: 5725
+level: 1
+experience: 0
+visibility: VIPS
+stats:
+  bedwars:
+    wins: 6
+    losses: 0
+    kills: 5
+    finalKills: 1
+    bedsBroken: 4
+  tntrun:
+    wins: 4
+    losses: 0
+  sumo:
+    wins: 11
+    losses: 3
+    streak: 0
+  murdermystery:
+    wins: 11
+  prophunt:
+    wins: 6
+secrets:
+- relic_sunken_chalice
+- relic_alchemist_core
+- relic_cloudrunner_feather
+- relic_stargazer_lens
+- relic_torii_offering

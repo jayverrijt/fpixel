@@ -1,0 +1,13 @@
+{
+  "name": "fpixel-stats-web",
+  "version": "1.0.0",
+  "description": "FPixel Network Official Live Stats & Server Web Portal",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^4.21.2"
+  }
+}

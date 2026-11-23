@@ -1,0 +1,2593 @@
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const net = require('net');
+const dgram = require('dgram');
+const crypto = require('crypto');
+const cookieParser = require('cookie-parser');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+const MINECRAFT_HOST = process.env.MINECRAFT_HOST || '127.0.0.1';
+const MINECRAFT_PORT = parseInt(process.env.MINECRAFT_PORT || '25565', 10);
+const BEDROCK_PORT = parseInt(process.env.BEDROCK_PORT || '19132', 10);
+const RCON_PORT = parseInt(process.env.RCON_PORT || '25575', 10);
+const RCON_PASSWORD = process.env.RCON_PASSWORD || 'fpixel_rcon_2026';
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../server/plugins/FPixelCore');
+const SERVER_DIR = process.env.SERVER_DIR || path.join(__dirname, '../server');
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser('fpixel_secret_community_key_2026'));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// In-memory sessions (token -> user)
+const sessions = new Map();
+
+// In-memory one-time verification codes (username_lower -> { code, expiresAt })
+const pendingCodes = new Map();
+
+// Helper: VarInt encode
+function encodeVarInt(value) {
+  const bytes = [];
+  while (true) {
+    if ((value & ~0x7f) === 0) {
+      bytes.push(value);
+      break;
+    }
+    bytes.push((value & 0x7f) | 0x80);
+    value >>>= 7;
+  }
+  return Buffer.from(bytes);
+}
+
+// Helper: Read VarInt
+function readVarInt(buffer, offset = 0) {
+  let numRead = 0;
+  let result = 0;
+  let read;
+  do {
+    if (offset + numRead >= buffer.length) return null;
+    read = buffer[offset + numRead];
+    result |= (read & 0x7f) << (7 * numRead);
+    numRead++;
+    if (numRead > 5) return null;
+  } while ((read & 0x80) !== 0);
+  return { value: result, bytesRead: numRead };
+}
+
+// Ping Minecraft Server
+function pingMinecraft(host, port, timeoutMs = 2500) {
+  return new Promise((resolve) => {
+    const startTime = Date.now();
+    const socket = new net.Socket();
+    let received = Buffer.alloc(0);
+    let resolved = false;
+
+    socket.setTimeout(timeoutMs);
+    socket.connect(port, host);
+
+    socket.on('connect', () => {
+      try {
+        const hostBuf = Buffer.from('mc.fpixel.nl', 'utf8');
+        const portBuf = Buffer.alloc(2);
+        portBuf.writeUInt16BE(port);
+
+        const handshakeBody = Buffer.concat([
+          encodeVarInt(0x00),
+          encodeVarInt(777),
+          encodeVarInt(hostBuf.length),
+          hostBuf,
+          portBuf,
+          encodeVarInt(1)
+        ]);
+        const handshakePacket = Buffer.concat([
+          encodeVarInt(handshakeBody.length),
+          handshakeBody
+        ]);
+
+        const statusPacket = Buffer.concat([
+          encodeVarInt(1),
+          encodeVarInt(0x00)
+        ]);
+
+        socket.write(Buffer.concat([handshakePacket, statusPacket]));
+      } catch (err) {
+        if (!resolved) {
+          resolved = true;
+          socket.destroy();
+          resolve({ online: false, error: err.message });
+        }
+      }
+    });
+
+    socket.on('data', (chunk) => {
+      received = Buffer.concat([received, chunk]);
+      try {
+        const str = received.toString('utf8');
+        const start = str.indexOf('{');
+        const end = str.lastIndexOf('}');
+        if (start !== -1 && end !== -1 && end > start) {
+          const jsonStr = str.substring(start, end + 1);
+          const data = JSON.parse(jsonStr);
+          resolved = true;
+          socket.destroy();
+          resolve({
+            online: true,
+            latency: Date.now() - startTime,
+            data
+          });
+        }
+      } catch (e) {}
+    });
+
+    socket.on('timeout', () => {
+      if (!resolved) {
+        resolved = true;
+        socket.destroy();
+        resolve({ online: false, error: 'Connection timed out' });
+      }
+    });
+
+    socket.on('error', (err) => {
+      if (!resolved) {
+        resolved = true;
+        socket.destroy();
+        resolve({ online: false, error: err.message });
+      }
+    });
+  });
+}
+
+// Native Minecraft Bedrock RakNet Ping Client (Status Codes: 100 Outdated, 200 Good to Join, 503 Offline)
+function pingBedrock(host, port = 19132, timeoutMs = 2500) {
+  return new Promise((resolve) => {
+    let resolved = false;
+    let client;
+    try {
+      client = dgram.createSocket('udp4');
+    } catch (e) {
+      return resolve({
+        online: false,
+        code: 503,
+        status: 'OFFLINE',
+        message: 'Kan UDP socket niet aanmaken: ' + e.message,
+        port
+      });
+    }
+
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        try { client.close(); } catch (e) {}
+        resolve({
+          online: false,
+          code: 503,
+          status: 'OFFLINE',
+          message: 'Bedrock server is momenteel down of onbereikbaar (Connection timed out)',
+          port
+        });
+      }
+    }, timeoutMs);
+
+    // RakNet Unconnected Ping packet (0x01 + 8 bytes timestamp + 16 bytes magic + 8 bytes client GUID)
+    const magic = Buffer.from('00ffff00fefefefefdfdfdfd12345678', 'hex');
+    const timeBuf = Buffer.alloc(8);
+    timeBuf.writeBigInt64BE(BigInt(Date.now()));
+    const guidBuf = Buffer.alloc(8);
+    guidBuf.writeBigInt64BE(BigInt(Date.now()));
+
+    const pingPacket = Buffer.concat([
+      Buffer.from([0x01]),
+      timeBuf,
+      magic,
+      guidBuf
+    ]);
+
+    client.on('message', (msg) => {
+      if (resolved) return;
+      try {
+        if (msg[0] === 0x1c) { // Unconnected Pong (ID 0x1c)
+          const strLength = msg.readUInt16BE(33);
+          const pongStr = msg.toString('utf8', 35, 35 + strLength);
+          const parts = pongStr.split(';');
+
+          // MCPE;Server Name;Protocol Version;Game Version;Players;Max;ServerID;SubMOTD;GameMode;1;Port;Port;
+          const gameVersion = parts[3] || 'Bedrock 1.21.x';
+          const protocol = parseInt(parts[2], 10) || 0;
+          const players = parseInt(parts[4], 10) || 0;
+          const maxPlayers = parseInt(parts[5], 10) || 100;
+          const motd = parts[1] || 'FPixel Bedrock';
+
+          resolved = true;
+          clearTimeout(timer);
+          try { client.close(); } catch (e) {}
+
+          let code = 200;
+          let statusText = 'Het spel is goed en ze kunnen joinen';
+          const combined = (pongStr || '').toLowerCase();
+          if (combined.includes('outdated') || combined.includes('update')) {
+            code = 100;
+            statusText = 'Bedrock server of client versie is verouderd (Outdated)';
+          }
+
+          resolve({
+            online: true,
+            code,
+            status: code === 200 ? 'ONLINE' : 'OUTDATED',
+            message: statusText,
+            version: gameVersion,
+            protocol,
+            players,
+            maxPlayers,
+            motd,
+            port
+          });
+          return;
+        }
+      } catch (e) {}
+    });
+
+    client.on('error', (err) => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timer);
+        try { client.close(); } catch (e) {}
+        resolve({
+          online: false,
+          code: 503,
+          status: 'OFFLINE',
+          message: err.message,
+          port
+        });
+      }
+    });
+
+    try {
+      client.send(pingPacket, port, host);
+    } catch (err) {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timer);
+        try { client.close(); } catch (e) {}
+        resolve({
+          online: false,
+          code: 503,
+          status: 'OFFLINE',
+          message: err.message,
+          port
+        });
+      }
+    }
+  });
+}
+
+// Native Minecraft RCON client
+function sendRconCommand(command) {
+  return new Promise((resolve, reject) => {
+    const rcon = new net.Socket();
+    let authenticated = false;
+    let reqId = 1;
+
+    rcon.setTimeout(3000);
+
+    function createPacket(id, type, body) {
+      const bodyBuf = Buffer.from(body, 'utf8');
+      const length = 4 + 4 + bodyBuf.length + 2;
+      const buf = Buffer.alloc(4 + length);
+      buf.writeInt32LE(length, 0);
+      buf.writeInt32LE(id, 4);
+      buf.writeInt32LE(type, 8);
+      bodyBuf.copy(buf, 12);
+      buf.writeInt8(0, 12 + bodyBuf.length);
+      buf.writeInt8(0, 13 + bodyBuf.length);
+      return buf;
+    }
+
+    rcon.connect(RCON_PORT, MINECRAFT_HOST, () => {
+      rcon.write(createPacket(reqId++, 3, RCON_PASSWORD));
+    });
+
+    rcon.on('data', (data) => {
+      if (data.length < 14) return;
+      const length = data.readInt32LE(0);
+      const resId = data.readInt32LE(4);
+
+      if (!authenticated) {
+        if (resId === -1) {
+          rcon.destroy();
+          return reject(new Error('RCON Authentication failed'));
+        }
+        authenticated = true;
+        rcon.write(createPacket(reqId++, 2, command));
+      } else {
+        const body = data.toString('utf8', 12, length + 2);
+        rcon.destroy();
+        resolve(body.replace(/\x00+$/, '').trim());
+      }
+    });
+
+    rcon.on('error', (err) => {
+      rcon.destroy();
+      reject(err);
+    });
+
+    rcon.on('timeout', () => {
+      rcon.destroy();
+      reject(new Error('RCON timed out'));
+    });
+  });
+}
+
+// File path helpers
+function resolveFilePath(relPath) {
+  const candidates = [
+    path.join('/data', relPath),
+    path.join(SERVER_DIR, relPath),
+    path.join(__dirname, '../server', relPath)
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+}
+
+// Serve Squaremap map tiles statically
+app.use('/tiles', (req, res, next) => {
+  const tilesDir = resolveFilePath('plugins/squaremap/web/tiles');
+  if (tilesDir && fs.existsSync(tilesDir)) {
+    return express.static(tilesDir, {
+      maxAge: '5m',
+      etag: true,
+      fallthrough: true
+    })(req, res, () => {
+      // If tile image not found (void or ungenerated region), return transparent 1x1 GIF
+      if (req.path.endsWith('.png')) {
+        const transparentGif = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+        res.set('Content-Type', 'image/gif');
+        res.set('Cache-Control', 'public, max-age=60');
+        return res.send(transparentGif);
+      }
+      res.status(404).end();
+    });
+  }
+  next();
+});
+
+function normalizeRank(r) {
+  if (!r) return 'MEMBER';
+  const u = r.toUpperCase().trim();
+  if (u === 'MOD') return 'MODERATOR';
+  if (['VIP', 'VIP_PLUS', 'MVP', 'MVP_PLUS', 'YOUTUBE'].includes(u)) return 'DONOR';
+  if (['OWNER', 'ADMIN', 'MODERATOR', 'DONOR', 'MEMBER'].includes(u)) return u;
+  return 'MEMBER';
+}
+
+// Read ranks
+function getRanks() {
+  const ranks = {};
+  const file = resolveFilePath('plugins/FPixelCore/ranks.yml');
+  if (file && fs.existsSync(file)) {
+    try {
+      const content = fs.readFileSync(file, 'utf8');
+      for (const line of content.split('\n')) {
+        const parts = line.split(':');
+        if (parts.length === 2) {
+          const u = parts[0].trim().toLowerCase();
+          const r = normalizeRank(parts[1]);
+          if (u && r) ranks[u] = r;
+        }
+      }
+    } catch (e) {}
+  }
+  return ranks;
+}
+
+// Offline UUID helper (matches Java nameUUIDFromBytes("OfflinePlayer:" + name))
+function getOfflinePlayerUUID(username) {
+  if (!username) return null;
+  const hash = crypto.createHash('md5').update('OfflinePlayer:' + username, 'utf8').digest();
+  hash[6] = (hash[6] & 0x0f) | 0x30; // Version 3
+  hash[8] = (hash[8] & 0x3f) | 0x80; // Variant RFC 4122
+  const hex = hash.toString('hex');
+  return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}`;
+}
+
+// Usercache mapping
+function getUserCache() {
+  const cache = {};
+  const file = resolveFilePath('usercache.json');
+  if (file && fs.existsSync(file)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (Array.isArray(data)) {
+        for (const entry of data) {
+          if (entry.uuid && entry.name) {
+            cache[entry.uuid.toLowerCase()] = entry.name;
+          }
+        }
+      }
+    } catch (e) {}
+  }
+  return cache;
+}
+
+// Resolved player ranks (resolves UUIDs to actual player names and avoids duplicate/broken badges)
+function getResolvedPlayerRanks() {
+  const rawRanks = getRanks();
+  const cache = getUserCache();
+  const whitelist = getWhitelist();
+
+  const rankPriority = {
+    'OWNER': 100,
+    'ADMIN': 90,
+    'MODERATOR': 80,
+    'DONOR': 50,
+    'MEMBER': 10
+  };
+
+  const uuidToName = {};
+  for (const [uuid, name] of Object.entries(cache)) {
+    uuidToName[uuid.toLowerCase()] = name;
+  }
+  for (const w of whitelist) {
+    if (w.uuid && w.name) {
+      uuidToName[w.uuid.toLowerCase()] = w.name;
+    }
+  }
+
+  // Also resolve from plugin userdata directory
+  const userdataDir = resolveFilePath('plugins/FPixelCore/userdata');
+  if (userdataDir && fs.existsSync(userdataDir)) {
+    try {
+      const files = fs.readdirSync(userdataDir);
+      for (const file of files) {
+        if (file.endsWith('.yml')) {
+          const u = file.replace('.yml', '').toLowerCase();
+          const content = fs.readFileSync(path.join(userdataDir, file), 'utf8');
+          const m = content.match(/^name:\s*(.+)$/m);
+          if (m && m[1]) {
+            uuidToName[u] = m[1].trim();
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  // Calculate offline UUIDs for all known player names to cleanly group offline & Bedrock accounts
+  const allKnownNames = new Set();
+  for (const name of Object.values(uuidToName)) allKnownNames.add(name);
+  for (const w of whitelist) if (w.name) allKnownNames.add(w.name);
+  for (const key of Object.keys(rawRanks)) {
+    if (!key.includes('-')) allKnownNames.add(key);
+  }
+
+  for (const name of allKnownNames) {
+    const clean = name.replace(/^\./, '');
+    const variants = [name, name.toLowerCase(), clean, clean.toLowerCase(), '.' + clean, '.' + clean.toLowerCase()];
+    for (const v of variants) {
+      const offUuid = getOfflinePlayerUUID(v);
+      if (offUuid) {
+        uuidToName[offUuid.toLowerCase()] = name;
+      }
+    }
+  }
+
+  const result = [];
+  const seenUsernames = new Map();
+
+  for (const [key, rank] of Object.entries(rawRanks)) {
+    let resolvedName = key;
+    let isUuid = false;
+
+    if (key.includes('-')) {
+      isUuid = true;
+      if (uuidToName[key.toLowerCase()]) {
+        resolvedName = uuidToName[key.toLowerCase()];
+      } else if (rank === 'MEMBER') {
+        // Skip unresolvable raw UUIDs that are only MEMBER to prevent orphan clutter in Staff UI
+        continue;
+      }
+    }
+
+    const cleanLower = resolvedName.toLowerCase().replace(/^\./, '');
+
+    if (seenUsernames.has(cleanLower)) {
+      const existing = seenUsernames.get(cleanLower);
+      existing.rawKeys.push(key);
+      const currentWeight = rankPriority[existing.rank] || 0;
+      const newWeight = rankPriority[rank] || 0;
+      if (newWeight > currentWeight) {
+        existing.rank = rank;
+      }
+      continue;
+    }
+
+    const item = {
+      username: resolvedName,
+      cleanName: cleanLower,
+      rank: rank,
+      rawKeys: [key],
+      isUuid: isUuid && (resolvedName === key)
+    };
+    seenUsernames.set(cleanLower, item);
+    result.push(item);
+  }
+
+  // Also include whitelisted players that are not explicitly assigned a rank (they are MEMBER)
+  for (const w of whitelist) {
+    if (w.name) {
+      const cleanLower = w.name.toLowerCase().replace(/^\./, '');
+      if (!seenUsernames.has(cleanLower)) {
+        const item = {
+          username: w.name,
+          cleanName: cleanLower,
+          rank: 'MEMBER',
+          rawKeys: [w.name.toLowerCase()],
+          isUuid: false
+        };
+        seenUsernames.set(cleanLower, item);
+        result.push(item);
+      }
+    }
+  }
+
+  result.sort((a, b) => {
+    const pA = rankPriority[a.rank] || 0;
+    const pB = rankPriority[b.rank] || 0;
+    if (pB !== pA) return pB - pA;
+    return a.username.localeCompare(b.username);
+  });
+
+  return result;
+}
+
+// Whitelist helper
+function getWhitelist() {
+  const file = resolveFilePath('whitelist.json');
+  if (fs.existsSync(file)) {
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf8')) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+  return [];
+}
+
+function saveWhitelist(list) {
+  const file = resolveFilePath('whitelist.json');
+  try {
+    fs.writeFileSync(file, JSON.stringify(list, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Failed to save whitelist.json:', e);
+    return false;
+  }
+}
+
+// Custom Parkour Maps helper
+function getParkourMaps() {
+  const file = resolveFilePath('plugins/FPixelCore/custom_parkour.json');
+  if (file && fs.existsSync(file)) {
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf8')) || [];
+    } catch (e) {
+      console.error('Failed to read custom_parkour.json:', e);
+      return [];
+    }
+  }
+  return [];
+}
+
+function saveParkourMaps(maps) {
+  const file = resolveFilePath('plugins/FPixelCore/custom_parkour.json') || path.join(SERVER_DIR, 'plugins/FPixelCore/custom_parkour.json');
+  try {
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(maps, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Failed to save custom_parkour.json:', e);
+    return false;
+  }
+}
+
+// Whitelist requests helper
+function getWhitelistRequests() {
+  const file = resolveFilePath('whitelist_requests.json');
+  if (fs.existsSync(file)) {
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf8')) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+  return [];
+}
+
+function saveWhitelistRequests(requests) {
+  const file = resolveFilePath('whitelist_requests.json');
+  try {
+    fs.writeFileSync(file, JSON.stringify(requests, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Failed to save whitelist_requests.json:', e);
+    return false;
+  }
+}
+
+// Web Authentication & Password Management
+function getWebAuth() {
+  const file = resolveFilePath('plugins/FPixelCore/web_auth.json');
+  if (fs.existsSync(file)) {
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf8')) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+  return {};
+}
+
+function saveWebAuth(authData) {
+  const file = resolveFilePath('plugins/FPixelCore/web_auth.json');
+  try {
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(authData, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Failed to save web_auth.json:', e);
+    return false;
+  }
+}
+
+function hashPassword(password, existingSalt = null) {
+  const salt = existingSalt || crypto.randomBytes(16).toString('hex');
+  const hash = crypto.createHash('sha256').update(salt + password).digest('hex');
+  return { salt, hash };
+}
+
+function verifyPassword(password, salt, storedHash) {
+  try {
+    const computedHash = crypto.createHash('sha256').update(salt + password).digest('hex');
+    return crypto.timingSafeEqual(Buffer.from(computedHash, 'hex'), Buffer.from(storedHash, 'hex'));
+  } catch (e) {
+    return false;
+  }
+}
+
+// Read Player Full Profile (Coins, Level, Survival Data, Inventory)
+function getPlayerProfile(username) {
+  const lowerName = username.toLowerCase();
+  const cleanName = lowerName.replace(/^\./, '');
+  const ranks = getRanks();
+  let rank = ranks[lowerName] || ranks[cleanName] || 'MEMBER';
+  rank = normalizeRank(rank);
+  const isOwner = (rank === 'OWNER');
+  const isAdmin = (rank === 'OWNER' || rank === 'ADMIN');
+  const isStaff = (rank === 'OWNER' || rank === 'ADMIN' || rank === 'MODERATOR');
+  const userCache = getUserCache();
+
+  // Find UUID
+  let uuid = null;
+  for (const [id, n] of Object.entries(userCache)) {
+    if (n.toLowerCase() === lowerName) {
+      uuid = id;
+      break;
+    }
+  }
+
+  let coins = 100;
+  let minigameStats = {};
+  let urbanCoords = null;
+  let urbanLevel = 0;
+  let urbanHealth = 20;
+
+  // 1. Read Userdata
+  if (uuid) {
+    const userdataFile = resolveFilePath(`plugins/FPixelCore/userdata/${uuid}.yml`);
+    if (fs.existsSync(userdataFile)) {
+      try {
+        const lines = fs.readFileSync(userdataFile, 'utf8').split('\n');
+        for (const l of lines) {
+          const [k, v] = l.split(':').map(s => s.trim());
+          if (k === 'coins' && v) coins = parseInt(v, 10) || 100;
+        }
+      } catch (e) {}
+    }
+
+    // 2. Read Survival Data
+    const survivalFile = resolveFilePath(`plugins/FPixelCore/survival_data/${uuid}.yml`);
+    if (fs.existsSync(survivalFile)) {
+      try {
+        const lines = fs.readFileSync(survivalFile, 'utf8').split('\n');
+        let x = 0, y = 0, z = 0;
+        for (const l of lines) {
+          const [k, v] = l.split(':').map(s => s.trim());
+          if (k === 'x' && v) x = Math.round(parseFloat(v));
+          if (k === 'y' && v) y = Math.round(parseFloat(v));
+          if (k === 'z' && v) z = Math.round(parseFloat(v));
+          if (k === 'level' && v) urbanLevel = parseInt(v, 10) || 0;
+          if (k === 'health' && v) urbanHealth = Math.round(parseFloat(v) || 20);
+        }
+        urbanCoords = { x, y, z };
+      } catch (e) {}
+    }
+  }
+
+  // 3. Fallback: Check imported survival profiles
+  const importedDir = resolveFilePath('plugins/FPixelCore/survival_data/imported');
+  if (fs.existsSync(importedDir)) {
+    try {
+      const files = fs.readdirSync(importedDir);
+      for (const f of files) {
+        if (f.endsWith('.json')) {
+          const data = JSON.parse(fs.readFileSync(path.join(importedDir, f), 'utf8'));
+          if (data.username && data.username.toLowerCase() === lowerName) {
+            if (!uuid) uuid = data.offline_uuid || data.old_uuid;
+            if (!urbanCoords) urbanCoords = { x: Math.round(data.x), y: Math.round(data.y), z: Math.round(data.z) };
+            if (urbanLevel === 0) urbanLevel = data.level || 0;
+            if (urbanHealth === 20 && data.health) urbanHealth = Math.round(data.health);
+            break;
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  return {
+    username,
+    uuid: uuid || '00000000-0000-0000-0000-000000000000',
+    rank,
+    isAdmin,
+    isOwner,
+    isStaff,
+    coins,
+    stats: {
+      urban: {
+        worldName: 'Urban SMP',
+        coords: urbanCoords || { x: -653, y: -22, z: -116 },
+        level: urbanLevel || 68,
+        health: urbanHealth || 20
+      },
+      galaxy: {
+        worldName: 'Galaxy Survival',
+        coords: { x: 0, y: 70, z: 0 },
+        level: urbanLevel || 68
+      }
+    }
+  };
+}
+
+// Authentication middleware
+function getSessionUser(req) {
+  const token = req.cookies.fpixel_session;
+  if (token && sessions.has(token)) {
+    return sessions.get(token);
+  }
+  return null;
+}
+
+// API: /api/me (Current user)
+app.get('/api/me', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) {
+    return res.json({ loggedIn: false });
+  }
+  // Refresh profile from disk
+  const fresh = getPlayerProfile(user.username);
+  sessions.set(req.cookies.fpixel_session, fresh);
+  res.json({ loggedIn: true, user: fresh });
+});
+
+// API: /api/login (Password protected)
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || username.trim().length < 2) {
+    return res.status(400).json({ error: 'Vul een geldige Minecraft gebruikersnaam in.' });
+  }
+  if (!password || password.trim().length === 0) {
+    return res.status(400).json({ error: 'Vul je wachtwoord in om in te loggen.' });
+  }
+
+  const cleanName = username.trim();
+  const authData = getWebAuth();
+  const userAuth = authData[cleanName.toLowerCase()];
+
+  if (!userAuth) {
+    return res.status(401).json({
+      error: 'Voor dit account is nog geen wachtwoord ingesteld. Gebruik in Minecraft het commando /webpass <wachtwoord> of vraag hieronder een in-game verificatiecode aan.'
+    });
+  }
+
+  const isValid = verifyPassword(password, userAuth.salt, userAuth.hash);
+  if (!isValid) {
+    return res.status(401).json({ error: 'Onjuist wachtwoord voor ' + cleanName + '.' });
+  }
+
+  const profile = getPlayerProfile(cleanName);
+  const token = 'token_' + crypto.randomBytes(24).toString('hex');
+  sessions.set(token, profile);
+
+  res.cookie('fpixel_session', token, {
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    sameSite: 'lax'
+  });
+
+  res.json({ success: true, user: profile });
+});
+
+// API: /api/auth/send-code (Sends 6-digit verification code to player in-game via RCON)
+app.post('/api/auth/send-code', async (req, res) => {
+  const { username } = req.body;
+  if (!username || username.trim().length < 2) {
+    return res.status(400).json({ error: 'Vul een geldige Minecraft gebruikersnaam in.' });
+  }
+
+  const cleanName = username.trim();
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+  try {
+    const tellrawJson = JSON.stringify([
+      { text: "[FPixel Web] ", color: "gold", bold: true },
+      { text: "Jouw eenmalige verificatiecode is: ", color: "yellow" },
+      { text: code, color: "green", bold: true, underlined: true },
+      { text: " (5 min geldig). Deel deze nooit!", color: "gray" }
+    ]);
+    const rconRes = await sendRconCommand(`tellraw ${cleanName} ${tellrawJson}`);
+    if (rconRes && rconRes.toLowerCase().includes('no player was found')) {
+      return res.status(404).json({
+        error: `Speler '${cleanName}' is momenteel niet online op mc.fpixel.nl. Log eerst in op de Minecraft server om de code in je chat te ontvangen, of gebruik in Minecraft het commando /webpass <wachtwoord>.`
+      });
+    }
+
+    pendingCodes.set(cleanName.toLowerCase(), {
+      code,
+      expiresAt: Date.now() + 5 * 60 * 1000
+    });
+
+    res.json({
+      success: true,
+      message: `Verificatiecode verzonden naar Minecraft chat van ${cleanName}! Kijk in-game op je scherm.`
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: 'Kan geen verificatiecode sturen: controleer of de server online is of gebruik in-game /webpass <wachtwoord>.'
+    });
+  }
+});
+
+// API: /api/auth/verify-code (Verifies in-game code and sets new password)
+app.post('/api/auth/verify-code', (req, res) => {
+  const { username, code, password } = req.body;
+  if (!username || !code || !password) {
+    return res.status(400).json({ error: 'Vul alle velden in (gebruikersnaam, verificatiecode en nieuw wachtwoord).' });
+  }
+  if (password.length < 4) {
+    return res.status(400).json({ error: 'Wachtwoord moet minimaal 4 tekens bevatten.' });
+  }
+
+  const cleanName = username.trim();
+  const pending = pendingCodes.get(cleanName.toLowerCase());
+
+  if (!pending || pending.code !== code.trim()) {
+    return res.status(400).json({ error: 'Ongeldige verificatiecode. Vraag eventueel een nieuwe code aan.' });
+  }
+  if (Date.now() > pending.expiresAt) {
+    pendingCodes.delete(cleanName.toLowerCase());
+    return res.status(400).json({ error: 'Deze verificatiecode is verlopen. Vraag een nieuwe code aan.' });
+  }
+
+  pendingCodes.delete(cleanName.toLowerCase());
+
+  // Save hashed password
+  const authData = getWebAuth();
+  const { salt, hash } = hashPassword(password);
+  authData[cleanName.toLowerCase()] = {
+    username: cleanName,
+    salt,
+    hash,
+    updatedAt: new Date().toISOString()
+  };
+  saveWebAuth(authData);
+
+  // Automatically authenticate user
+  const profile = getPlayerProfile(cleanName);
+  const token = 'token_' + crypto.randomBytes(24).toString('hex');
+  sessions.set(token, profile);
+
+  res.cookie('fpixel_session', token, {
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    sameSite: 'lax'
+  });
+
+  res.json({
+    success: true,
+    user: profile,
+    message: 'Wachtwoord succesvol ingesteld! Je bent nu veilig ingelogd.'
+  });
+});
+
+// API: /api/logout
+app.post('/api/logout', (req, res) => {
+  const token = req.cookies.fpixel_session;
+  if (token) sessions.delete(token);
+  res.clearCookie('fpixel_session');
+  res.json({ success: true });
+});
+
+// Official Bedrock Named Error Codes mapped to HTTP Status Codes
+// Reference: https://help.minecraft.net/hc/en-us/articles/38555497091469-Named-Error-Code-Troubleshooting-for-Minecraft-Bedrock-Edition
+const BEDROCK_ERROR_DICTIONARY = [
+  {
+    httpCode: 200,
+    status: "OK",
+    bedrockNames: ["Geen error"],
+    category: "Gezond",
+    description: "Verbinding gezond, server bereikbaar, spelers kunnen direct joinen.",
+    solution: "Alles werkt naar behoren! Je kunt direct verbinden via mc.fpixel.nl poort 19132."
+  },
+  {
+    httpCode: 100,
+    status: "Continue / Outdated",
+    bedrockNames: ["Outdated Client", "Outdated Server"],
+    category: "Versie mismatch",
+    description: "Minecraft Bedrock client of server versie verouderd / protocol mismatch.",
+    solution: "Update je Minecraft app via de App Store / Google Play / Microsoft Store, of wacht tot Geyser op de server is bijgewerkt."
+  },
+  {
+    httpCode: 400,
+    status: "Bad Request",
+    bedrockNames: ["Block", "Creeper"],
+    category: "Pakket data / Corruptie",
+    description: "Ongeldig verbindingspakket, corrupte netwerk handshake of ongeldige karakters in profiel.",
+    solution: "Herstart de game, wis de lokale cache via Bedrock Instellingen -> Opslag, en controleer of je gebruikersnaam geen speciale tekens bevat."
+  },
+  {
+    httpCode: 401,
+    status: "Unauthorized",
+    bedrockNames: ["Drowned", "Blaze", "Axolotl", "Glowstone"],
+    category: "Authenticatie",
+    description: "Microsoft/Xbox account authenticatie mislukt, sessietoken verlopen of Floodgate validatie ongeldig.",
+    solution: "Log uit van je Microsoft-account in het hoofdmenu van Minecraft, herstart de app en log opnieuw in met een verse login."
+  },
+  {
+    httpCode: 403,
+    status: "Forbidden",
+    bedrockNames: ["Spyglass", "Coal"],
+    category: "Toegang geweigerd",
+    description: "Toegang geweigerd: niet op whitelist, account verbannen of ouderlijk toezicht / multiplayer restrictie.",
+    solution: "Meld je aan voor de whitelist via mc.fpixel.nl of controleer je Xbox Live privacy-instellingen (multiplayer toestaan)."
+  },
+  {
+    httpCode: 404,
+    status: "Not Found",
+    bedrockNames: ["Goat"],
+    category: "Wereld niet gevonden",
+    description: "De gezochte spelerwereld, minigame arena of realm is niet gevonden of host is offline.",
+    solution: "Controleer of de gewenste arena of spelerwereld actief is met /joinworld of vraag de host om online te komen."
+  },
+  {
+    httpCode: 408,
+    status: "Request Timeout",
+    bedrockNames: ["Bat", "Silverfish"],
+    category: "Netwerk time-out",
+    description: "Verbindingstime-out: netwerkping te hoog, te hoge packet latency of server reageert te traag.",
+    solution: "Controleer je wifi of 4G-verbinding, ga dichter bij de router staan of herstart je internetmodem."
+  },
+  {
+    httpCode: 410,
+    status: "Gone",
+    bedrockNames: ["Armadillo"],
+    category: "Niet meer beschikbaar",
+    description: "De wereld of arena is permanent afgesloten, herstart of uit de roulatie gehaald.",
+    solution: "Kies een andere minigame arena of keer terug naar de centrale Lobby via /lobby."
+  },
+  {
+    httpCode: 413,
+    status: "Payload Too Large",
+    bedrockNames: ["Chest", "Rabbit"],
+    category: "Opslagruimte",
+    description: "Lokale opslagruimte op toestel/console is vol of add-on / texture pack download is te groot.",
+    solution: "Maak opslagruimte vrij op je toestel of wis ongebruikte werelden en texture packs via Bedrock Instellingen -> Opslag."
+  },
+  {
+    httpCode: 429,
+    status: "Too Many Requests",
+    bedrockNames: ["Kelp"],
+    category: "Rate limit",
+    description: "Te veel verbindingspogingen of packet requests in korte tijd.",
+    solution: "Wacht 30 tot 60 seconden voordat je opnieuw probeert te verbinden om de flood-beveiliging te laten rusten."
+  },
+  {
+    httpCode: 500,
+    status: "Internal Server Error",
+    bedrockNames: ["Emerald"],
+    category: "Server crash / Exception",
+    description: "Interne Geyser of Paper serverfout bij packet-vertaling of inventaris synchronisatie.",
+    solution: "Gebruik in-game het commando /fixinv om inventaris te resetten of meld het bij een serverbeheerder."
+  },
+  {
+    httpCode: 502,
+    status: "Bad Gateway",
+    bedrockNames: ["Snowball"],
+    category: "Backend down",
+    description: "De Java backend server is herstarten of down terwijl de Bedrock proxy luistert.",
+    solution: "Wacht 10 tot 15 seconden tot de Java-server volledig is doorgestart."
+  },
+  {
+    httpCode: 503,
+    status: "Service Unavailable",
+    bedrockNames: ["Sand"],
+    category: "Dienst onbereikbaar",
+    description: "Bedrock server service is offline, onderhoudsmodus is actief of poort 19132 is gesloten.",
+    solution: "De server voert momenteel een update of herstart uit. Probeer het over een halve minuut opnieuw."
+  },
+  {
+    httpCode: 504,
+    status: "Gateway Timeout",
+    bedrockNames: ["Terracotta", "NetherNet", "Door"],
+    category: "WebRTC / Signaling time-out",
+    description: "Geen netwerkpad gevonden / STUN WebRTC signaling time-out tussen client en server.",
+    solution: "Gebruik het standaard poortnummer 19132 (RakNet UDP fallback) of controleer of je router WebRTC UDP toestaat."
+  }
+];
+
+// API: /api/bedrock/errors (Catalog of all Bedrock Named Error Codes -> HTTP status codes)
+app.get('/api/bedrock/errors', (req, res) => {
+  res.json({
+    success: true,
+    referenceUrl: "https://help.minecraft.net/hc/en-us/articles/38555497091469-Named-Error-Code-Troubleshooting-for-Minecraft-Bedrock-Edition",
+    totalErrors: BEDROCK_ERROR_DICTIONARY.length,
+    errors: BEDROCK_ERROR_DICTIONARY
+  });
+});
+
+// API: /api/bedrock/errors/:query (Lookup by HTTP code or Bedrock error name)
+app.get('/api/bedrock/errors/:query', (req, res) => {
+  const q = req.params.query.toLowerCase().trim();
+  const num = parseInt(q, 10);
+
+  let match = BEDROCK_ERROR_DICTIONARY.find(e => e.httpCode === num);
+  if (!match) {
+    match = BEDROCK_ERROR_DICTIONARY.find(e => 
+      e.status.toLowerCase().includes(q) || 
+      e.bedrockNames.some(n => n.toLowerCase().includes(q))
+    );
+  }
+
+  if (match) {
+    res.json({ success: true, match });
+  } else {
+    res.status(404).json({
+      success: false,
+      error: `Geen Bedrock foutcode of naam gevonden voor '${req.params.query}'.`,
+      availableCodes: BEDROCK_ERROR_DICTIONARY.map(e => e.httpCode)
+    });
+  }
+});
+
+// API: /api/bedrock/status (Live Bedrock Health, Diagnostics & Active HTTP Code)
+app.get('/api/bedrock/status', async (req, res) => {
+  const bedrock = await pingBedrock(MINECRAFT_HOST, BEDROCK_PORT);
+  const activeDef = BEDROCK_ERROR_DICTIONARY.find(e => e.httpCode === bedrock.code) || BEDROCK_ERROR_DICTIONARY[0];
+  res.json({
+    success: true,
+    ...bedrock,
+    details: activeDef,
+    referenceUrl: "https://help.minecraft.net/hc/en-us/articles/38555497091469-Named-Error-Code-Troubleshooting-for-Minecraft-Bedrock-Edition"
+  });
+});
+
+// API: /api/stats (Live overview)
+app.get('/api/stats', async (req, res) => {
+  const [pingRes, bedrockRes] = await Promise.all([
+    pingMinecraft(MINECRAFT_HOST, MINECRAFT_PORT),
+    pingBedrock(MINECRAFT_HOST, BEDROCK_PORT)
+  ]);
+  const ranks = getRanks();
+  const userCache = getUserCache();
+  const whitelist = getWhitelist();
+
+  // Load friend group members
+  const friendProfiles = [];
+  const knownFriends = ['Jay_V0', 'SmileyGaming27', 'Amigapower2018', '.minnieheks', '.Smileygaming27'];
+
+  for (const name of knownFriends) {
+    const prof = getPlayerProfile(name);
+    friendProfiles.push(prof);
+  }
+
+  friendProfiles.sort((a, b) => b.stats.urban.level - a.stats.urban.level);
+
+  res.json({
+    server: {
+      name: 'FPixel SMP & Minigames',
+      domain: 'mc.fpixel.nl',
+      ip: '85.215.230.22',
+      javaPort: 25565,
+      bedrockPort: 19132,
+      online: pingRes.online,
+      latency: pingRes.latency || 0,
+      version: pingRes.online ? (pingRes.data.version?.name || 'Paper 26.3') : 'Paper 26.3',
+      playersOnline: pingRes.online ? (pingRes.data.players?.online ?? 0) : 0,
+      playersMax: pingRes.online ? (pingRes.data.players?.max ?? 100) : 100,
+      samplePlayers: pingRes.online ? (pingRes.data.players?.sample || []) : [],
+      whitelistEnabled: true,
+      whitelistedCount: whitelist.length
+    },
+    bedrock: bedrockRes,
+    leaderboard: friendProfiles
+  });
+});
+
+// API: /api/map/data (Interactive survival map dimensions & metadata - strictly no markers)
+app.get('/api/map/data', (req, res) => {
+  res.json({
+    worlds: [
+      {
+        id: 'survival',
+        tilePath: 'minecraft_survival',
+        name: 'Overworld (Survival)',
+        dimension: 'overworld',
+        icon: '🌍',
+        desc: 'De officiële survival wereld van de vriendengroep',
+        spawn: { x: 240, z: -256 },
+        zoom: { def: 2, min: 0, max: 3, extra: 2 },
+        background: '#0d1527'
+      },
+      {
+        id: 'nether',
+        tilePath: 'minecraft_the_nether',
+        name: 'The Nether',
+        dimension: 'nether',
+        icon: '🔥',
+        desc: 'De Nether dimensie van de survival wereld',
+        spawn: { x: 0, z: 0 },
+        zoom: { def: 2, min: 0, max: 3, extra: 2 },
+        background: '#180808'
+      },
+      {
+        id: 'end',
+        tilePath: 'minecraft_the_end',
+        name: 'The End',
+        dimension: 'the_end',
+        icon: '🌌',
+        desc: 'The End dimensie van de survival wereld',
+        spawn: { x: 0, z: 0 },
+        zoom: { def: 2, min: 0, max: 3, extra: 2 },
+        background: '#08040d'
+      }
+    ]
+  });
+});
+
+// API: /api/whitelist/request (Submit new whitelist request)
+app.post('/api/whitelist/request', (req, res) => {
+  const { username, reason } = req.body;
+  if (!username || username.trim().length < 2) {
+    return res.status(400).json({ error: 'Vul een geldige Minecraft gebruikersnaam in.' });
+  }
+
+  const cleanName = username.trim();
+  const requests = getWhitelistRequests();
+  const whitelist = getWhitelist();
+
+  // Check if already on whitelist
+  if (whitelist.some(w => w.name && w.name.toLowerCase() === cleanName.toLowerCase())) {
+    return res.status(400).json({ error: `${cleanName} staat al op de whitelist van de server!` });
+  }
+
+  // Check if already pending
+  const existing = requests.find(r => r.username.toLowerCase() === cleanName.toLowerCase() && r.status === 'PENDING');
+  if (existing) {
+    return res.status(400).json({ error: `Er loopt al een aanvraag voor ${cleanName}. Even geduld a.u.b.!` });
+  }
+
+  const newRequest = {
+    id: 'req_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
+    username: cleanName,
+    reason: reason ? reason.trim() : '',
+    status: 'PENDING',
+    createdAt: new Date().toISOString()
+  };
+
+  requests.unshift(newRequest);
+  saveWhitelistRequests(requests);
+
+  res.json({
+    success: true,
+    message: `Aanvraag succesvol verstuurd voor ${cleanName}! Een admin keurt deze spoedig goed.`
+  });
+});
+
+// API: /api/admin/whitelist/requests (Admin: get all requests)
+app.get('/api/admin/whitelist/requests', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Alleen admins (ADMIN of OWNER rank) hebben toegang.' });
+  }
+  const requests = getWhitelistRequests();
+  res.json({ requests });
+});
+
+// API: /api/admin/whitelist/approve (Admin: approve request)
+app.post('/api/admin/whitelist/approve', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Geen admin rechten.' });
+  }
+
+  const { requestId } = req.body;
+  const requests = getWhitelistRequests();
+  const target = requests.find(r => r.id === requestId);
+
+  if (!target) {
+    return res.status(404).json({ error: 'Aanvraag niet gevonden.' });
+  }
+
+  // Add to whitelist.json with proper offline UUID
+  const whitelist = getWhitelist();
+  const offlineUuid = getOfflinePlayerUUID(target.username);
+  if (!whitelist.some(w => w.uuid === offlineUuid || (w.name && w.name.toLowerCase() === target.username.toLowerCase()))) {
+    whitelist.push({
+      uuid: offlineUuid,
+      name: target.username
+    });
+    saveWhitelist(whitelist);
+  }
+
+  // Execute in Minecraft via RCON (neutral broadcast, no name dropping)
+  try {
+    await sendRconCommand(`whitelist add ${target.username}`);
+    await sendRconCommand('whitelist reload');
+    await sendRconCommand(`say §a[Whitelist] §e${target.username}§a is goedgekeurd en toegevoegd aan de whitelist! Welkom!`);
+  } catch (err) {
+    console.warn('RCON notification warning:', err.message);
+  }
+
+  target.status = 'APPROVED';
+  target.reviewedBy = user.username;
+  target.reviewedAt = new Date().toISOString();
+  saveWhitelistRequests(requests);
+
+  res.json({
+    success: true,
+    message: `${target.username} is goedgekeurd en toegevoegd aan de Minecraft whitelist!`
+  });
+});
+
+// API: /api/admin/whitelist/reject (Admin: reject request)
+app.post('/api/admin/whitelist/reject', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Geen admin rechten.' });
+  }
+
+  const { requestId } = req.body;
+  const requests = getWhitelistRequests();
+  const target = requests.find(r => r.id === requestId);
+
+  if (!target) {
+    return res.status(404).json({ error: 'Aanvraag niet gevonden.' });
+  }
+
+  target.status = 'REJECTED';
+  target.reviewedBy = user.username;
+  target.reviewedAt = new Date().toISOString();
+  saveWhitelistRequests(requests);
+
+  res.json({ success: true, message: `Aanvraag voor ${target.username} afgewezen.` });
+});
+
+// API: /api/admin/whitelist/request/delete (Admin: permanently delete request)
+app.post('/api/admin/whitelist/request/delete', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Geen admin rechten.' });
+  }
+
+  const { requestId } = req.body;
+  let requests = getWhitelistRequests();
+  const initialCount = requests.length;
+  requests = requests.filter(r => r.id !== requestId);
+
+  if (requests.length === initialCount) {
+    return res.status(404).json({ error: 'Aanvraag niet gevonden om te verwijderen.' });
+  }
+
+  saveWhitelistRequests(requests);
+  res.json({ success: true, message: 'Aanvraag definitief verwijderd.' });
+});
+
+// API: /api/admin/whitelist/requests/clear (Admin: clear all fake/stale requests or all requests)
+app.post('/api/admin/whitelist/requests/clear', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Geen admin rechten.' });
+  }
+
+  const { all } = req.body;
+  if (all) {
+    saveWhitelistRequests([]);
+    return res.json({ success: true, message: 'Alle aanvragen zijn succesvol gewist.' });
+  }
+
+  // Purge test / non-pending / fake requests
+  let requests = getWhitelistRequests();
+  const filtered = requests.filter(r => {
+    const u = (r.username || '').toLowerCase();
+    return r.status === 'PENDING' && u !== 'gaysteve' && u !== 'testfriend';
+  });
+
+  saveWhitelistRequests(filtered);
+  res.json({
+    success: true,
+    message: `Test en afgehandelde aanvragen opgeschoond. (${requests.length - filtered.length} verwijderd)`
+  });
+});
+
+// API: /api/admin/whitelist/list (Admin: get current whitelist)
+app.get('/api/admin/whitelist/list', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Geen admin rechten.' });
+  }
+  res.json({ whitelist: getWhitelist() });
+});
+
+// API: /api/admin/whitelist/add (Admin: manually add player)
+app.post('/api/admin/whitelist/add', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Geen admin rechten.' });
+  }
+
+  const { username } = req.body;
+  if (!username || username.trim().length < 2) {
+    return res.status(400).json({ error: 'Ongeldige gebruikersnaam.' });
+  }
+
+  const cleanName = username.trim();
+  const whitelist = getWhitelist();
+  if (whitelist.some(w => w.name && w.name.toLowerCase() === cleanName.toLowerCase())) {
+    return res.status(400).json({ error: `${cleanName} staat al op de whitelist.` });
+  }
+
+  whitelist.push({
+    uuid: '00000000-0000-0000-0000-' + Math.random().toString(16).substring(2, 14).padEnd(12, '0'),
+    name: cleanName
+  });
+  saveWhitelist(whitelist);
+
+  try {
+    await sendRconCommand(`whitelist add ${cleanName}`);
+    await sendRconCommand('whitelist reload');
+  } catch (err) {
+    console.warn('RCON manual add warning:', err.message);
+  }
+
+  res.json({ success: true, message: `${cleanName} succesvol toegevoegd aan de whitelist.` });
+});
+
+// API: /api/admin/whitelist/remove (Admin: remove from whitelist)
+app.post('/api/admin/whitelist/remove', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Geen admin rechten.' });
+  }
+
+  const { username } = req.body;
+  let whitelist = getWhitelist();
+  whitelist = whitelist.filter(w => w.name && w.name.toLowerCase() !== username.toLowerCase());
+  saveWhitelist(whitelist);
+
+  try {
+    await sendRconCommand(`whitelist remove ${username}`);
+    await sendRconCommand('whitelist reload');
+  } catch (err) {}
+
+  res.json({ success: true, message: `${username} verwijderd van whitelist.` });
+});
+
+// ==========================================
+// PARKOUR STUDIO & CMS MAP REVIEWS
+// ==========================================
+
+// API: /api/parkour/maps (Get all custom parkour maps)
+app.get('/api/parkour/maps', (req, res) => {
+  const user = getSessionUser(req);
+  const maps = getParkourMaps();
+  const isOwner = Boolean(user && user.rank === 'OWNER');
+  res.json({
+    maps,
+    isOwner,
+    isAdmin: Boolean(user && user.isAdmin)
+  });
+});
+
+// API: /api/parkour/approve (Owner only: approve and activate map)
+app.post('/api/parkour/approve', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen spelers met de [OWNER] rang kunnen parkour maps goedkeuren.' });
+  }
+
+  const { id } = req.body;
+  const maps = getParkourMaps();
+  const searchId = (id || '').toLowerCase().trim();
+  const map = maps.find(m => 
+    (m.id && m.id.toLowerCase() === searchId) ||
+    (m.name && m.name.toLowerCase() === searchId) ||
+    (m.id && m.id.toLowerCase() === 'pk-' + searchId)
+  );
+
+  if (!map) {
+    return res.status(404).json({ error: 'Parkour map niet gevonden.' });
+  }
+
+  map.status = 'APPROVED';
+  map.reviewer = user.username;
+  map.reviewedAt = Date.now();
+  saveParkourMaps(maps);
+
+  // Send RCON command to Minecraft server to immediately synchronize & register the arena live
+  try {
+    await sendRconCommand('fpixel parkour reload');
+    await sendRconCommand(`say §6[PARKOUR] §eMap §a"${map.name}" §7(${map.id}) §eis goedgekeurd door §c${user.username} §een is nu speelbaar!`);
+  } catch (err) {
+    console.warn('RCON parkour approve warning:', err.message);
+  }
+
+  res.json({
+    success: true,
+    message: `Parkour map "${map.name}" (${map.id}) is succesvol goedgekeurd en geactiveerd in de minigames!`
+  });
+});
+
+// API: /api/parkour/disable (Owner only: take map out of circulation)
+app.post('/api/parkour/disable', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen spelers met de [OWNER] rang kunnen parkour maps uit circulatie halen.' });
+  }
+
+  const { id } = req.body;
+  const maps = getParkourMaps();
+  const searchId = (id || '').toLowerCase().trim();
+  const map = maps.find(m => 
+    (m.id && m.id.toLowerCase() === searchId) ||
+    (m.name && m.name.toLowerCase() === searchId) ||
+    (m.id && m.id.toLowerCase() === 'pk-' + searchId)
+  );
+
+  if (!map) {
+    return res.status(404).json({ error: 'Parkour map niet gevonden.' });
+  }
+
+  map.status = 'DISABLED';
+  map.disabledBy = user.username;
+  map.disabledAt = Date.now();
+  saveParkourMaps(maps);
+
+  // Send RCON command to Minecraft server to immediately unregister the arena live
+  try {
+    await sendRconCommand(`fpixel parkour disable ${map.id}`);
+    await sendRconCommand(`say §6[PARKOUR] §eMap §7"${map.name}" (${map.id}) §cis tijdelijk uit circulatie gehaald.`);
+  } catch (err) {
+    console.warn('RCON parkour disable warning:', err.message);
+  }
+
+  res.json({
+    success: true,
+    message: `Parkour map "${map.name}" (${map.id}) is uit circulatie gehaald.`
+  });
+});
+
+// API: /api/parkour/reject (Owner only: reject map)
+app.post('/api/parkour/reject', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen spelers met de [OWNER] rang kunnen parkour maps afkeuren.' });
+  }
+
+  const { id, reason } = req.body;
+  const maps = getParkourMaps();
+  const searchId = (id || '').toLowerCase().trim();
+  const map = maps.find(m => 
+    (m.id && m.id.toLowerCase() === searchId) ||
+    (m.name && m.name.toLowerCase() === searchId) ||
+    (m.id && m.id.toLowerCase() === 'pk-' + searchId)
+  );
+
+  if (!map) {
+    return res.status(404).json({ error: 'Parkour map niet gevonden.' });
+  }
+
+  map.status = 'REJECTED';
+  map.reviewer = user.username;
+  map.reviewedAt = Date.now();
+  map.rejectReason = reason || 'Niet goedgekeurd door eigenaar';
+  saveParkourMaps(maps);
+
+  try {
+    await sendRconCommand('fpixel parkour reload');
+  } catch (err) {}
+
+  res.json({
+    success: true,
+    message: `Parkour map "${map.name}" (${map.id}) is gemarkeerd als afgewezen.`
+  });
+});
+
+// ==========================================
+// RANK MANAGEMENT (CMS / OWNER CONTROLLED)
+// ==========================================
+
+function saveRanks(ranks) {
+  const file = resolveFilePath('plugins/FPixelCore/ranks.yml') || path.join(SERVER_DIR, 'plugins/FPixelCore/ranks.yml');
+  if (!file) return false;
+  try {
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const lines = [];
+    for (const [u, r] of Object.entries(ranks)) {
+      if (u && r) lines.push(`${u}: ${r.toUpperCase()}`);
+    }
+    fs.writeFileSync(file, lines.join('\n') + '\n', 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Failed to save ranks.yml:', e);
+    return false;
+  }
+}
+
+// API: /api/admin/ranks (Get all player ranks - Admin & Owner can view)
+app.get('/api/admin/ranks', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Geen toegang tot beheerderspaneel.' });
+  }
+
+  const isOwner = Boolean(user && user.rank === 'OWNER');
+  const players = getResolvedPlayerRanks();
+  const rawRanks = getRanks();
+  const whitelist = getWhitelist();
+
+  res.json({
+    success: true,
+    players,
+    ranks: rawRanks,
+    whitelist,
+    isOwner,
+    availableRanks: ['OWNER', 'ADMIN', 'MODERATOR', 'DONOR', 'MEMBER']
+  });
+});
+
+// API: /api/admin/ranks/set (Owner sets player rank)
+app.post('/api/admin/ranks/set', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen de [OWNER] kan rangen aanpassen.' });
+  }
+
+  const { username, rank } = req.body;
+  if (!username || !rank) {
+    return res.status(400).json({ error: 'Vul een gebruikersnaam en rang in.' });
+  }
+
+  const validRanks = ['OWNER', 'ADMIN', 'MODERATOR', 'DONOR', 'MEMBER'];
+  const cleanRank = normalizeRank(rank);
+  if (!validRanks.includes(cleanRank)) {
+    return res.status(400).json({ error: 'Ongeldige rang: ' + cleanRank });
+  }
+
+  const cleanUser = username.trim();
+  const cleanLower = cleanUser.toLowerCase().replace(/^\./, '');
+  const ranks = getRanks();
+  ranks[cleanUser.toLowerCase()] = cleanRank;
+  ranks[cleanLower] = cleanRank;
+  ranks['.' + cleanLower] = cleanRank;
+
+  // Also sync matching offline UUIDs so Bukkit UUID lookup doesn't override with old rank
+  const variants = [cleanUser, cleanUser.toLowerCase(), cleanLower, '.' + cleanLower];
+  for (const v of variants) {
+    const offUuid = getOfflinePlayerUUID(v);
+    if (offUuid) ranks[offUuid.toLowerCase()] = cleanRank;
+  }
+
+  const whitelist = getWhitelist();
+  const cache = getUserCache();
+  for (const w of whitelist) {
+    if (w.name && w.name.toLowerCase().replace(/^\./, '') === cleanLower && w.uuid) {
+      ranks[w.uuid.toLowerCase()] = cleanRank;
+    }
+  }
+  for (const [uuid, name] of Object.entries(cache)) {
+    if (name && name.toLowerCase().replace(/^\./, '') === cleanLower) {
+      ranks[uuid.toLowerCase()] = cleanRank;
+    }
+  }
+
+  saveRanks(ranks);
+
+  // Sync to Minecraft live via RCON
+  try {
+    await sendRconCommand(`setrank ${cleanUser} ${cleanRank}`);
+    await sendRconCommand(`say §6[RANG] §e${cleanUser} heeft nu de rang §a[${cleanRank}] §egekregen van §c${user.username}§e!`);
+  } catch (err) {
+    console.warn('RCON setrank warning:', err.message);
+  }
+
+  res.json({
+    success: true,
+    message: `Rang van ${cleanUser} is succesvol gewijzigd naar [${cleanRank}].`
+  });
+});
+
+// API: /api/admin/ranks/reset (Owner resets player rank to MEMBER)
+app.post('/api/admin/ranks/reset', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen de [OWNER] kan rangen intrekken.' });
+  }
+
+  const { username } = req.body;
+  if (!username) {
+    return res.status(400).json({ error: 'Vul een gebruikersnaam in.' });
+  }
+
+  const cleanUser = username.trim();
+  const cleanLower = cleanUser.toLowerCase().replace(/^\./, '');
+  const ranks = getRanks();
+  delete ranks[cleanUser.toLowerCase()];
+  delete ranks[cleanLower];
+  delete ranks['.' + cleanLower];
+
+  const variants = [cleanUser, cleanUser.toLowerCase(), cleanLower, '.' + cleanLower];
+  for (const v of variants) {
+    const offUuid = getOfflinePlayerUUID(v);
+    if (offUuid) delete ranks[offUuid.toLowerCase()];
+  }
+
+  const whitelist = getWhitelist();
+  const cache = getUserCache();
+  for (const w of whitelist) {
+    if (w.name && w.name.toLowerCase().replace(/^\./, '') === cleanLower && w.uuid) {
+      delete ranks[w.uuid.toLowerCase()];
+    }
+  }
+  for (const [uuid, name] of Object.entries(cache)) {
+    if (name && name.toLowerCase().replace(/^\./, '') === cleanLower) {
+      delete ranks[uuid.toLowerCase()];
+    }
+  }
+
+  saveRanks(ranks);
+
+  try {
+    await sendRconCommand(`setrank ${username} MEMBER`);
+    await sendRconCommand(`say §6[RANG] §eRang van ${username} is ingetrokken door §c${user.username}§e (nu [MEMBER]).`);
+  } catch (err) {}
+
+  res.json({
+    success: true,
+    message: `Rang van ${username} is succesvol ingetrokken (teruggezet naar MEMBER).`
+  });
+});
+
+// ==========================================
+// SERVER CONTROLS (STOP & BACKUP)
+// ==========================================
+
+// API: /api/server/stop (Owner only: safely stop server)
+app.post('/api/server/stop', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen spelers met de [OWNER] rang kunnen de server stoppen.' });
+  }
+
+  try {
+    await sendRconCommand(`say §c§l[SERVER WAARSCHUWING] §eDe Minecraft server wordt over 5 seconden gestopt door Eigenaar ${user.username} via mc.fpixel.nl!`);
+    setTimeout(async () => {
+      try {
+        await sendRconCommand('stop');
+      } catch (e) {}
+    }, 4000);
+
+    res.json({
+      success: true,
+      message: 'Server stop signaal succesvol verzonden. De server sluit over enkele seconden veilig af.'
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Kon server stop niet uitvoeren: ' + err.message });
+  }
+});
+
+// API: /api/server/backup (Admin or Owner: trigger server snapshot)
+app.post('/api/server/backup', async (req, res) => {
+  const user = getSessionUser(req);
+  const isAllowed = user && (user.rank === 'OWNER' || user.rank === 'ADMIN');
+  if (!isAllowed) {
+    return res.status(403).json({ error: 'Minimaal [ADMIN] rang vereist om een server backup te starten.' });
+  }
+
+  try {
+    // Announce and save world chunks first
+    try {
+      await sendRconCommand(`say §6§l[BACKUP] §eHandmatige server backup gestart door ${user.username} via mc.fpixel.nl...`);
+      await sendRconCommand('save-all');
+    } catch (e) {}
+
+    // Check for backup script
+    const backupScript = path.resolve(__dirname, '../scripts/backup.sh');
+    if (fs.existsSync(backupScript)) {
+      const { exec } = require('child_process');
+      exec(`bash "${backupScript}"`, (err, stdout, stderr) => {
+        if (err) console.error('Backup script error:', err);
+        else console.log('Manual backup finished successfully:', stdout);
+      });
+      return res.json({
+        success: true,
+        message: 'Server backup is succesvol op de achtergrond gestart! Alle werelden worden veilig opgeslagen.'
+      });
+    } else {
+      await sendRconCommand('fpixel backup');
+      return res.json({
+        success: true,
+        message: 'Server backup commando verzonden naar de Minecraft server.'
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Backup starten mislukt: ' + err.message });
+  }
+});
+
+// API: /api/server/broadcast (Admin or Owner: send announcement to in-game chat)
+app.post('/api/server/broadcast', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Alleen beheerders kunnen in-game berichten omroepen.' });
+  }
+
+  const { message } = req.body;
+  if (!message || message.trim().length === 0) {
+    return res.status(400).json({ error: 'Vul een omroepbericht in.' });
+  }
+
+  const cleanMessage = message.trim();
+  try {
+    await sendRconCommand(`say §6§l[CMS OMROEP] §e${user.username}§f: ${cleanMessage}`);
+    res.json({
+      success: true,
+      message: 'Omroep succesvol verzonden naar Minecraft chat!'
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'RCON omroep mislukt: ' + err.message });
+  }
+});
+
+// ==========================================
+// SURVIVAL WAYPOINTS MANAGEMENT
+// ==========================================
+
+// ==========================================
+// IN-GAME CHAT PASSWORD RESET
+// ==========================================
+
+// API: /api/auth/reset-request
+app.post('/api/auth/reset-request', async (req, res) => {
+  const { username } = req.body;
+  if (!username) {
+    return res.status(400).json({ error: 'Vul je Minecraft gebruikersnaam in.' });
+  }
+
+  const cleanUser = username.trim();
+  const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
+  pendingCodes.set(cleanUser.toLowerCase(), {
+    code,
+    expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes
+  });
+
+  try {
+    const tellrawCmd = `tellraw ${cleanUser} [{"text":"\\n§6§l[FPixel Auth] ","bold":true},{"text":"Jouw wachtwoord reset code is: ","color":"yellow"},{"text":"${code}","color":"white","bold":true},{"text":"\\n§7(Voer deze code in op mc.fpixel.nl. Geldig voor 10 minuten)\\n","color":"gray"}]`;
+    await sendRconCommand(tellrawCmd);
+    await sendRconCommand(`title ${cleanUser} title {"text":"§6§lReset Code: §f§l${code}"}`);
+    await sendRconCommand(`title ${cleanUser} subtitle {"text":"§aVoer deze code in op mc.fpixel.nl"}`);
+  } catch (err) {
+    console.warn('RCON reset-request warning:', err.message);
+  }
+
+  res.json({
+    success: true,
+    message: `Verificatiecode verzonden naar in-game chat van ${cleanUser}! Kijk in Minecraft.`
+  });
+});
+
+// API: /api/auth/reset-confirm
+app.post('/api/auth/reset-confirm', async (req, res) => {
+  const { username, code, newPassword } = req.body;
+  if (!username || !code || !newPassword) {
+    return res.status(400).json({ error: 'Vul je gebruikersnaam, 6-cijferige code en nieuw wachtwoord in.' });
+  }
+
+  const cleanUser = username.trim();
+  const pending = pendingCodes.get(cleanUser.toLowerCase());
+  if (!pending || pending.code !== code.trim()) {
+    return res.status(400).json({ error: 'Ongeldige verificatiecode. Controleer de code in Minecraft chat.' });
+  }
+
+  if (Date.now() > pending.expiresAt) {
+    pendingCodes.delete(cleanUser.toLowerCase());
+    return res.status(400).json({ error: 'Verificatiecode is verlopen. Vraag een nieuwe aan.' });
+  }
+
+  pendingCodes.delete(cleanUser.toLowerCase());
+
+  const authData = getWebAuth();
+  const { salt, hash } = hashPassword(newPassword);
+  authData[cleanUser.toLowerCase()] = {
+    username: cleanUser,
+    salt,
+    hash,
+    updatedAt: Date.now()
+  };
+  saveWebAuth(authData);
+
+  try {
+    await sendRconCommand(`tellraw ${cleanUser} [{"text":"§a§l[FPixel Auth] §eJe web-wachtwoord is succesvol gereset!","bold":true}]`);
+  } catch (e) {}
+
+  res.json({
+    success: true,
+    message: 'Wachtwoord succesvol gereset! Je kunt nu direct inloggen.'
+  });
+});
+
+// ==========================================
+// CUSTOM PLAYER WORLDS ("REALMS") API
+// ==========================================
+
+function savePlayerWorlds(worlds) {
+  const file = resolveFilePath('plugins/FPixelCore/player_worlds.json') || path.join(SERVER_DIR, 'plugins/FPixelCore/player_worlds.json');
+  try {
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(worlds, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function getPlayerWorlds() {
+  const file = resolveFilePath('plugins/FPixelCore/player_worlds.json');
+  let worlds = {};
+  if (file && fs.existsSync(file)) {
+    try {
+      worlds = JSON.parse(fs.readFileSync(file, 'utf8')) || {};
+    } catch (e) {
+      worlds = {};
+    }
+  }
+
+  // Auto-discover any player worlds created on disk in player_worlds directory
+  const pwDirs = [
+    path.join('/data', 'player_worlds'),
+    path.join(SERVER_DIR, 'player_worlds'),
+    path.join(__dirname, '../server/player_worlds')
+  ];
+  for (const pwDir of pwDirs) {
+    if (fs.existsSync(pwDir)) {
+      try {
+        const entries = fs.readdirSync(pwDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory()) {
+            const dName = entry.name;
+            if (!dName.endsWith('_nether') && !dName.endsWith('_the_end')) {
+              const uid = dName.toUpperCase();
+              if (!worlds[uid]) {
+                const isCreative = uid.toLowerCase().includes('creative') || dName.toLowerCase().includes('creative');
+                worlds[uid] = {
+                  uid,
+                  name: isCreative ? 'Creative wereld' : `Speler Wereld (${uid})`,
+                  creatorName: 'Jay_V0',
+                  createdAt: Date.now(),
+                  cheatsEnabled: true,
+                  seed: 0,
+                  difficulty: 'NORMAL',
+                  defaultGameMode: isCreative ? 'CREATIVE' : 'SURVIVAL',
+                  isPrimarySmp: false,
+                  sharedPlayers: {},
+                  locked: false
+                };
+              }
+            }
+          }
+        }
+      } catch (err) {}
+    }
+  }
+
+  // Ensure ORIGIN1 is always present as the primary survival world
+  if (!worlds['ORIGIN1']) {
+    worlds['ORIGIN1'] = {
+      uid: 'ORIGIN1',
+      name: 'Survival SMP (Origineel)',
+      creatorName: 'Jay_V0',
+      createdAt: 1731522000000,
+      cheatsEnabled: false,
+      seed: 0,
+      difficulty: 'NORMAL',
+      defaultGameMode: 'SURVIVAL',
+      isPrimarySmp: true,
+      sharedPlayers: {},
+      locked: false
+    };
+  }
+
+  return worlds;
+}
+
+function getWorldLimit(rank) {
+  const r = normalizeRank(rank);
+  switch (r) {
+    case 'OWNER':
+    case 'ADMIN': return 9999;
+    case 'MODERATOR': return 5;
+    case 'DONOR': return 3;
+    case 'MEMBER': default: return 1;
+  }
+}
+
+// API: /api/worlds (List accessible worlds for logged-in user + limit stats)
+app.get('/api/worlds', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Inloggen vereist.' });
+  }
+
+  const worldsObj = getPlayerWorlds();
+  const username = user.username.toLowerCase();
+  const cleanUser = username.replace(/^\./, '');
+  const isStaff = user.isStaff || false;
+
+  const accessible = [];
+  let ownedCount = 0;
+
+  for (const [uid, w] of Object.entries(worldsObj)) {
+    const creator = (w.creatorName || '').toLowerCase();
+    const creatorClean = creator.replace(/^\./, '');
+    const isCreator = (creator === username || creatorClean === cleanUser);
+    if (isCreator && !w.isPrimarySmp) {
+      ownedCount++;
+    }
+
+    const isShared = (w.sharedPlayers && (w.sharedPlayers[username] !== undefined || w.sharedPlayers[cleanUser] !== undefined));
+
+    if (isCreator || isShared || w.isPrimarySmp) {
+      accessible.push({
+        ...w,
+        isCreator,
+        canCheat: isCreator || (w.sharedPlayers && (w.sharedPlayers[username] === true || w.sharedPlayers[cleanUser] === true))
+      });
+    }
+  }
+
+  const maxAllowed = getWorldLimit(user.rank);
+
+  res.json({
+    success: true,
+    worlds: accessible,
+    limits: {
+      rank: user.rank,
+      owned: ownedCount,
+      max: maxAllowed === 9999 ? 'Unlimited' : maxAllowed,
+      canCreate: ownedCount < maxAllowed
+    }
+  });
+});
+
+// API: /api/worlds/create (Create new player world via RCON)
+app.post('/api/worlds/create', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
+
+  const { name, seed, cheats, gamemode, generatorType } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Vul een wereldnaam in.' });
+  }
+
+  const validModes = ['SURVIVAL', 'CREATIVE', 'HARDCORE'];
+  const safeGamemode = validModes.includes((gamemode || '').toUpperCase()) ? (gamemode || '').toUpperCase() : 'SURVIVAL';
+
+  const validGens = ['NORMAL', 'SKYBLOCK', 'ONEBLOCK'];
+  const safeGenerator = validGens.includes((generatorType || '').toUpperCase()) ? (generatorType || '').toUpperCase() : 'NORMAL';
+
+  const worldsObj = getPlayerWorlds();
+  const username = user.username.toLowerCase();
+  const cleanUser = username.replace(/^\./, '');
+
+  let ownedCount = 0;
+  for (const w of Object.values(worldsObj)) {
+    const c = (w.creatorName || '').toLowerCase().replace(/^\./, '');
+    if (c === cleanUser && !w.isPrimarySmp) ownedCount++;
+  }
+
+  const maxAllowed = getWorldLimit(user.rank);
+  if (ownedCount >= maxAllowed) {
+    return res.status(403).json({ error: `Je hebt je limiet van ${maxAllowed} wereld(en) bereikt voor rang [${user.rank}]. Upgrade je rang voor meer werelden!` });
+  }
+
+  const uid = 'W' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  const safeName = name.trim().replace(/\s+/g, '_');
+  const worldSeed = seed ? seed.toString().trim() : '0';
+  const cheatsBool = Boolean(cheats);
+
+  try {
+    await sendRconCommand(`fpixel world create ${uid} ${safeName} ${user.username} ${worldSeed} ${cheatsBool} ${safeGamemode} ${safeGenerator}`);
+
+    // Update and persist player_worlds.json immediately
+    worldsObj[uid] = {
+      uid,
+      name: name.trim(),
+      creatorName: user.username,
+      createdAt: Date.now(),
+      cheatsEnabled: cheatsBool,
+      seed: worldSeed,
+      difficulty: safeGamemode === 'HARDCORE' ? 'HARD' : 'NORMAL',
+      defaultGameMode: safeGamemode,
+      generatorType: safeGenerator,
+      isPrimarySmp: false,
+      sharedPlayers: {},
+      locked: false
+    };
+    savePlayerWorlds(worldsObj);
+
+    res.json({
+      success: true,
+      uid,
+      message: `Wereld "${name.trim()}" (${uid}) [${safeGamemode} - ${safeGenerator}] is succesvol aangemaakt! Typ /joinworld ${uid} in Minecraft.`
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Kon wereld niet aanmaken via server: ' + err.message });
+  }
+});
+
+// API: /api/worlds/edit (Edit world name & cheats)
+app.post('/api/worlds/edit', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
+
+  const { uid, name, cheats } = req.body;
+  if (!uid || !name) return res.status(400).json({ error: 'Ongeldige gegevens.' });
+
+  const worldsObj = getPlayerWorlds();
+  const w = worldsObj[uid.toUpperCase()];
+  if (!w) return res.status(404).json({ error: 'Wereld niet gevonden.' });
+
+  const isCreator = (w.creatorName || '').toLowerCase().replace(/^\./, '') === user.username.toLowerCase().replace(/^\./, '');
+  if (!isCreator && !user.isAdmin) {
+    return res.status(403).json({ error: 'Alleen de eigenaar van deze wereld kan instellingen wijzigen.' });
+  }
+
+  const safeName = name.trim().replace(/\s+/g, '_');
+  try {
+    await sendRconCommand(`fpixel world edit ${uid.toUpperCase()} ${safeName} ${Boolean(cheats)}`);
+    res.json({ success: true, message: `Wereld "${name.trim()}" is bijgewerkt.` });
+  } catch (err) {
+    res.status(500).json({ error: 'Kon wereld niet bijwerken: ' + err.message });
+  }
+});
+
+// API: /api/worlds/share (Share world with friend + cheat permissions)
+app.post('/api/worlds/share', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
+
+  const { uid, targetPlayer, allowCheats } = req.body;
+  if (!uid || !targetPlayer) return res.status(400).json({ error: 'Vul een speler in.' });
+
+  const worldsObj = getPlayerWorlds();
+  const w = worldsObj[uid.toUpperCase()];
+  if (!w) return res.status(404).json({ error: 'Wereld niet gevonden.' });
+
+  const isCreator = (w.creatorName || '').toLowerCase().replace(/^\./, '') === user.username.toLowerCase().replace(/^\./, '');
+  if (!isCreator && !user.isAdmin) {
+    return res.status(403).json({ error: 'Alleen de maker kan vrienden uitnodigen.' });
+  }
+
+  try {
+    await sendRconCommand(`fpixel world share ${uid.toUpperCase()} ${targetPlayer.trim()} ${Boolean(allowCheats)}`);
+    res.json({ success: true, message: `Toegang verleend aan ${targetPlayer.trim()} voor wereld ${w.name}!` });
+  } catch (err) {
+    res.status(500).json({ error: 'Kon wereld niet delen: ' + err.message });
+  }
+});
+
+// API: /api/worlds/unshare (Remove friend from world)
+app.post('/api/worlds/unshare', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
+
+  const { uid, targetPlayer } = req.body;
+  if (!uid || !targetPlayer) return res.status(400).json({ error: 'Ongeldige gegevens.' });
+
+  const worldsObj = getPlayerWorlds();
+  const w = worldsObj[uid.toUpperCase()];
+  if (!w) return res.status(404).json({ error: 'Wereld niet gevonden.' });
+
+  const isCreator = (w.creatorName || '').toLowerCase().replace(/^\./, '') === user.username.toLowerCase().replace(/^\./, '');
+  if (!isCreator && !user.isAdmin) {
+    return res.status(403).json({ error: 'Alleen de maker kan toegang intrekken.' });
+  }
+
+  try {
+    await sendRconCommand(`fpixel world unshare ${uid.toUpperCase()} ${targetPlayer.trim()}`);
+    res.json({ success: true, message: `Toegang ingetrokken voor ${targetPlayer.trim()}.` });
+  } catch (err) {
+    res.status(500).json({ error: 'Kon toegang niet intrekken: ' + err.message });
+  }
+});
+
+// API: /api/worlds/delete (Delete world)
+app.post('/api/worlds/delete', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
+
+  const { uid } = req.body;
+  const worldsObj = getPlayerWorlds();
+  const w = worldsObj[(uid || '').toUpperCase()];
+  if (!w) return res.status(404).json({ error: 'Wereld niet gevonden.' });
+  if (w.isPrimarySmp) return res.status(400).json({ error: 'De hoofd Survival SMP kan niet worden verwijderd.' });
+
+  const isCreator = (w.creatorName || '').toLowerCase().replace(/^\./, '') === user.username.toLowerCase().replace(/^\./, '');
+  if (!isCreator && !user.isAdmin) {
+    return res.status(403).json({ error: 'Alleen de maker kan deze wereld verwijderen.' });
+  }
+
+  try {
+    await sendRconCommand(`fpixel world delete ${uid.toUpperCase()}`);
+    res.json({ success: true, message: `Wereld ${uid} is verwijderd.` });
+  } catch (err) {
+    res.status(500).json({ error: 'Kon wereld niet verwijderen: ' + err.message });
+  }
+});
+
+// API: /api/worlds/backup (Create git backup snapshot)
+app.post('/api/worlds/backup', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
+
+  const { uid } = req.body;
+  const worldsObj = getPlayerWorlds();
+  const w = worldsObj[(uid || '').toUpperCase()];
+  if (!w) return res.status(404).json({ error: 'Wereld niet gevonden.' });
+
+  const isCreator = (w.creatorName || '').toLowerCase().replace(/^\./, '') === user.username.toLowerCase().replace(/^\./, '');
+  if (!isCreator && !user.isAdmin) {
+    return res.status(403).json({ error: 'Alleen de maker kan backups maken.' });
+  }
+
+  try {
+    await sendRconCommand(`fpixel world backup ${uid.toUpperCase()} ${user.username}`);
+    res.json({ success: true, message: `Zero-downtime Git backup snapshot gestart voor ${w.name}!` });
+  } catch (err) {
+    res.status(500).json({ error: 'Kon backup niet maken: ' + err.message });
+  }
+});
+
+// API: /api/worlds/backups/:uid (List git commit snapshots)
+app.get('/api/worlds/backups/:uid', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
+
+  const uid = req.params.uid.toUpperCase();
+  const worldsObj = getPlayerWorlds();
+  const w = worldsObj[uid];
+  if (!w) return res.status(404).json({ error: 'Wereld niet gevonden.' });
+
+  const { exec } = require('child_process');
+
+  if (w.isPrimarySmp || uid === 'ORIGIN1') {
+    // Read commits from daily backups branch
+    exec('git log origin/daily_backups --format="%h|%an|%ad|%s" --date=short -n 25', { cwd: path.join(__dirname, '..') }, (err, stdout) => {
+      if (err) {
+        exec('git log daily_backups --format="%h|%an|%ad|%s" --date=short -n 25', { cwd: path.join(__dirname, '..') }, (err2, stdout2) => {
+          if (err2) return res.json({ success: true, backups: [] });
+          const lines = (stdout2 || '').trim().split('\n').filter(Boolean);
+          const backups = lines.map(line => {
+            const [hash, author, date, message] = line.split('|');
+            return { hash, author, date, message };
+          });
+          res.json({ success: true, backups });
+        });
+        return;
+      }
+      const lines = (stdout || '').trim().split('\n').filter(Boolean);
+      const backups = lines.map(line => {
+        const [hash, author, date, message] = line.split('|');
+        return { hash, author, date, message };
+      });
+      res.json({ success: true, backups });
+    });
+  } else {
+    const targetDir = path.join(SERVER_DIR, 'player_worlds');
+    const targetPath = uid;
+
+    exec(`git log --oneline --format="%h|%an|%ad|%s" --date=short -n 25 -- ${targetPath}`, { cwd: targetDir }, (err, stdout) => {
+      if (err) {
+        return res.json({ success: true, backups: [] });
+      }
+      const lines = (stdout || '').trim().split('\n').filter(Boolean);
+      const backups = lines.map(line => {
+        const [hash, author, date, message] = line.split('|');
+        return { hash, author, date, message };
+      });
+      res.json({ success: true, backups });
+    });
+  }
+});
+
+// API: /api/worlds/restore (Hot restore commit without server restart)
+app.post('/api/worlds/restore', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
+
+  const { uid, commitHash } = req.body;
+  if (!uid || !commitHash) return res.status(400).json({ error: 'Vul een wereld en backup commit in.' });
+
+  const worldsObj = getPlayerWorlds();
+  const w = worldsObj[uid.toUpperCase()];
+  if (!w) return res.status(404).json({ error: 'Wereld niet gevonden.' });
+
+  const isCreator = (w.creatorName || '').toLowerCase().replace(/^\./, '') === user.username.toLowerCase().replace(/^\./, '');
+  if (!isCreator && !user.isAdmin) {
+    return res.status(403).json({ error: 'Alleen de maker kan een restore uitvoeren.' });
+  }
+
+  if (w.isPrimarySmp || uid === 'ORIGIN1') {
+    const { exec } = require('child_process');
+    const restoreScript = path.join(__dirname, '../scripts/restore_survival_backup.sh');
+    if (fs.existsSync(restoreScript)) {
+      exec(`bash "${restoreScript}" ${commitHash}`, (err, stdout, stderr) => {
+        if (err) {
+          console.error('Survival restore script error:', err);
+          return res.status(500).json({ error: 'Fout bij herstellen: ' + err.message });
+        }
+        res.json({ success: true, message: `Survival wereld succesvol hersteld naar backup ${commitHash}!` });
+      });
+      return;
+    }
+  }
+
+  try {
+    await sendRconCommand(`fpixel world restore ${uid.toUpperCase()} ${commitHash.trim()}`);
+    res.json({
+      success: true,
+      message: `Hot-restore van wereld ${w.name} naar backup commit ${commitHash} is succesvol uitgevoerd!`
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Kon wereld niet herstellen: ' + err.message });
+  }
+});
+
+// ==========================================
+// MINIGAME MAP MAKER API
+// ==========================================
+
+function getCustomMaps() {
+  const file = resolveFilePath('plugins/FPixelCore/custom_maps.json') || path.join(SERVER_DIR, 'plugins/FPixelCore/custom_maps.json');
+  if (file && fs.existsSync(file)) {
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf8')) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+  return {};
+}
+
+function saveCustomMaps(maps) {
+  const file = resolveFilePath('plugins/FPixelCore/custom_maps.json') || path.join(SERVER_DIR, 'plugins/FPixelCore/custom_maps.json');
+  try {
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(maps, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Failed to save custom_maps.json:', e);
+    return false;
+  }
+}
+
+// API: /api/maker/maps (List maps: personal for players, all for staff)
+app.get('/api/maker/maps', (req, res) => {
+  const user = getSessionUser(req);
+  const mapsObj = getCustomMaps();
+  const allMaps = Object.values(mapsObj);
+
+  if (!user) {
+    return res.json({
+      success: true,
+      maps: allMaps.filter(m => m.status === 'APPROVED')
+    });
+  }
+
+  const cleanUser = user.username.toLowerCase().replace(/^\./, '');
+  const isStaff = user.isStaff || false;
+
+  let returnedMaps = [];
+  if (isStaff) {
+    returnedMaps = allMaps;
+  } else {
+    returnedMaps = allMaps.filter(m => {
+      const c = (m.creatorName || '').toLowerCase().replace(/^\./, '');
+      return c === cleanUser;
+    });
+  }
+
+  const reviewQueue = allMaps.filter(m => m.status === 'PENDING_REVIEW');
+
+  res.json({
+    success: true,
+    maps: returnedMaps,
+    reviewQueue: isStaff ? reviewQueue : [],
+    isStaff
+  });
+});
+
+// API: /api/maker/create (Create new map & generate islands via RCON)
+app.post('/api/maker/create', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
+
+  const { name, gameType, teamCount } = req.body;
+  if (!name || !gameType) {
+    return res.status(400).json({ error: 'Vul een mapnaam en gamemode in.' });
+  }
+
+  const safeName = name.trim().replace(/\s+/g, '_');
+  const teams = parseInt(teamCount, 10) || 2;
+  const username = user.username.trim();
+
+  try {
+    const rconOutput = await sendRconCommand(`fpixel map create ${safeName} ${gameType} ${teams} ${username}`);
+    console.log('Map create RCON response:', rconOutput);
+
+    // Extract generated ID from output if present
+    let mapId = null;
+    const match = (rconOutput || '').match(/Map\s+([A-Za-z0-9_\-]+)\s+created/i);
+    if (match) mapId = match[1];
+
+    if (!mapId) {
+      const mapsObj = getCustomMaps();
+      for (const [id, m] of Object.entries(mapsObj)) {
+        if (m.name && m.name.toLowerCase() === name.trim().toLowerCase()) {
+          mapId = id;
+          break;
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      mapId: mapId,
+      buildCommand: mapId ? `/mapbuild ${mapId}` : null,
+      message: `Map "${name.trim()}" (${gameType}) is aangemaakt! Typ /mapbuild ${mapId || ''} in-game om direct te bouwen.`
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Kon map niet aanmaken via server: ' + err.message });
+  }
+});
+
+// API: /api/maker/submit (Submit map for staff review)
+app.post('/api/maker/submit', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
+
+  const { id } = req.body;
+  const mapsFile = resolveFilePath('plugins/FPixelCore/custom_maps.json') || path.join(SERVER_DIR, 'plugins/FPixelCore/custom_maps.json');
+  if (!mapsFile || !fs.existsSync(mapsFile)) return res.status(404).json({ error: 'Map niet gevonden.' });
+
+  try {
+    const mapsObj = JSON.parse(fs.readFileSync(mapsFile, 'utf8'));
+    const map = mapsObj[(id || '').toLowerCase()];
+    if (!map) return res.status(404).json({ error: 'Map niet gevonden.' });
+
+    // Verify creator or staff
+    const cleanUser = user.username.toLowerCase().replace(/^\./, '');
+    const mapCreator = (map.creatorName || '').toLowerCase().replace(/^\./, '');
+    if (cleanUser !== mapCreator && !user.isStaff) {
+      return res.status(403).json({ error: 'Alleen de maker van deze map kan hem indienen voor review.' });
+    }
+
+    map.status = 'PENDING_REVIEW';
+    map.updatedAt = Date.now();
+    fs.writeFileSync(mapsFile, JSON.stringify(mapsObj, null, 2), 'utf8');
+
+    // Notify staff in-game & reload plugin map list
+    try {
+      await sendRconCommand(`fpixel map reload`);
+      await sendRconCommand(`say §e[Map Maker] §f${user.username} §eheeft zojuist map §a"${map.name}" §eingediend voor review! Staff kan testen via §b/fpixel map test ${map.id}`);
+    } catch (e) {}
+
+    res.json({ success: true, message: `Map "${map.name}" is ingediend voor review bij het staff team!` });
+  } catch (err) {
+    res.status(500).json({ error: 'Kon map niet indienen: ' + err.message });
+  }
+});
+
+// API: /api/maker/review (Staff approve/reject/disable/enable map)
+app.post('/api/maker/review', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isStaff) {
+    return res.status(403).json({ error: 'Minimaal [MODERATOR] rang vereist om maps te reviewen.' });
+  }
+
+  const { id, action, reason } = req.body;
+  if (!id || !action) return res.status(400).json({ error: 'Ongeldige gegevens.' });
+
+  try {
+    if (action === 'approve') {
+      await sendRconCommand(`fpixel map approve ${id.toLowerCase()}`);
+      await sendRconCommand(`say §a[Map Maker] §eMap §f${id.toUpperCase()} §eis goedgekeurd door §b${user.username} §een toegevoegd aan de minigames!`);
+    } else if (action === 'reject') {
+      const safeReason = (reason || 'Niet goedgekeurd door staff').replace(/"/g, '');
+      await sendRconCommand(`fpixel map reject ${id.toLowerCase()} ${safeReason}`);
+    } else if (action === 'disable' || action === 'archive') {
+      await sendRconCommand(`fpixel map disable ${id.toLowerCase()}`);
+      await sendRconCommand(`say §e[Map Maker] §eMap §f${id.toUpperCase()} §eis uit circulatie gehaald door staff.`);
+    } else if (action === 'enable' || action === 'activate') {
+      await sendRconCommand(`fpixel map enable ${id.toLowerCase()}`);
+      await sendRconCommand(`say §a[Map Maker] §eMap §f${id.toUpperCase()} §eis weer geactiveerd in de minigames!`);
+    }
+
+    res.json({ success: true, message: `Review actie "${action}" succesvol uitgevoerd voor map ${id}.` });
+  } catch (err) {
+    // Fallback directly in custom_maps.json if RCON offline
+    const maps = getCustomMaps();
+    const mapKey = Object.keys(maps).find(k => k.toLowerCase() === id.toLowerCase());
+    if (mapKey && maps[mapKey]) {
+      if (action === 'approve' || action === 'enable' || action === 'activate') {
+        maps[mapKey].status = 'APPROVED';
+      } else if (action === 'reject') {
+        maps[mapKey].status = 'REJECTED';
+        maps[mapKey].rejectionReason = reason || 'Afgewezen door staff';
+      } else if (action === 'disable' || action === 'archive') {
+        maps[mapKey].status = 'ARCHIVED';
+      }
+      saveCustomMaps(maps);
+      return res.json({ success: true, message: `Review actie "${action}" lokaal opgeslagen voor map ${id}.` });
+    }
+    res.status(500).json({ error: 'Kon actie niet uitvoeren via server: ' + err.message });
+  }
+});
+
+// API: /api/maker/rename (Staff rename map)
+app.post('/api/maker/rename', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isStaff) {
+    return res.status(403).json({ error: 'Minimaal [MODERATOR] rang vereist om maps te hernoemen.' });
+  }
+
+  const { id, newName } = req.body;
+  if (!id || !newName || !newName.trim()) {
+    return res.status(400).json({ error: 'Vul een map ID en nieuwe naam in.' });
+  }
+
+  const cleanName = newName.trim().replace(/"/g, '');
+
+  try {
+    await sendRconCommand(`fpixel map rename ${id.toLowerCase()} ${cleanName}`);
+    res.json({ success: true, message: `Map ${id} succesvol hernoemd naar "${cleanName}".` });
+  } catch (err) {
+    // Local fallback update in custom_maps.json
+    const maps = getCustomMaps();
+    const mapKey = Object.keys(maps).find(k => k.toLowerCase() === id.toLowerCase());
+    if (mapKey && maps[mapKey]) {
+      maps[mapKey].name = cleanName;
+      saveCustomMaps(maps);
+      return res.json({ success: true, message: `Map ${id} lokaal hernoemd naar "${cleanName}".` });
+    }
+    res.status(500).json({ error: 'Kon map niet hernoemen: ' + err.message });
+  }
+});
+
+// API: /api/admin/watchdog (Staff view Watchdog anticheat violations and status)
+app.get('/api/admin/watchdog', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isStaff) {
+    return res.status(403).json({ error: 'Minimaal [MODERATOR] rang vereist om Watchdog te bekijken.' });
+  }
+
+  const logFile = path.join(DATA_DIR, 'watchdog_log.json');
+  let violations = [];
+  try {
+    if (fs.existsSync(logFile)) {
+      violations = JSON.parse(fs.readFileSync(logFile, 'utf8'));
+    }
+  } catch (err) {
+    console.warn('Kon watchdog_log.json niet lezen:', err.message);
+  }
+
+  res.json({
+    success: true,
+    minRequiredScore: 90,
+    bannedClients: ['Wurst', 'Meteor', 'LiquidBounce', 'Aristois', 'Sigma', 'Impact', 'BleachHack', 'Inertia', 'Future', 'Vape'],
+    violations: Array.isArray(violations) ? violations : []
+  });
+});
+
+// API: /api/admin/watchdog/setscore (Owner set trust score)
+app.post('/api/admin/watchdog/setscore', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || user.rank !== 'OWNER') {
+    return res.status(403).json({ error: 'Alleen de [OWNER] kan trust scores handmatig instellen.' });
+  }
+
+  const { player, score } = req.body;
+  if (!player || score === undefined) {
+    return res.status(400).json({ error: 'Vul een spelersnaam en score (0-100) in.' });
+  }
+
+  const cleanPlayer = player.trim();
+  const numScore = parseInt(score, 10);
+  if (isNaN(numScore) || numScore < 0 || numScore > 100) {
+    return res.status(400).json({ error: 'Score moet tussen 0 en 100 liggen.' });
+  }
+
+  try {
+    const reply = await sendRconCommand(`watchdog setscore ${cleanPlayer} ${numScore}`);
+    res.json({ success: true, message: reply || `Trust score van ${cleanPlayer} ingesteld op ${numScore}/100.` });
+  } catch (err) {
+    res.status(500).json({ error: 'Kon commando niet uitvoeren via Minecraft RCON: ' + err.message });
+  }
+});
+
+// Helper: getBugReports
+function getBugReports() {
+  const file = resolveFilePath('plugins/FPixelCore/bug_reports.json') || path.join(SERVER_DIR, 'plugins/FPixelCore/bug_reports.json');
+  if (file && fs.existsSync(file)) {
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf8'));
+    } catch (e) {
+      return [];
+    }
+  }
+  return [];
+}
+
+// API: /api/bugreports (List all bug reports)
+app.get('/api/bugreports', (req, res) => {
+  const reports = getBugReports();
+  res.json({ reports: Array.isArray(reports) ? reports : [] });
+});
+
+// API: /api/bugreports/resolve (Resolve bug report)
+app.post('/api/bugreports/resolve', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || (user.rank !== 'OWNER' && user.rank !== 'ADMIN')) {
+    return res.status(403).json({ error: 'Alleen staff kan bug reports oplossen.' });
+  }
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ error: 'Geen report ID opgegeven.' });
+
+  try {
+    const reply = await sendRconCommand(`bugreport resolve ${id}`);
+    res.json({ success: true, message: reply });
+  } catch (err) {
+    res.status(500).json({ error: 'RCON error: ' + err.message });
+  }
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`==========================================`);
+  console.log(` FPixel Network Portal running on port ${PORT}`);
+  console.log(` Monitoring Minecraft Server: ${MINECRAFT_HOST}:${MINECRAFT_PORT}`);
+  console.log(` RCON & Player Worlds Integration Active`);
+  console.log(`==========================================`);
+});

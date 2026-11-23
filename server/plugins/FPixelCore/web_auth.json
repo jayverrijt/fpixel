@@ -1,0 +1,26 @@
+{
+  "jay_v0": {
+    "username": "Jay_V0",
+    "salt": "f2562977107a88b9d79f05eae4557d6c",
+    "hash": "33dcc781d5b6626b966801d2c7276c26f2f432c8a7eaeed06f45436e4acd957e",
+    "updatedAt": "2026-10-14T13:42:24.700Z"
+  },
+  "amigapower2018": {
+    "username": "Amigapower2018",
+    "salt": "be4c1636dfb1c165ffdac057fb0f751e",
+    "hash": "dd59b8146dc8dcccd6afaa10ca8b24609f256770e75725b6f9fbd83ab5d0e6a8",
+    "updatedAt": "2026-10-19T14:52:11.827Z"
+  },
+  "smileygaming27": {
+    "username": "SmileyGaming27",
+    "salt": "8b10142047ea8d08965623fdcaf0b998",
+    "hash": "1e13cc9d7e8b3d4aff57dda9ed7253f46464c2e1df56e48b6f66bb560714f349",
+    "updatedAt": 1795036147737
+  },
+  ".minnieheks": {
+    "username": ".minnieheks",
+    "salt": "17b211e64be1da5d770e147dcdd76235",
+    "hash": "d852b749b0d4f42e757b55d9c8c24ef6817a34757878a27703fa59229c4746cb",
+    "updatedAt": "2026-11-18T21:07:53.643817283Z"
+  }
+}

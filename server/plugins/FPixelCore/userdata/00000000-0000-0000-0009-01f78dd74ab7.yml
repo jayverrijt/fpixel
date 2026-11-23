@@ -1,0 +1,24 @@
+name: .jayverrijt8280
+coins: 200
+level: 1
+experience: 0
+visibility: ALL
+stats:
+  bedwars:
+    wins: 0
+    losses: 0
+    kills: 0
+    finalKills: 0
+    bedsBroken: 0
+  tntrun:
+    wins: 0
+    losses: 0
+  sumo:
+    wins: 0
+    losses: 0
+    streak: 0
+  murdermystery:
+    wins: 2
+  prophunt:
+    wins: 0
+secrets: []

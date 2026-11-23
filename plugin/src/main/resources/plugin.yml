@@ -1,0 +1,97 @@
+name: FPixelCore
+version: '1.0.0'
+main: net.fpixel.FPixelPlugin
+api-version: '1.21'
+author: FPixelTeam
+description: Complete Hypixel-grade minigame server framework with Geyser/Floodgate crossplay
+softdepend:
+  - floodgate
+  - Geyser-Spigot
+commands:
+  fpixel:
+    description: Unified FPixel Network, Parkour, Fill, and Empty command
+    aliases: [fp]
+  fill:
+    description: Unified FPixel chunk fill command
+    permission: fpixel.admin
+    aliases: [chunkfill, fillchunk, fillchunck]
+  empty:
+    description: Unified FPixel chunk empty command
+    permission: fpixel.admin
+    aliases: [chunkempty, emptychunk]
+  lobby:
+    description: Teleport to network hub / lobby
+    aliases: [hub, l, spawn]
+  join:
+    description: Join a minigame arena
+    aliases: [play]
+  setrank:
+    description: Set a player's rank
+    permission: fpixel.owner
+  maps:
+    description: Browse and select a minigame map
+    aliases: [arenas]
+  joinworld:
+    description: Join a personal or shared custom player world
+    aliases: [jw, worldjoin]
+  mapbuild:
+    description: Join and build your custom minigame map
+    aliases: [buildmap, mapedit]
+  serverupdate:
+    description: Full server update with pre-update backup, git pull, and restart
+    permission: fpixel.owner
+    aliases: [updateserver]
+  serverbackup:
+    description: Full server-wide snapshot backup
+    permission: fpixel.owner
+    aliases: [backup]
+  duels:
+    description: Challenge players to 1v1 duels
+    aliases: [duel]
+  party:
+    description: Group up with friends and play minigames together
+    aliases: [p]
+  forcestart:
+    description: Force start the arena countdown immediately
+    aliases: [start]
+  fly:
+    description: Toggle flight mode in the Lobby (VIP+ or higher)
+    aliases: [flight]
+  survival:
+    description: Join the Survival SMP world
+    aliases: [smp]
+  testing:
+    description: Toggle testing mode and manage simulated players for game testing
+    permission: fpixel.owner
+    aliases: [test]
+  shop:
+    description: Open the BedWars item shop
+  webpass:
+    description: Stel je wachtwoord in voor het FPixel webportaal
+    aliases: [setwebpass, webpassword]
+  secrets:
+    description: View your discovered ancient relics and lore
+    aliases: [secret, lore, relics]
+  survivalbackup:
+    description: Trigger an immediate survival world backup pushed directly to GitHub
+    permission: fpixel.owner
+    aliases: [backupnow, smpbackup]
+  coins:
+    description: Manage and view your FPixel coins
+    aliases: [coin, eco, money, balance]
+  addcoins:
+    description: Add coins to a player
+    permission: fpixel.admin
+  watchdog:
+    description: FPixel Custom Watchdog Anticheat & Integrity Management
+    aliases: [wd, anticheat]
+    permission: fpixel.mod
+  fixinv:
+    description: Fix and resynchronize client container and inventory state
+    aliases: [syncinv, fixinventory]
+  bedrock:
+    description: Bedrock status, connectivity, and status codes (100 Outdated, 200 Good)
+    aliases: [bedrockstatus, geyserstatus]
+  bugreport:
+    description: Report a bug, broken feature, or issue with coordinates and minigame tracking
+    aliases: [reportbug, bug, report]

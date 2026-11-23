@@ -1,0 +1,182 @@
+{
+  "sw-2029": {
+    "id": "sw-2029",
+    "name": "Siege",
+    "gameType": "SKYWARS",
+    "creatorUuid": "150c93d2-8bb4-324d-bb3f-28a55111e649",
+    "creatorName": "Jay_V0",
+    "teamCount": 4,
+    "status": "REJECTED",
+    "rejectionReason": "Niet goedgekeurd door staff",
+    "worldName": "map_build_sw-2029",
+    "createdAt": 1794771341463,
+    "updatedAt": 1795211843236,
+    "teamSpawns": [
+      "map_build_sw-2029,40.5,65.0,0.5,90.0,0.0",
+      "map_build_sw-2029,0.5,65.0,40.5,180.0,0.0",
+      "map_build_sw-2029,-39.5,65.0,0.5,270.0,0.0",
+      "map_build_sw-2029,0.5,65.0,-39.5,360.0,0.0"
+    ],
+    "teamBeds": [
+      "map_build_sw-2029,41.0,65.0,0.0,0.0,0.0",
+      "map_build_sw-2029,1.0,65.0,40.0,0.0,0.0",
+      "map_build_sw-2029,-39.0,65.0,0.0,0.0,0.0",
+      "map_build_sw-2029,1.0,65.0,-40.0,0.0,0.0"
+    ],
+    "teamGenerators": [
+      "map_build_sw-2029,39.5,65.0,0.5,0.0,0.0",
+      "map_build_sw-2029,-0.5,65.0,40.5,0.0,0.0",
+      "map_build_sw-2029,-40.5,65.0,0.5,0.0,0.0",
+      "map_build_sw-2029,-0.5,65.0,-39.5,0.0,0.0"
+    ],
+    "midChests": [
+      "map_build_sw-2029,2.0,65.0,2.0,0.0,0.0",
+      "map_build_sw-2029,-2.0,65.0,-2.0,0.0,0.0",
+      "map_build_sw-2029,-2.0,65.0,2.0,0.0,0.0",
+      "map_build_sw-2029,2.0,65.0,-2.0,0.0,0.0"
+    ],
+    "islandChests": [],
+    "midGenerators": [],
+    "parkourCheckpoints": [],
+    "spectatorSpawn": "map_build_sw-2029,0.5,74.0,0.5,0.0,90.0",
+    "waitingLobby": "map_build_sw-2029,0.5,100.0,0.5,0.0,0.0"
+  },
+  "sw-1731": {
+    "id": "sw-1731",
+    "name": "Jay\u0027s speeltuin",
+    "gameType": "SKYWARS",
+    "creatorUuid": "150c93d2-8bb4-324d-bb3f-28a55111e649",
+    "creatorName": "Jay_V0",
+    "teamCount": 2,
+    "status": "ARCHIVED",
+    "worldName": "map_build_sw-1731",
+    "createdAt": 1794773025388,
+    "updatedAt": 1795211965631,
+    "teamSpawns": [
+      "map_build_sw-1731,40.5,65.0,0.5,90.0,0.0",
+      "map_build_sw-1731,-39.5,65.0,0.5,270.0,0.0"
+    ],
+    "teamBeds": [
+      "map_build_sw-1731,41.0,65.0,0.0,0.0,0.0",
+      "map_build_sw-1731,-39.0,65.0,0.0,0.0,0.0"
+    ],
+    "teamGenerators": [
+      "map_build_sw-1731,39.5,65.0,0.5,0.0,0.0",
+      "map_build_sw-1731,-40.5,65.0,0.5,0.0,0.0"
+    ],
+    "midChests": [
+      "map_build_sw-1731,2.0,65.0,2.0,0.0,0.0",
+      "map_build_sw-1731,-2.0,65.0,-2.0,0.0,0.0",
+      "map_build_sw-1731,-2.0,65.0,2.0,0.0,0.0",
+      "map_build_sw-1731,2.0,65.0,-2.0,0.0,0.0"
+    ],
+    "islandChests": [],
+    "midGenerators": [],
+    "parkourCheckpoints": [],
+    "spectatorSpawn": "map_build_sw-1731,0.5,74.0,0.5,0.0,90.0",
+    "waitingLobby": "map_build_sw-1731,0.5,100.0,0.5,0.0,0.0"
+  },
+  "mm-1241": {
+    "id": "mm-1241",
+    "name": "beach",
+    "gameType": "MURDER_MYSTERY",
+    "creatorUuid": "00000000-0000-0000-0009-01ff601729dc",
+    "creatorName": ".minnieheks",
+    "teamCount": 2,
+    "status": "APPROVED",
+    "worldName": "map_build_mm-1241",
+    "createdAt": 1795036300249,
+    "updatedAt": 1795397277181,
+    "teamSpawns": [],
+    "teamBeds": [],
+    "teamGenerators": [],
+    "midChests": [],
+    "islandChests": [],
+    "midGenerators": [],
+    "parkourCheckpoints": [],
+    "spectatorSpawn": "map_build_mm-1241,0.5,65.0,0.5,0.0,0.0",
+    "waitingLobby": "map_build_mm-1241,0.5,100.0,0.5,0.0,0.0"
+  },
+  "sw-1885": {
+    "id": "sw-1885",
+    "name": "Lucky Block",
+    "gameType": "SKYWARS",
+    "creatorUuid": "2bf5868b-5810-305c-939b-022744b0e1ad",
+    "creatorName": "Amigapower2018",
+    "teamCount": 4,
+    "status": "APPROVED",
+    "worldName": "map_build_sw-1885",
+    "createdAt": 1795211086375,
+    "updatedAt": 1795211846121,
+    "teamSpawns": [
+      "map_build_sw-1885,40.5,65.0,0.5,90.0,0.0",
+      "map_build_sw-1885,0.5,65.0,40.5,180.0,0.0",
+      "map_build_sw-1885,-39.5,65.0,0.5,270.0,0.0",
+      "map_build_sw-1885,0.5,65.0,-39.5,360.0,0.0"
+    ],
+    "teamBeds": [],
+    "teamGenerators": [
+      "map_build_sw-1885,39.5,65.0,0.5,0.0,0.0",
+      "map_build_sw-1885,-0.5,65.0,40.5,0.0,0.0",
+      "map_build_sw-1885,-40.5,65.0,0.5,0.0,0.0",
+      "map_build_sw-1885,-0.5,65.0,-39.5,0.0,0.0"
+    ],
+    "midChests": [
+      "map_build_sw-1885,2.0,65.0,2.0,0.0,0.0",
+      "map_build_sw-1885,-2.0,65.0,-2.0,0.0,0.0",
+      "map_build_sw-1885,-2.0,65.0,2.0,0.0,0.0",
+      "map_build_sw-1885,2.0,65.0,-2.0,0.0,0.0"
+    ],
+    "islandChests": [
+      "map_build_sw-1885,41.0,65.0,0.0,0.0,0.0",
+      "map_build_sw-1885,1.0,65.0,40.0,0.0,0.0",
+      "map_build_sw-1885,-39.0,65.0,0.0,0.0,0.0",
+      "map_build_sw-1885,1.0,65.0,-40.0,0.0,0.0"
+    ],
+    "midGenerators": [],
+    "parkourCheckpoints": [],
+    "spectatorSpawn": "map_build_sw-1885,0.5,74.0,0.5,0.0,90.0",
+    "waitingLobby": "map_build_sw-1885,0.5,100.0,0.5,0.0,0.0"
+  },
+  "sw-5975": {
+    "id": "sw-5975",
+    "name": "Old Castle",
+    "gameType": "SKYWARS",
+    "creatorUuid": "150c93d2-8bb4-324d-bb3f-28a55111e649",
+    "creatorName": "Jay_V0",
+    "teamCount": 4,
+    "status": "DRAFT",
+    "worldName": "map_build_sw-5975",
+    "createdAt": 1795433386973,
+    "updatedAt": 1795433386973,
+    "teamSpawns": [
+      "map_build_sw-5975,40.5,65.0,0.5,90.0,0.0",
+      "map_build_sw-5975,0.5,65.0,40.5,180.0,0.0",
+      "map_build_sw-5975,-39.5,65.0,0.5,270.0,0.0",
+      "map_build_sw-5975,0.5,65.0,-39.5,360.0,0.0"
+    ],
+    "teamBeds": [],
+    "teamGenerators": [
+      "map_build_sw-5975,39.5,65.0,0.5,0.0,0.0",
+      "map_build_sw-5975,-0.5,65.0,40.5,0.0,0.0",
+      "map_build_sw-5975,-40.5,65.0,0.5,0.0,0.0",
+      "map_build_sw-5975,-0.5,65.0,-39.5,0.0,0.0"
+    ],
+    "midChests": [
+      "map_build_sw-5975,2.0,65.0,2.0,0.0,0.0",
+      "map_build_sw-5975,-2.0,65.0,-2.0,0.0,0.0",
+      "map_build_sw-5975,-2.0,65.0,2.0,0.0,0.0",
+      "map_build_sw-5975,2.0,65.0,-2.0,0.0,0.0"
+    ],
+    "islandChests": [
+      "map_build_sw-5975,41.0,65.0,0.0,0.0,0.0",
+      "map_build_sw-5975,1.0,65.0,40.0,0.0,0.0",
+      "map_build_sw-5975,-39.0,65.0,0.0,0.0,0.0",
+      "map_build_sw-5975,1.0,65.0,-40.0,0.0,0.0"
+    ],
+    "midGenerators": [],
+    "parkourCheckpoints": [],
+    "spectatorSpawn": "map_build_sw-5975,0.5,74.0,0.5,0.0,90.0",
+    "waitingLobby": "map_build_sw-5975,0.5,100.0,0.5,0.0,0.0"
+  }
+}

@@ -1,0 +1,122 @@
+inventory:
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:compass
+  count: 1
+  components:
+    minecraft:lore: '[{color:"gray",text:"Click to select and play minigames."}]'
+    minecraft:custom_name: '{extra:[{bold:1b,color:"green",text:"Game Navigator "},{color:"gray",text:"(Right
+      Click)"}],text:""}'
+  schema_version: 1
+- null
+- null
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:player_head
+  count: 1
+  components:
+    minecraft:profile: '{id:[I;353145810,-1951124915,-1153488731,1360127561],name:"Jay_V0",properties:[{name:"textures",signature:"PyrFpyrUW6Sf2/Fm26+xQuyCkIWxKvZXntITZpaOjSDf167tzTqv+GDH8f4GkhxpJ615+iJ6wCNlKjHA0OLeoi1uotwM5jH/0PojCRw6cj7OAl0YLQwaaeCdrBp7AalCimsWlIVrj6bV31tpzaq/XQAWwdyiv4mFbMa2XE6RY9cftjuKqbt4D2lCLk+GEscLLbxMZZNTLvAid5blo/ioCJbrV6r4caGZ+S1rVNQc61dyI2pIWZpqGBOXGFnAgUzVZA2SG2e3GOTlujECDGYSe0qqO8y5RQn4zXzQ74Wer7+ekkQxz56klJmdQzCZXJapLnKGvyi6J7OIsDpx5ycigwlTJ07i2UWOI33XH1u3QfOledzOKfWUJSTTqUDIriibc2oAkaJgqJy3WFHEbM7g+bP6Mf4Jdb2WMzmPPAVGTjayQWf63HdD2FKN8GSZhHR2i5SzQUcyV/H55F5se8GxSx7wpMPrEd1zBGKP+Owzb63mTu71oARAU2FzPYrAoYnxSVsehe8kIK1SvAdfXgQDlohMFVm5stZFYkdsJP5dnQZjTGkA47EF3G/lzug8vztBbkq4ZluZidhvaQj4Jlao0x+BTmwkkDn5IUEF/tY4AsVhN52hOzXU/eXhj/z74S02MfHxRMj0VV1Svla99XspHNOKffQUhomPoVYPd8PO4vk=",value:"ewogICJ0aW1lc3RhbXAiIDogMTc5NDY0NTc0Mzg2MSwKICAicHJvZmlsZUlkIiA6ICI5YzYxYTU3MjMwZjE0MmNiYTRkNGJhZjlmOTE0NzFlZSIsCiAgInByb2ZpbGVOYW1lIiA6ICJKYXlfVjAiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzEyNDQwZjVkMWJkNDUwZmQ4ZTlkMzg1MDllMWYzODA2ODJiOTAzOWNhZDU1ZTkwZWIxZDBkYzQ2NTg3YTkxNyIKICAgIH0sCiAgICAiQ0FQRSIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNWVjOTMwY2RkMjYyOWM4NzcxNjU1YzYwZWViZWI4NjdiNGI2NTU5YjBlNmQzYmM3MWM0MGM5NjM0N2ZhMDNmMCIKICAgIH0KICB9Cn0="}]}'
+    minecraft:lore: '[{color:"gray",text:"Click to view your stats and levels."}]'
+    minecraft:custom_name: '{extra:[{bold:1b,color:"yellow",text:"My Profile "},{color:"gray",text:"(Right
+      Click)"}],text:""}'
+  schema_version: 1
+- null
+- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:lime_dye
+  count: 1
+  components:
+    minecraft:lore: '[{color:"gray",text:"Click to change player visibility in the
+      lobby."}]'
+    minecraft:custom_name: '{extra:[{bold:1b,color:"aqua",text:"Players: "},{color:"green",text:"Visible
+      "},{color:"gray",text:"(Right Click)"}],text:""}'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:nether_star
+  count: 1
+  components:
+    minecraft:lore: '[{color:"gray",text:"Click to open quick actions and lobby selection."}]'
+    minecraft:custom_name: '{extra:[{bold:1b,color:"gold",text:"Quick Menu "},{color:"gray",text:"(Right
+      Click)"}],text:""}'
+  schema_version: 1
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+armor:
+- null
+- null
+- null
+- null
+offhand:
+  ==: org.bukkit.inventory.ItemStack
+  schema_version: 1
+  id: minecraft:air
+  DataVersion: 5023
+enderchest:
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+exp: 0.0
+level: 0
+health: 20.0
+food: 20
+saturation: 20.0
+gamemode: ADVENTURE
