@@ -33,23 +33,25 @@ public class SurvivalBackupCommand implements CommandExecutor {
         }
 
         isBackupRunning = true;
-        ChatUtil.sendMessage(sender, "§6[Backup] §eStarting survival world backup directly to GitHub branch §b'backups_survival'§e...");
+        ChatUtil.sendMessage(sender, "§6[Backup] §eStarting daily whole-repository backup directly to GitHub branch §b'daily_backups'§e...");
         ChatUtil.sendMessage(sender, "§7No persistent backup files will be stored locally.");
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 // Find script
-                File script = new File("/home/jayv/fpixel/scripts/backup_survival_github.sh");
+                File script = new File("/home/jayv/fpixel/scripts/daily_backup.sh");
                 if (!script.exists()) {
-                    File localScript = new File(plugin.getServer().getWorldContainer().getParentFile(), "scripts/backup_survival_github.sh");
+                    File localScript = new File(plugin.getServer().getWorldContainer().getParentFile(), "scripts/daily_backup.sh");
                     if (localScript.exists()) {
                         script = localScript;
+                    } else {
+                        script = new File("/home/jayv/fpixel/scripts/backup_survival_github.sh");
                     }
                 }
 
                 if (!script.exists()) {
                     isBackupRunning = false;
-                    ChatUtil.sendMessage(sender, "§c[Backup] Error: backup_survival_github.sh not found!");
+                    ChatUtil.sendMessage(sender, "§c[Backup] Error: daily_backup.sh not found!");
                     return;
                 }
 
@@ -60,7 +62,7 @@ public class SurvivalBackupCommand implements CommandExecutor {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                     String line;
                     while ((line = reader.readLine()) != null) {
-                        plugin.getLogger().info("[SurvivalBackup] " + line);
+                        plugin.getLogger().info("[DailyBackup] " + line);
                     }
                 }
 
@@ -68,14 +70,14 @@ public class SurvivalBackupCommand implements CommandExecutor {
                 isBackupRunning = false;
 
                 if (exitCode == 0) {
-                    ChatUtil.sendMessage(sender, "§a§l[Backup Success] §fSurvival world backup was successfully pushed to GitHub (§bbackups_survival§f)!");
+                    ChatUtil.sendMessage(sender, "§a§l[Backup Success] §fDaily whole-repository backup was successfully pushed to GitHub (§bdaily_backups§f)!");
                     ChatUtil.sendMessage(sender, "§aAll temporary files were purged locally.");
                 } else {
                     ChatUtil.sendMessage(sender, "§c§l[Backup Warning] §fBackup script exited with code " + exitCode + ". Check server logs.");
                 }
             } catch (Exception e) {
                 isBackupRunning = false;
-                plugin.getLogger().severe("Survival backup failed: " + e.getMessage());
+                plugin.getLogger().severe("Daily backup failed: " + e.getMessage());
                 ChatUtil.sendMessage(sender, "§c§l[Backup Error] §fException during backup: " + e.getMessage());
             }
         });

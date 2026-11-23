@@ -2194,9 +2194,9 @@ app.get('/api/worlds/backups/:uid', (req, res) => {
 
   if (w.isPrimarySmp || uid === 'ORIGIN1') {
     // Read commits from daily backups branch
-    exec('git log origin/backups_survival --format="%h|%an|%ad|%s" --date=short -n 25', { cwd: path.join(__dirname, '..') }, (err, stdout) => {
+    exec('git log origin/daily_backups --format="%h|%an|%ad|%s" --date=short -n 25', { cwd: path.join(__dirname, '..') }, (err, stdout) => {
       if (err) {
-        exec('git log backups_survival --format="%h|%an|%ad|%s" --date=short -n 25', { cwd: path.join(__dirname, '..') }, (err2, stdout2) => {
+        exec('git log daily_backups --format="%h|%an|%ad|%s" --date=short -n 25', { cwd: path.join(__dirname, '..') }, (err2, stdout2) => {
           if (err2) return res.json({ success: true, backups: [] });
           const lines = (stdout2 || '').trim().split('\n').filter(Boolean);
           const backups = lines.map(line => {

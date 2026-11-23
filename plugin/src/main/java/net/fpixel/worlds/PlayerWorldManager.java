@@ -715,6 +715,7 @@ public class PlayerWorldManager implements Listener {
             currentWorldSession.put(player.getUniqueId(), toPw.getUid());
             loadPlayerState(player, toPw.getUid());
             plugin.getScoreboardManager().remove(player);
+            Bukkit.broadcast(ChatUtil.component("§e" + player.getName() + " joined the " + toPw.getName() + " realm."));
         } else if (toPw == null) {
             // Player returned to Hub or Minigames
             currentWorldSession.remove(player.getUniqueId());

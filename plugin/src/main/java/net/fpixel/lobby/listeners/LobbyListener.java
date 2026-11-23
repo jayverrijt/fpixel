@@ -64,7 +64,7 @@ public class LobbyListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        event.joinMessage(null); // Silent join message, Hypixel style
+        event.joinMessage(ChatUtil.component("§e" + player.getName() + " joined §6§lFPixel"));
 
         plugin.getRankManager().loadRanks();
         plugin.getRankManager().updatePlayerDisplayName(player);
@@ -83,8 +83,8 @@ public class LobbyListener implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        event.quitMessage(null);
         Player player = event.getPlayer();
+        event.quitMessage(ChatUtil.component("§e" + player.getName() + " left §6§lFPixel"));
         plugin.getRankManager().removePermissions(player);
         plugin.getScoreboardManager().remove(player);
         plugin.getUserManager().unloadUser(player.getUniqueId());

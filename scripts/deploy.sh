@@ -99,12 +99,12 @@ if [ ! -f "${SERVER_DIR}/plugins/floodgate-spigot.jar" ]; then
   fi
 fi
 
-# Ensure latest Survival World dimension is present from backups_survival
+# Ensure latest Survival World dimension is present from daily_backups
 if [ ! -d "${SERVER_DIR}/survival/region" ] && [ ! -d "${SERVER_DIR}/world/dimensions/minecraft/survival/region" ]; then
-  echo ">>> Restoring latest survival world dimension from backups_survival..."
-  git fetch origin backups_survival 2>/dev/null || true
+  echo ">>> Restoring latest survival world dimension from daily_backups..."
+  git fetch origin daily_backups 2>/dev/null || git fetch origin backups_survival 2>/dev/null || true
   mkdir -p /tmp/survival_restore_deploy
-  git archive origin/backups_survival | tar -x -C /tmp/survival_restore_deploy 2>/dev/null || true
+  (git archive origin/daily_backups 2>/dev/null || git archive origin/backups_survival 2>/dev/null) | tar -x -C /tmp/survival_restore_deploy 2>/dev/null || true
   if [ -d /tmp/survival_restore_deploy/dimensions/minecraft/survival ]; then
     mkdir -p "${SERVER_DIR}/survival"
     cp -a /tmp/survival_restore_deploy/dimensions/minecraft/survival/* "${SERVER_DIR}/survival/"

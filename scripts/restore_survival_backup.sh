@@ -3,13 +3,13 @@ set -euo pipefail
 
 # ==============================================================================
 # FPixel Network - Restore Survival World from GitHub Daily Backup
-# Restores the latest survival world backup from branch 'backups_survival'
+# Restores the latest survival world backup from branch 'daily_backups'
 # ==============================================================================
 
 REPO_DIR="${REPO_DIR:-/home/jayv/fpixel}"
 SERVER_DIR="${SERVER_DIR:-${REPO_DIR}/server}"
 CONTAINER_NAME="${CONTAINER_NAME:-fpixel-minecraft}"
-BRANCH_NAME="backups_survival"
+BRANCH_NAME="daily_backups"
 REMOTE_NAME="origin"
 TEMP_RESTORE_DIR="/tmp/fpixel_survival_restore_$(date +%s)"
 
