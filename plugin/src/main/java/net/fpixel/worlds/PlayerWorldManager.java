@@ -213,10 +213,14 @@ public class PlayerWorldManager implements Listener {
     }
 
     public synchronized PlayerWorld createWorld(String uid, String name, String creatorName, UUID creatorUuid, long seed, boolean cheats) {
-        return createWorld(uid, name, creatorName, creatorUuid, seed, cheats, "SURVIVAL");
+        return createWorld(uid, name, creatorName, creatorUuid, seed, cheats, "SURVIVAL", "NORMAL");
     }
 
     public synchronized PlayerWorld createWorld(String uid, String name, String creatorName, UUID creatorUuid, long seed, boolean cheats, String defaultGameMode) {
+        return createWorld(uid, name, creatorName, creatorUuid, seed, cheats, defaultGameMode, "NORMAL");
+    }
+
+    public synchronized PlayerWorld createWorld(String uid, String name, String creatorName, UUID creatorUuid, long seed, boolean cheats, String defaultGameMode, String generatorType) {
         if (uid == null) {
             uid = generateUid();
         } else {
@@ -226,8 +230,12 @@ public class PlayerWorldManager implements Listener {
             defaultGameMode = "SURVIVAL";
         }
         defaultGameMode = defaultGameMode.toUpperCase().trim();
+        if (generatorType == null || generatorType.isBlank()) {
+            generatorType = "NORMAL";
+        }
+        generatorType = generatorType.toUpperCase().trim();
 
-        PlayerWorld pw = new PlayerWorld(uid, name, creatorUuid, creatorName, seed, cheats, defaultGameMode, false);
+        PlayerWorld pw = new PlayerWorld(uid, name, creatorUuid, creatorName, seed, cheats, defaultGameMode, generatorType, false);
         worlds.put(uid, pw);
         saveWorlds();
 
@@ -281,11 +289,18 @@ public class PlayerWorldManager implements Listener {
         }
         String path = "player_worlds/" + pw.getUid();
         World w = Bukkit.getWorld(path);
+        File worldFolder = new File(plugin.getServer().getWorldContainer(), path);
+        boolean isBrandNew = !worldFolder.exists() || w == null;
+
         if (w == null) {
-            w = new WorldCreator(path)
-                    .environment(World.Environment.NORMAL)
-                    .seed(pw.getSeed() != 0 ? pw.getSeed() : new Random().nextLong())
-                    .createWorld();
+            WorldCreator wc = new WorldCreator(path)
+                    .environment(World.Environment.NORMAL);
+            if ("SKYBLOCK".equalsIgnoreCase(pw.getGeneratorType()) || "ONEBLOCK".equalsIgnoreCase(pw.getGeneratorType())) {
+                wc.generator(new net.fpixel.core.map.VoidChunkGenerator());
+            } else {
+                wc.seed(pw.getSeed() != 0 ? pw.getSeed() : new Random().nextLong());
+            }
+            w = wc.createWorld();
         }
         if (w != null) {
             w.setPVP(true);
@@ -294,8 +309,97 @@ public class PlayerWorldManager implements Listener {
             } else if (!"CREATIVE".equalsIgnoreCase(pw.getDefaultGameMode())) {
                 w.setDifficulty(Difficulty.NORMAL);
             }
+
+            if (isBrandNew) {
+                initializeSpecialWorld(pw, w);
+            }
         }
         return w;
+    }
+
+    private void initializeSpecialWorld(PlayerWorld pw, World w) {
+        if ("SKYBLOCK".equalsIgnoreCase(pw.getGeneratorType())) {
+            // Build classic Skyblock Island at 0, 65, 0
+            for (int x = -10; x <= 10; x++) {
+                for (int z = -10; z <= 10; z++) {
+                    for (int y = 55; y <= 85; y++) {
+                        w.getBlockAt(x, y, z).setType(Material.AIR, false);
+                    }
+                }
+            }
+
+            // Bedrock anchor
+            w.getBlockAt(0, 62, 0).setType(Material.BEDROCK, false);
+
+            // Dirt layers (3x3)
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    w.getBlockAt(dx, 63, dz).setType(Material.DIRT, false);
+                    w.getBlockAt(dx, 64, dz).setType(Material.DIRT, false);
+                    w.getBlockAt(dx, 65, dz).setType(Material.GRASS_BLOCK, false);
+                }
+            }
+            // L-extension (classic Skyblock shape: 3 blocks long)
+            for (int ez = 2; ez <= 4; ez++) {
+                w.getBlockAt(1, 63, ez).setType(Material.DIRT, false);
+                w.getBlockAt(1, 64, ez).setType(Material.DIRT, false);
+                w.getBlockAt(1, 65, ez).setType(Material.GRASS_BLOCK, false);
+            }
+
+            // Oak tree on the short side
+            w.getBlockAt(-1, 66, -1).setType(Material.OAK_SAPLING, false);
+            for (int ty = 66; ty <= 70; ty++) {
+                w.getBlockAt(-1, ty, -1).setType(Material.OAK_LOG, false);
+            }
+            for (int lx = -3; lx <= 1; lx++) {
+                for (int lz = -3; lz <= 1; lz++) {
+                    for (int ly = 69; ly <= 70; ly++) {
+                        if (w.getBlockAt(lx, ly, lz).getType() == Material.AIR) {
+                            w.getBlockAt(lx, ly, lz).setType(Material.OAK_LEAVES, false);
+                        }
+                    }
+                }
+            }
+            w.getBlockAt(-1, 71, -1).setType(Material.OAK_LEAVES, false);
+            w.getBlockAt(0, 71, -1).setType(Material.OAK_LEAVES, false);
+            w.getBlockAt(-2, 71, -1).setType(Material.OAK_LEAVES, false);
+            w.getBlockAt(-1, 71, 0).setType(Material.OAK_LEAVES, false);
+            w.getBlockAt(-1, 71, -2).setType(Material.OAK_LEAVES, false);
+
+            // Starter Chest at (1, 66, 4)
+            org.bukkit.block.Block chestBlock = w.getBlockAt(1, 66, 4);
+            chestBlock.setType(Material.CHEST, false);
+            if (chestBlock.getState() instanceof org.bukkit.block.Chest chest) {
+                org.bukkit.inventory.Inventory inv = chest.getBlockInventory();
+                inv.clear();
+                inv.setItem(0, new ItemStack(Material.ICE, 2));
+                inv.setItem(1, new ItemStack(Material.LAVA_BUCKET, 1));
+                inv.setItem(2, new ItemStack(Material.BONE_MEAL, 2));
+                inv.setItem(3, new ItemStack(Material.SUGAR_CANE, 1));
+                inv.setItem(4, new ItemStack(Material.CACTUS, 1));
+                inv.setItem(5, new ItemStack(Material.RED_MUSHROOM, 1));
+                inv.setItem(6, new ItemStack(Material.BROWN_MUSHROOM, 1));
+                inv.setItem(7, new ItemStack(Material.BREAD, 8));
+                inv.setItem(8, new ItemStack(Material.PUMPKIN_SEEDS, 1));
+                inv.setItem(9, new ItemStack(Material.MELON_SLICE, 1));
+                inv.setItem(10, new ItemStack(Material.TURTLE_EGG, 1));
+                chest.update(true, false);
+            }
+
+            w.setSpawnLocation(new Location(w, 0.5, 66.0, 0.5));
+        } else if ("ONEBLOCK".equalsIgnoreCase(pw.getGeneratorType())) {
+            // Build OneBlock base at 0, 64, 0
+            for (int x = -5; x <= 5; x++) {
+                for (int z = -5; z <= 5; z++) {
+                    for (int y = 50; y <= 75; y++) {
+                        w.getBlockAt(x, y, z).setType(Material.AIR, false);
+                    }
+                }
+            }
+            w.getBlockAt(0, 63, 0).setType(Material.BEDROCK, false);
+            w.getBlockAt(0, 64, 0).setType(Material.GRASS_BLOCK, false);
+            w.setSpawnLocation(new Location(w, 0.5, 65.0, 0.5));
+        }
     }
 
     public World getNether(PlayerWorld pw) {

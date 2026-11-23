@@ -92,3 +92,6 @@ commands:
   bedrock:
     description: Bedrock status, connectivity, and status codes (100 Outdated, 200 Good)
     aliases: [bedrockstatus, geyserstatus]
+  bugreport:
+    description: Report a bug, broken feature, or issue with coordinates and minigame tracking
+    aliases: [reportbug, bug, report]

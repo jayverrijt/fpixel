@@ -17,6 +17,8 @@ public class PlayerWorld {
     private String difficulty; // EASY, NORMAL, HARD, PEACEFUL
     private String defaultGameMode; // SURVIVAL, CREATIVE, ADVENTURE
     private boolean isPrimarySmp;
+    private String generatorType = "NORMAL"; // NORMAL, SKYBLOCK, ONEBLOCK
+    private boolean publicWorld = true;
     private Map<String, Boolean> sharedPlayers = new HashMap<>(); // username/UUID -> canCheat
     private boolean locked;
 
@@ -28,6 +30,10 @@ public class PlayerWorld {
     }
 
     public PlayerWorld(String uid, String name, UUID creatorUuid, String creatorName, long seed, boolean cheatsEnabled, String defaultGameMode, boolean isPrimarySmp) {
+        this(uid, name, creatorUuid, creatorName, seed, cheatsEnabled, defaultGameMode, "NORMAL", isPrimarySmp);
+    }
+
+    public PlayerWorld(String uid, String name, UUID creatorUuid, String creatorName, long seed, boolean cheatsEnabled, String defaultGameMode, String generatorType, boolean isPrimarySmp) {
         this.uid = uid;
         this.name = name;
         this.creatorUuid = creatorUuid;
@@ -36,13 +42,14 @@ public class PlayerWorld {
         this.seed = seed;
         this.cheatsEnabled = cheatsEnabled;
         this.defaultGameMode = defaultGameMode != null && !defaultGameMode.isBlank() ? defaultGameMode.toUpperCase() : "SURVIVAL";
+        this.generatorType = generatorType != null && !generatorType.isBlank() ? generatorType.toUpperCase() : "NORMAL";
         this.difficulty = "HARDCORE".equalsIgnoreCase(this.defaultGameMode) ? "HARD" : "NORMAL";
         this.isPrimarySmp = isPrimarySmp;
         this.locked = false;
     }
 
     public boolean canAccess(Player player) {
-        if (isPrimarySmp) return true;
+        if (isPrimarySmp || publicWorld) return true;
         if (creatorUuid != null && creatorUuid.equals(player.getUniqueId())) return true;
         String pName = player.getName().toLowerCase();
         String pNameClean = pName.startsWith(".") ? pName.substring(1) : pName;
@@ -104,6 +111,16 @@ public class PlayerWorld {
 
     public boolean isPrimarySmp() { return isPrimarySmp; }
     public void setPrimarySmp(boolean primarySmp) { isPrimarySmp = primarySmp; }
+
+    public String getGeneratorType() {
+        return generatorType != null && !generatorType.isBlank() ? generatorType.toUpperCase() : "NORMAL";
+    }
+    public void setGeneratorType(String generatorType) {
+        this.generatorType = generatorType != null && !generatorType.isBlank() ? generatorType.toUpperCase() : "NORMAL";
+    }
+
+    public boolean isPublicWorld() { return publicWorld; }
+    public void setPublicWorld(boolean publicWorld) { this.publicWorld = publicWorld; }
 
     public Map<String, Boolean> getSharedPlayers() { return sharedPlayers; }
     public void setSharedPlayers(Map<String, Boolean> sharedPlayers) { this.sharedPlayers = sharedPlayers; }

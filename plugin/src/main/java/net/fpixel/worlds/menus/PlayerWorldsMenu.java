@@ -93,6 +93,21 @@ public class PlayerWorldsMenu implements Listener {
             }
         }
 
+        // Create New World item at slot 48
+        ItemStack createItem = new ItemBuilder(Material.NETHER_STAR)
+                .name("§a§l+ Nieuwe Wereld Aanmaken")
+                .lore(
+                        "§7Start direct een nieuwe persoonlijke wereld!",
+                        "§7Keuze uit:",
+                        "§8 • §fNormal World Generation",
+                        "§8 • §bSkyBlock Island",
+                        "§8 • §dOneBlock Challenge",
+                        "",
+                        "§e▶ Klik om de wizard te openen!"
+                )
+                .build();
+        inv.setItem(48, createItem);
+
         // Info / Web account item at bottom center (slot 49)
         ItemStack infoItem = new ItemBuilder(Material.BOOK)
                 .name("§6§lBeheer op mc.fpixel.nl")
@@ -116,19 +131,21 @@ public class PlayerWorldsMenu implements Listener {
 
             SimpleForm.Builder builder = SimpleForm.builder()
                     .title("§2§lPlayer Worlds")
-                    .content(accessibleWorlds.isEmpty() ?
-                            "Geen werelden beschikbaar. Bezoek mc.fpixel.nl om een wereld aan te maken!" :
-                            "Kies een spelerwereld om naar toe te teleporteren:");
+                    .content("Kies een bestaande spelerwereld of maak een nieuwe aan:");
+
+            builder.button("§2§l+ Nieuwe Wereld Aanmaken\n§7Normal, Skyblock of OneBlock", FormImage.Type.PATH, "textures/ui/anvil_icon");
 
             for (PlayerWorld pw : accessibleWorlds) {
-                String sub = "Door " + pw.getCreatorName() + (pw.isCheatsEnabled() ? " | Cheats: AAN" : "");
+                String sub = "Door " + pw.getCreatorName() + (pw.isCheatsEnabled() ? " | Cheats: AAN" : "") + " | " + pw.getGeneratorType();
                 builder.button("§a§l" + pw.getName() + "\n§7" + sub, FormImage.Type.PATH, "textures/blocks/grass_carried");
             }
 
             builder.validResultHandler(response -> {
                 int clicked = response.clickedButtonId();
-                if (clicked >= 0 && clicked < accessibleWorlds.size()) {
-                    PlayerWorld target = accessibleWorlds.get(clicked);
+                if (clicked == 0) {
+                    Bukkit.getScheduler().runTask(plugin, this::openBedrockCreateWizard);
+                } else if (clicked - 1 >= 0 && clicked - 1 < accessibleWorlds.size()) {
+                    PlayerWorld target = accessibleWorlds.get(clicked - 1);
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         worldManager.teleportPlayerToWorld(player, target.getUid());
                     });
@@ -142,6 +159,52 @@ public class PlayerWorldsMenu implements Listener {
         }
     }
 
+    private void openBedrockCreateWizard() {
+        try {
+            FloodgatePlayer fp = plugin.getBedrockManager().getFloodgatePlayer(player);
+            if (fp == null) return;
+
+            org.geysermc.cumulus.form.CustomForm.Builder builder = org.geysermc.cumulus.form.CustomForm.builder()
+                    .title("§2§lWereld Aanmaken")
+                    .input("Wereldnaam", "Mijn Wereld", player.getName() + "'s Wereld")
+                    .dropdown("Generatietype", java.util.List.of("Normal World", "SkyBlock", "OneBlock"), 0)
+                    .dropdown("Gamemode", java.util.List.of("Survival", "Creative", "Hardcore"), 0)
+                    .toggle("Cheats Inschakelen", false)
+                    .dropdown("Zichtbaarheid / Delen", java.util.List.of("Iedereen (Openbaar)", "Alleen Ik (Privé)"), 0);
+
+            builder.validResultHandler(resp -> {
+                String rawName = resp.asInput(0);
+                String finalName = (rawName == null || rawName.isBlank()) ? player.getName() + "'s Wereld" : rawName;
+                int genIdx = resp.asDropdown(1);
+                int gmIdx = resp.asDropdown(2);
+                boolean cheats = resp.asToggle(3);
+                int shareIdx = resp.asDropdown(4);
+
+                String genType = genIdx == 1 ? "SKYBLOCK" : (genIdx == 2 ? "ONEBLOCK" : "NORMAL");
+                String gm = gmIdx == 1 ? "CREATIVE" : (gmIdx == 2 ? "HARDCORE" : "SURVIVAL");
+                boolean isPublic = shareIdx == 0;
+
+                String baseId = (player.getName() + "_" + genType).toLowerCase().replaceAll("[^a-z0-9_]", "");
+                String uid = baseId + "_" + (System.currentTimeMillis() % 10000);
+                long seed = new java.util.Random().nextLong();
+
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    player.sendMessage("§a§lBezig met genereren van je " + genType + " wereld...");
+                    PlayerWorld pw = worldManager.createWorld(uid, finalName, player.getName(), player.getUniqueId(), seed, cheats, gm, genType);
+                    if (!isPublic) {
+                        pw.setPublicWorld(false);
+                        worldManager.saveWorlds();
+                    }
+                    worldManager.teleportPlayerToWorld(player, pw.getUid());
+                });
+            });
+
+            fp.sendForm(builder.build());
+        } catch (Throwable t) {
+            player.sendMessage("§cKon wizard niet openen: " + t.getMessage());
+        }
+    }
+
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         if (!event.getInventory().equals(inv)) return;
@@ -149,6 +212,11 @@ public class PlayerWorldsMenu implements Listener {
 
         if (event.getWhoClicked() instanceof Player clicker && clicker.equals(player)) {
             int slot = event.getRawSlot();
+            if (slot == 48) {
+                player.closeInventory();
+                new WorldCreationWizardMenu(plugin, worldManager, player).open();
+                return;
+            }
             if (slot >= 10 && slot < 44) {
                 int index = getIndexFromSlot(slot);
                 if (index >= 0 && index < accessibleWorlds.size()) {

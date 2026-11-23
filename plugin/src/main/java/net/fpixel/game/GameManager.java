@@ -4,6 +4,7 @@ import net.fpixel.FPixelPlugin;
 import net.fpixel.core.util.ChatUtil;
 import net.fpixel.party.Party;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Snowball;
@@ -297,6 +298,91 @@ public class GameManager implements Listener {
         for (Arena arena : arenas.values()) {
             if (arena.getWorld() != null && arena.getWorld().equals(loc.getWorld())) {
                 arena.onBlockExplode(event);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBucketEmpty(org.bukkit.event.player.PlayerBucketEmptyEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            if (arena.getState() != GameState.IN_GAME) {
+                event.setCancelled(true);
+                return;
+            }
+            arena.onBucketEmpty(event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBucketFill(org.bukkit.event.player.PlayerBucketFillEvent event) {
+        Player player = event.getPlayer();
+        Arena arena = getPlayerArena(player);
+        if (arena != null) {
+            if (arena.getState() != GameState.IN_GAME) {
+                event.setCancelled(true);
+                return;
+            }
+            arena.onBucketFill(event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBlockFromTo(org.bukkit.event.block.BlockFromToEvent event) {
+        org.bukkit.World w = event.getBlock().getWorld();
+        for (Arena arena : arenas.values()) {
+            if (arena.getWorld() != null && arena.getWorld().equals(w)) {
+                if (arena.getState() == GameState.IN_GAME) {
+                    Location toLoc = event.getToBlock().getLocation();
+                    if (arena.getLobbySpawn() != null && toLoc.distanceSquared(arena.getLobbySpawn()) <= 150 * 150) {
+                        arena.getRollbackEngine().recordPlace(event.getToBlock());
+                    }
+                } else if (arena.getLobbySpawn() != null && event.getBlock().getLocation().distanceSquared(arena.getLobbySpawn()) <= 150 * 150) {
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBlockBurn(org.bukkit.event.block.BlockBurnEvent event) {
+        org.bukkit.World w = event.getBlock().getWorld();
+        for (Arena arena : arenas.values()) {
+            if (arena.getWorld() != null && arena.getWorld().equals(w)) {
+                if (arena.getState() == GameState.IN_GAME) {
+                    arena.getRollbackEngine().recordBreak(event.getBlock());
+                } else {
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBlockIgnite(org.bukkit.event.block.BlockIgniteEvent event) {
+        if (event.getBlock() != null) {
+            org.bukkit.World w = event.getBlock().getWorld();
+            for (Arena arena : arenas.values()) {
+                if (arena.getWorld() != null && arena.getWorld().equals(w)) {
+                    if (arena.getState() == GameState.IN_GAME) {
+                        arena.getRollbackEngine().recordPlace(event.getBlock());
+                    } else {
+                        event.setCancelled(true);
+                    }
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onEntityChangeBlock(org.bukkit.event.entity.EntityChangeBlockEvent event) {
+        if (event.getEntity() instanceof org.bukkit.entity.EnderDragon) {
+            for (Arena arena : arenas.values()) {
+                if (arena.getWorld() != null && arena.getWorld().equals(event.getBlock().getWorld())) {
+                    event.setCancelled(true);
+                    return;
+                }
             }
         }
     }

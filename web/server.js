@@ -1996,13 +1996,16 @@ app.post('/api/worlds/create', async (req, res) => {
   const user = getSessionUser(req);
   if (!user) return res.status(401).json({ error: 'Inloggen vereist.' });
 
-  const { name, seed, cheats, gamemode } = req.body;
+  const { name, seed, cheats, gamemode, generatorType } = req.body;
   if (!name || !name.trim()) {
     return res.status(400).json({ error: 'Vul een wereldnaam in.' });
   }
 
   const validModes = ['SURVIVAL', 'CREATIVE', 'HARDCORE'];
   const safeGamemode = validModes.includes((gamemode || '').toUpperCase()) ? (gamemode || '').toUpperCase() : 'SURVIVAL';
+
+  const validGens = ['NORMAL', 'SKYBLOCK', 'ONEBLOCK'];
+  const safeGenerator = validGens.includes((generatorType || '').toUpperCase()) ? (generatorType || '').toUpperCase() : 'NORMAL';
 
   const worldsObj = getPlayerWorlds();
   const username = user.username.toLowerCase();
@@ -2025,7 +2028,7 @@ app.post('/api/worlds/create', async (req, res) => {
   const cheatsBool = Boolean(cheats);
 
   try {
-    await sendRconCommand(`fpixel world create ${uid} ${safeName} ${user.username} ${worldSeed} ${cheatsBool} ${safeGamemode}`);
+    await sendRconCommand(`fpixel world create ${uid} ${safeName} ${user.username} ${worldSeed} ${cheatsBool} ${safeGamemode} ${safeGenerator}`);
 
     // Update and persist player_worlds.json immediately
     worldsObj[uid] = {
@@ -2037,6 +2040,7 @@ app.post('/api/worlds/create', async (req, res) => {
       seed: worldSeed,
       difficulty: safeGamemode === 'HARDCORE' ? 'HARD' : 'NORMAL',
       defaultGameMode: safeGamemode,
+      generatorType: safeGenerator,
       isPrimarySmp: false,
       sharedPlayers: {},
       locked: false
@@ -2046,7 +2050,7 @@ app.post('/api/worlds/create', async (req, res) => {
     res.json({
       success: true,
       uid,
-      message: `Wereld "${name.trim()}" (${uid}) [${safeGamemode}] is succesvol aangemaakt! Typ /joinworld ${uid} in Minecraft.`
+      message: `Wereld "${name.trim()}" (${uid}) [${safeGamemode} - ${safeGenerator}] is succesvol aangemaakt! Typ /joinworld ${uid} in Minecraft.`
     });
   } catch (err) {
     res.status(500).json({ error: 'Kon wereld niet aanmaken via server: ' + err.message });
@@ -2541,6 +2545,42 @@ app.post('/api/admin/watchdog/setscore', async (req, res) => {
     res.json({ success: true, message: reply || `Trust score van ${cleanPlayer} ingesteld op ${numScore}/100.` });
   } catch (err) {
     res.status(500).json({ error: 'Kon commando niet uitvoeren via Minecraft RCON: ' + err.message });
+  }
+});
+
+// Helper: getBugReports
+function getBugReports() {
+  const file = resolveFilePath('plugins/FPixelCore/bug_reports.json') || path.join(SERVER_DIR, 'plugins/FPixelCore/bug_reports.json');
+  if (file && fs.existsSync(file)) {
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf8'));
+    } catch (e) {
+      return [];
+    }
+  }
+  return [];
+}
+
+// API: /api/bugreports (List all bug reports)
+app.get('/api/bugreports', (req, res) => {
+  const reports = getBugReports();
+  res.json({ reports: Array.isArray(reports) ? reports : [] });
+});
+
+// API: /api/bugreports/resolve (Resolve bug report)
+app.post('/api/bugreports/resolve', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || (user.rank !== 'OWNER' && user.rank !== 'ADMIN')) {
+    return res.status(403).json({ error: 'Alleen staff kan bug reports oplossen.' });
+  }
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ error: 'Geen report ID opgegeven.' });
+
+  try {
+    const reply = await sendRconCommand(`bugreport resolve ${id}`);
+    res.json({ success: true, message: reply });
+  } catch (err) {
+    res.status(500).json({ error: 'RCON error: ' + err.message });
   }
 });
 

@@ -51,6 +51,7 @@ public class FPixelPlugin extends JavaPlugin {
     private net.fpixel.worlds.PlayerWorldManager playerWorldManager;
     private net.fpixel.games.maker.MapMakerManager mapMakerManager;
     private net.fpixel.core.watchdog.WatchdogManager watchdogManager;
+    private net.fpixel.core.bugreport.BugReportManager bugReportManager;
 
 
     @Override
@@ -83,6 +84,7 @@ public class FPixelPlugin extends JavaPlugin {
         this.playerWorldManager = new net.fpixel.worlds.PlayerWorldManager(this);
         this.mapMakerManager = new net.fpixel.games.maker.MapMakerManager(this);
         this.watchdogManager = new net.fpixel.core.watchdog.WatchdogManager(this);
+        this.bugReportManager = new net.fpixel.core.bugreport.BugReportManager(this);
 
         // 2. Visual & Display Managers (Scoreboards & Tablist)
         this.scoreboardManager = new ScoreboardManager(this);
@@ -99,6 +101,8 @@ public class FPixelPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new net.fpixel.games.parkour.ParkourListener(this, this.parkourManager), this);
         Bukkit.getPluginManager().registerEvents(new net.fpixel.lobby.portal.HubPortalListener(this.hubPortalManager), this);
         Bukkit.getPluginManager().registerEvents(new net.fpixel.core.watchdog.WatchdogListener(this, this.watchdogManager), this);
+        Bukkit.getPluginManager().registerEvents(new net.fpixel.worlds.OneBlockListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new net.fpixel.survival.CropPlantListener(this), this);
 
 
         // 4. Register Commands
@@ -189,6 +193,10 @@ public class FPixelPlugin extends JavaPlugin {
         net.fpixel.commands.BedrockStatusCommand bedrockCmd = new net.fpixel.commands.BedrockStatusCommand(this);
         getCommand("bedrock").setExecutor(bedrockCmd);
         getCommand("bedrock").setTabCompleter(bedrockCmd);
+
+        net.fpixel.core.bugreport.BugReportCommand bugReportCmd = new net.fpixel.core.bugreport.BugReportCommand(this, this.bugReportManager);
+        getCommand("bugreport").setExecutor(bugReportCmd);
+        getCommand("bugreport").setTabCompleter(bugReportCmd);
 
         // 5. Build Grand Hub and 30 Minigame Maps (10 per game)
         this.worldManager = new WorldManager(this);
@@ -281,6 +289,7 @@ public class FPixelPlugin extends JavaPlugin {
     public net.fpixel.worlds.PlayerWorldManager getPlayerWorldManager() { return playerWorldManager; }
     public net.fpixel.games.maker.MapMakerManager getMapMakerManager() { return mapMakerManager; }
     public net.fpixel.core.watchdog.WatchdogManager getWatchdogManager() { return watchdogManager; }
+    public net.fpixel.core.bugreport.BugReportManager getBugReportManager() { return bugReportManager; }
 
     @Override
     public org.bukkit.generator.ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {

@@ -224,6 +224,17 @@ public abstract class Arena {
         // Instant map rollback
         rollbackEngine.rollback();
 
+        // Clean up entities (dropped items, arrows, monsters, primed TNT, falling blocks) in arena
+        if (getWorld() != null && (lobbySpawn != null || spectatorSpawn != null)) {
+            Location center = lobbySpawn != null ? lobbySpawn : spectatorSpawn;
+            for (org.bukkit.entity.Entity e : getWorld().getEntities()) {
+                if (e instanceof Player) continue;
+                if (e.getLocation().distanceSquared(center) <= 150 * 150) {
+                    e.remove();
+                }
+            }
+        }
+
         onArenaReset();
         state = GameState.WAITING;
     }
@@ -479,8 +490,12 @@ public abstract class Arena {
 
     public void onPlayerJoin(Player player) {}
     public void onPlayerLeave(Player player) {}
-    public void onBlockBreak(BlockBreakEvent event) {}
-    public void onBlockPlace(BlockPlaceEvent event) {}
+    public void onBlockBreak(BlockBreakEvent event) {
+        event.setCancelled(true);
+    }
+    public void onBlockPlace(BlockPlaceEvent event) {
+        event.setCancelled(true);
+    }
     public void onPlayerDamage(EntityDamageByEntityEvent event) {}
     public void onPlayerDeath(PlayerDeathEvent event) {}
     public void onPlayerMove(PlayerMoveEvent event) {}
@@ -492,8 +507,47 @@ public abstract class Arena {
     public void onPlayerDropItem(org.bukkit.event.player.PlayerDropItemEvent event) {}
     public void onPlayerSwapHandItems(org.bukkit.event.player.PlayerSwapHandItemsEvent event) {}
     public void onItemConsume(org.bukkit.event.player.PlayerItemConsumeEvent event) {}
-    public void onEntityExplode(org.bukkit.event.entity.EntityExplodeEvent event) {}
-    public void onBlockExplode(org.bukkit.event.block.BlockExplodeEvent event) {}
+
+    public void onEntityExplode(org.bukkit.event.entity.EntityExplodeEvent event) {
+        if (state != GameState.IN_GAME) {
+            event.setCancelled(true);
+            return;
+        }
+        for (org.bukkit.block.Block b : event.blockList()) {
+            if (!rollbackEngine.isPlayerPlaced(b.getLocation())) {
+                rollbackEngine.logBlockBreak(b);
+            }
+        }
+    }
+
+    public void onBlockExplode(org.bukkit.event.block.BlockExplodeEvent event) {
+        if (state != GameState.IN_GAME) {
+            event.setCancelled(true);
+            return;
+        }
+        for (org.bukkit.block.Block b : event.blockList()) {
+            if (!rollbackEngine.isPlayerPlaced(b.getLocation())) {
+                rollbackEngine.logBlockBreak(b);
+            }
+        }
+    }
+
+    public void onBucketEmpty(org.bukkit.event.player.PlayerBucketEmptyEvent event) {
+        if (state != GameState.IN_GAME) {
+            event.setCancelled(true);
+            return;
+        }
+        org.bukkit.block.Block placed = event.getBlockClicked().getRelative(event.getBlockFace());
+        rollbackEngine.recordPlace(placed);
+    }
+
+    public void onBucketFill(org.bukkit.event.player.PlayerBucketFillEvent event) {
+        if (state != GameState.IN_GAME) {
+            event.setCancelled(true);
+            return;
+        }
+        rollbackEngine.recordBreak(event.getBlockClicked());
+    }
 
     public boolean isSpectator(UUID uuid) {
         return spectators.contains(uuid);

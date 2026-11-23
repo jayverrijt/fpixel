@@ -15,6 +15,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -26,6 +27,7 @@ public class SkyWarsGame extends Arena {
     private final List<Location> islandSpawns = new ArrayList<>();
     private final List<Location> islandChests = new ArrayList<>();
     private final List<Location> midChests = new ArrayList<>();
+    private final Set<Location> populatedChests = new HashSet<>();
     private final List<Location> cageBlocks = new ArrayList<>();
     private final Map<UUID, Integer> kills = new HashMap<>();
     private final Map<UUID, SkyWarsKit> selectedKits = new HashMap<>();
@@ -133,6 +135,7 @@ public class SkyWarsGame extends Arena {
             if (loc.getBlock().getState() instanceof Chest chest) {
                 fillIslandChest(chest.getBlockInventory());
                 chest.update(true, false);
+                populatedChests.add(loc);
             }
         }
         for (Location loc : midChests) {
@@ -140,6 +143,7 @@ public class SkyWarsGame extends Arena {
             if (loc.getBlock().getState() instanceof Chest chest) {
                 fillMidChest(chest.getBlockInventory());
                 chest.update(true, false);
+                populatedChests.add(loc);
             }
         }
     }
@@ -191,11 +195,18 @@ public class SkyWarsGame extends Arena {
     }
 
     public void fillChestDynamically(Chest chest) {
-        if (chest == null || !chest.getBlockInventory().isEmpty()) return;
+        if (chest == null) return;
+        Location loc = chest.getLocation();
+        if (populatedChests.contains(loc)) return; // Already looted or populated this round: do not refill!
+        if (!chest.getBlockInventory().isEmpty()) {
+            populatedChests.add(loc);
+            return;
+        }
         Location center = (lobbySpawn != null) ? lobbySpawn : (spectatorSpawn != null ? spectatorSpawn : null);
         if (center == null) {
             fillIslandChest(chest.getBlockInventory());
             chest.update(true, false);
+            populatedChests.add(loc);
             return;
         }
         double dist = Math.sqrt(Math.pow(chest.getX() - center.getBlockX(), 2) + Math.pow(chest.getZ() - center.getBlockZ(), 2));
@@ -205,6 +216,7 @@ public class SkyWarsGame extends Arena {
             fillIslandChest(chest.getBlockInventory());
         }
         chest.update(true, false);
+        populatedChests.add(loc);
     }
 
     public static void fillStaticIslandChest(Inventory inv) {
@@ -270,6 +282,7 @@ public class SkyWarsGame extends Arena {
 
         // Timed SkyWars Events
         if (gameTime == 120) {
+            populatedChests.clear();
             populateChests();
             broadcast("§a§lCHEST REFILL §8» §eAll chests have been refilled!");
             for (Player p : getAllBukkitPlayers()) {
@@ -277,6 +290,7 @@ public class SkyWarsGame extends Arena {
                 ChatUtil.playSound(p, Sound.BLOCK_CHEST_OPEN, 1.0f, 1.2f);
             }
         } else if (gameTime == 240) {
+            populatedChests.clear();
             populateChests();
             for (Location loc : midChests) {
                 if (loc.getBlock().getState() instanceof Chest chest) {
@@ -329,6 +343,21 @@ public class SkyWarsGame extends Arena {
             return;
         }
         rollbackEngine.recordPlace(event.getBlockPlaced());
+    }
+
+    @Override
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if (state != GameState.IN_GAME) return;
+        if (event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) return;
+        Block b = event.getClickedBlock();
+        if (b == null || (b.getType() != Material.CHEST && b.getType() != Material.TRAPPED_CHEST)) return;
+        if (b.getState() instanceof Chest chest) {
+            Location loc = chest.getLocation();
+            if (!populatedChests.contains(loc)) {
+                fillChestDynamically(chest);
+                populatedChests.add(loc);
+            }
+        }
     }
 
     @Override
@@ -411,6 +440,7 @@ public class SkyWarsGame extends Arena {
     @Override
     public void onArenaReset() {
         kills.clear();
+        populatedChests.clear();
         buildAndBreakCages();
         for (Location loc : islandChests) {
             if (loc.getBlock().getState() instanceof Chest chest) chest.getBlockInventory().clear();

@@ -484,24 +484,13 @@ public class LobbyListener implements Listener {
 
         if (loc == null || loc.getWorld() == null) return;
 
-        Arena arena = plugin.getGameManager().getPlayerArena(player);
-        if (arena instanceof net.fpixel.games.skywars.SkyWarsGame sw) {
-            Location center = (sw.getLobbySpawn() != null) ? sw.getLobbySpawn() : sw.getSpectatorSpawn();
-            double dist = center != null ? Math.sqrt(Math.pow(loc.getX() - center.getBlockX(), 2) + Math.pow(loc.getZ() - center.getBlockZ(), 2)) : 50;
+        String wName = loc.getWorld().getName().toLowerCase();
+        if (wName.startsWith("map_build_") || (plugin.getMapMakerManager() != null && plugin.getMapMakerManager().isBuilderWorld(loc.getWorld()))) {
+            double dist = Math.sqrt(Math.pow(loc.getX(), 2) + Math.pow(loc.getZ(), 2));
             if (dist <= 22) {
                 net.fpixel.games.skywars.SkyWarsGame.fillStaticMidChest(inv);
             } else {
                 net.fpixel.games.skywars.SkyWarsGame.fillStaticIslandChest(inv);
-            }
-        } else {
-            String wName = loc.getWorld().getName().toLowerCase();
-            if (wName.startsWith("map_build_") || (plugin.getMapMakerManager() != null && plugin.getMapMakerManager().isBuilderWorld(loc.getWorld()))) {
-                double dist = Math.sqrt(Math.pow(loc.getX(), 2) + Math.pow(loc.getZ(), 2));
-                if (dist <= 22) {
-                    net.fpixel.games.skywars.SkyWarsGame.fillStaticMidChest(inv);
-                } else {
-                    net.fpixel.games.skywars.SkyWarsGame.fillStaticIslandChest(inv);
-                }
             }
         }
     }
@@ -515,22 +504,14 @@ public class LobbyListener implements Listener {
         if (!(block.getState() instanceof org.bukkit.block.Chest chest)) return;
 
         Player player = event.getPlayer();
-        Arena arena = plugin.getGameManager().getPlayerArena(player);
-
-        if (arena instanceof net.fpixel.games.skywars.SkyWarsGame sw) {
+        String wName = block.getWorld().getName().toLowerCase();
+        if (wName.startsWith("map_build_") || (plugin.getMapMakerManager() != null && plugin.getMapMakerManager().isBuilderWorld(block.getWorld()))) {
             if (chest.getBlockInventory().isEmpty()) {
-                sw.fillChestDynamically(chest);
-            }
-        } else {
-            String wName = block.getWorld().getName().toLowerCase();
-            if (wName.startsWith("map_build_") || (plugin.getMapMakerManager() != null && plugin.getMapMakerManager().isBuilderWorld(block.getWorld()))) {
-                if (chest.getBlockInventory().isEmpty()) {
-                    double dist = Math.sqrt(Math.pow(chest.getX(), 2) + Math.pow(chest.getZ(), 2));
-                    if (dist <= 22) {
-                        net.fpixel.games.skywars.SkyWarsGame.fillStaticMidChest(chest.getBlockInventory());
-                    } else {
-                        net.fpixel.games.skywars.SkyWarsGame.fillStaticIslandChest(chest.getBlockInventory());
-                    }
+                double dist = Math.sqrt(Math.pow(chest.getX(), 2) + Math.pow(chest.getZ(), 2));
+                if (dist <= 22) {
+                    net.fpixel.games.skywars.SkyWarsGame.fillStaticMidChest(chest.getBlockInventory());
+                } else {
+                    net.fpixel.games.skywars.SkyWarsGame.fillStaticIslandChest(chest.getBlockInventory());
                 }
             }
         }
