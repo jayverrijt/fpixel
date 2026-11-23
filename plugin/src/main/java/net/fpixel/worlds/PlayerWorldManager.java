@@ -12,9 +12,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -289,8 +291,7 @@ public class PlayerWorldManager implements Listener {
         }
         String path = "player_worlds/" + pw.getUid();
         World w = Bukkit.getWorld(path);
-        File worldFolder = new File(plugin.getServer().getWorldContainer(), path);
-        boolean isBrandNew = !worldFolder.exists() || w == null;
+        boolean isNew = !pw.isInitialized();
 
         if (w == null) {
             WorldCreator wc = new WorldCreator(path)
@@ -310,11 +311,40 @@ public class PlayerWorldManager implements Listener {
                 w.setDifficulty(Difficulty.NORMAL);
             }
 
-            if (isBrandNew) {
+            if (isNew) {
                 initializeSpecialWorld(pw, w);
+                pw.setInitialized(true);
+                saveWorlds();
             }
         }
         return w;
+    }
+
+    public void populateSkyblockChest(World w) {
+        if (w == null) return;
+        if (!w.isChunkLoaded(0, 0)) {
+            w.getChunkAt(0, 0).load(true);
+        }
+        org.bukkit.block.Block chestBlock = w.getBlockAt(1, 66, 4);
+        chestBlock.setType(Material.CHEST, true);
+        if (chestBlock.getState() instanceof org.bukkit.block.Chest chest) {
+            org.bukkit.inventory.Inventory inv = chest.getInventory();
+            if (inv.isEmpty()) {
+                inv.setItem(0, new ItemStack(Material.ICE, 2));
+                inv.setItem(1, new ItemStack(Material.LAVA_BUCKET, 1));
+                inv.setItem(2, new ItemStack(Material.BONE_MEAL, 2));
+                inv.setItem(3, new ItemStack(Material.SUGAR_CANE, 1));
+                inv.setItem(4, new ItemStack(Material.CACTUS, 1));
+                inv.setItem(5, new ItemStack(Material.RED_MUSHROOM, 1));
+                inv.setItem(6, new ItemStack(Material.BROWN_MUSHROOM, 1));
+                inv.setItem(7, new ItemStack(Material.BREAD, 8));
+                inv.setItem(8, new ItemStack(Material.PUMPKIN_SEEDS, 1));
+                inv.setItem(9, new ItemStack(Material.MELON_SLICE, 1));
+                inv.setItem(10, new ItemStack(Material.OAK_SAPLING, 1));
+                inv.setItem(11, new ItemStack(Material.TURTLE_EGG, 1));
+                chest.update(true, true);
+            }
+        }
     }
 
     private void initializeSpecialWorld(PlayerWorld pw, World w) {
@@ -367,24 +397,8 @@ public class PlayerWorldManager implements Listener {
             w.getBlockAt(-1, 71, -2).setType(Material.OAK_LEAVES, false);
 
             // Starter Chest at (1, 66, 4)
-            org.bukkit.block.Block chestBlock = w.getBlockAt(1, 66, 4);
-            chestBlock.setType(Material.CHEST, false);
-            if (chestBlock.getState() instanceof org.bukkit.block.Chest chest) {
-                org.bukkit.inventory.Inventory inv = chest.getBlockInventory();
-                inv.clear();
-                inv.setItem(0, new ItemStack(Material.ICE, 2));
-                inv.setItem(1, new ItemStack(Material.LAVA_BUCKET, 1));
-                inv.setItem(2, new ItemStack(Material.BONE_MEAL, 2));
-                inv.setItem(3, new ItemStack(Material.SUGAR_CANE, 1));
-                inv.setItem(4, new ItemStack(Material.CACTUS, 1));
-                inv.setItem(5, new ItemStack(Material.RED_MUSHROOM, 1));
-                inv.setItem(6, new ItemStack(Material.BROWN_MUSHROOM, 1));
-                inv.setItem(7, new ItemStack(Material.BREAD, 8));
-                inv.setItem(8, new ItemStack(Material.PUMPKIN_SEEDS, 1));
-                inv.setItem(9, new ItemStack(Material.MELON_SLICE, 1));
-                inv.setItem(10, new ItemStack(Material.TURTLE_EGG, 1));
-                chest.update(true, false);
-            }
+            populateSkyblockChest(w);
+            Bukkit.getScheduler().runTask(plugin, () -> populateSkyblockChest(w));
 
             w.setSpawnLocation(new Location(w, 0.5, 66.0, 0.5));
         } else if ("ONEBLOCK".equalsIgnoreCase(pw.getGeneratorType())) {
@@ -396,7 +410,8 @@ public class PlayerWorldManager implements Listener {
                     }
                 }
             }
-            w.getBlockAt(0, 63, 0).setType(Material.BEDROCK, false);
+            // No bedrock underneath per user request: floating OneBlock
+            w.getBlockAt(0, 63, 0).setType(Material.AIR, false);
             w.getBlockAt(0, 64, 0).setType(Material.GRASS_BLOCK, false);
             w.setSpawnLocation(new Location(w, 0.5, 65.0, 0.5));
         }
@@ -505,8 +520,8 @@ public class PlayerWorldManager implements Listener {
             return false;
         }
 
-        Location spawn = targetWorld.getSpawnLocation().clone().add(0.5, 0.5, 0.5);
-        player.teleport(spawn);
+        Location spawn = targetWorld.getSpawnLocation();
+        player.teleport(new Location(targetWorld, spawn.getBlockX() + 0.5, spawn.getY(), spawn.getBlockZ() + 0.5, spawn.getYaw(), spawn.getPitch()));
 
         currentWorldSession.put(player.getUniqueId(), pw.getUid());
         loadPlayerState(player, pw.getUid());
@@ -743,7 +758,8 @@ public class PlayerWorldManager implements Listener {
                 if (bed != null && bed.getWorld() != null && bed.getWorld().getName().startsWith("player_worlds/" + pw.getUid())) {
                     event.setRespawnLocation(bed);
                 } else {
-                    event.setRespawnLocation(ow.getSpawnLocation().clone().add(0.5, 0.5, 0.5));
+                    Location spawn = ow.getSpawnLocation();
+                    event.setRespawnLocation(new Location(ow, spawn.getBlockX() + 0.5, spawn.getY(), spawn.getBlockZ() + 0.5, spawn.getYaw(), spawn.getPitch()));
                 }
             }
             if ("HARDCORE".equalsIgnoreCase(pw.getDefaultGameMode())) {
@@ -753,6 +769,23 @@ public class PlayerWorldManager implements Listener {
                 });
             }
             plugin.getScoreboardManager().remove(player);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onSkyblockChestOpen(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        org.bukkit.block.Block block = event.getClickedBlock();
+        if (block == null || block.getType() != Material.CHEST) return;
+        if (block.getX() == 1 && block.getY() == 66 && block.getZ() == 4) {
+            PlayerWorld pw = getWorldForLocation(block.getLocation());
+            if (pw != null && "SKYBLOCK".equalsIgnoreCase(pw.getGeneratorType())) {
+                if (block.getState() instanceof org.bukkit.block.Chest chest) {
+                    if (chest.getInventory().isEmpty()) {
+                        populateSkyblockChest(block.getWorld());
+                    }
+                }
+            }
         }
     }
 

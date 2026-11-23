@@ -21,6 +21,7 @@ public class PlayerWorld {
     private boolean publicWorld = true;
     private Map<String, Boolean> sharedPlayers = new HashMap<>(); // username/UUID -> canCheat
     private boolean locked;
+    private boolean initialized = false;
 
     public PlayerWorld() {
     }
@@ -127,4 +128,7 @@ public class PlayerWorld {
 
     public boolean isLocked() { return locked; }
     public void setLocked(boolean locked) { this.locked = locked; }
+
+    public boolean isInitialized() { return initialized; }
+    public void setInitialized(boolean initialized) { this.initialized = initialized; }
 }

@@ -52,6 +52,8 @@ def rcon_command(host, port, password, cmd):
 rcon_command("127.0.0.1", 25575, "fpixel_rcon_2026", "save-all")
 EOF
     sleep 2
+    # Ensure all server data files are readable by backup script
+    docker exec "${CONTAINER_NAME}" chmod -R a+rX /data 2>/dev/null || true
 fi
 
 # 2. Prepare isolated git worktree
@@ -95,23 +97,23 @@ echo "Archiving server dimensions, player profiles, and plugin data..."
 mkdir -p "${WORKTREE_DIR}/server"
 
 if [ -d "${SERVER_DIR}/world" ]; then
-    cp -a "${SERVER_DIR}/world" "${WORKTREE_DIR}/server/"
+    cp -r "${SERVER_DIR}/world" "${WORKTREE_DIR}/server/" || true
 fi
 if [ -d "${SERVER_DIR}/config" ]; then
-    cp -a "${SERVER_DIR}/config" "${WORKTREE_DIR}/server/"
+    cp -r "${SERVER_DIR}/config" "${WORKTREE_DIR}/server/" || true
 fi
 mkdir -p "${WORKTREE_DIR}/server/plugins"
 if [ -d "${SERVER_DIR}/plugins/FPixelCore" ]; then
-    cp -a "${SERVER_DIR}/plugins/FPixelCore" "${WORKTREE_DIR}/server/plugins/"
+    cp -r "${SERVER_DIR}/plugins/FPixelCore" "${WORKTREE_DIR}/server/plugins/" || true
 fi
 if [ -d "${SERVER_DIR}/plugins/SkinsRestorer" ]; then
-    cp -a "${SERVER_DIR}/plugins/SkinsRestorer" "${WORKTREE_DIR}/server/plugins/"
+    cp -r "${SERVER_DIR}/plugins/SkinsRestorer" "${WORKTREE_DIR}/server/plugins/" || true
 fi
 
 # Copy server root configs
 for f in server.properties bukkit.yml spigot.yml ops.json whitelist.json usercache.json; do
     if [ -f "${SERVER_DIR}/${f}" ]; then
-        cp -f "${SERVER_DIR}/${f}" "${WORKTREE_DIR}/server/"
+        cp -f "${SERVER_DIR}/${f}" "${WORKTREE_DIR}/server/" || true
     fi
 done
 
