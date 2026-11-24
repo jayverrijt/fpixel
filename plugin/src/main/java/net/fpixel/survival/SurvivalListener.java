@@ -147,6 +147,7 @@ public class SurvivalListener implements Listener {
                 plugin.getSurvivalManager().addSurvivalPlayer(player);
                 plugin.getSurvivalManager().getProfileManager().loadProfile(player, player.getWorld());
             }
+            org.bukkit.Bukkit.broadcast(net.fpixel.core.util.ChatUtil.component("§e" + player.getName() + " joined the Survival realm."));
         }
     }
 

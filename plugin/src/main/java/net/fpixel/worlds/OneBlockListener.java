@@ -80,8 +80,10 @@ public class OneBlockListener implements Listener {
                 world.loadChunk(0, 0, true);
             }
 
-            // Ensure bedrock underneath remains safe
-            world.getBlockAt(0, 63, 0).setType(Material.BEDROCK, false);
+            // Ensure no bedrock block underneath the OneBlock
+            if (world.getBlockAt(0, 63, 0).getType() == Material.BEDROCK) {
+                world.getBlockAt(0, 63, 0).setType(Material.AIR, false);
+            }
 
             Block target = world.getBlockAt(0, 64, 0);
 

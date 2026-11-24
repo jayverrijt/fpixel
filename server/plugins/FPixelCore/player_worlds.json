@@ -16,7 +16,8 @@
       ".minnieheks": true,
       "amigapower2018": true
     },
-    "locked": false
+    "locked": false,
+    "initialized": false
   },
   "W89O3OL": {
     "uid": "W89O3OL",
@@ -33,7 +34,8 @@
     "sharedPlayers": {
       "amigapower2018": true
     },
-    "locked": false
+    "locked": false,
+    "initialized": true
   },
   "WP60V6B": {
     "uid": "WP60V6B",
@@ -50,6 +52,7 @@
     "sharedPlayers": {
       "smileygaming27": false
     },
-    "locked": false
+    "locked": false,
+    "initialized": false
   }
 }
