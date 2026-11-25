@@ -1,0 +1,97 @@
+location:
+  world: survival
+  x: -928.230407009822
+  y: 58.0
+  z: -144.984227909811
+  yaw: -15.943665
+  pitch: 17.550028
+level: 0
+exp: 0.2857143
+health: 17.0
+food: 16
+inventory:
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:carrot
+  count: 3
+  schema_version: 1
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+armor:
+- null
+- null
+- null
+- null
+offhand:
+  ==: org.bukkit.inventory.ItemStack
+  schema_version: 1
+  id: minecraft:air
+  DataVersion: 5023
+enderchest:
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null
+- null

@@ -138,6 +138,27 @@
     "spectatorSpawn": "map_build_sw-1885,0.5,74.0,0.5,0.0,90.0",
     "waitingLobby": "map_build_sw-1885,0.5,100.0,0.5,0.0,0.0"
   },
+  "tr-4708": {
+    "id": "tr-4708",
+    "name": "?",
+    "gameType": "TNTRUN",
+    "creatorUuid": "51ccfa37-b463-37f5-b2af-57d704e00cc0",
+    "creatorName": ".minnieheks",
+    "teamCount": 4,
+    "status": "DRAFT",
+    "worldName": "map_build_tr-4708",
+    "createdAt": 1795539738041,
+    "updatedAt": 1795539738041,
+    "teamSpawns": [],
+    "teamBeds": [],
+    "teamGenerators": [],
+    "midChests": [],
+    "islandChests": [],
+    "midGenerators": [],
+    "parkourCheckpoints": [],
+    "spectatorSpawn": "map_build_tr-4708,0.5,65.0,0.5,0.0,0.0",
+    "waitingLobby": "map_build_tr-4708,0.5,100.0,0.5,0.0,0.0"
+  },
   "sw-5975": {
     "id": "sw-5975",
     "name": "Old Castle",

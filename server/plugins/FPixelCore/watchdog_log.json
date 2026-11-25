@@ -1,0 +1,26 @@
+[
+  {
+    "timestamp": "2026-11-24 11:30:22",
+    "player": "robodin08",
+    "uuid": "e6fb34fd-33c1-3b6f-aba4-b634f05e2891",
+    "brand": "fabric",
+    "score": 85,
+    "reason": "Onmogelijke aanvalsafstand / Reach Hack (5.24 blocks)"
+  },
+  {
+    "timestamp": "2026-11-24 11:28:46",
+    "player": "robodin08",
+    "uuid": "e6fb34fd-33c1-3b6f-aba4-b634f05e2891",
+    "brand": "fabric",
+    "score": 85,
+    "reason": "Abnormale snelheid / Speed Hack (1.25 b/t)"
+  },
+  {
+    "timestamp": "2026-11-24 11:20:43",
+    "player": "robodin08",
+    "uuid": "e6fb34fd-33c1-3b6f-aba4-b634f05e2891",
+    "brand": "fabric",
+    "score": 85,
+    "reason": "Abnormale snelheid / Speed Hack (1.36 b/t)"
+  }
+]

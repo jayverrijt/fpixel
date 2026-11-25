@@ -1,35 +1,27 @@
 location:
   world: survival
-  x: 1283.8505
+  x: 1311.6265
   y: 55.0
-  z: 98.3271
-  yaw: -150.53912
-  pitch: 22.132095
+  z: 109.38728
+  yaw: 173.88873
+  pitch: 0.23225403
 level: 6
 exp: 0.31578952
 health: 20.0
 food: 15
 inventory:
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:blackstone
-  count: 64
+  id: minecraft:stone_brick_wall
+  count: 12
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:gilded_blackstone
-  count: 18
+  id: minecraft:chest
+  count: 1
   schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:sulfur_spike
-  count: 3
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:basalt
-  count: 4
-  schema_version: 1
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:stone
@@ -55,87 +47,44 @@ inventory:
   id: minecraft:glass
   count: 1
   schema_version: 1
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:chiseled_polished_blackstone
+  id: minecraft:diamond_sword
+  count: 1
+  components:
+    minecraft:damage: '189'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_pickaxe
+  count: 1
+  components:
+    minecraft:damage: '226'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:diamond_shovel
+  count: 1
+  components:
+    minecraft:damage: '78'
+  schema_version: 1
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:bone
   count: 2
   schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:gilded_blackstone
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:potent_sulfur
-  count: 1
-  schema_version: 1
 - null
 - null
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:lava_bucket
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:lava_bucket
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:lava_bucket
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:lava_bucket
-  count: 1
-  schema_version: 1
-- null
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:stone_brick_wall
-  count: 34
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:chest
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:grass_block
-  count: 1
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:polished_blackstone_bricks
-  count: 4
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:polished_blackstone
-  count: 1
-  schema_version: 1
-- null
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:blackstone
-  count: 25
-  schema_version: 1
 - null
 - null
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:cobbled_deepslate
-  count: 64
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:cobbled_deepslate
-  count: 4
-  schema_version: 1
+- null
+- null
+- null
+- null
+- null
+- null
+- null
 - null
 - null
 - null
@@ -143,9 +92,14 @@ inventory:
 - null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:cracked_polished_blackstone_bricks
-  count: 11
+  id: minecraft:sulfur_spike
+  count: 2
   schema_version: 1
+- null
+- null
+- null
+- null
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:diamond_boots

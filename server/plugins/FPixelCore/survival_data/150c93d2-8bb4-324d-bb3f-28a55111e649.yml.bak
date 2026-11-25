@@ -1,12 +1,12 @@
 location:
   world: survival
-  x: -881.3522735604356
-  y: 63.0
-  z: -133.86890118434457
-  yaw: -94.661865
-  pitch: 14.592251
+  x: -977.556268661411
+  y: 58.0
+  z: -197.58351200025055
+  yaw: 147.78648
+  pitch: 10.353059
 level: 71
-exp: 0.93183285
+exp: 0.95054394
 health: 20.0
 food: 20
 inventory:
@@ -17,7 +17,7 @@ inventory:
   components:
     minecraft:repair_cost: '7'
     minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:mending":1,"minecraft:silk_touch":1,"minecraft:unbreaking":3}'
-    minecraft:damage: '318'
+    minecraft:damage: '379'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -36,7 +36,7 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:stone_brick_wall
-  count: 13
+  count: 57
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -46,7 +46,7 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:cobblestone
-  count: 39
+  count: 4
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -60,16 +60,12 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:cooked_beef
-  count: 11
+  count: 8
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:diamond_sword
+  id: minecraft:carrot
   count: 1
-  components:
-    minecraft:repair_cost: '15'
-    minecraft:enchantments: '{"minecraft:fire_aspect":2,"minecraft:knockback":2,"minecraft:looting":3,"minecraft:sharpness":5,"minecraft:unbreaking":3}'
-    minecraft:damage: '463'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -119,7 +115,7 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:magma_cream
-  count: 3
+  count: 6
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -149,18 +145,14 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:netherrack
-  count: 33
+  count: 64
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:netherrack
-  count: 23
-  schema_version: 1
-- ==: org.bukkit.inventory.ItemStack
-  DataVersion: 5023
-  id: minecraft:cobblestone
   count: 64
   schema_version: 1
+- null
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:iron_ingot
@@ -169,11 +161,11 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:oak_planks
-  count: 64
+  count: 55
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:stone_brick_wall
+  id: minecraft:basalt
   count: 64
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
@@ -183,13 +175,13 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:stone_brick_wall
-  count: 64
+  id: minecraft:blackstone
+  count: 10
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:stone_brick_wall
-  count: 64
+  id: minecraft:nautilus_shell
+  count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -208,8 +200,12 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:rotten_flesh
-  count: 8
+  id: minecraft:diamond_sword
+  count: 1
+  components:
+    minecraft:repair_cost: '15'
+    minecraft:enchantments: '{"minecraft:fire_aspect":2,"minecraft:knockback":2,"minecraft:looting":3,"minecraft:sharpness":5,"minecraft:unbreaking":3}'
+    minecraft:damage: '466'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -250,6 +246,7 @@ inventory:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:impaling":4,"minecraft:mending":1,"minecraft:riptide":2,"minecraft:unbreaking":3}'
+    minecraft:damage: '1'
   schema_version: 1
 - null
 - null
@@ -294,6 +291,7 @@ offhand:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:impaling":4,"minecraft:mending":1,"minecraft:riptide":2,"minecraft:unbreaking":3}'
+    minecraft:damage: '1'
   schema_version: 1
 enderchest:
 - null
