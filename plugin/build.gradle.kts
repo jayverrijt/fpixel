@@ -20,6 +20,19 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:26.3.build.227-stable")
     compileOnly("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")
+
+    testImplementation("io.papermc.paper:paper-api:26.3.build.227-stable")
+    testImplementation("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
 }
 
 tasks.withType<JavaCompile> {

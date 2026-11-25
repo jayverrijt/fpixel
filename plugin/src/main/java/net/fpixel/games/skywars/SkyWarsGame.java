@@ -134,7 +134,6 @@ public class SkyWarsGame extends Arena {
             ensureChunkLoaded(loc);
             if (loc.getBlock().getState() instanceof Chest chest) {
                 fillIslandChest(chest.getBlockInventory());
-                chest.update(true, false);
                 populatedChests.add(loc);
             }
         }
@@ -142,7 +141,6 @@ public class SkyWarsGame extends Arena {
             ensureChunkLoaded(loc);
             if (loc.getBlock().getState() instanceof Chest chest) {
                 fillMidChest(chest.getBlockInventory());
-                chest.update(true, false);
                 populatedChests.add(loc);
             }
         }
@@ -205,7 +203,6 @@ public class SkyWarsGame extends Arena {
         Location center = (lobbySpawn != null) ? lobbySpawn : (spectatorSpawn != null ? spectatorSpawn : null);
         if (center == null) {
             fillIslandChest(chest.getBlockInventory());
-            chest.update(true, false);
             populatedChests.add(loc);
             return;
         }
@@ -215,7 +212,6 @@ public class SkyWarsGame extends Arena {
         } else {
             fillIslandChest(chest.getBlockInventory());
         }
-        chest.update(true, false);
         populatedChests.add(loc);
     }
 
@@ -443,9 +439,11 @@ public class SkyWarsGame extends Arena {
         populatedChests.clear();
         buildAndBreakCages();
         for (Location loc : islandChests) {
+            ensureChunkLoaded(loc);
             if (loc.getBlock().getState() instanceof Chest chest) chest.getBlockInventory().clear();
         }
         for (Location loc : midChests) {
+            ensureChunkLoaded(loc);
             if (loc.getBlock().getState() instanceof Chest chest) chest.getBlockInventory().clear();
         }
         if (lobbySpawn != null && lobbySpawn.getWorld() != null) {

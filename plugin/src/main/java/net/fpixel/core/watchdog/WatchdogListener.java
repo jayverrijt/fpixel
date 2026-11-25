@@ -91,6 +91,10 @@ public class WatchdogListener implements Listener {
     @EventHandler
     public void onChannelRegister(PlayerRegisterChannelEvent event) {
         String channel = event.getChannel().toLowerCase();
+        // Allow legitimate recipe-viewer / utility mod channels (e.g. jei:cheat_permission)
+        if (channel.startsWith("jei:")) {
+            return;
+        }
         if (channel.contains("wurst") || channel.contains("meteor") || channel.contains("liquid")
                 || channel.contains("aristois") || channel.contains("cheat") || channel.contains("hack")) {
             watchdog.penalize(event.getPlayer(), 100, "Verboden hack client kanaal geregistreerd: " + event.getChannel());

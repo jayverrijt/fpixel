@@ -111,6 +111,29 @@ public class ParkourListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onHangingBreak(org.bukkit.event.hanging.HangingBreakEvent event) {
+        if (!event.getEntity().getWorld().getName().equalsIgnoreCase("parkour_studio")) return;
+        if (event instanceof org.bukkit.event.hanging.HangingBreakByEntityEvent byEntity && byEntity.getRemover() instanceof Player player) {
+            if (!parkourManager.isInTestSession(player) && parkourManager.getEditingMapId(player) != null) {
+                return;
+            }
+        }
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onHangingDamage(org.bukkit.event.entity.EntityDamageByEntityEvent event) {
+        if (!(event.getEntity() instanceof org.bukkit.entity.Hanging hanging)) return;
+        if (!hanging.getWorld().getName().equalsIgnoreCase("parkour_studio")) return;
+        if (event.getDamager() instanceof Player player) {
+            if (!parkourManager.isInTestSession(player) && parkourManager.getEditingMapId(player) != null) {
+                return;
+            }
+        }
+        event.setCancelled(true);
+    }
+
     @EventHandler(priority = EventPriority.HIGH)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
