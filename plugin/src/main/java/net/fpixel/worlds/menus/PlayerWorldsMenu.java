@@ -170,7 +170,7 @@ public class PlayerWorldsMenu implements Listener {
                     .dropdown("Generatietype", java.util.List.of("Normal World", "SkyBlock", "OneBlock"), 0)
                     .dropdown("Gamemode", java.util.List.of("Survival", "Creative", "Hardcore"), 0)
                     .toggle("Cheats Inschakelen", false)
-                    .dropdown("Zichtbaarheid / Delen", java.util.List.of("Iedereen (Openbaar)", "Alleen Ik (Privé)"), 0);
+                    .dropdown("Zichtbaarheid / Delen", java.util.List.of("Iedereen (Openbaar)", "Alleen Ik (Privé)"), 1);
 
             builder.validResultHandler(resp -> {
                 String rawName = resp.asInput(0);
@@ -191,10 +191,8 @@ public class PlayerWorldsMenu implements Listener {
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     player.sendMessage("§a§lBezig met genereren van je " + genType + " wereld...");
                     PlayerWorld pw = worldManager.createWorld(uid, finalName, player.getName(), player.getUniqueId(), seed, cheats, gm, genType);
-                    if (!isPublic) {
-                        pw.setPublicWorld(false);
-                        worldManager.saveWorlds();
-                    }
+                    pw.setPublicWorld(isPublic);
+                    worldManager.saveWorlds();
                     worldManager.teleportPlayerToWorld(player, pw.getUid());
                 });
             });

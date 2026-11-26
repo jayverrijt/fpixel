@@ -2042,6 +2042,7 @@ app.post('/api/worlds/create', async (req, res) => {
       defaultGameMode: safeGamemode,
       generatorType: safeGenerator,
       isPrimarySmp: false,
+      publicWorld: false,
       sharedPlayers: {},
       locked: false
     };

@@ -18,7 +18,7 @@ public class PlayerWorld {
     private String defaultGameMode; // SURVIVAL, CREATIVE, ADVENTURE
     private boolean isPrimarySmp;
     private String generatorType = "NORMAL"; // NORMAL, SKYBLOCK, ONEBLOCK
-    private boolean publicWorld = true;
+    private boolean publicWorld = false;
     private Map<String, Boolean> sharedPlayers = new HashMap<>(); // username/UUID -> canCheat
     private boolean locked;
     private boolean initialized = false;
@@ -46,6 +46,7 @@ public class PlayerWorld {
         this.generatorType = generatorType != null && !generatorType.isBlank() ? generatorType.toUpperCase() : "NORMAL";
         this.difficulty = "HARDCORE".equalsIgnoreCase(this.defaultGameMode) ? "HARD" : "NORMAL";
         this.isPrimarySmp = isPrimarySmp;
+        this.publicWorld = false;
         this.locked = false;
     }
 
