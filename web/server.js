@@ -1611,6 +1611,19 @@ app.post('/api/admin/ranks/set', async (req, res) => {
       ranks[uuid.toLowerCase()] = cleanRank;
     }
   }
+  const userdataDir = resolveFilePath('plugins/FPixelCore/userdata');
+  if (userdataDir && fs.existsSync(userdataDir)) {
+    try {
+      for (const file of fs.readdirSync(userdataDir)) {
+        if (!file.endsWith('.yml')) continue;
+        const content = fs.readFileSync(path.join(userdataDir, file), 'utf8');
+        const m = content.match(/^name:\s*(.+)$/m);
+        if (m && m[1] && m[1].trim().toLowerCase().replace(/^\./, '') === cleanLower) {
+          ranks[file.replace('.yml', '').toLowerCase()] = cleanRank;
+        }
+      }
+    } catch (e) {}
+  }
 
   saveRanks(ranks);
 
@@ -1664,6 +1677,19 @@ app.post('/api/admin/ranks/reset', async (req, res) => {
     if (name && name.toLowerCase().replace(/^\./, '') === cleanLower) {
       delete ranks[uuid.toLowerCase()];
     }
+  }
+  const userdataDir = resolveFilePath('plugins/FPixelCore/userdata');
+  if (userdataDir && fs.existsSync(userdataDir)) {
+    try {
+      for (const file of fs.readdirSync(userdataDir)) {
+        if (!file.endsWith('.yml')) continue;
+        const content = fs.readFileSync(path.join(userdataDir, file), 'utf8');
+        const m = content.match(/^name:\s*(.+)$/m);
+        if (m && m[1] && m[1].trim().toLowerCase().replace(/^\./, '') === cleanLower) {
+          delete ranks[file.replace('.yml', '').toLowerCase()];
+        }
+      }
+    } catch (e) {}
   }
 
   saveRanks(ranks);

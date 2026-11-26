@@ -105,9 +105,6 @@ public class RankManager {
 
         Rank uuidRank = playerRanks.get(player.getUniqueId());
 
-        if (nameRank != null && uuidRank != null) {
-            return nameRank.getWeight() >= uuidRank.getWeight() ? nameRank : uuidRank;
-        }
         if (nameRank != null) return nameRank;
         if (uuidRank != null) return uuidRank;
 
@@ -160,14 +157,16 @@ public class RankManager {
             }
         } catch (Exception ignored) {}
 
-        saveRanks();
-
         Player target = Bukkit.getPlayerExact(name);
         if (target == null) target = Bukkit.getPlayerExact(clean);
         if (target == null) target = Bukkit.getPlayerExact("." + clean);
         if (target != null) {
+            playerRanks.put(target.getUniqueId(), rank);
+            saveRanks();
             updatePlayerDisplayName(target);
             applyPermissions(target);
+        } else {
+            saveRanks();
         }
     }
 
