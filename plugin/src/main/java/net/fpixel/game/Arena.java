@@ -69,6 +69,9 @@ public abstract class Arena {
         } else if (state == GameState.IN_GAME) {
             gameTime++;
             handleGameTick();
+            if (plugin.getScuffedModeManager() != null) {
+                plugin.getScuffedModeManager().onArenaTick(this, gameTime);
+            }
             checkWinCondition();
         } else if (state == GameState.ENDING) {
             handleEndingTick();
@@ -151,6 +154,9 @@ public abstract class Arena {
             ChatUtil.playSound(p, Sound.ENTITY_ENDER_DRAGON_GROWL, 0.8f, 1.2f);
         }
         onGameStart();
+        if (plugin.getScuffedModeManager() != null) {
+            plugin.getScuffedModeManager().onArenaStart(this);
+        }
         if (plugin.getTestingManager() != null) {
             plugin.getTestingManager().onArenaStart(this);
         }
@@ -236,6 +242,9 @@ public abstract class Arena {
         }
 
         onArenaReset();
+        if (plugin.getScuffedModeManager() != null) {
+            plugin.getScuffedModeManager().onArenaReset(this);
+        }
         state = GameState.WAITING;
     }
 
@@ -353,6 +362,9 @@ public abstract class Arena {
 
         player.setAllowFlight(false);
         player.setFlying(false);
+        if (plugin.getScuffedModeManager() != null) {
+            plugin.getScuffedModeManager().resetPlayerAttributes(player);
+        }
         for (org.bukkit.potion.PotionEffect effect : player.getActivePotionEffects()) {
             player.removePotionEffect(effect.getType());
         }

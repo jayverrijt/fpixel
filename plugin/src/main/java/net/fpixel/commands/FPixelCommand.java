@@ -404,6 +404,35 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             }
             Bukkit.dispatchCommand(sender, "serverbackup");
             return true;
+        } else if (sub.equals("scuffed")) {
+            if (!checkModPermission(sender)) {
+                sender.sendMessage(ChatUtil.colorize("§cJe hebt geen permissie om Scuffed Mode te togglen."));
+                return true;
+            }
+            var scuffed = plugin.getScuffedModeManager();
+            if (args.length < 2) {
+                scuffed.setEnabled(!scuffed.isEnabled());
+                return true;
+            }
+            String mode = args[1].toLowerCase();
+            if (mode.equals("on") || mode.equals("true") || mode.equals("enable")) {
+                if (scuffed.isEnabled()) {
+                    sender.sendMessage(ChatUtil.colorize("§c§l[SCUFFED] §eScuffed Mode staat al §a§lAAN§e!"));
+                } else {
+                    scuffed.setEnabled(true);
+                }
+            } else if (mode.equals("off") || mode.equals("false") || mode.equals("disable")) {
+                if (!scuffed.isEnabled()) {
+                    sender.sendMessage(ChatUtil.colorize("§c§l[SCUFFED] §eScuffed Mode staat al §c§lUIT§e!"));
+                } else {
+                    scuffed.setEnabled(false);
+                }
+            } else if (mode.equals("status")) {
+                sender.sendMessage(ChatUtil.colorize("§c§l[SCUFFED] §eStatus: " + (scuffed.isEnabled() ? "§a§lAAN" : "§c§lUIT")));
+            } else {
+                sender.sendMessage(ChatUtil.colorize("§cGebruik: §e/fpixel scuffed [on|off|status]"));
+            }
+            return true;
         } else if (sub.equals("watchdog") || sub.equals("wd")) {
             String[] wdArgs = new String[args.length - 1];
             System.arraycopy(args, 1, wdArgs, 0, args.length - 1);
@@ -1080,7 +1109,11 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
 
         List<String> list = new ArrayList<>();
         if (args.length == 1) {
-            list.addAll(Arrays.asList("map", "parkour", "watchdog", "test", "approve", "disable", "fill", "empty", "undo", "import", "update", "backup", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
+            list.addAll(Arrays.asList("scuffed", "map", "parkour", "watchdog", "test", "approve", "disable", "fill", "empty", "undo", "import", "update", "backup", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
+        } else if (args[0].equalsIgnoreCase("scuffed")) {
+            if (args.length == 2) {
+                list.addAll(Arrays.asList("on", "off", "status"));
+            }
         } else if (args[0].equalsIgnoreCase("watchdog") || args[0].equalsIgnoreCase("wd")) {
             if (args.length == 2) {
                 list.addAll(Arrays.asList("status", "check", "violations", "setscore"));

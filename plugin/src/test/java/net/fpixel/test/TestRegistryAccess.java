@@ -94,6 +94,7 @@ public class TestRegistryAccess implements RegistryAccess {
     public @NotNull <T extends Keyed> Registry<T> getRegistry(@NotNull RegistryKey<T> registryKey) {
         if (registryKey == RegistryKey.ITEM) return registryFor(ItemType.class);
         if (registryKey == RegistryKey.DAMAGE_TYPE) return registryFor(DamageType.class);
+        if (registryKey == RegistryKey.SOUND_EVENT) return registryFor(org.bukkit.Sound.class);
         return registryFor(Keyed.class);
     }
 }

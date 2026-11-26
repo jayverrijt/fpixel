@@ -135,6 +135,10 @@ public class WatchdogListener implements Listener {
         }
 
         if (horizontalDist > maxAllowedSpeed && from.getY() <= to.getY()) {
+            if (plugin.getScuffedModeManager() != null && plugin.getScuffedModeManager().isEnabled()
+                    && plugin.getGameManager().getPlayerArena(player) != null) {
+                return;
+            }
             watchdog.penalize(player, 15, "Abnormale snelheid / Speed Hack (" + String.format("%.2f", horizontalDist) + " b/t)");
             return;
         }

@@ -173,6 +173,9 @@ public class GameManager implements Listener {
                 return;
             }
             arena.onBlockPlace(event);
+            if (!event.isCancelled() && plugin.getScuffedModeManager() != null) {
+                plugin.getScuffedModeManager().onBlockPlace(arena, event);
+            }
         }
     }
 
@@ -258,6 +261,9 @@ public class GameManager implements Listener {
                 return;
             }
             damagerArena.onPlayerDamage(event);
+            if (!event.isCancelled() && plugin.getScuffedModeManager() != null) {
+                plugin.getScuffedModeManager().onPlayerDamage(damagerArena, event);
+            }
         }
     }
 
@@ -440,6 +446,9 @@ public class GameManager implements Listener {
             Arena arena = getPlayerArena(player);
             if (arena != null) {
                 arena.onProjectileHit(event);
+                if (plugin.getScuffedModeManager() != null) {
+                    plugin.getScuffedModeManager().onProjectileHit(arena, event);
+                }
             }
         }
     }

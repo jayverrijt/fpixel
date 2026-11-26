@@ -503,7 +503,9 @@ public class WorldManager {
             Material existing = world.getBlockAt(x, y, z).getType();
             if (existing.isSolid() && !existing.name().endsWith("_WALL") && !existing.name().endsWith("_FENCE")
                     && !existing.name().endsWith("_SLAB") && !existing.name().endsWith("_STAIRS")
-                    && !existing.name().endsWith("_PRESSURE_PLATE")) {
+                    && !existing.name().endsWith("_PRESSURE_PLATE")
+                    && existing != Material.EMERALD_BLOCK && existing != Material.GOLD_BLOCK
+                    && existing != Material.REDSTONE_BLOCK && existing != Material.SLIME_BLOCK) {
                 world.getBlockAt(x, y, z).setType(mat, false);
                 return;
             }
@@ -514,7 +516,9 @@ public class WorldManager {
         for (int y = 105; y >= 95; y--) {
             Material existing = world.getBlockAt(x, y, z).getType();
             if (existing.isSolid() && !existing.name().endsWith("_WALL") && !existing.name().endsWith("_FENCE")
-                    && !existing.name().endsWith("_PRESSURE_PLATE")) {
+                    && !existing.name().endsWith("_PRESSURE_PLATE")
+                    && existing != Material.EMERALD_BLOCK && existing != Material.GOLD_BLOCK
+                    && existing != Material.REDSTONE_BLOCK && existing != Material.SLIME_BLOCK) {
                 world.getBlockAt(x, y + 1, z).setType(mat, false);
                 return;
             }
@@ -531,17 +535,17 @@ public class WorldManager {
     }
 
     private void decorateGrandPlaza(World world, int cy) {
-        // Radial paved paths connecting fountain plaza rings to launchpads & bridges
-        for (int z = -15; z <= -6; z++) {
+        // Radial paved paths connecting fountain plaza rings toward launchpads without overwriting launchpad blocks
+        for (int z = -12; z <= -6; z++) {
             for (int x = -1; x <= 1; x++) setPathBlock(world, x, z, Material.POLISHED_ANDESITE);
         }
-        for (int z = 6; z <= 15; z++) {
+        for (int z = 6; z <= 12; z++) {
             for (int x = -1; x <= 1; x++) setPathBlock(world, x, z, Material.POLISHED_ANDESITE);
         }
-        for (int x = -15; x <= -6; x++) {
+        for (int x = -12; x <= -6; x++) {
             for (int z = -1; z <= 1; z++) setPathBlock(world, x, z, Material.POLISHED_ANDESITE);
         }
-        for (int x = 6; x <= 15; x++) {
+        for (int x = 6; x <= 12; x++) {
             for (int z = -1; z <= 1; z++) setPathBlock(world, x, z, Material.POLISHED_ANDESITE);
         }
 
