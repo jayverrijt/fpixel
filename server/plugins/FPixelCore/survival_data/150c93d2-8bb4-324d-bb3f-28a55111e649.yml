@@ -1,12 +1,12 @@
 location:
-  world: survival
-  x: -935.1756346094586
-  y: 58.0
-  z: -227.77841612185625
-  yaw: 16.116913
-  pitch: 23.224586
-level: 71
-exp: 0.95054394
+  world: world_nether
+  x: 129.23527861838852
+  y: 49.0
+  z: -30.964331401322795
+  yaw: 21.08438
+  pitch: 32.941856
+level: 72
+exp: 0.018799283
 health: 20.0
 food: 20
 inventory:
@@ -59,8 +59,8 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:cooked_beef
-  count: 8
+  id: minecraft:spruce_fence_gate
+  count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -105,7 +105,7 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:spider_eye
-  count: 1
+  count: 2
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -152,7 +152,11 @@ inventory:
   id: minecraft:netherrack
   count: 64
   schema_version: 1
-- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:string
+  count: 3
+  schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:iron_ingot
@@ -246,7 +250,6 @@ inventory:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:impaling":4,"minecraft:mending":1,"minecraft:riptide":2,"minecraft:unbreaking":3}'
-    minecraft:damage: '1'
   schema_version: 1
 - null
 - null
@@ -291,7 +294,6 @@ offhand:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:impaling":4,"minecraft:mending":1,"minecraft:riptide":2,"minecraft:unbreaking":3}'
-    minecraft:damage: '1'
   schema_version: 1
 enderchest:
 - null

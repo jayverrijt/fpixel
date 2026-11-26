@@ -139,6 +139,33 @@ public class LobbyListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onHangingBreak(org.bukkit.event.hanging.HangingBreakEvent event) {
+        Location spawn = plugin.getLobbyManager().getSpawnLocation();
+        if (spawn == null || spawn.getWorld() == null || !event.getEntity().getWorld().equals(spawn.getWorld())) return;
+        if (event instanceof org.bukkit.event.hanging.HangingBreakByEntityEvent byEntity && byEntity.getRemover() instanceof Player player) {
+            if (isInLobby(player) && player.getGameMode() != GameMode.CREATIVE) {
+                event.setCancelled(true);
+            }
+        } else {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onHangingDamage(EntityDamageByEntityEvent event) {
+        if (!(event.getEntity() instanceof org.bukkit.entity.Hanging hanging)) return;
+        Location spawn = plugin.getLobbyManager().getSpawnLocation();
+        if (spawn == null || spawn.getWorld() == null || !hanging.getWorld().equals(spawn.getWorld())) return;
+        if (event.getDamager() instanceof Player player) {
+            if (isInLobby(player) && player.getGameMode() != GameMode.CREATIVE) {
+                event.setCancelled(true);
+            }
+        } else {
+            event.setCancelled(true);
+        }
+    }
+
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         Player player = event.getPlayer();
@@ -471,6 +498,7 @@ public class LobbyListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInventoryOpen(org.bukkit.event.inventory.InventoryOpenEvent event) {
         if (!(event.getPlayer() instanceof Player player)) return;
+        if (plugin.getGameManager().getPlayerArena(player) != null) return;
         var inv = event.getInventory();
         if (inv == null || !inv.isEmpty()) return;
 
@@ -483,6 +511,12 @@ public class LobbyListener implements Listener {
         }
 
         if (loc == null || loc.getWorld() == null) return;
+        for (Arena arena : plugin.getGameManager().getArenas()) {
+            if (arena.getWorld() != null && arena.getWorld().equals(loc.getWorld())
+                    && arena.getState() == net.fpixel.game.GameState.IN_GAME) {
+                return;
+            }
+        }
 
         String wName = loc.getWorld().getName().toLowerCase();
         if (wName.startsWith("map_build_") || (plugin.getMapMakerManager() != null && plugin.getMapMakerManager().isBuilderWorld(loc.getWorld()))) {
@@ -504,6 +538,13 @@ public class LobbyListener implements Listener {
         if (!(block.getState() instanceof org.bukkit.block.Chest chest)) return;
 
         Player player = event.getPlayer();
+        if (plugin.getGameManager().getPlayerArena(player) != null) return;
+        for (Arena arena : plugin.getGameManager().getArenas()) {
+            if (arena.getWorld() != null && arena.getWorld().equals(block.getWorld())
+                    && arena.getState() == net.fpixel.game.GameState.IN_GAME) {
+                return;
+            }
+        }
         String wName = block.getWorld().getName().toLowerCase();
         if (wName.startsWith("map_build_") || (plugin.getMapMakerManager() != null && plugin.getMapMakerManager().isBuilderWorld(block.getWorld()))) {
             if (chest.getBlockInventory().isEmpty()) {

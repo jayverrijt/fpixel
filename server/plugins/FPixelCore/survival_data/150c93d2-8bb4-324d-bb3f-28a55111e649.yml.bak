@@ -1,23 +1,23 @@
 location:
-  world: survival
-  x: -977.556268661411
-  y: 58.0
-  z: -197.58351200025055
-  yaw: 147.78648
-  pitch: 10.353059
-level: 71
-exp: 0.95054394
+  world: world_nether
+  x: 129.53687148789916
+  y: 49.200000047683716
+  z: -30.973277698697338
+  yaw: -6.6625714
+  pitch: 38.87248
+level: 72
+exp: 0.018799283
 health: 20.0
 food: 20
 inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:diamond_pickaxe
+  id: minecraft:diamond_sword
   count: 1
   components:
-    minecraft:repair_cost: '7'
-    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:mending":1,"minecraft:silk_touch":1,"minecraft:unbreaking":3}'
-    minecraft:damage: '379'
+    minecraft:repair_cost: '15'
+    minecraft:enchantments: '{"minecraft:fire_aspect":2,"minecraft:knockback":2,"minecraft:looting":3,"minecraft:sharpness":5,"minecraft:unbreaking":3}'
+    minecraft:damage: '466'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -59,8 +59,8 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:cooked_beef
-  count: 8
+  id: minecraft:spruce_fence_gate
+  count: 1
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -105,7 +105,7 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:spider_eye
-  count: 1
+  count: 2
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -152,7 +152,11 @@ inventory:
   id: minecraft:netherrack
   count: 64
   schema_version: 1
-- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:string
+  count: 3
+  schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:iron_ingot
@@ -200,12 +204,12 @@ inventory:
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
-  id: minecraft:diamond_sword
+  id: minecraft:diamond_pickaxe
   count: 1
   components:
-    minecraft:repair_cost: '15'
-    minecraft:enchantments: '{"minecraft:fire_aspect":2,"minecraft:knockback":2,"minecraft:looting":3,"minecraft:sharpness":5,"minecraft:unbreaking":3}'
-    minecraft:damage: '466'
+    minecraft:repair_cost: '7'
+    minecraft:enchantments: '{"minecraft:efficiency":4,"minecraft:mending":1,"minecraft:silk_touch":1,"minecraft:unbreaking":3}'
+    minecraft:damage: '379'
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -246,7 +250,6 @@ inventory:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:impaling":4,"minecraft:mending":1,"minecraft:riptide":2,"minecraft:unbreaking":3}'
-    minecraft:damage: '1'
   schema_version: 1
 - null
 - null
@@ -291,7 +294,6 @@ offhand:
   components:
     minecraft:repair_cost: '1'
     minecraft:enchantments: '{"minecraft:impaling":4,"minecraft:mending":1,"minecraft:riptide":2,"minecraft:unbreaking":3}'
-    minecraft:damage: '1'
   schema_version: 1
 enderchest:
 - null

@@ -155,7 +155,7 @@ public class GameManager implements Listener {
         Player player = event.getPlayer();
         Arena arena = getPlayerArena(player);
         if (arena != null) {
-            if (arena.getState() != GameState.IN_GAME) {
+            if (arena.getState() != GameState.IN_GAME || arena.isSpectator(player.getUniqueId())) {
                 event.setCancelled(true);
                 return;
             }
@@ -168,11 +168,33 @@ public class GameManager implements Listener {
         Player player = event.getPlayer();
         Arena arena = getPlayerArena(player);
         if (arena != null) {
-            if (arena.getState() != GameState.IN_GAME) {
+            if (arena.getState() != GameState.IN_GAME || arena.isSpectator(player.getUniqueId())) {
                 event.setCancelled(true);
                 return;
             }
             arena.onBlockPlace(event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onHangingBreak(org.bukkit.event.hanging.HangingBreakEvent event) {
+        org.bukkit.World w = event.getEntity().getWorld();
+        for (Arena arena : arenas.values()) {
+            if (arena.getWorld() != null && arena.getWorld().equals(w)) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+        if (event instanceof org.bukkit.event.hanging.HangingBreakByEntityEvent byEntity) {
+            Player remover = null;
+            if (byEntity.getRemover() instanceof Player p) {
+                remover = p;
+            } else if (byEntity.getRemover() instanceof org.bukkit.entity.Projectile proj && proj.getShooter() instanceof Player p) {
+                remover = p;
+            }
+            if (remover != null && getPlayerArena(remover) != null) {
+                event.setCancelled(true);
+            }
         }
     }
 
@@ -184,18 +206,39 @@ public class GameManager implements Listener {
             return;
         }
 
+        // Protect paintings and item frames in all arena worlds
+        if (event.getEntity() instanceof org.bukkit.entity.Hanging hanging) {
+            org.bukkit.World w = hanging.getWorld();
+            for (Arena arena : arenas.values()) {
+                if (arena.getWorld() != null && arena.getWorld().equals(w)) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+        }
+
         Player damager = null;
         if (event.getDamager() instanceof Player p) {
             damager = p;
-        } else if (event.getDamager() instanceof Arrow arrow && arrow.getShooter() instanceof Player p) {
+        } else if (event.getDamager() instanceof org.bukkit.entity.Projectile proj && proj.getShooter() instanceof Player p) {
             damager = p;
-        } else if (event.getDamager() instanceof Snowball sb && sb.getShooter() instanceof Player p) {
-            damager = p;
+        }
+
+        if (damager != null) {
+            Arena damagerArena = getPlayerArena(damager);
+            if (damagerArena != null && damagerArena.isSpectator(damager.getUniqueId())) {
+                event.setCancelled(true);
+                return;
+            }
         }
 
         if (damager != null && event.getEntity() instanceof Player target) {
             Arena damagerArena = getPlayerArena(damager);
             Arena targetArena = getPlayerArena(target);
+            if (targetArena != null && targetArena.isSpectator(target.getUniqueId())) {
+                event.setCancelled(true);
+                return;
+            }
             if (damagerArena == null || targetArena == null || damagerArena != targetArena) {
                 // When neither is in a minigame arena:
                 if (damagerArena == null && targetArena == null) {
@@ -267,6 +310,10 @@ public class GameManager implements Listener {
         if (event.getEntity() instanceof Player player) {
             Arena arena = getPlayerArena(player);
             if (arena != null) {
+                if (arena.isSpectator(player.getUniqueId())) {
+                    event.setCancelled(true);
+                    return;
+                }
                 arena.onPlayerPickupItem(event);
             }
         }
@@ -307,7 +354,7 @@ public class GameManager implements Listener {
         Player player = event.getPlayer();
         Arena arena = getPlayerArena(player);
         if (arena != null) {
-            if (arena.getState() != GameState.IN_GAME) {
+            if (arena.getState() != GameState.IN_GAME || arena.isSpectator(player.getUniqueId())) {
                 event.setCancelled(true);
                 return;
             }
@@ -320,7 +367,7 @@ public class GameManager implements Listener {
         Player player = event.getPlayer();
         Arena arena = getPlayerArena(player);
         if (arena != null) {
-            if (arena.getState() != GameState.IN_GAME) {
+            if (arena.getState() != GameState.IN_GAME || arena.isSpectator(player.getUniqueId())) {
                 event.setCancelled(true);
                 return;
             }

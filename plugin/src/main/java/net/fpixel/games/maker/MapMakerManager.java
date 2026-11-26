@@ -487,6 +487,29 @@ public class MapMakerManager implements Listener {
         }
     }
 
+    private boolean isApprovedBuildWorld(World world) {
+        if (world == null) return false;
+        String wName = world.getName();
+        if (!wName.toLowerCase().startsWith("map_build_")) return false;
+        String mapId = wName.substring("map_build_".length());
+        CustomMinigameMap map = getMap(mapId);
+        return map != null && map.getStatus() == CustomMinigameMap.Status.APPROVED;
+    }
+
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onApprovedHangingBreak(org.bukkit.event.hanging.HangingBreakEvent event) {
+        if (isApprovedBuildWorld(event.getEntity().getWorld())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onApprovedHangingDamage(org.bukkit.event.entity.EntityDamageByEntityEvent event) {
+        if (event.getEntity() instanceof org.bukkit.entity.Hanging hanging && isApprovedBuildWorld(hanging.getWorld())) {
+            event.setCancelled(true);
+        }
+    }
+
     public boolean testMap(String id, Player staff) {
         CustomMinigameMap map = getMap(id);
         if (map == null) {

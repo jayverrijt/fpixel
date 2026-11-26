@@ -1,5 +1,5 @@
 name: Amigapower2018
-coins: 1050
+coins: 1300
 level: 1
 experience: 0
 visibility: ALL
@@ -18,7 +18,7 @@ stats:
     losses: 4
     streak: 0
   murdermystery:
-    wins: 4
+    wins: 6
   prophunt:
     wins: 1
 secrets:

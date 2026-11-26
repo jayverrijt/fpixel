@@ -1,7 +1,7 @@
 name: .minnieheks
-coins: 4085
-level: 1
-experience: 0
+coins: 4635
+level: 5
+experience: 100
 visibility: ALL
 stats:
   bedwars:
@@ -18,7 +18,7 @@ stats:
     losses: 4
     streak: 0
   murdermystery:
-    wins: 7
+    wins: 8
   prophunt:
     wins: 2
 secrets:

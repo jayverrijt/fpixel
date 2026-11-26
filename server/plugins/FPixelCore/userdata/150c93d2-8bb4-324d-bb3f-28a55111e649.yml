@@ -1,6 +1,6 @@
 name: Jay_V0
-coins: 5835
-level: 2
+coins: 6035
+level: 1
 experience: 0
 visibility: VIPS
 stats:
@@ -18,7 +18,7 @@ stats:
     losses: 3
     streak: 0
   murdermystery:
-    wins: 11
+    wins: 13
   prophunt:
     wins: 6
 secrets:

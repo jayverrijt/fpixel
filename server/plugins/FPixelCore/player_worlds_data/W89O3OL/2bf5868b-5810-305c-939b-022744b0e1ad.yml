@@ -1,13 +1,37 @@
 inventory:
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:compass
+  count: 1
+  components:
+    minecraft:lore: '[{color:"gray",text:"Click to browse and switch maps!"}]'
+    minecraft:custom_name: '{extra:[{bold:1b,color:"green",text:"Select Map "},{color:"gray",text:"(Right
+      Click)"}],text:""}'
+  schema_version: 1
 - null
 - null
 - null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:bow
+  count: 1
+  components:
+    minecraft:lore: '[{color:"gray",text:"Click to choose your SkyWars combat kit!"}]'
+    minecraft:custom_name: '{extra:[{bold:1b,color:"aqua",text:"Select Kit "},{color:"gray",text:"(Right
+      Click)"}],text:""}'
+  schema_version: 1
 - null
 - null
 - null
-- null
-- null
-- null
+- ==: org.bukkit.inventory.ItemStack
+  DataVersion: 5023
+  id: minecraft:red_bed
+  count: 1
+  components:
+    minecraft:lore: '[{color:"gray",text:"Right click to return to the Hub."}]'
+    minecraft:custom_name: '{extra:[{bold:1b,color:"red",text:"Back to Lobby "},{color:"gray",text:"(Right
+      Click)"}],text:""}'
+  schema_version: 1
 - null
 - null
 - null
@@ -84,5 +108,5 @@ exp: 0.0
 level: 0
 health: 20.0
 food: 20
-saturation: 12.0
-gamemode: SURVIVAL
+saturation: 20.0
+gamemode: ADVENTURE
