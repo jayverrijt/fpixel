@@ -1545,6 +1545,120 @@ function saveRanks(ranks) {
   }
 }
 
+// =========================================================================
+// CUSTOM KITS MANAGEMENT (ADMIN & OWNER)
+// =========================================================================
+function getCustomKits() {
+  const file = resolveFilePath('plugins/FPixelCore/custom_kits.json') || path.join(SERVER_DIR, 'plugins/FPixelCore/custom_kits.json');
+  if (!file || !fs.existsSync(file)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveCustomKits(kitsObj) {
+  const file = resolveFilePath('plugins/FPixelCore/custom_kits.json') || path.join(SERVER_DIR, 'plugins/FPixelCore/custom_kits.json');
+  if (!file) return false;
+  try {
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(kitsObj, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Failed to save custom_kits.json:', e);
+    return false;
+  }
+}
+
+app.get('/api/admin/kits', (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Alleen [ADMIN] en [OWNER] hebben toegang tot Custom Kits.' });
+  }
+  res.json({
+    success: true,
+    kits: getCustomKits(),
+    gameTypes: ['SKYWARS', 'BEDWARS', 'PVP', 'BRIDGE', 'SUMO', 'TNTRUN', 'PARKOUR', 'MURDER_MYSTERY', 'PROP_HUNT']
+  });
+});
+
+app.post('/api/admin/kits/save', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Alleen [ADMIN] en [OWNER] kunnen custom kits aanmaken.' });
+  }
+  const { gameType, id, name, icon, helmet, chestplate, leggings, boots, items } = req.body;
+  const validGames = ['SKYWARS', 'BEDWARS', 'PVP', 'BRIDGE', 'SUMO', 'TNTRUN', 'PARKOUR', 'MURDER_MYSTERY', 'PROP_HUNT'];
+  const cleanGame = String(gameType || '').toUpperCase().trim();
+  if (!validGames.includes(cleanGame)) {
+    return res.status(400).json({ error: 'Ongeldige gamemode: ' + cleanGame });
+  }
+  if (!name || !String(name).trim()) {
+    return res.status(400).json({ error: 'Vul een kit naam in.' });
+  }
+
+  const cleanId = (id && String(id).trim())
+    ? String(id).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '')
+    : String(name).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+
+  const safeItems = Array.isArray(items)
+    ? items
+        .filter(it => it && it.material && String(it.material).trim())
+        .map(it => ({
+          material: String(it.material).trim().toUpperCase(),
+          amount: Math.max(1, Math.min(64, parseInt(it.amount, 10) || 1))
+        }))
+    : [];
+
+  const kitObj = {
+    id: cleanId,
+    name: String(name).trim(),
+    icon: String(icon || 'CHEST').trim().toUpperCase(),
+    helmet: helmet ? String(helmet).trim().toUpperCase() : '',
+    chestplate: chestplate ? String(chestplate).trim().toUpperCase() : '',
+    leggings: leggings ? String(leggings).trim().toUpperCase() : '',
+    boots: boots ? String(boots).trim().toUpperCase() : '',
+    items: safeItems
+  };
+
+  const kits = getCustomKits();
+  if (!Array.isArray(kits[cleanGame])) kits[cleanGame] = [];
+  const idx = kits[cleanGame].findIndex(k => k.id === cleanId);
+  if (idx >= 0) {
+    kits[cleanGame][idx] = kitObj;
+  } else {
+    kits[cleanGame].push(kitObj);
+  }
+  saveCustomKits(kits);
+
+  try {
+    await sendRconCommand('fpixel reloadkits');
+  } catch (err) {}
+
+  res.json({ success: true, kit: kitObj, message: `Custom kit "${kitObj.name}" opgeslagen voor ${cleanGame}!` });
+});
+
+app.post('/api/admin/kits/delete', async (req, res) => {
+  const user = getSessionUser(req);
+  if (!user || !user.isAdmin) {
+    return res.status(403).json({ error: 'Alleen [ADMIN] en [OWNER] kunnen custom kits verwijderen.' });
+  }
+  const { gameType, id } = req.body;
+  const cleanGame = String(gameType || '').toUpperCase().trim();
+  const cleanId = String(id || '').trim().toLowerCase();
+  const kits = getCustomKits();
+  if (Array.isArray(kits[cleanGame])) {
+    kits[cleanGame] = kits[cleanGame].filter(k => String(k.id || '').toLowerCase() !== cleanId);
+    saveCustomKits(kits);
+    try {
+      await sendRconCommand('fpixel reloadkits');
+    } catch (err) {}
+  }
+  res.json({ success: true, message: `Kit "${cleanId}" verwijderd uit ${cleanGame}.` });
+});
+
 // API: /api/admin/ranks (Get all player ranks - Admin & Owner can view)
 app.get('/api/admin/ranks', (req, res) => {
   const user = getSessionUser(req);

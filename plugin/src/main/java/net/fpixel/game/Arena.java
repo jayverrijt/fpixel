@@ -154,6 +154,11 @@ public abstract class Arena {
             ChatUtil.playSound(p, Sound.ENTITY_ENDER_DRAGON_GROWL, 0.8f, 1.2f);
         }
         onGameStart();
+        if (plugin.getCustomKitManager() != null) {
+            for (Player p : getBukkitPlayers()) {
+                plugin.getCustomKitManager().applySelectedKit(p, gameType);
+            }
+        }
         if (plugin.getScuffedModeManager() != null) {
             plugin.getScuffedModeManager().onArenaStart(this);
         }
@@ -327,6 +332,13 @@ public abstract class Arena {
                     .lore("§7Click to choose your SkyWars combat kit!")
                     .build();
             player.getInventory().setItem(4, kitSelector);
+        }
+        if (plugin.getCustomKitManager() != null && !plugin.getCustomKitManager().getKitsForGameType(this.gameType).isEmpty()) {
+            ItemStack customKitItem = new ItemBuilder(Material.CHEST)
+                    .name("§6§lCustom Kits §7(Right Click)")
+                    .lore("§7Click to choose an Admin custom kit!")
+                    .build();
+            player.getInventory().setItem(this.gameType.equalsIgnoreCase("SKYWARS") ? 5 : 4, customKitItem);
         }
         player.getInventory().setItem(8, lobbyBed);
 

@@ -53,6 +53,7 @@ public class FPixelPlugin extends JavaPlugin {
     private net.fpixel.core.watchdog.WatchdogManager watchdogManager;
     private net.fpixel.core.bugreport.BugReportManager bugReportManager;
     private net.fpixel.game.scuffed.ScuffedModeManager scuffedModeManager;
+    private net.fpixel.game.kits.CustomKitManager customKitManager;
 
 
     @Override
@@ -87,6 +88,7 @@ public class FPixelPlugin extends JavaPlugin {
         this.watchdogManager = new net.fpixel.core.watchdog.WatchdogManager(this);
         this.bugReportManager = new net.fpixel.core.bugreport.BugReportManager(this);
         this.scuffedModeManager = new net.fpixel.game.scuffed.ScuffedModeManager(this);
+        this.customKitManager = new net.fpixel.game.kits.CustomKitManager(this);
 
         // 2. Visual & Display Managers (Scoreboards & Tablist)
         this.scoreboardManager = new ScoreboardManager(this);
@@ -293,6 +295,7 @@ public class FPixelPlugin extends JavaPlugin {
     public net.fpixel.core.watchdog.WatchdogManager getWatchdogManager() { return watchdogManager; }
     public net.fpixel.core.bugreport.BugReportManager getBugReportManager() { return bugReportManager; }
     public net.fpixel.game.scuffed.ScuffedModeManager getScuffedModeManager() { return scuffedModeManager; }
+    public net.fpixel.game.kits.CustomKitManager getCustomKitManager() { return customKitManager; }
 
     @Override
     public org.bukkit.generator.ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {

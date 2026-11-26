@@ -43,7 +43,12 @@ public class ScuffedModeManager {
         PINATA_HITS("§d§lPiñata Hits", "Hitting players bursts random loot (or mobs)!"),
         CURSED_FOOTSTEPS("§4§lCursed Footsteps", "Random primed TNT spawns under players!"),
         PYM_PARTICLES("§3§lPym Particles", "Players randomly shrink (0.45x) or grow (2.1x)!"),
-        BUTTER_FINGERS("§e§lButter Fingers", "15% chance to drop your held item when attacking!");
+        BUTTER_FINGERS("§e§lButter Fingers", "15% chance to drop your held item when attacking!"),
+        CREEPER_RAIN("§2§lCreeper Rain", "Creepers randomly fall from the sky near players!"),
+        POTION_ROULETTE("§d§lPotion Roulette", "Random chaotic potion effects every 16 seconds!"),
+        TRAMPOLINE_BOUNCE("§a§lTrampoline Chaos", "Randomly launches players sky-high!"),
+        GLASS_CANNON("§c§lCrit Lightning", "20% chance for a 5x damage lightning strike!"),
+        HOT_POTATO("§6§lHot Potato", "Pass the glowing potato by hitting someone before it explodes!");
 
         private final String displayName;
         private final String description;
@@ -61,6 +66,8 @@ public class ScuffedModeManager {
     private final Random rng = new Random();
     private boolean enabled = false;
     private final Map<String, Set<Modifier>> arenaModifiers = new ConcurrentHashMap<>();
+    private final Map<String, UUID> hotPotatoHolder = new ConcurrentHashMap<>();
+    private final Map<String, Integer> hotPotatoTimer = new ConcurrentHashMap<>();
 
     public ScuffedModeManager(FPixelPlugin plugin) {
         this.plugin = plugin;
@@ -217,6 +224,70 @@ public class ScuffedModeManager {
                 applyRandomScale(p);
             }
         }
+
+        // Creeper Rain every 14 seconds
+        if (mods.contains(Modifier.CREEPER_RAIN) && gameTime > 0 && gameTime % 14 == 0) {
+            Player target = alive.get(rng.nextInt(alive.size()));
+            if (target.getWorld() != null) {
+                Location dropLoc = target.getLocation().add(rng.nextInt(5) - 2, 10, rng.nextInt(5) - 2);
+                target.getWorld().spawnEntity(dropLoc, EntityType.CREEPER);
+                ChatUtil.sendActionBar(target, "§2§l☄ INCOMING CREEPER!");
+            }
+        }
+
+        // Potion Roulette every 16 seconds
+        if (mods.contains(Modifier.POTION_ROULETTE) && gameTime > 0 && gameTime % 16 == 0) {
+            PotionEffectType[] chaosEffects = {
+                    PotionEffectType.BLINDNESS, PotionEffectType.NAUSEA,
+                    PotionEffectType.REGENERATION, PotionEffectType.JUMP_BOOST,
+                    PotionEffectType.LEVITATION, PotionEffectType.SPEED
+            };
+            PotionEffectType picked = chaosEffects[rng.nextInt(chaosEffects.length)];
+            int amp = (picked == PotionEffectType.JUMP_BOOST || picked == PotionEffectType.SPEED) ? 4 : 1;
+            for (Player p : alive) {
+                p.addPotionEffect(new PotionEffect(picked, 80, amp, false, false));
+                ChatUtil.sendActionBar(p, "§d§l🎲 POTION ROULETTE: §e" + picked.getKey().getKey().toUpperCase());
+            }
+        }
+
+        // Trampoline Chaos every 9 seconds
+        if (mods.contains(Modifier.TRAMPOLINE_BOUNCE) && gameTime > 0 && gameTime % 9 == 0) {
+            Player target = alive.get(rng.nextInt(alive.size()));
+            target.setVelocity(target.getVelocity().setY(1.25));
+            ChatUtil.playSound(target, Sound.ENTITY_SLIME_JUMP, 1.0f, 1.3f);
+            ChatUtil.sendActionBar(target, "§a§lBOING!");
+        }
+
+        // Hot Potato timer & assignment
+        if (mods.contains(Modifier.HOT_POTATO)) {
+            String key = arena.getId().toLowerCase();
+            UUID holderId = hotPotatoHolder.get(key);
+            if (holderId == null && gameTime > 0 && gameTime % 22 == 0) {
+                Player picked = alive.get(rng.nextInt(alive.size()));
+                hotPotatoHolder.put(key, picked.getUniqueId());
+                hotPotatoTimer.put(key, 6);
+                picked.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 140, 0, false, false));
+                ChatUtil.sendTitle(picked, "§6§l🥔 HOT POTATO!", "§cHit someone within 6s!", 5, 30, 5);
+            } else if (holderId != null) {
+                int rem = hotPotatoTimer.getOrDefault(key, 0) - 1;
+                Player holder = Bukkit.getPlayer(holderId);
+                if (holder == null || !holder.isOnline() || !arena.getAlivePlayers().contains(holder)) {
+                    hotPotatoHolder.remove(key);
+                    hotPotatoTimer.remove(key);
+                } else if (rem <= 0) {
+                    hotPotatoHolder.remove(key);
+                    hotPotatoTimer.remove(key);
+                    holder.removePotionEffect(PotionEffectType.GLOWING);
+                    if (holder.getWorld() != null) {
+                        holder.getWorld().createExplosion(holder.getLocation(), 3.0f, false, false, holder);
+                    }
+                    ChatUtil.sendTitle(holder, "§4§l💥 BOOM!", "§7You held the Hot Potato too long!", 5, 30, 5);
+                } else {
+                    hotPotatoTimer.put(key, rem);
+                    ChatUtil.sendActionBar(holder, "§6§l🥔 HOT POTATO: §c" + rem + "s!");
+                }
+            }
+        }
     }
 
     public void onBlockPlace(Arena arena, BlockPlaceEvent event) {
@@ -269,11 +340,36 @@ public class ScuffedModeManager {
                 ChatUtil.sendActionBar(attacker, "§e§l🧈 BUTTER FINGERS! Dropped your item!");
             }
         }
+
+        if (mods.contains(Modifier.GLASS_CANNON) && event.getEntity() instanceof Player victim && rng.nextInt(100) < 20) {
+            event.setDamage(event.getDamage() * 5.0);
+            if (victim.getWorld() != null) {
+                victim.getWorld().strikeLightningEffect(victim.getLocation());
+            }
+            if (event.getDamager() instanceof Player attacker) {
+                ChatUtil.sendActionBar(attacker, "§c§l⚡ 5x CRIT STRIKE!");
+            }
+        }
+
+        if (mods.contains(Modifier.HOT_POTATO) && event.getDamager() instanceof Player attacker && event.getEntity() instanceof Player victim) {
+            String key = arena.getId().toLowerCase();
+            UUID holderId = hotPotatoHolder.get(key);
+            if (holderId != null && holderId.equals(attacker.getUniqueId())) {
+                hotPotatoHolder.put(key, victim.getUniqueId());
+                attacker.removePotionEffect(PotionEffectType.GLOWING);
+                victim.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 140, 0, false, false));
+                ChatUtil.sendActionBar(attacker, "§aPassed the Hot Potato to " + victim.getName() + "!");
+                ChatUtil.sendTitle(victim, "§6§l🥔 HOT POTATO!", "§cHit someone before it blows!", 5, 25, 5);
+            }
+        }
     }
 
     public void onArenaReset(Arena arena) {
         if (arena != null) {
-            arenaModifiers.remove(arena.getId().toLowerCase());
+            String key = arena.getId().toLowerCase();
+            arenaModifiers.remove(key);
+            hotPotatoHolder.remove(key);
+            hotPotatoTimer.remove(key);
             for (Player p : arena.getAllBukkitPlayers()) {
                 resetPlayerAttributes(p);
             }

@@ -1634,15 +1634,22 @@ public class WorldManager {
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
 
-            // Colosseum flat floor
-            MapBuilder.fillCircle(defaultWorld, cx, cy, cz, 16, Material.SMOOTH_STONE);
-            MapBuilder.fillRing(defaultWorld, cx, cy, cz, 15, 16, Material.STONE_BRICKS);
-            for (int y = 1; y <= 4; y++) {
-                MapBuilder.fillRing(defaultWorld, cx, cy + y, cz, 16, 17, Material.STONE_BRICKS);
-            }
+            // Clear any previous PvP arena blocks before building expanded colosseum
+            MapBuilder.fillBox(defaultWorld, cx - 35, cy, cz - 35, cx + 35, cy + 20, cz + 35, Material.AIR);
 
-            game.setSpawn1(new Location(defaultWorld, cx - 10 + 0.5, cy + 1, cz + 0.5, -90f, 0f));
-            game.setSpawn2(new Location(defaultWorld, cx + 10 + 0.5, cy + 1, cz + 0.5, 90f, 0f));
+            // Expanded Colosseum flat floor (radius 32) with tall anti-escape walls & barrier dome for Scuffed Mode
+            MapBuilder.fillCircle(defaultWorld, cx, cy, cz, 32, Material.SMOOTH_STONE);
+            MapBuilder.fillRing(defaultWorld, cx, cy, cz, 29, 32, Material.STONE_BRICKS);
+            for (int y = 1; y <= 7; y++) {
+                MapBuilder.fillRing(defaultWorld, cx, cy + y, cz, 32, 33, Material.STONE_BRICKS);
+            }
+            for (int y = 8; y <= 16; y++) {
+                MapBuilder.fillRing(defaultWorld, cx, cy + y, cz, 32, 33, Material.TINTED_GLASS);
+            }
+            MapBuilder.fillCircle(defaultWorld, cx, cy + 17, cz, 33, Material.BARRIER);
+
+            game.setSpawn1(new Location(defaultWorld, cx - 22 + 0.5, cy + 1, cz + 0.5, -90f, 0f));
+            game.setSpawn2(new Location(defaultWorld, cx + 22 + 0.5, cy + 1, cz + 0.5, 90f, 0f));
 
             plugin.getGameManager().registerArena(game);
         }

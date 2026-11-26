@@ -18,14 +18,15 @@ class RankManagerTest {
         RankManager manager = new RankManager(plugin);
         World world = BukkitTestHarness.createWorld("world");
         UUID uuid = UUID.randomUUID();
-        Player player = BukkitTestHarness.createPlayer("SmileyGaming27", uuid, world);
+        String playerName = "RankTestUser_" + uuid.toString().substring(0, 6);
+        Player player = BukkitTestHarness.createPlayer(playerName, uuid, world);
 
         // Simulate player previously having OWNER on their UUID
         manager.setRank(uuid, Rank.OWNER);
         assertEquals(Rank.OWNER, manager.getRank(player));
 
         // Demote by name to MEMBER
-        manager.setRankByName("SmileyGaming27", Rank.MEMBER);
+        manager.setRankByName(playerName, Rank.MEMBER);
         assertEquals(Rank.MEMBER, manager.getRank(player),
                 "Demoting by name to MEMBER must override previous OWNER UUID rank");
     }

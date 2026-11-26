@@ -472,6 +472,16 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             }
             Bukkit.dispatchCommand(sender, "serverbackup");
             return true;
+        } else if (sub.equals("reloadkits")) {
+            if (!checkAdminPermission(sender)) {
+                sender.sendMessage(ChatUtil.colorize("§cAlleen [ADMIN] of hoger kan kits herladen."));
+                return true;
+            }
+            if (plugin.getCustomKitManager() != null) {
+                plugin.getCustomKitManager().loadKits();
+            }
+            sender.sendMessage(ChatUtil.colorize("§a§l[KITS] §eCustom kits herladen vanuit custom_kits.json!"));
+            return true;
         } else if (sub.equals("scuffed")) {
             if (!checkModPermission(sender)) {
                 sender.sendMessage(ChatUtil.colorize("§cJe hebt geen permissie om Scuffed Mode te togglen."));
