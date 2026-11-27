@@ -503,7 +503,9 @@ public class WorldManager {
             Material existing = world.getBlockAt(x, y, z).getType();
             if (existing.isSolid() && !existing.name().endsWith("_WALL") && !existing.name().endsWith("_FENCE")
                     && !existing.name().endsWith("_SLAB") && !existing.name().endsWith("_STAIRS")
-                    && !existing.name().endsWith("_PRESSURE_PLATE")) {
+                    && !existing.name().endsWith("_PRESSURE_PLATE")
+                    && existing != Material.EMERALD_BLOCK && existing != Material.GOLD_BLOCK
+                    && existing != Material.REDSTONE_BLOCK && existing != Material.SLIME_BLOCK) {
                 world.getBlockAt(x, y, z).setType(mat, false);
                 return;
             }
@@ -514,7 +516,9 @@ public class WorldManager {
         for (int y = 105; y >= 95; y--) {
             Material existing = world.getBlockAt(x, y, z).getType();
             if (existing.isSolid() && !existing.name().endsWith("_WALL") && !existing.name().endsWith("_FENCE")
-                    && !existing.name().endsWith("_PRESSURE_PLATE")) {
+                    && !existing.name().endsWith("_PRESSURE_PLATE")
+                    && existing != Material.EMERALD_BLOCK && existing != Material.GOLD_BLOCK
+                    && existing != Material.REDSTONE_BLOCK && existing != Material.SLIME_BLOCK) {
                 world.getBlockAt(x, y + 1, z).setType(mat, false);
                 return;
             }
@@ -531,17 +535,17 @@ public class WorldManager {
     }
 
     private void decorateGrandPlaza(World world, int cy) {
-        // Radial paved paths connecting fountain plaza rings to launchpads & bridges
-        for (int z = -15; z <= -6; z++) {
+        // Radial paved paths connecting fountain plaza rings toward launchpads without overwriting launchpad blocks
+        for (int z = -12; z <= -6; z++) {
             for (int x = -1; x <= 1; x++) setPathBlock(world, x, z, Material.POLISHED_ANDESITE);
         }
-        for (int z = 6; z <= 15; z++) {
+        for (int z = 6; z <= 12; z++) {
             for (int x = -1; x <= 1; x++) setPathBlock(world, x, z, Material.POLISHED_ANDESITE);
         }
-        for (int x = -15; x <= -6; x++) {
+        for (int x = -12; x <= -6; x++) {
             for (int z = -1; z <= 1; z++) setPathBlock(world, x, z, Material.POLISHED_ANDESITE);
         }
-        for (int x = 6; x <= 15; x++) {
+        for (int x = 6; x <= 12; x++) {
             for (int z = -1; z <= 1; z++) setPathBlock(world, x, z, Material.POLISHED_ANDESITE);
         }
 
@@ -1630,15 +1634,22 @@ public class WorldManager {
             game.setLobbySpawn(waitingLoc.clone().add(0, 1, 0));
             game.setSpectatorSpawn(waitingLoc.clone().add(0, 5, 0));
 
-            // Colosseum flat floor
-            MapBuilder.fillCircle(defaultWorld, cx, cy, cz, 16, Material.SMOOTH_STONE);
-            MapBuilder.fillRing(defaultWorld, cx, cy, cz, 15, 16, Material.STONE_BRICKS);
-            for (int y = 1; y <= 4; y++) {
-                MapBuilder.fillRing(defaultWorld, cx, cy + y, cz, 16, 17, Material.STONE_BRICKS);
-            }
+            // Clear any previous PvP arena blocks before building expanded colosseum
+            MapBuilder.fillBox(defaultWorld, cx - 35, cy, cz - 35, cx + 35, cy + 20, cz + 35, Material.AIR);
 
-            game.setSpawn1(new Location(defaultWorld, cx - 10 + 0.5, cy + 1, cz + 0.5, -90f, 0f));
-            game.setSpawn2(new Location(defaultWorld, cx + 10 + 0.5, cy + 1, cz + 0.5, 90f, 0f));
+            // Expanded Colosseum flat floor (radius 32) with tall anti-escape walls & barrier dome for Scuffed Mode
+            MapBuilder.fillCircle(defaultWorld, cx, cy, cz, 32, Material.SMOOTH_STONE);
+            MapBuilder.fillRing(defaultWorld, cx, cy, cz, 29, 32, Material.STONE_BRICKS);
+            for (int y = 1; y <= 7; y++) {
+                MapBuilder.fillRing(defaultWorld, cx, cy + y, cz, 32, 33, Material.STONE_BRICKS);
+            }
+            for (int y = 8; y <= 16; y++) {
+                MapBuilder.fillRing(defaultWorld, cx, cy + y, cz, 32, 33, Material.TINTED_GLASS);
+            }
+            MapBuilder.fillCircle(defaultWorld, cx, cy + 17, cz, 33, Material.BARRIER);
+
+            game.setSpawn1(new Location(defaultWorld, cx - 22 + 0.5, cy + 1, cz + 0.5, -90f, 0f));
+            game.setSpawn2(new Location(defaultWorld, cx + 22 + 0.5, cy + 1, cz + 0.5, 90f, 0f));
 
             plugin.getGameManager().registerArena(game);
         }

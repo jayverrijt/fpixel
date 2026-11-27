@@ -12,30 +12,11 @@
     "generatorType": "NORMAL",
     "publicWorld": true,
     "sharedPlayers": {
-      "smileygaming27": true,
       ".minnieheks": true,
       "amigapower2018": true
     },
     "locked": false,
     "initialized": false
-  },
-  "W89O3OL": {
-    "uid": "W89O3OL",
-    "name": "OneblockTest",
-    "creatorName": "Jay_v0",
-    "createdAt": 1795471454313,
-    "cheatsEnabled": true,
-    "seed": 0,
-    "difficulty": "NORMAL",
-    "defaultGameMode": "CREATIVE",
-    "isPrimarySmp": false,
-    "generatorType": "ONEBLOCK",
-    "publicWorld": true,
-    "sharedPlayers": {
-      "amigapower2018": true
-    },
-    "locked": false,
-    "initialized": true
   },
   "WP60V6B": {
     "uid": "WP60V6B",
@@ -49,9 +30,7 @@
     "isPrimarySmp": false,
     "generatorType": "NORMAL",
     "publicWorld": true,
-    "sharedPlayers": {
-      "smileygaming27": false
-    },
+    "sharedPlayers": {},
     "locked": false,
     "initialized": false
   }

@@ -41,19 +41,24 @@ public class LaunchpadListener implements Listener {
             Vector dir = loc.getDirection();
 
             // Hub intelligent vector targeting: smooth, unobstructed flight arcs
-            if (player.getWorld().equals(plugin.getServer().getWorlds().get(0))) {
-                int bx = plate.getX();
-                int bz = plate.getZ();
-                double distFromCenter = Math.hypot(bx, bz);
+            boolean inHub = (plugin.getLobbyManager() != null && plugin.getLobbyManager().isLobbyWorld(player.getWorld()))
+                    || (!plugin.getServer().getWorlds().isEmpty() && player.getWorld().equals(plugin.getServer().getWorlds().get(0)));
+            if (inHub) {
+                Location spawn = plugin.getLobbyManager() != null ? plugin.getLobbyManager().getSpawnLocation() : null;
+                double cx = (spawn != null && spawn.getWorld() != null && spawn.getWorld().equals(player.getWorld())) ? spawn.getX() : 0.0;
+                double cz = (spawn != null && spawn.getWorld() != null && spawn.getWorld().equals(player.getWorld())) ? spawn.getZ() : 0.0;
+                double dx = plate.getX() - cx;
+                double dz = plate.getZ() - cz;
+                double distFromCenter = Math.hypot(dx, dz);
 
                 if (distFromCenter <= 25) {
                     // Outward launchpad from Central Plaza: point outward along radial vector to target island!
-                    double angle = Math.atan2(bz, bx);
+                    double angle = Math.atan2(dz, dx);
                     dir = new Vector(Math.cos(angle), 0, Math.sin(angle)).normalize();
                     player.setVelocity(dir.multiply(3.2).setY(1.35));
                 } else {
-                    // Return launchpad on outer island: point back inward towards Central Plaza (0, 100, 0)!
-                    double angle = Math.atan2(-bz, -bx);
+                    // Return launchpad on outer island: point back inward towards Central Plaza!
+                    double angle = Math.atan2(-dz, -dx);
                     dir = new Vector(Math.cos(angle), 0, Math.sin(angle)).normalize();
                     player.setVelocity(dir.multiply(3.2).setY(1.35));
                 }

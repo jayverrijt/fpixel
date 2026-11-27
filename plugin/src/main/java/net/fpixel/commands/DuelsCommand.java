@@ -54,7 +54,7 @@ public class DuelsCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            ChatUtil.sendMessage(player, "§6Usage: §e/duel <player|bot> [skywars|bedwars|pvp|parkour|tnt|sumo|bridge]");
+            ChatUtil.sendMessage(player, "§6Usage: §e/duel <player|bot> [skywars|bedwars|pvp|parkour|tnt|sumo|bridge|prophunt|murdermystery]");
             return true;
         }
 
@@ -101,6 +101,8 @@ public class DuelsCommand implements CommandExecutor, TabCompleter {
             case "PARKOUR", "PK" -> "PARKOUR";
             case "TNT", "TNTRUN", "TR" -> "TNTRUN";
             case "BRIDGE", "THEBRIDGE" -> "BRIDGE";
+            case "PROPHUNT", "PROP_HUNT", "PROP", "PH" -> "PROP_HUNT";
+            case "MURDERMYSTERY", "MURDER_MYSTERY", "MURDER", "MM" -> "MURDER_MYSTERY";
             default -> "SUMO";
         };
     }
@@ -122,30 +124,28 @@ public class DuelsCommand implements CommandExecutor, TabCompleter {
                 .append(Component.text(" "))
                 .append(createChoiceButton(targetName, "sumo", "§e§l[SUMO]"))
                 .append(Component.text(" "))
-                .append(createChoiceButton(targetName, "bridge", "§6§l[BRIDGE]"));
+                .append(createChoiceButton(targetName, "bridge", "§6§l[BRIDGE]"))
+                .append(Component.text(" "))
+                .append(createChoiceButton(targetName, "prophunt", "§d§l[PROP HUNT]"))
+                .append(Component.text(" "))
+                .append(createChoiceButton(targetName, "murdermystery", "§4§l[MURDER MYSTERY]"));
 
         player.sendMessage(choices);
     }
 
     private void startBotDuel(Player player, String type) {
-        Arena duelArena = null;
-        for (Arena arena : plugin.getGameManager().getArenas()) {
-            if (arena.getMaxPlayers() == 2
-                    && arena.getGameType().equalsIgnoreCase(type)
-                    && arena.getState() == GameState.WAITING
-                    && arena.getPlayerCount() == 0) {
-                duelArena = arena;
-                break;
-            }
-        }
+        Arena duelArena = plugin.getDuelManager().findDuelArena(type);
         if (duelArena == null) {
             ChatUtil.sendMessage(player, "§cNo empty duel arena available for " + type + "!");
             return;
         }
         ChatUtil.sendMessage(player, "§aLaunching §6" + type + " 1v1 §aagainst a simulated bot...");
         duelArena.join(player);
-        if (duelArena.getSimulatedPlayers().isEmpty()) {
-            duelArena.addSimulatedPlayer(plugin.getTestingManager().createBot());
+        int needed = Math.max(1, duelArena.getMinPlayers() - duelArena.getPlayerCount());
+        if (duelArena.getSimulatedPlayers().isEmpty() || duelArena.getPlayerCount() < duelArena.getMinPlayers()) {
+            for (int i = 0; i < needed; i++) {
+                duelArena.addSimulatedPlayer(plugin.getTestingManager().createBot());
+            }
         }
         duelArena.setCountdown(3);
         duelArena.forceStart();
@@ -171,7 +171,7 @@ public class DuelsCommand implements CommandExecutor, TabCompleter {
             }
             return list;
         } else if (args.length == 2) {
-            return Arrays.asList("skywars", "bedwars", "pvp", "parkour", "tnt", "sumo", "bridge");
+            return Arrays.asList("skywars", "bedwars", "pvp", "parkour", "tnt", "sumo", "bridge", "prophunt", "murdermystery");
         }
         return new ArrayList<>();
     }

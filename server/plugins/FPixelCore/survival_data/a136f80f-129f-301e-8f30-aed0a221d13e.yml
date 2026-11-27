@@ -3,8 +3,8 @@ location:
   x: 370.44247107878647
   y: -50.0
   z: -736.7694170164633
-  yaw: -26.909485
-  pitch: 15.767022
+  yaw: -51.26956
+  pitch: 16.028957
 level: 55
 exp: 0.7698176
 health: 20.0
@@ -29,7 +29,7 @@ inventory:
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
   id: minecraft:cooked_cod
-  count: 38
+  count: 37
   schema_version: 1
 - ==: org.bukkit.inventory.ItemStack
   DataVersion: 5023
@@ -179,9 +179,9 @@ armor:
   schema_version: 1
 offhand:
   ==: org.bukkit.inventory.ItemStack
+  id: minecraft:air
   DataVersion: 5023
   schema_version: 1
-  id: minecraft:air
 enderchest:
 - null
 - null

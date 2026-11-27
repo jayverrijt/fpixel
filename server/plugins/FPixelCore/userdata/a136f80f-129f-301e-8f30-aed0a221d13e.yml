@@ -1,5 +1,5 @@
 name: SmileyGaming27
-coins: 5229
+coins: 7179
 level: 1
 experience: 0
 visibility: ALL
@@ -11,16 +11,16 @@ stats:
     finalKills: 0
     bedsBroken: 0
   tntrun:
-    wins: 8
+    wins: 9
     losses: 1
   sumo:
-    wins: 4
-    losses: 3
+    wins: 7
+    losses: 5
     streak: 0
   murdermystery:
     wins: 10
   prophunt:
-    wins: 2
+    wins: 3
 secrets:
 - relic_sunken_chalice
 - relic_blacksmith_hammer

@@ -100,6 +100,8 @@ function switchStaffTab(subtabId) {
     loadRanks();
   } else if (subtabId === 'watchdog') {
     loadWatchdogData();
+  } else if (subtabId === 'kits') {
+    loadCustomKits();
   }
 }
 
@@ -255,6 +257,11 @@ function renderAuthUser(user) {
   const rankBadge = document.getElementById('nav-user-rank');
   rankBadge.textContent = user.rank;
   rankBadge.className = `rank-badge rank-${(user.rank || 'member').toLowerCase()}`;
+
+  const kitsTabBtn = document.getElementById('staff-subnav-kits');
+  if (kitsTabBtn) {
+    kitsTabBtn.style.display = (user.rank === 'ADMIN' || user.rank === 'OWNER') ? '' : 'none';
+  }
 
   // Server Stop button strictly for OWNER
   const stopBtn = document.getElementById('btn-server-stop');
@@ -1214,6 +1221,101 @@ async function assignRank() {
 
   await updatePlayerRank(username, rank);
   document.getElementById('assign-rank-username').value = '';
+}
+
+// Custom Kits Management ([ADMIN]+)
+async function loadCustomKits() {
+  const container = document.getElementById('custom-kits-list');
+  if (!container) return;
+  container.innerHTML = '<div style="color:#94a3b8;">Custom kits laden...</div>';
+  try {
+    const res = await fetch('/api/admin/kits');
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      container.innerHTML = `<div style="color:#ef4444;">${escapeHtml(data.error || 'Geen toegang.')}</div>`;
+      return;
+    }
+    const kits = data.kits || {};
+    const cards = [];
+    for (const [gameType, list] of Object.entries(kits)) {
+      if (!Array.isArray(list)) continue;
+      for (const kit of list) {
+        const itemsText = (kit.items || []).map(i => `${i.amount}x ${i.material}`).join(', ');
+        cards.push(`
+          <div class="glass-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="rank-badge rank-admin">${escapeHtml(gameType)}</span>
+              <button class="btn btn-sm btn-ghost" style="color:#ef4444;" onclick="deleteCustomKit('${escapeHtml(gameType)}', '${escapeHtml(kit.id)}')">Verwijder</button>
+            </div>
+            <h4 style="margin:10px 0 6px;">${escapeHtml(kit.name)} <span style="color:#64748b; font-size:0.8rem;">(${escapeHtml(kit.id)})</span></h4>
+            <div style="color:#94a3b8; font-size:0.85rem;">Icoon: ${escapeHtml(kit.icon || 'CHEST')}</div>
+            <div style="color:#cbd5e1; font-size:0.85rem; margin-top:6px;">${escapeHtml(itemsText || 'Geen extra items')}</div>
+          </div>
+        `);
+      }
+    }
+    container.innerHTML = cards.length ? cards.join('') : '<div style="color:#94a3b8;">Nog geen custom kits aangemaakt.</div>';
+  } catch (e) {
+    container.innerHTML = '<div style="color:#ef4444;">Kon custom kits niet ophalen.</div>';
+  }
+}
+
+async function saveCustomKit() {
+  const gameType = document.getElementById('kit-gamemode').value;
+  const name = document.getElementById('kit-name').value.trim();
+  const icon = document.getElementById('kit-icon').value.trim() || 'CHEST';
+  const helmet = document.getElementById('kit-helmet').value.trim();
+  const chestplate = document.getElementById('kit-chestplate').value.trim();
+  const leggings = document.getElementById('kit-leggings').value.trim();
+  const boots = document.getElementById('kit-boots').value.trim();
+  const rawItems = document.getElementById('kit-items').value.split('\n');
+
+  const items = [];
+  for (const line of rawItems) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const [mat, amtStr] = trimmed.split(':');
+    if (mat && mat.trim()) {
+      items.push({ material: mat.trim().toUpperCase(), amount: parseInt(amtStr, 10) || 1 });
+    }
+  }
+
+  try {
+    const res = await fetch('/api/admin/kits/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gameType, name, icon, helmet, chestplate, leggings, boots, items })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      document.getElementById('kit-name').value = '';
+      loadCustomKits();
+    } else {
+      showToast(data.error || 'Kon kit niet opslaan.', 'error');
+    }
+  } catch (e) {
+    showToast('Netwerkfout.', 'error');
+  }
+}
+
+async function deleteCustomKit(gameType, id) {
+  try {
+    const res = await fetch('/api/admin/kits/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gameType, id })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(data.message, 'success');
+      loadCustomKits();
+    } else {
+      showToast(data.error || 'Kon kit niet verwijderen.', 'error');
+    }
+  } catch (e) {
+    showToast('Netwerkfout.', 'error');
+  }
 }
 
 // Server Operations

@@ -1,7 +1,7 @@
 name: Jay_V0
-coins: 6035
-level: 1
-experience: 0
+coins: 7130
+level: 4
+experience: 100
 visibility: VIPS
 stats:
   bedwars:
@@ -14,8 +14,8 @@ stats:
     wins: 4
     losses: 0
   sumo:
-    wins: 11
-    losses: 3
+    wins: 13
+    losses: 6
     streak: 0
   murdermystery:
     wins: 13

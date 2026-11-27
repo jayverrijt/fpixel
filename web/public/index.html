@@ -341,6 +341,9 @@
             <button class="subnav-pill" onclick="switchStaffTab('watchdog')">
               Watchdog Anticheat
             </button>
+            <button id="staff-subnav-kits" class="subnav-pill" onclick="switchStaffTab('kits')" style="display:none;">
+              Custom Kits
+            </button>
           </div>
         </div>
       </div>
@@ -415,6 +418,71 @@
               <!-- Injected by app.js -->
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Sub-section 3: Server Controle -->
+      <div id="staff-section-kits" class="staff-subpane" style="display: none;">
+        <div class="section-sub-header">
+          <h3>Custom Kits Beheer ([ADMIN]+)</h3>
+          <p>Maak en beheer custom kits voor iedere minigame. Spelers kunnen deze kiezen in de lobby!</p>
+        </div>
+
+        <div class="glass-card" style="margin-bottom: 24px;">
+          <h4 style="margin-top: 0; color: #38bdf8;">Nieuwe / Bestaande Kit Opslaan</h4>
+          <div class="form-row-grid">
+            <div class="form-group">
+              <label>Gamemode:</label>
+              <select id="kit-gamemode">
+                <option value="SKYWARS">SKYWARS</option>
+                <option value="BEDWARS">BEDWARS</option>
+                <option value="PVP">PVP</option>
+                <option value="BRIDGE">BRIDGE</option>
+                <option value="SUMO">SUMO</option>
+                <option value="TNTRUN">TNTRUN</option>
+                <option value="PARKOUR">PARKOUR</option>
+                <option value="MURDER_MYSTERY">MURDER_MYSTERY</option>
+                <option value="PROP_HUNT">PROP_HUNT</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Kit Naam:</label>
+              <input type="text" id="kit-name" placeholder="bijv. Rusher">
+            </div>
+            <div class="form-group">
+              <label>Icoon Materiaal:</label>
+              <input type="text" id="kit-icon" value="DIAMOND_SWORD" placeholder="DIAMOND_SWORD">
+            </div>
+          </div>
+          <div class="form-row-grid" style="margin-top: 12px;">
+            <div class="form-group">
+              <label>Helmet (optioneel):</label>
+              <input type="text" id="kit-helmet" placeholder="IRON_HELMET">
+            </div>
+            <div class="form-group">
+              <label>Chestplate (optioneel):</label>
+              <input type="text" id="kit-chestplate" placeholder="IRON_CHESTPLATE">
+            </div>
+            <div class="form-group">
+              <label>Leggings (optioneel):</label>
+              <input type="text" id="kit-leggings" placeholder="IRON_LEGGINGS">
+            </div>
+            <div class="form-group">
+              <label>Boots (optioneel):</label>
+              <input type="text" id="kit-boots" placeholder="IRON_BOOTS">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 12px;">
+            <label>Items (1 per regel: <code>MATERIAL:AANTAL</code>, bijv. <code>DIAMOND_SWORD:1</code> of <code>GOLDEN_APPLE:4</code>):</label>
+            <textarea id="kit-items" rows="4" style="width:100%; background:#0c0f14; color:#fff; border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:10px;" placeholder="DIAMOND_SWORD:1&#10;ENDER_PEARL:2&#10;OAK_PLANKS:64"></textarea>
+          </div>
+          <button class="btn btn-purple" onclick="saveCustomKit()" style="margin-top: 12px;">
+            Kit Opslaan & Activeren
+          </button>
+        </div>
+
+        <div id="custom-kits-list" class="maker-grid">
+          <!-- Injected by app.js -->
         </div>
       </div>
 

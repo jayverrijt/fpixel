@@ -80,6 +80,26 @@ public class DuelManager {
         ChatUtil.playSound(target, Sound.BLOCK_NOTE_BLOCK_BELL, 1.0f, 1.5f);
     }
 
+    public Arena findDuelArena(String type) {
+        for (Arena arena : plugin.getGameManager().getArenas()) {
+            if (arena.getMaxPlayers() == 2
+                    && arena.getGameType().equalsIgnoreCase(type)
+                    && arena.getState() == GameState.WAITING
+                    && arena.getPlayerCount() == 0) {
+                return arena;
+            }
+        }
+        for (Arena arena : plugin.getGameManager().getArenas()) {
+            if (arena.getMaxPlayers() >= 2
+                    && arena.getGameType().equalsIgnoreCase(type)
+                    && arena.getState() == GameState.WAITING
+                    && arena.getPlayerCount() == 0) {
+                return arena;
+            }
+        }
+        return null;
+    }
+
     public void acceptChallenge(Player target, String senderName) {
         Player sender = Bukkit.getPlayer(senderName);
         if (sender == null || !sender.isOnline()) {
@@ -99,17 +119,8 @@ public class DuelManager {
             return;
         }
 
-        // Find available 1v1 duel arena
-        Arena duelArena = null;
-        for (Arena arena : plugin.getGameManager().getArenas()) {
-            if (arena.getMaxPlayers() == 2
-                    && arena.getGameType().equalsIgnoreCase(invite.getGameType())
-                    && arena.getState() == GameState.WAITING
-                    && arena.getPlayerCount() == 0) {
-                duelArena = arena;
-                break;
-            }
-        }
+        // Find available 1v1 duel arena (falling back to any open arena for modes like PropHunt/MurderMystery)
+        Arena duelArena = findDuelArena(invite.getGameType());
 
         if (duelArena == null) {
             ChatUtil.sendMessage(target, "§cNo empty arena available for " + invite.getGameType() + " right now!");
@@ -121,6 +132,12 @@ public class DuelManager {
 
         duelArena.join(sender);
         duelArena.join(target);
+        if (plugin.getTestingManager() != null && duelArena.getPlayerCount() < duelArena.getMinPlayers()) {
+            int needed = duelArena.getMinPlayers() - duelArena.getPlayerCount();
+            for (int i = 0; i < needed; i++) {
+                duelArena.addSimulatedPlayer(plugin.getTestingManager().createBot());
+            }
+        }
         duelArena.forceStart();
     }
 

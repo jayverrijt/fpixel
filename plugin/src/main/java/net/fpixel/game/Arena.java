@@ -69,6 +69,9 @@ public abstract class Arena {
         } else if (state == GameState.IN_GAME) {
             gameTime++;
             handleGameTick();
+            if (plugin.getScuffedModeManager() != null) {
+                plugin.getScuffedModeManager().onArenaTick(this, gameTime);
+            }
             checkWinCondition();
         } else if (state == GameState.ENDING) {
             handleEndingTick();
@@ -151,6 +154,14 @@ public abstract class Arena {
             ChatUtil.playSound(p, Sound.ENTITY_ENDER_DRAGON_GROWL, 0.8f, 1.2f);
         }
         onGameStart();
+        if (plugin.getCustomKitManager() != null) {
+            for (Player p : getBukkitPlayers()) {
+                plugin.getCustomKitManager().applySelectedKit(p, gameType);
+            }
+        }
+        if (plugin.getScuffedModeManager() != null) {
+            plugin.getScuffedModeManager().onArenaStart(this);
+        }
         if (plugin.getTestingManager() != null) {
             plugin.getTestingManager().onArenaStart(this);
         }
@@ -236,6 +247,9 @@ public abstract class Arena {
         }
 
         onArenaReset();
+        if (plugin.getScuffedModeManager() != null) {
+            plugin.getScuffedModeManager().onArenaReset(this);
+        }
         state = GameState.WAITING;
     }
 
@@ -319,6 +333,13 @@ public abstract class Arena {
                     .build();
             player.getInventory().setItem(4, kitSelector);
         }
+        if (plugin.getCustomKitManager() != null && !plugin.getCustomKitManager().getKitsForGameType(this.gameType).isEmpty()) {
+            ItemStack customKitItem = new ItemBuilder(Material.CHEST)
+                    .name("§6§lCustom Kits §7(Right Click)")
+                    .lore("§7Click to choose an Admin custom kit!")
+                    .build();
+            player.getInventory().setItem(this.gameType.equalsIgnoreCase("SKYWARS") ? 5 : 4, customKitItem);
+        }
         player.getInventory().setItem(8, lobbyBed);
 
         if (lobbySpawn != null) {
@@ -353,6 +374,9 @@ public abstract class Arena {
 
         player.setAllowFlight(false);
         player.setFlying(false);
+        if (plugin.getScuffedModeManager() != null) {
+            plugin.getScuffedModeManager().resetPlayerAttributes(player);
+        }
         for (org.bukkit.potion.PotionEffect effect : player.getActivePotionEffects()) {
             player.removePotionEffect(effect.getType());
         }

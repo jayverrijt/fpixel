@@ -38,7 +38,7 @@ public final class BukkitTestHarness {
         } catch (Throwable ignored) {
         }
 
-        PluginManager pm = proxy(PluginManager.class, (m, args) -> null);
+        PluginManager pm = proxy(PluginManager.class, (m, args) -> defaultReturn(m.getReturnType()));
         BukkitTask dummyTask = proxy(BukkitTask.class, (m, args) -> {
             if (m.getName().equals("getTaskId")) return 1;
             if (m.getName().equals("isCancelled")) return false;
@@ -113,7 +113,20 @@ public final class BukkitTestHarness {
                 yield null;
             }
             case "getLoadedChunks" -> new org.bukkit.Chunk[0];
-            case "getEntities" -> Collections.emptyList();
+            case "getEntities", "getEntitiesByClass", "getEntitiesByClasses" -> Collections.emptyList();
+            case "spawn" -> {
+                if (args.length >= 2 && args[1] instanceof Class<?> clazz && clazz.isInterface()) {
+                    yield proxy(clazz, (em, ea) -> defaultReturn(em.getReturnType()));
+                }
+                yield null;
+            }
+            case "spawnEntity" -> {
+                if (args.length >= 2 && args[1] instanceof org.bukkit.entity.EntityType et
+                        && et.getEntityClass() != null && et.getEntityClass().isInterface()) {
+                    yield proxy(et.getEntityClass(), (em, ea) -> defaultReturn(em.getReturnType()));
+                }
+                yield null;
+            }
             case "getBlockAt" -> {
                 int x, y, z;
                 if (args.length == 1 && args[0] instanceof Location loc) {
@@ -144,6 +157,15 @@ public final class BukkitTestHarness {
             case "getY" -> y;
             case "getZ" -> z;
             case "getLocation" -> new Location(world, x, y, z);
+            case "getRelative" -> {
+                if (args.length == 1 && args[0] instanceof org.bukkit.block.BlockFace bf) {
+                    yield world.getBlockAt(x + bf.getModX(), y + bf.getModY(), z + bf.getModZ());
+                }
+                if (args.length == 3) {
+                    yield world.getBlockAt(x + (int) args[0], y + (int) args[1], z + (int) args[2]);
+                }
+                yield null;
+            }
             case "getType" -> type[0];
             case "setType" -> {
                 type[0] = (Material) args[0];

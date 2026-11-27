@@ -64,6 +64,62 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
         return false;
     }
 
+    private String normalizeGameType(String raw) {
+        if (raw == null) return null;
+        return switch (raw.toLowerCase()) {
+            case "skywars", "sw" -> "SKYWARS";
+            case "bedwars", "bw" -> "BEDWARS";
+            case "murdermystery", "murder_mystery", "murder", "mm" -> "MURDER_MYSTERY";
+            case "prophunt", "prop_hunt", "prop", "ph" -> "PROP_HUNT";
+            case "sumo" -> "SUMO";
+            case "bridge", "thebridge" -> "BRIDGE";
+            case "pvp", "duels", "classic" -> "PVP";
+            case "tntrun", "tnt" -> "TNTRUN";
+            case "parkour", "pk" -> "PARKOUR";
+            default -> null;
+        };
+    }
+
+    private void launchGameTest(Player player, String gameType) {
+        Arena current = plugin.getGameManager().getPlayerArena(player);
+        if (current != null) {
+            current.leave(player);
+        }
+
+        Arena targetArena = null;
+        for (Arena arena : plugin.getGameManager().getArenas()) {
+            if (arena.getGameType().equalsIgnoreCase(gameType)
+                    && (arena.getState() == net.fpixel.game.GameState.WAITING || arena.getState() == net.fpixel.game.GameState.STARTING)) {
+                targetArena = arena;
+                break;
+            }
+        }
+        if (targetArena == null) {
+            for (Arena arena : plugin.getGameManager().getArenas()) {
+                if (arena.getGameType().equalsIgnoreCase(gameType) && arena.getPlayerCount() == 0) {
+                    arena.resetArena();
+                    targetArena = arena;
+                    break;
+                }
+            }
+        }
+        if (targetArena == null) {
+            ChatUtil.sendMessage(player, "§cGeen beschikbare arena gevonden voor §e" + gameType + "§c.");
+            return;
+        }
+
+        targetArena.join(player);
+        if (plugin.getTestingManager() != null) {
+            int needed = Math.max(0, targetArena.getMinPlayers() - targetArena.getPlayerCount());
+            for (int i = 0; i < needed; i++) {
+                targetArena.addSimulatedPlayer(plugin.getTestingManager().createBot());
+            }
+        }
+        targetArena.setCountdown(3);
+        targetArena.forceStart();
+        ChatUtil.sendMessage(player, "§a§l[TEST] §eTestgame gestart voor §6" + gameType + " §7(" + targetArena.getId() + ")!");
+    }
+
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] rawArgs) {
         String cmdLabel = label.toLowerCase();
@@ -102,20 +158,32 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
             return handleParkourCommand(sender, args);
         }
 
-        if (sub.equals("test")) {
+        if (sub.equals("test") || sub.equals("play")) {
             if (!(sender instanceof Player player)) {
-                sender.sendMessage("Alleen spelers kunnen /fpixel test gebruiken.");
+                sender.sendMessage("Alleen spelers kunnen /fpixel " + sub + " gebruiken.");
                 return true;
             }
             if (!checkModPermission(sender)) {
-                ChatUtil.sendMessage(player, "§cJe hebt minstens de §2[MOD] §crang nodig om parkour maps te reviewen.");
+                ChatUtil.sendMessage(player, "§cJe hebt minstens de §2[MOD] §crang nodig om games of maps te testen.");
                 return true;
             }
             if (args.length < 2) {
-                ChatUtil.sendMessage(player, "§cGebruik: §e/fpixel test <map-id>");
+                ChatUtil.sendMessage(player, "§cGebruik: §e/fpixel " + sub + " <gamemode|parkour-map-id>");
+                ChatUtil.sendMessage(player, "§7Gamemodes: §fskywars, bedwars, murdermystery, prophunt, sumo, bridge, pvp, tntrun, parkour");
                 return true;
             }
-            plugin.getParkourManager().startTestingSession(player, args[1]);
+            String target = args[1];
+            String normalizedGame = normalizeGameType(target);
+            if (normalizedGame != null) {
+                launchGameTest(player, normalizedGame);
+                return true;
+            }
+            if (sub.equals("test") && plugin.getParkourManager().getMap(target) != null) {
+                plugin.getParkourManager().startTestingSession(player, target);
+                return true;
+            }
+            ChatUtil.sendMessage(player, "§cOnbekende gamemode of parkour map: §f" + target);
+            ChatUtil.sendMessage(player, "§7Gamemodes: §fskywars, bedwars, murdermystery, prophunt, sumo, bridge, pvp, tntrun, parkour");
             return true;
         }
 
@@ -403,6 +471,45 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             Bukkit.dispatchCommand(sender, "serverbackup");
+            return true;
+        } else if (sub.equals("reloadkits")) {
+            if (!checkAdminPermission(sender)) {
+                sender.sendMessage(ChatUtil.colorize("§cAlleen [ADMIN] of hoger kan kits herladen."));
+                return true;
+            }
+            if (plugin.getCustomKitManager() != null) {
+                plugin.getCustomKitManager().loadKits();
+            }
+            sender.sendMessage(ChatUtil.colorize("§a§l[KITS] §eCustom kits herladen vanuit custom_kits.json!"));
+            return true;
+        } else if (sub.equals("scuffed")) {
+            if (!checkModPermission(sender)) {
+                sender.sendMessage(ChatUtil.colorize("§cJe hebt geen permissie om Scuffed Mode te togglen."));
+                return true;
+            }
+            var scuffed = plugin.getScuffedModeManager();
+            if (args.length < 2) {
+                scuffed.setEnabled(!scuffed.isEnabled());
+                return true;
+            }
+            String mode = args[1].toLowerCase();
+            if (mode.equals("on") || mode.equals("true") || mode.equals("enable")) {
+                if (scuffed.isEnabled()) {
+                    sender.sendMessage(ChatUtil.colorize("§c§l[SCUFFED] §eScuffed Mode staat al §a§lAAN§e!"));
+                } else {
+                    scuffed.setEnabled(true);
+                }
+            } else if (mode.equals("off") || mode.equals("false") || mode.equals("disable")) {
+                if (!scuffed.isEnabled()) {
+                    sender.sendMessage(ChatUtil.colorize("§c§l[SCUFFED] §eScuffed Mode staat al §c§lUIT§e!"));
+                } else {
+                    scuffed.setEnabled(false);
+                }
+            } else if (mode.equals("status")) {
+                sender.sendMessage(ChatUtil.colorize("§c§l[SCUFFED] §eStatus: " + (scuffed.isEnabled() ? "§a§lAAN" : "§c§lUIT")));
+            } else {
+                sender.sendMessage(ChatUtil.colorize("§cGebruik: §e/fpixel scuffed [on|off|status]"));
+            }
             return true;
         } else if (sub.equals("watchdog") || sub.equals("wd")) {
             String[] wdArgs = new String[args.length - 1];
@@ -1080,7 +1187,11 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
 
         List<String> list = new ArrayList<>();
         if (args.length == 1) {
-            list.addAll(Arrays.asList("map", "parkour", "watchdog", "test", "approve", "disable", "fill", "empty", "undo", "import", "update", "backup", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
+            list.addAll(Arrays.asList("scuffed", "test", "play", "map", "parkour", "watchdog", "approve", "disable", "fill", "empty", "undo", "import", "update", "backup", "rebuildhub", "setlobby", "buildmaps", "list", "addcoins", "reload"));
+        } else if (args[0].equalsIgnoreCase("scuffed")) {
+            if (args.length == 2) {
+                list.addAll(Arrays.asList("on", "off", "status"));
+            }
         } else if (args[0].equalsIgnoreCase("watchdog") || args[0].equalsIgnoreCase("wd")) {
             if (args.length == 2) {
                 list.addAll(Arrays.asList("status", "check", "violations", "setscore"));
@@ -1113,12 +1224,16 @@ public class FPixelCommand implements CommandExecutor, TabCompleter {
                     }
                 }
             }
-        } else if (args[0].equalsIgnoreCase("test") || args[0].equalsIgnoreCase("approve") || args[0].equalsIgnoreCase("disable")) {
+        } else if (args[0].equalsIgnoreCase("test") || args[0].equalsIgnoreCase("play")) {
             if (args.length == 2) {
-                for (net.fpixel.games.parkour.CustomParkourMap m : plugin.getParkourManager().getAllMaps()) {
-                    list.add(m.getId());
+                list.addAll(Arrays.asList("skywars", "bedwars", "murdermystery", "prophunt", "sumo", "bridge", "pvp", "tntrun", "parkour"));
+                if (args[0].equalsIgnoreCase("test")) {
+                    for (net.fpixel.games.parkour.CustomParkourMap m : plugin.getParkourManager().getAllMaps()) {
+                        list.add(m.getId());
+                    }
                 }
             }
+        } else if (args[0].equalsIgnoreCase("approve") || args[0].equalsIgnoreCase("disable")) {
         } else if (args[0].equalsIgnoreCase("import")) {
             if (args.length == 2) {
                 list.addAll(Arrays.asList("list", "hub", "map", "scan"));
